@@ -1,0 +1,306 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { Button, Card, CodeSample, Freshness, SectionLabel, StageBadge } from "@railor/ui";
+import { createKey, revokeKey } from "../../app/app/developers/actions";
+
+export interface KeyRow {
+  id: string;
+  label: string;
+  mode: "test" | "live";
+  prefix: string;
+  secret: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  revoked: boolean;
+}
+
+export interface UsageRow {
+  endpoint: string;
+  count: number;
+  errors: number;
+  p95: number;
+}
+
+/**
+ * Keys, usage and agent installation in one place. The test key already exists
+ * — nobody has to find a "create key" button before the docs work.
+ */
+export function DeveloperPortal({
+  keys,
+  usage,
+  baseUrl,
+  exampleQuery,
+}: {
+  keys: KeyRow[];
+  usage: UsageRow[];
+  baseUrl: string;
+  exampleQuery: Record<string, unknown>;
+}) {
+  const [freshSecret, setFreshSecret] = useState<string | null>(null);
+  const [label, setLabel] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  const testKey = keys.find((k) => k.mode === "test" && !k.revoked)?.secret ?? undefined;
+
+  const mcpConfig = {
+    railor: {
+      url: `${baseUrl}/api/mcp`,
+      headers: { Authorization: `Bearer ${testKey ?? "rk_test_your_key"}` },
+    },
+  };
+  const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=railor&config=${encodeURIComponent(
+    Buffer.from(JSON.stringify(mcpConfig.railor)).toString("base64"),
+  )}`;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-[24px] font-semibold tracking-tight">Developers</h1>
+        <p className="max-w-2xl text-[14px] text-[var(--color-muted)]">
+          The screens in this app are thin clients over these endpoints. Your test key is already
+          live and every snippet below is rendered with it.
+        </p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Card className="flex flex-col gap-4 p-5">
+          <SectionLabel>60-second start</SectionLabel>
+          <CodeSample
+            apiKey={testKey}
+            variants={[
+              {
+                language: "curl",
+                label: "cURL",
+                code: `curl ${baseUrl}/v1/corridors/search \\
+  -H "Authorization: Bearer RAILOR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(exampleQuery, null, 2)}'`,
+              },
+              {
+                language: "ts",
+                label: "TypeScript",
+                code: `const response = await fetch("${baseUrl}/v1/corridors/search", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer RAILOR_API_KEY",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(${JSON.stringify(exampleQuery, null, 2)}),
+})
+
+const { data, providers_checked } = await response.json()`,
+              },
+              {
+                language: "python",
+                label: "Python",
+                code: `import httpx
+
+response = httpx.post(
+    "${baseUrl}/v1/corridors/search",
+    headers={"Authorization": "Bearer RAILOR_API_KEY"},
+    json=${JSON.stringify(exampleQuery, null, 4).replace(/"/g, '"')},
+)
+print(response.json()["providers_checked"])`,
+              },
+            ]}
+            caption="Rendered with your workspace's test key and your most recent corridor."
+          />
+        </Card>
+
+        <Card className="flex flex-col gap-3 p-5">
+          <div className="flex items-center justify-between">
+            <SectionLabel>API keys</SectionLabel>
+            <span className="text-[11px] text-[var(--color-faint)]">
+              Live keys are shown once and stored hashed
+            </span>
+          </div>
+
+          <ul className="flex flex-col gap-2">
+            {keys.map((key) => (
+              <li
+                key={key.id}
+                className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-[var(--color-line)] p-3"
+              >
+                <div className="flex flex-1 flex-col">
+                  <span className="flex items-center gap-2 text-[13.5px] font-medium">
+                    {key.label}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                        key.mode === "test"
+                          ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
+                          : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
+                      }`}
+                    >
+                      {key.mode}
+                    </span>
+                    {key.revoked ? (
+                      <span className="text-[11px] text-[var(--color-bad)]">revoked</span>
+                    ) : null}
+                  </span>
+                  <code className="tabular text-[12px] text-[var(--color-muted)]">
+                    {key.secret ?? `${key.prefix}…`}
+                  </code>
+                  <span className="text-[11px] text-[var(--color-faint)]">
+                    {key.lastUsedAt ? (
+                      <Freshness date={key.lastUsedAt} prefix="Last used" />
+                    ) : (
+                      "Never used"
+                    )}
+                  </span>
+                </div>
+                {!key.revoked ? (
+                  <button
+                    type="button"
+                    onClick={() => startTransition(async () => void (await revokeKey(key.id)))}
+                    className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12px] text-[var(--color-muted)] hover:border-[var(--color-bad)] hover:text-[var(--color-bad)]"
+                  >
+                    Revoke
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
+            <input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Key label (e.g. staging worker)"
+              className="flex-1 rounded-full border border-[var(--color-line)] px-3 py-1.5 text-[13px] outline-none focus:border-[var(--color-violet)]"
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await createKey(label || "Test key", "test");
+                  if (res.ok) setLabel("");
+                })
+              }
+            >
+              New test key
+            </Button>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await createKey(label || "Live key", "live");
+                  if (res.ok && res.secret) setFreshSecret(res.secret);
+                  setLabel("");
+                })
+              }
+            >
+              New live key
+            </Button>
+          </div>
+
+          {freshSecret ? (
+            <div className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-3">
+              <span className="text-[11px] uppercase tracking-wide text-[var(--color-purple)]">
+                Copy this now — it is not shown again
+              </span>
+              <code className="break-all text-[12.5px]">{freshSecret}</code>
+            </div>
+          ) : null}
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <Card className="flex flex-col gap-3 p-5">
+          <div className="flex items-center gap-2">
+            <SectionLabel>MCP server</SectionLabel>
+            <StageBadge stage="beta" />
+          </div>
+          <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
+            Let a coding or treasury agent query the same verified data. Every tool response carries
+            source, verified_at and confidence.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a href={cursorDeeplink}>
+              <Button size="sm" variant="secondary">
+                Add to Cursor
+              </Button>
+            </a>
+            <a href="/docs/mcp">
+              <Button size="sm" variant="secondary">
+                Claude Code instructions
+              </Button>
+            </a>
+          </div>
+          <CodeSample
+            apiKey={testKey}
+            variants={[
+              {
+                language: "json",
+                label: "mcp.json",
+                code: JSON.stringify(
+                  {
+                    mcpServers: {
+                      railor: {
+                        url: `${baseUrl}/api/mcp`,
+                        headers: { Authorization: "Bearer RAILOR_API_KEY" },
+                      },
+                    },
+                  },
+                  null,
+                  2,
+                ),
+              },
+              {
+                language: "cli",
+                label: "Claude Code",
+                code: `claude mcp add --transport http railor ${baseUrl}/api/mcp \\
+  --header "Authorization: Bearer RAILOR_API_KEY"`,
+              },
+            ]}
+            caption="Ask your agent: “Which mapped providers can settle USDC to an AED business account for an Indian entity?”"
+          />
+        </Card>
+
+        <Card className="flex flex-col gap-3 p-5">
+          <SectionLabel>Usage</SectionLabel>
+          {usage.length ? (
+            <table className="w-full text-left text-[13px]">
+              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <tr>
+                  <th className="pb-2">Endpoint</th>
+                  <th className="pb-2">Requests</th>
+                  <th className="pb-2">Errors</th>
+                  <th className="pb-2">p95</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usage.map((row) => (
+                  <tr key={row.endpoint} className="border-t border-[var(--color-line)]">
+                    <td className="py-2 font-mono text-[12px]">{row.endpoint}</td>
+                    <td className="tabular py-2">{row.count}</td>
+                    <td className="tabular py-2">{row.errors}</td>
+                    <td className="tabular py-2">{row.p95}ms</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-[13px] text-[var(--color-muted)]">
+              No API calls yet. Copy the snippet above — it runs as printed.
+            </p>
+          )}
+
+          <div className="border-t border-[var(--color-line)] pt-3">
+            <SectionLabel>Endpoints</SectionLabel>
+            <ul className="mt-2 flex flex-col gap-1 font-mono text-[12px] text-[var(--color-ink-soft)]">
+              <li>POST /v1/corridors/search</li>
+              <li>GET /v1/providers</li>
+              <li>GET /v1/changes</li>
+              <li className="text-[var(--color-faint)]">POST /v1/eligibility — coming soon</li>
+              <li className="text-[var(--color-faint)]">POST /v1/watchlists — coming soon</li>
+            </ul>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

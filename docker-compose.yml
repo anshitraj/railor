@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: railor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: railor
+      POSTGRES_PASSWORD: railor
+      POSTGRES_DB: railor
+    ports:
+      - "5433:5432"
+    volumes:
+      - railor-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U railor -d railor"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: railor-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  railor-pgdata:

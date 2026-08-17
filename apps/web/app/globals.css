@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import "@railor/ui/styles.css";
+
+/* Tailwind v4 scans sources; the design system lives outside this app. */
+@source "../../../packages/ui/src";
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-purple) 22%, transparent);
+  }
+
+  /* Focus is never removed — only restyled. */
+  :focus-visible {
+    outline: 2px solid var(--color-purple);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rail-grid {
+    background-image:
+      linear-gradient(to right, rgb(30 30 50 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(30 30 50 / 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .glass {
+    background: color-mix(in srgb, var(--color-surface) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

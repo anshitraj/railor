@@ -1,0 +1,193 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { StageBadge, cn, type Stage } from "@railor/ui";
+
+interface MenuItem {
+  label: string;
+  href: string;
+  hint: string;
+  stage: Stage;
+}
+
+const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: string; href: string } }> = {
+  Product: {
+    items: [
+      { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live" },
+      { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live" },
+      { label: "Provider Intelligence", href: "/providers", hint: "Coverage, requirements, limits, sources", stage: "live" },
+      { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live" },
+      { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live" },
+      { label: "Connections", href: "/company/roadmap", hint: "Connect the providers you already use", stage: "soon" },
+    ],
+    panel: {
+      title: "One question, one answer",
+      body: "“Indian company sending USDC to a UAE supplier who receives AED” resolves to 15 providers checked, each with a verdict, a reason and a source.",
+      href: "/#search",
+    },
+  },
+  Developers: {
+    items: [
+      { label: "API", href: "/docs/api", hint: "REST with evidence on every claim", stage: "beta" },
+      { label: "Documentation", href: "/docs", hint: "Runnable snippets, your own test key", stage: "live" },
+      { label: "MCP", href: "/docs/mcp", hint: "Let coding agents query verified data", stage: "beta" },
+      { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", stage: "beta" },
+      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "soon" },
+      { label: "Changelog", href: "/docs/changelog", hint: "What shipped", stage: "live" },
+    ],
+    panel: {
+      title: "Built API-first",
+      body: "Every screen in Railor is a thin client over the same endpoints you get. Signed in, the docs render with your key and your last corridor.",
+      href: "/docs",
+    },
+  },
+  Resources: {
+    items: [
+      { label: "Provider Directory", href: "/providers", hint: "Filter by market, product, rail", stage: "live" },
+      { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live" },
+      { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live" },
+      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "soon" },
+    ],
+    panel: {
+      title: "Evidence, not vibes",
+      body: "Each claim carries its source, the time it was retrieved, the time it was last verified, and a confidence score that decays with age.",
+      href: "/changes",
+    },
+  },
+  Company: {
+    items: [
+      { label: "About", href: "/company", hint: "Why Railor exists", stage: "live" },
+      { label: "Roadmap", href: "/company/roadmap", hint: "Intelligence → orchestration", stage: "live" },
+      { label: "Trust", href: "/company/trust", hint: "How we handle data and claims", stage: "live" },
+    ],
+    panel: {
+      title: "Say unknown, not wrong",
+      body: "Railor would rather return “unknown” than a confident answer it cannot evidence. That principle outranks every other product decision.",
+      href: "/company/trust",
+    },
+  },
+};
+
+export function MarketingNav() {
+  const [open, setOpen] = useState<string | null>(null);
+
+  return (
+    <header
+      className="sticky top-4 z-50 mx-auto w-[min(1180px,calc(100%-2rem))]"
+      onMouseLeave={() => setOpen(null)}
+    >
+      <nav className="glass flex items-center gap-1 rounded-full border border-[var(--color-line)] px-3 py-2 shadow-[var(--shadow-soft)]">
+        <Link href="/" className="flex items-center gap-2 px-3 py-1">
+          <RailorMark />
+          <span className="text-[15px] font-semibold tracking-tight">Railor</span>
+        </Link>
+
+        <div className="hidden items-center gap-0.5 md:flex">
+          {Object.keys(MENUS).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onMouseEnter={() => setOpen(key)}
+              onFocus={() => setOpen(key)}
+              onClick={() => setOpen(open === key ? null : key)}
+              aria-expanded={open === key}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 text-[14px] transition",
+                open === key
+                  ? "bg-[var(--color-lavender)] text-[var(--color-purple-deep)]"
+                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)]",
+              )}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1" />
+
+        <Link
+          href="/#search"
+          className="hidden rounded-full px-3.5 py-1.5 text-[14px] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] sm:block"
+        >
+          Search rails
+        </Link>
+        <Link
+          href="/login"
+          className="rounded-full px-3.5 py-1.5 text-[14px] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)]"
+        >
+          Sign in
+        </Link>
+        <Link
+          href="/login?intent=start"
+          className="rounded-full bg-[var(--color-purple)] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[var(--color-purple-deep)]"
+        >
+          Get started
+        </Link>
+      </nav>
+
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-1/2 top-full w-[min(980px,100%)] -translate-x-1/2 pt-3"
+            onMouseEnter={() => setOpen(open)}
+          >
+            <div className="grid gap-6 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-panel)] lg:grid-cols-[1.5fr_1fr]">
+              <ul className="grid gap-1 sm:grid-cols-2">
+                {MENUS[open]!.items.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="flex flex-col gap-0.5 rounded-2xl px-3 py-2.5 transition hover:bg-[var(--color-canvas)]"
+                      onClick={() => setOpen(null)}
+                    >
+                      <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-ink)]">
+                        {item.label}
+                        {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
+                      </span>
+                      <span className="text-[12.5px] leading-snug text-[var(--color-muted)]">
+                        {item.hint}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href={MENUS[open]!.panel.href}
+                onClick={() => setOpen(null)}
+                className="flex flex-col justify-between gap-4 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-5 transition hover:brightness-[0.98]"
+              >
+                <div className="flex flex-col gap-2">
+                  <p className="text-[15px] font-semibold text-[var(--color-purple-deep)]">
+                    {MENUS[open]!.panel.title}
+                  </p>
+                  <p className="text-[13px] leading-relaxed text-[var(--color-ink-soft)]">
+                    {MENUS[open]!.panel.body}
+                  </p>
+                </div>
+                <span className="text-[13px] font-medium text-[var(--color-purple)]">Open →</span>
+              </Link>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </header>
+  );
+}
+
+export function RailorMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect width="24" height="24" rx="7" fill="var(--color-purple)" />
+      <path d="M6 8.5h12M6 15.5h12" stroke="white" strokeWidth="1.6" strokeLinecap="round" opacity="0.55" />
+      <path d="M9.5 5.5v13M14.5 5.5v13" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2.6" fill="var(--color-lime)" />
+    </svg>
+  );
+}

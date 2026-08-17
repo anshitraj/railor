@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "railor-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@railor/web", "dev"],
+      "port": 3000
+    }
+  ]
+}

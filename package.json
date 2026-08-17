@@ -1,0 +1,25 @@
+{
+  "name": "railor",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Railor — financial infrastructure, mapped.",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "pnpm --filter @railor/web dev",
+    "cli": "pnpm --filter @railor/cli dev",
+    "build": "pnpm --filter @railor/web build",
+    "start": "pnpm --filter @railor/web start",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @railor/database generate",
+    "db:migrate": "pnpm --filter @railor/database migrate",
+    "db:seed": "pnpm --filter @railor/database seed",
+    "db:reset": "pnpm --filter @railor/database reset",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @railor/core test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}
