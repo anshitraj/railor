@@ -1,8 +1,10 @@
 import "server-only";
 import { and, eq, isNull } from "drizzle-orm";
 import { apiKeys, apiUsage, ensureMigrated, getDb } from "@railor/database";
+import { getMonthlyUsageCount, monthStart, resolveMonthlyCap } from "@railor/core";
 import { randomUUID } from "node:crypto";
 import { hashApiKey } from "./auth";
+import { checkBurstLimit } from "./rate-limit";
 
 export interface ApiContext {
   organizationId: string;
@@ -41,6 +43,24 @@ export async function authenticate(request: Request): Promise<ApiContext> {
     .limit(1);
 
   if (!key) throw new ApiError(401, "invalid_api_key", "That API key is not valid.");
+
+  if (!checkBurstLimit(key.id)) {
+    throw new ApiError(
+      429,
+      "rate_limited",
+      "Too many requests for this key in a short window. Slow down and retry shortly.",
+    );
+  }
+
+  const cap = resolveMonthlyCap(key);
+  const used = await getMonthlyUsageCount(key.id, monthStart());
+  if (used >= cap) {
+    throw new ApiError(
+      429,
+      "quota_exceeded",
+      `This key has used its monthly request cap (${cap}). Upgrade or wait for the next billing cycle.`,
+    );
+  }
 
   await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id));
 

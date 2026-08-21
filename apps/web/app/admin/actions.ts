@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auditLogs, changeEvents, getDb, providerCapabilities } from "@railor/database";
+import { pruneApiUsage, rollupApiUsageDay } from "@railor/core";
 import { requireSession } from "../../lib/auth";
 import { fanOutAlertsForChange } from "../../lib/alerting";
 
@@ -84,4 +85,27 @@ export async function rejectChange(id: string) {
 
   revalidatePath("/admin");
   return { ok: true as const };
+}
+
+/**
+ * Manual trigger for the usage rollup + retention job (yesterday's api_usage
+ * → api_usage_daily, then prune raw rows past 14 days). In production this
+ * should run on a schedule via /api/internal/usage-rollup — no scheduler is
+ * wired up yet, so this button is the only way to run it today.
+ */
+export async function runUsageMaintenance() {
+  const session = await requireAdmin();
+  const yesterday = new Date(Date.now() - 86_400_000);
+  const rollup = await rollupApiUsageDay(yesterday);
+  const pruned = await pruneApiUsage(14);
+
+  const db = await getDb();
+  await db.insert(auditLogs).values({
+    actorId: session.user.id,
+    action: "usage.maintenance.run",
+    metadata: { rollup, pruned },
+  });
+
+  revalidatePath("/admin");
+  return { ok: true as const, rollup, pruned };
 }

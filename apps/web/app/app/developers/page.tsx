@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { apiKeys, apiUsage, getDb } from "@railor/database";
+import { apiKeys, getDb } from "@railor/database";
+import {
+  getMonthlyUsageCount,
+  getUsageByEndpoint,
+  getUsageDailySeries,
+  monthStart,
+  resolveMonthlyCap,
+} from "@railor/core";
 import { getSession } from "../../../lib/auth";
 import { getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
@@ -13,24 +20,24 @@ export default async function DevelopersPage() {
   const org = session.organization;
 
   const db = await getDb();
-  const [keys, usage, corridors] = await Promise.all([
+  const [keys, usage, dailySeries, corridors] = await Promise.all([
     db
       .select()
       .from(apiKeys)
       .where(eq(apiKeys.organizationId, org.id))
       .orderBy(desc(apiKeys.createdAt)),
-    db.select().from(apiUsage).where(eq(apiUsage.organizationId, org.id)).limit(500),
+    getUsageByEndpoint(org.id),
+    getUsageDailySeries(org.id, 30),
     getSavedCorridors(org.id),
   ]);
 
-  const byEndpoint = new Map<string, { count: number; errors: number; latencies: number[] }>();
-  for (const row of usage) {
-    const entry = byEndpoint.get(row.endpoint) ?? { count: 0, errors: 0, latencies: [] };
-    entry.count += 1;
-    if (row.status >= 400) entry.errors += 1;
-    if (row.latencyMs) entry.latencies.push(row.latencyMs);
-    byEndpoint.set(row.endpoint, entry);
-  }
+  const liveKey = keys.find((k) => k.mode === "live" && !k.revokedAt);
+  const quota = liveKey
+    ? {
+        used: await getMonthlyUsageCount(liveKey.id, monthStart()),
+        cap: resolveMonthlyCap(liveKey),
+      }
+    : null;
 
   const corridorQuery = (corridors[0]?.query ?? {}) as Record<string, unknown>;
   const exampleQuery = {
@@ -56,11 +63,9 @@ export default async function DevelopersPage() {
         createdAt: k.createdAt.toISOString(),
         revoked: Boolean(k.revokedAt),
       }))}
-      usage={[...byEndpoint.entries()].map(([endpoint, entry]) => {
-        const sorted = entry.latencies.sort((a, b) => a - b);
-        const p95 = sorted.length ? sorted[Math.floor(sorted.length * 0.95)] ?? sorted.at(-1)! : 0;
-        return { endpoint, count: entry.count, errors: entry.errors, p95 };
-      })}
+      usage={usage}
+      dailySeries={dailySeries}
+      quota={quota}
     />
   );
 }

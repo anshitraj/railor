@@ -21,6 +21,7 @@ import {
 } from "@railor/database";
 import type { SourceType } from "@railor/types";
 import type { CapabilityFacet, ProviderInput } from "./eligibility.js";
+import { getConformanceSummary, getObservationSummary, getRecentIncidents } from "./analytics.js";
 
 export interface ProviderSummary {
   id: string;
@@ -235,7 +236,8 @@ export async function loadProviderBySlug(slug: string) {
   const [provider] = await db.select().from(providers).where(eq(providers.slug, slug)).limit(1);
   if (!provider) return null;
 
-  const [products, facets, reqs, fees, limits, changes, sources, health] = await Promise.all([
+  const [products, facets, reqs, fees, limits, changes, sources, health, observed, conformance, incidents] =
+    await Promise.all([
     db.select().from(providerProducts).where(eq(providerProducts.providerId, provider.id)),
     db
       .select({
@@ -273,9 +275,25 @@ export async function loadProviderBySlug(slug: string) {
       .where(eq(healthChecks.providerId, provider.id))
       .orderBy(desc(healthChecks.checkedAt))
       .limit(12),
+    getObservationSummary(provider.id),
+    getConformanceSummary(provider.id),
+    getRecentIncidents(provider.id),
   ]);
 
-  return { provider, products, facets, requirements: reqs, fees, limits, changes, sources, health };
+  return {
+    provider,
+    products,
+    facets,
+    requirements: reqs,
+    fees,
+    limits,
+    changes,
+    sources,
+    health,
+    observed,
+    conformance,
+    incidents,
+  };
 }
 
 export interface ChangeFeedFilter {

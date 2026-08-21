@@ -37,7 +37,35 @@ export default async function ProviderProfile({
   const data = await loadProviderBySlug(slug);
   if (!data) notFound();
 
-  const { provider, products, facets, requirements, fees, limits, changes, sources, health } = data;
+  const {
+    provider,
+    products,
+    facets,
+    requirements,
+    fees,
+    limits,
+    changes,
+    sources,
+    health,
+    observed,
+    conformance,
+    incidents,
+  } = data;
+
+  const CONFORMANCE_STATUS_STYLE: Record<string, string> = {
+    pass: "bg-[var(--color-ok-bg)] text-[var(--color-ok)]",
+    fail: "bg-[var(--color-bad-bg)] text-[var(--color-bad)]",
+    warning: "bg-[var(--color-warn-bg)] text-[var(--color-warn)]",
+    not_tested: "bg-[var(--color-unknown-bg)] text-[var(--color-unknown)]",
+    access_required: "bg-[var(--color-unknown-bg)] text-[var(--color-unknown)]",
+  };
+  const CONFORMANCE_STATUS_LABEL: Record<string, string> = {
+    pass: "Pass",
+    fail: "Fail",
+    warning: "Warning",
+    not_tested: "Not tested",
+    access_required: "Access required",
+  };
 
   const entity = facets.filter((f) => f.capability.entityCountry);
   const corridors = facets.filter((f) => f.capability.destinationCountry);
@@ -359,18 +387,106 @@ export default async function ProviderProfile({
             )}
           </Card>
 
-          <Card className="flex flex-col gap-2 border-dashed p-5">
+          <Card className={`flex flex-col gap-2 p-5 ${observed ? "" : "border-dashed"}`}>
             <SectionLabel>Observed performance</SectionLabel>
-            <EmptyState
-              className="border-0 p-0"
-              what="No observed data yet"
-              why="Railor publishes observed settlement and success rates only from measurements it has actually taken. Until this deployment has them, the advertised figure is shown on its own — never dressed up as measured."
-              actionLabel="See advertised settlement"
-              href={`/app/providers/${provider.slug}#advertised`}
-            />
+            {observed ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                    Success rate
+                  </p>
+                  <p className="tabular text-[18px] font-semibold">
+                    {Math.round(observed.successRate * 100)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                    Sample size
+                  </p>
+                  <p className="tabular text-[18px] font-semibold">{observed.sampleSize}</p>
+                </div>
+                {observed.p50SettlementMs !== null ? (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                      P50 settlement
+                    </p>
+                    <p className="tabular text-[18px] font-semibold">
+                      {(observed.p50SettlementMs / 1000).toFixed(1)}s
+                    </p>
+                  </div>
+                ) : null}
+                {observed.p95SettlementMs !== null ? (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                      P95 settlement
+                    </p>
+                    <p className="tabular text-[18px] font-semibold">
+                      {(observed.p95SettlementMs / 1000).toFixed(1)}s
+                    </p>
+                  </div>
+                ) : null}
+                <p className="col-span-2 text-[11px] text-[var(--color-faint)]">
+                  {provider.isDemo ? "Demo sample · " : ""}
+                  {observed.lastObservedAt ? (
+                    <Freshness date={observed.lastObservedAt} prefix="Last observed" />
+                  ) : null}
+                </p>
+              </div>
+            ) : (
+              <EmptyState
+                className="border-0 p-0"
+                what="No observed data yet"
+                why="Railor publishes observed settlement and success rates only from measurements it has actually taken. Until this deployment has them, the advertised figure is shown on its own — never dressed up as measured."
+                actionLabel="See advertised settlement"
+                href={`/app/providers/${provider.slug}#advertised`}
+              />
+            )}
             <p id="advertised" className="text-[13px] text-[var(--color-ink-soft)]">
               Advertised: {provider.advertisedSettlement ?? "not published"}
             </p>
+          </Card>
+
+          <Card className="flex flex-col gap-3 p-5">
+            <SectionLabel>Conformance</SectionLabel>
+            {conformance.length ? (
+              <ul className="flex flex-col gap-1.5">
+                {conformance.map((c) => (
+                  <li key={c.kind} className="flex items-center gap-2 text-[13px]">
+                    <span className="flex-1">{c.label}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                        CONFORMANCE_STATUS_STYLE[c.status] ?? CONFORMANCE_STATUS_STYLE.not_tested
+                      }`}
+                    >
+                      {CONFORMANCE_STATUS_LABEL[c.status] ?? c.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[13px] text-[var(--color-muted)]">
+                No conformance tests cataloged for this provider yet.
+              </p>
+            )}
+            <div className="border-t border-[var(--color-line)] pt-3">
+              <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                Incidents, last 30 days
+              </p>
+              {incidents.length ? (
+                <ul className="mt-1.5 flex flex-col gap-1.5">
+                  {incidents.map((i) => (
+                    <li key={i.id} className="text-[13px]">
+                      <span className="font-medium">{i.title}</span>
+                      <span className="ml-2 text-[11px] text-[var(--color-muted)]">
+                        {i.severity} · {i.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-[13px] text-[var(--color-muted)]">None recorded.</p>
+              )}
+            </div>
           </Card>
         </div>
       </div>

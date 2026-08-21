@@ -22,6 +22,17 @@ export interface UsageRow {
   p95: number;
 }
 
+export interface DailyUsagePoint {
+  day: string;
+  count: number;
+  errors: number;
+}
+
+export interface QuotaInfo {
+  used: number;
+  cap: number;
+}
+
 /**
  * Keys, usage and agent installation in one place. The test key already exists
  * — nobody has to find a "create key" button before the docs work.
@@ -29,11 +40,15 @@ export interface UsageRow {
 export function DeveloperPortal({
   keys,
   usage,
+  dailySeries,
+  quota,
   baseUrl,
   exampleQuery,
 }: {
   keys: KeyRow[];
   usage: UsageRow[];
+  dailySeries: DailyUsagePoint[];
+  quota: QuotaInfo | null;
   baseUrl: string;
   exampleQuery: Record<string, unknown>;
 }) {
@@ -262,6 +277,46 @@ print(response.json()["providers_checked"])`,
 
         <Card className="flex flex-col gap-3 p-5">
           <SectionLabel>Usage</SectionLabel>
+
+          {quota ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between text-[13px]">
+                <span className="font-medium">
+                  {quota.used.toLocaleString()} / {quota.cap.toLocaleString()} requests
+                </span>
+                <span className="text-[11px] text-[var(--color-faint)]">this month · live key</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-line)]">
+                <div
+                  className={`h-full rounded-full ${
+                    quota.used / quota.cap >= 1
+                      ? "bg-[var(--color-bad)]"
+                      : quota.used / quota.cap >= 0.8
+                        ? "bg-[var(--color-warn)]"
+                        : "bg-[var(--color-purple)]"
+                  }`}
+                  style={{ width: `${Math.min(100, (quota.used / quota.cap) * 100)}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {dailySeries.some((d) => d.count > 0) ? (
+            <div className="flex items-end gap-[2px] border-t border-[var(--color-line)] pt-3" style={{ height: 40 }}>
+              {(() => {
+                const max = Math.max(1, ...dailySeries.map((d) => d.count));
+                return dailySeries.map((d) => (
+                  <div
+                    key={d.day}
+                    title={`${d.day}: ${d.count} request${d.count === 1 ? "" : "s"}${d.errors ? `, ${d.errors} error${d.errors === 1 ? "" : "s"}` : ""}`}
+                    className={`flex-1 rounded-t-[2px] ${d.errors ? "bg-[var(--color-bad)]" : "bg-[var(--color-purple)]"} opacity-70`}
+                    style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
+                  />
+                ));
+              })()}
+            </div>
+          ) : null}
+
           {usage.length ? (
             <table className="w-full text-left text-[13px]">
               <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">

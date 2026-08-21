@@ -13,7 +13,7 @@ import {
   savedCorridors,
   watchlists,
 } from "@railor/database";
-import { corridorLabel } from "@railor/core";
+import { corridorLabel, DEFAULT_LIVE_MONTHLY_CAP, DEFAULT_TEST_MONTHLY_CAP } from "@railor/core";
 import type { CorridorQuery, OnboardingAnswers } from "@railor/types";
 import { randomBytes } from "node:crypto";
 import { hashApiKey, suggestedOrgName } from "./auth";
@@ -78,6 +78,8 @@ export async function createApiKey(
       prefix: secret.slice(0, 12),
       keyHash: hashApiKey(secret),
       revealableSecret: mode === "test" ? secret : null,
+      // Interim flat default until real billing/plan tiers exist — see @railor/core's analytics module.
+      monthlyRequestCap: mode === "test" ? DEFAULT_TEST_MONTHLY_CAP : DEFAULT_LIVE_MONTHLY_CAP,
       createdBy: userId,
     })
     .returning();

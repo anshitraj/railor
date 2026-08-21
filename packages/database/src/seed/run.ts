@@ -30,6 +30,39 @@ import {
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000);
 const hash = (v: string) => createHash("sha256").update(v).digest("hex").slice(0, 32);
 
+/**
+ * Conformance test *catalog* — what Railor would check for a provider, not a
+ * claim about whether it passes. No `conformance_runs` rows are seeded: every
+ * test starts genuinely `not_tested` until something actually runs it.
+ */
+const API_TEST_KINDS = [
+  "authentication",
+  "quote_api",
+  "quote_schema",
+  "idempotency",
+  "beneficiary_validation",
+  "status_endpoint",
+  "asset_network_availability",
+  "response_schema",
+  "docs_parity",
+] as const;
+
+const CONFORMANCE_LABELS: Record<string, string> = {
+  authentication: "Authentication",
+  sandbox_reachable: "Sandbox reachable",
+  quote_api: "Quote API",
+  quote_schema: "Quote schema",
+  idempotency: "Idempotency behavior",
+  beneficiary_validation: "Beneficiary validation",
+  webhook_signature: "Webhook signature",
+  webhook_delivery: "Webhook delivery",
+  webhook_retry: "Webhook retry",
+  status_endpoint: "Status endpoint",
+  asset_network_availability: "Asset/network availability",
+  response_schema: "Response schema",
+  docs_parity: "Docs/API parity",
+};
+
 /** Products that can carry a payout corridor facet. */
 const CORRIDOR_PRODUCTS = new Set(["payout", "off_ramp", "collection"]);
 
@@ -59,7 +92,8 @@ export async function seedDemoData(): Promise<SeedSummary> {
       ${s.evidence}, ${s.providerCapabilities}, ${s.providerRequirements},
       ${s.providerProducts}, ${s.fees}, ${s.limits}, ${s.changeEvents},
       ${s.sourceSnapshots}, ${s.sourceDocuments}, ${s.observations},
-      ${s.healthChecks}, ${s.providers}, ${s.requirements},
+      ${s.healthChecks}, ${s.conformanceTests}, ${s.conformanceRuns}, ${s.incidents},
+      ${s.providers}, ${s.requirements},
       ${s.assetNetworks}, ${s.assets}, ${s.blockchains}, ${s.currencies}, ${s.countries}
     restart identity cascade
   `);
@@ -309,6 +343,21 @@ export async function seedDemoData(): Promise<SeedSummary> {
           spec.slug === "halcyon-clearing" && i < 2 ? "Settlement delays reported" : "Operational",
       })),
     );
+
+    /* ---- conformance test catalog (architecture only — zero runs seeded) -- */
+    const kinds: string[] = [];
+    if (spec.hasApi) kinds.push(...API_TEST_KINDS);
+    if (spec.hasSandbox) kinds.push("sandbox_reachable");
+    if (spec.hasWebhooks) kinds.push("webhook_signature", "webhook_delivery", "webhook_retry");
+    if (kinds.length) {
+      await db.insert(s.conformanceTests).values(
+        kinds.map((kind) => ({
+          providerId,
+          kind: kind as never,
+          label: CONFORMANCE_LABELS[kind] ?? kind,
+        })),
+      );
+    }
   }
 
   /* ---- change events --------------------------------------------------- */

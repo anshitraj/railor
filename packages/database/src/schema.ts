@@ -119,6 +119,39 @@ export const requirementKindEnum = pgEnum("requirement_kind", ["kyc", "kyb", "te
 
 export const apiKeyModeEnum = pgEnum("api_key_mode", ["test", "live"]);
 
+export const conformanceTestKindEnum = pgEnum("conformance_test_kind", [
+  "authentication",
+  "sandbox_reachable",
+  "quote_api",
+  "quote_schema",
+  "idempotency",
+  "beneficiary_validation",
+  "webhook_signature",
+  "webhook_delivery",
+  "webhook_retry",
+  "status_endpoint",
+  "asset_network_availability",
+  "response_schema",
+  "docs_parity",
+]);
+
+export const conformanceStatusEnum = pgEnum("conformance_status", [
+  "pass",
+  "fail",
+  "warning",
+  "not_tested",
+  "access_required",
+]);
+
+export const incidentSeverityEnum = pgEnum("incident_severity", ["minor", "major", "critical"]);
+
+export const incidentStatusEnum = pgEnum("incident_status", [
+  "investigating",
+  "identified",
+  "monitoring",
+  "resolved",
+]);
+
 /* -------------------------------------------------------------------------- */
 /* Reference data                                                              */
 /* -------------------------------------------------------------------------- */
@@ -470,6 +503,67 @@ export const healthChecks = pgTable("health_checks", {
   statusText: text("status_text"),
 });
 
+/**
+ * Catalog of what Railor checks for a provider (architecture, not a claim).
+ * A row existing here says nothing about the world; only `conformance_runs`
+ * does, and only once something has actually run the check.
+ */
+export const conformanceTests = pgTable(
+  "conformance_tests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => providers.id, { onDelete: "cascade" }),
+    kind: conformanceTestKindEnum("kind").notNull(),
+    label: text("label").notNull(),
+    enabled: boolean("enabled").default(true).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    providerKindIdx: uniqueIndex("conformance_tests_provider_kind_idx").on(t.providerId, t.kind),
+  }),
+);
+
+export const conformanceRuns = pgTable(
+  "conformance_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    testId: uuid("test_id")
+      .notNull()
+      .references(() => conformanceTests.id, { onDelete: "cascade" }),
+    status: conformanceStatusEnum("status").notNull(),
+    detail: text("detail"),
+    latencyMs: integer("latency_ms"),
+    ranAt: timestamp("ran_at", { withTimezone: true }).defaultNow().notNull(),
+    evidenceId: uuid("evidence_id").references(() => evidence.id),
+  },
+  (t) => ({
+    testIdx: index("conformance_runs_test_idx").on(t.testId, t.ranAt),
+  }),
+);
+
+export const incidents = pgTable(
+  "incidents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => providers.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    severity: incidentSeverityEnum("severity").notNull(),
+    status: incidentStatusEnum("status").default("investigating").notNull(),
+    sourceUrl: text("source_url"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => ({
+    providerIdx: index("incidents_provider_idx").on(t.providerId, t.startedAt),
+  }),
+);
+
 /* -------------------------------------------------------------------------- */
 /* Identity & organizations                                                    */
 /* -------------------------------------------------------------------------- */
@@ -714,7 +808,46 @@ export const apiUsage = pgTable(
     latencyMs: integer("latency_ms"),
     createdAt: now(),
   },
-  (t) => ({ orgIdx: index("api_usage_org_idx").on(t.organizationId, t.createdAt) }),
+  (t) => ({
+    orgIdx: index("api_usage_org_idx").on(t.organizationId, t.createdAt),
+    keyIdx: index("api_usage_key_idx").on(t.apiKeyId, t.createdAt),
+  }),
+);
+
+/**
+ * Daily rollup of `api_usage`, one row per org/key/endpoint/day. Populated by
+ * `rollupApiUsageDay` (see @railor/core's analytics module) so the 30-day
+ * usage chart and quota checks never have to scan the raw event table.
+ * `api_usage` itself is pruned after rollup — this table is what survives.
+ */
+export const apiUsageDaily = pgTable(
+  "api_usage_daily",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    /** UTC midnight for the day this row summarizes. */
+    day: timestamp("day", { withTimezone: true }).notNull(),
+    requestCount: integer("request_count").default(0).notNull(),
+    errorCount: integer("error_count").default(0).notNull(),
+    latencySumMs: integer("latency_sum_ms").default(0).notNull(),
+    latencySampleCount: integer("latency_sample_count").default(0).notNull(),
+    latencyMaxMs: integer("latency_max_ms"),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    unique: uniqueIndex("api_usage_daily_unique").on(
+      t.organizationId,
+      t.apiKeyId,
+      t.endpoint,
+      t.day,
+    ),
+    orgDayIdx: index("api_usage_daily_org_day_idx").on(t.organizationId, t.day),
+  }),
 );
 
 export const auditLogs = pgTable(

@@ -8,13 +8,22 @@ import {
   providers,
   sourceDocuments,
 } from "@railor/database";
+import { getAuditLog, getPlatformUsageSummary } from "@railor/core";
 import { Card, Freshness, SectionLabel } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { ReviewQueue } from "../../components/admin/review-queue";
 import { RailorMark } from "../../components/marketing/nav";
+import { UsageMaintenance } from "../../components/admin/usage-maintenance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operations console" };
+
+function relativeTime(date: Date): string {
+  const mins = Math.max(1, Math.round((Date.now() - date.getTime()) / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
+  return `${Math.round(mins / 1440)}d ago`;
+}
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -38,7 +47,7 @@ export default async function AdminPage() {
   }
 
   const db = await getDb();
-  const [pending, crawlers, recentEvidence] = await Promise.all([
+  const [pending, crawlers, recentEvidence, platformUsage, auditLog] = await Promise.all([
     db
       .select({
         change: changeEvents,
@@ -59,6 +68,8 @@ export default async function AdminPage() {
       .orderBy(desc(sourceDocuments.lastCheckedAt))
       .limit(20),
     db.select().from(evidenceTable).orderBy(desc(evidenceTable.createdAt)).limit(8),
+    getPlatformUsageSummary(30),
+    getAuditLog(20),
   ]);
 
   const failing = crawlers.filter((c) => c.source.failureCount > 0);
@@ -148,6 +159,68 @@ export default async function AdminPage() {
                 ) : null}
               </li>
             ))}
+          </ul>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <Card className="flex flex-col gap-3 p-5">
+          <div className="flex items-center justify-between">
+            <SectionLabel>API usage — last 30 days, all orgs</SectionLabel>
+            <UsageMaintenance />
+          </div>
+          {platformUsage.length ? (
+            <table className="w-full text-left text-[13px]">
+              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <tr>
+                  <th className="pb-2">Organization</th>
+                  <th className="pb-2">Requests</th>
+                  <th className="pb-2">Errors</th>
+                  <th className="pb-2">Last request</th>
+                </tr>
+              </thead>
+              <tbody>
+                {platformUsage.map((row) => (
+                  <tr key={row.organizationId} className="border-t border-[var(--color-line)]">
+                    <td className="py-2">{row.organizationName}</td>
+                    <td className="tabular py-2">{row.count}</td>
+                    <td className="tabular py-2">{row.errors}</td>
+                    <td className="tabular py-2 text-[var(--color-muted)]">
+                      {relativeTime(row.lastRequestAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-[13px] text-[var(--color-muted)]">
+              No API calls recorded across any workspace in the last 30 days.
+            </p>
+          )}
+        </Card>
+
+        <Card className="flex flex-col gap-3 p-5">
+          <SectionLabel>Audit log</SectionLabel>
+          <ul className="flex flex-col gap-2">
+            {auditLog.map((entry) => (
+              <li key={entry.id} className="flex flex-col border-b border-[var(--color-line)] pb-2 last:border-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium">{entry.action}</span>
+                  <span className="flex-1" />
+                  <span className="text-[11px] text-[var(--color-faint)]">
+                    {relativeTime(entry.createdAt)}
+                  </span>
+                </div>
+                <span className="text-[11px] text-[var(--color-muted)]">
+                  {entry.actorEmail ?? "unknown actor"}
+                  {entry.organizationName ? ` · ${entry.organizationName}` : ""}
+                  {entry.target ? ` · ${entry.target}` : ""}
+                </span>
+              </li>
+            ))}
+            {!auditLog.length ? (
+              <li className="text-[13px] text-[var(--color-muted)]">No admin actions recorded yet.</li>
+            ) : null}
           </ul>
         </Card>
       </div>
