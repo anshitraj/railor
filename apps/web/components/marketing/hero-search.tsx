@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { Search } from "lucide-react";
 import {
   Button,
   Chip,
@@ -13,6 +14,8 @@ import {
   type PickerOption,
   type Verdict,
 } from "@railor/ui";
+import { CurrencyLogo, type CurrencySymbol } from "./currency-logo";
+import { CountryFlag, type CountryCode } from "./country-flag";
 
 interface SearchResponse {
   interpretation: {
@@ -57,11 +60,17 @@ const PLACEHOLDERS = [
   "Compare business ramps in the GCC",
 ];
 
-const EXAMPLES = [
-  "Indian company sending USDC to a UAE supplier who receives AED",
-  "USDC off-ramp to NGN for a Nigerian business",
-  "Virtual cards for a UAE company",
-  "EUR payouts from a Singapore entity",
+const EXAMPLES: Array<{
+  query: string;
+  source: CountryCode;
+  destination: CountryCode;
+  asset: CurrencySymbol;
+  label: string;
+}> = [
+  { query: "Indian company sending USDC to a UAE supplier who receives AED", source: "IN", destination: "AE", asset: "USDC", label: "India to UAE" },
+  { query: "USDT off-ramp to NGN for a Nigerian business", source: "WORLD", destination: "NG", asset: "USDT", label: "to Nigeria" },
+  { query: "Virtual cards for a UAE company funded with USDC", source: "AE", destination: "AE", asset: "USDC", label: "UAE cards" },
+  { query: "EUR payouts from a Singapore entity using EURC", source: "SG", destination: "EU", asset: "EURC", label: "to Europe" },
 ];
 
 const PIPELINE = [
@@ -86,6 +95,7 @@ export function HeroSearch({
   const [data, setData] = useState<SearchResponse | null>(null);
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const runIdRef = useRef(0);
 
   useEffect(() => {
     if (input || data) return;
@@ -99,12 +109,18 @@ export function HeroSearch({
    */
   const run = async (text: string, overrides?: Record<string, string>) => {
     if (!text.trim() && !overrides) return;
+    // A run id, not just a boolean: if the user fires a second search before
+    // the first settles (editing a chip while a request is in flight), the
+    // stale run's own timer and eventual response must not touch state
+    // anymore — only the most recent run is allowed to.
+    const runId = ++runIdRef.current;
     setPending(true);
     setStage(0);
-    const ticker = window.setInterval(
-      () => setStage((s) => (s < PIPELINE.length - 1 ? s + 1 : s)),
-      160,
-    );
+    setData(null);
+    const ticker = window.setInterval(() => {
+      if (runIdRef.current !== runId) return;
+      setStage((s) => (s < PIPELINE.length - 1 ? s + 1 : s));
+    }, 160);
     try {
       const response = await fetch("/api/search", {
         method: "POST",
@@ -112,11 +128,15 @@ export function HeroSearch({
         body: JSON.stringify({ input: text, query: overrides }),
       });
       const json: SearchResponse = await response.json();
+      if (runIdRef.current !== runId) return;
       setData(json);
+      setStage(-1);
     } finally {
       window.clearInterval(ticker);
-      setStage(-1);
-      setPending(false);
+      if (runIdRef.current === runId) {
+        setStage(-1);
+        setPending(false);
+      }
     }
   };
 
@@ -139,16 +159,14 @@ export function HeroSearch({
         }}
         className="relative"
       >
-        <div className="flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-white p-2 pl-5 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-violet)] focus-within:shadow-[var(--shadow-lift)]">
-          <span className="text-[var(--color-faint)]" aria-hidden>
-            ⌕
-          </span>
+        <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--color-line-strong)] bg-white p-2 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[var(--shadow-lift)] sm:flex-row sm:items-center sm:rounded-full sm:pl-5">
+          <Search size={18} className="ml-2 hidden shrink-0 text-[var(--color-faint)] sm:block" aria-hidden />
           <div className="relative flex-1">
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="w-full bg-transparent py-2.5 text-[15px] outline-none"
+              className="w-full bg-transparent px-2 py-2.5 text-[14px] outline-none sm:px-0 sm:text-[15px]"
               aria-label="Describe the infrastructure you need"
             />
             {!input ? (
@@ -166,7 +184,7 @@ export function HeroSearch({
               </AnimatePresence>
             ) : null}
           </div>
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} className="w-full shrink-0 sm:w-auto">
             {pending ? "Checking…" : "Search rails"}
           </Button>
         </div>
@@ -177,50 +195,57 @@ export function HeroSearch({
           <span className="text-[12px] text-[var(--color-faint)]">Try</span>
           {EXAMPLES.map((example) => (
             <Chip
-              key={example}
+              key={example.query}
               onClick={() => {
-                setInput(example);
-                void run(example);
+                setInput(example.query);
+                void run(example.query);
               }}
-              className="text-[13px]"
+              className="inline-flex items-center gap-1.5 text-[12px]"
             >
-              {example}
+              <CountryFlag code={example.source} size={14} />
+              <CurrencyLogo symbol={example.asset} size={16} />
+              <span>{example.label}</span>
+              <CountryFlag code={example.destination} size={14} />
             </Chip>
           ))}
         </div>
       ) : null}
 
-      <AnimatePresence>
-        {stage >= 0 ? (
-          <motion.ul
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col gap-1.5 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4"
-          >
-            {PIPELINE.map((label, i) => (
-              <li
-                key={label}
-                className={`flex items-center gap-2 text-[13px] ${
-                  i <= stage ? "text-[var(--color-ink)]" : "text-[var(--color-faint)]"
+      {/* Plain conditional, not AnimatePresence: this list only ever needs
+          to fade in, never out — it disappears the instant real results (or
+          an error) exist. Animating its *exit* pulled in AnimatePresence's
+          unmount-on-exit-complete lifecycle, which left a zero-opacity,
+          zero-content but still-laid-out node behind indefinitely. A plain
+          conditional unmounts on the next render, unconditionally, the way
+          React normally does — no animation library callback required. */}
+      {stage >= 0 && !data ? (
+        <motion.ul
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col gap-1.5 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4"
+        >
+          {PIPELINE.map((label, i) => (
+            <li
+              key={label}
+              className={`flex items-center gap-2 text-[13px] ${
+                i <= stage ? "text-[var(--color-ink)]" : "text-[var(--color-faint)]"
+              }`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  i < stage
+                    ? "bg-[var(--color-ok)]"
+                    : i === stage
+                      ? "animate-pulse bg-[var(--color-purple)]"
+                      : "bg-[var(--color-line-strong)]"
                 }`}
-              >
-                <span
-                  className={`size-1.5 rounded-full ${
-                    i < stage
-                      ? "bg-[var(--color-ok)]"
-                      : i === stage
-                        ? "animate-pulse bg-[var(--color-purple)]"
-                        : "bg-[var(--color-line-strong)]"
-                  }`}
-                />
-                {label}
-                {i < stage ? <span className="text-[var(--color-ok)]">✓</span> : null}
-              </li>
-            ))}
-          </motion.ul>
-        ) : null}
-      </AnimatePresence>
+              />
+              {label}
+              {i < stage ? <span className="text-[var(--color-ok)]">✓</span> : null}
+            </li>
+          ))}
+        </motion.ul>
+      ) : null}
 
       {data ? (
         <motion.div
@@ -258,7 +283,7 @@ export function HeroSearch({
           </div>
 
           <div className="flex flex-col gap-2">
-            {data.results.map((result, i) => (
+            {data.results.map((result) => (
               <ResultRow
                 key={result.provider.slug}
                 name={result.provider.name}
@@ -266,7 +291,8 @@ export function HeroSearch({
                 verdict={result.eligibility}
                 confidence={result.confidence}
                 lastVerifiedAt={result.lastVerifiedAt}
-                blurred={!data.authenticated && i >= 2}
+                blurred={!data.authenticated}
+                onUnlock={continueToFull}
                 facts={Object.entries(result.facts)
                   .filter(([, v]) => Boolean(v))
                   .slice(0, 3)

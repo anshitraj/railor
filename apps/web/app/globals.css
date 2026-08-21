@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "@railor/ui/styles.css";
 
@@ -17,7 +18,7 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--color-purple) 22%, transparent);
+    background: color-mix(in srgb, var(--color-orange) 30%, transparent);
   }
 
   /* Focus is never removed — only restyled. */
@@ -32,6 +33,10 @@
   h3 {
     letter-spacing: -0.02em;
   }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
 }
 
 @layer utilities {
@@ -41,14 +46,36 @@
 
   .rail-grid {
     background-image:
-      linear-gradient(to right, rgb(30 30 50 / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(30 30 50 / 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgb(28 27 25 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(28 27 25 / 0.045) 1px, transparent 1px);
     background-size: 56px 56px;
   }
 
   .glass {
     background: color-mix(in srgb, var(--color-surface) 78%, transparent);
     backdrop-filter: blur(16px) saturate(140%);
+  }
+
+  .railor-rule {
+    background-image: linear-gradient(to right, rgb(28 27 25 / 0.075) 1px, transparent 1px);
+    background-size: min(24vw, 320px) 100%;
+    mask-image: linear-gradient(to bottom, black, transparent 75%);
+  }
+
+  .rail-map-grid {
+    background-image:
+      linear-gradient(to right, rgb(28 27 25 / 0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(28 27 25 / 0.055) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+  }
+
+  .section-kicker {
+    color: var(--color-orange-deep);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
   }
 }
 

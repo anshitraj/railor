@@ -75,13 +75,13 @@ export function MarketingNav() {
 
   return (
     <header
-      className="sticky top-4 z-50 mx-auto w-[min(1180px,calc(100%-2rem))]"
+      className="sticky top-0 z-50 mx-auto w-full border-b border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-paper)_88%,transparent)] backdrop-blur-xl"
       onMouseLeave={() => setOpen(null)}
     >
-      <nav className="glass flex items-center gap-1 rounded-full border border-[var(--color-line)] px-3 py-2 shadow-[var(--shadow-soft)]">
-        <Link href="/" className="flex items-center gap-2 px-3 py-1">
-          <RailorMark />
-          <span className="text-[15px] font-semibold tracking-tight">Railor</span>
+      <nav className="mx-auto flex w-[min(1360px,calc(100%-2rem))] items-center gap-1 py-3">
+        <Link href="/" className="flex items-center gap-2.5 pr-5 py-1">
+          <RailorMark size={30} />
+          <span className="font-display text-[21px] font-bold tracking-[-0.055em]">Railor</span>
         </Link>
 
         <div className="hidden items-center gap-0.5 md:flex">
@@ -94,10 +94,10 @@ export function MarketingNav() {
               onClick={() => setOpen(open === key ? null : key)}
               aria-expanded={open === key}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-[14px] transition",
+                "rounded-full px-3 py-1.5 text-[13px] font-semibold transition",
                 open === key
-                  ? "bg-[var(--color-lavender)] text-[var(--color-purple-deep)]"
-                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)]",
+                  ? "bg-[var(--color-ink)] text-white"
+                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]",
               )}
             >
               {key}
@@ -109,19 +109,19 @@ export function MarketingNav() {
 
         <Link
           href="/#search"
-          className="hidden rounded-full px-3.5 py-1.5 text-[14px] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] sm:block"
+          className="hidden rounded-full px-3 py-1.5 text-[13px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] sm:block"
         >
           Search rails
         </Link>
         <Link
           href="/login"
-          className="rounded-full px-3.5 py-1.5 text-[14px] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)]"
+          className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]"
         >
           Sign in
         </Link>
         <Link
           href="/login?intent=start"
-          className="rounded-full bg-[var(--color-purple)] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[var(--color-purple-deep)]"
+          className="rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[var(--color-orange-deep)]"
         >
           Get started
         </Link>
@@ -134,10 +134,10 @@ export function MarketingNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-full w-[min(980px,100%)] -translate-x-1/2 pt-3"
+            className="absolute left-1/2 top-full w-[min(980px,calc(100%-2rem))] -translate-x-1/2 pt-3"
             onMouseEnter={() => setOpen(open)}
           >
-            <div className="grid gap-6 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-panel)] lg:grid-cols-[1.5fr_1fr]">
+            <div className="grid gap-6 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-[var(--color-paper)] p-6 shadow-[var(--shadow-panel)] lg:grid-cols-[1.5fr_1fr]">
               <ul className="grid gap-1 sm:grid-cols-2">
                 {MENUS[open]!.items.map((item) => (
                   <li key={item.label}>
@@ -161,17 +161,17 @@ export function MarketingNav() {
               <Link
                 href={MENUS[open]!.panel.href}
                 onClick={() => setOpen(null)}
-                className="flex flex-col justify-between gap-4 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-5 transition hover:brightness-[0.98]"
+                className="flex flex-col justify-between gap-4 rounded-[var(--radius-card)] bg-[var(--color-ink)] p-5 text-white transition hover:bg-[var(--color-orange-deep)]"
               >
                 <div className="flex flex-col gap-2">
-                  <p className="text-[15px] font-semibold text-[var(--color-purple-deep)]">
+                  <p className="text-[15px] font-semibold text-white">
                     {MENUS[open]!.panel.title}
                   </p>
-                  <p className="text-[13px] leading-relaxed text-[var(--color-ink-soft)]">
+                  <p className="text-[13px] leading-relaxed text-white/65">
                     {MENUS[open]!.panel.body}
                   </p>
                 </div>
-                <span className="text-[13px] font-medium text-[var(--color-purple)]">Open →</span>
+                <span className="text-[13px] font-medium text-[var(--color-orange)]">Open →</span>
               </Link>
             </div>
           </motion.div>
@@ -183,11 +183,11 @@ export function MarketingNav() {
 
 export function RailorMark({ size = 22 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect width="24" height="24" rx="7" fill="var(--color-purple)" />
-      <path d="M6 8.5h12M6 15.5h12" stroke="white" strokeWidth="1.6" strokeLinecap="round" opacity="0.55" />
-      <path d="M9.5 5.5v13M14.5 5.5v13" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="2.6" fill="var(--color-lime)" />
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
+      <path d="M5 6h19.2C35 6 42 12.8 42 22.2c0 6.05-3.35 10.6-8.8 13.05L43 43H27.6l-11-9.7H15v9.7H5V6Zm10 9.3v9.05h9.15c4.7 0 7.6-1.52 7.6-4.62 0-2.95-2.75-4.4-7.6-4.4H15Z" fill="var(--color-orange)" />
+      <rect x="16.4" y="16.1" width="13.1" height="7" rx="3.5" fill="var(--color-paper)" />
+      <circle cx="20.2" cy="19.6" r="1.55" fill="var(--color-ink)" />
+      <circle cx="25.7" cy="19.6" r="1.55" fill="var(--color-ink)" />
     </svg>
   );
 }

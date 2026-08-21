@@ -52,6 +52,7 @@ export async function getReferenceOptions(): Promise<ReferenceOptions> {
     currencies: currencies.map((c) => ({
       value: c.code,
       label: `${c.code} — ${c.name}`,
+      emoji: c.symbol ?? undefined,
       popularity: c.popularity,
     })),
     assets: assets.map((a) => ({

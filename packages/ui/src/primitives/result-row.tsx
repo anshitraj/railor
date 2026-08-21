@@ -25,6 +25,7 @@ export function ResultRow({
   children,
   defaultOpen = false,
   blurred = false,
+  onUnlock,
 }: {
   name: string;
   category: string;
@@ -35,8 +36,10 @@ export function ResultRow({
   actions?: React.ReactNode;
   children?: React.ReactNode;
   defaultOpen?: boolean;
-  /** Public preview: structure visible, detail withheld until sign-in. */
+  /** Public preview: name/verdict stay real, deeper detail is locked. */
   blurred?: boolean;
+  /** Where the lock affordance sends an anonymous visitor. */
+  onUnlock?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -70,16 +73,46 @@ export function ResultRow({
 
         <VerdictPill verdict={verdict} />
 
-        <div className={cn("flex flex-1 flex-wrap gap-x-6 gap-y-1", blurred && "select-none blur-[5px]")}>
-          {facts.map((f) => (
-            <span key={f.label} className="flex min-w-[110px] flex-col">
-              <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">
-                {f.label}
-              </span>
-              <span className="tabular text-[13px] text-[var(--color-ink-soft)]">{f.value}</span>
+        {blurred ? (
+          <button
+            type="button"
+            onClick={onUnlock}
+            className="group relative flex min-w-[230px] flex-1 items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 text-left"
+          >
+            <div aria-hidden className="flex flex-1 flex-wrap gap-x-6 gap-y-1 blur-[6px] select-none">
+              {facts.length ? (
+                facts.map((f) => (
+                  <span key={f.label} className="flex min-w-[110px] flex-col">
+                    <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">
+                      {f.label}
+                    </span>
+                    <span className="tabular text-[13px] text-[var(--color-ink-soft)]">{f.value}</span>
+                  </span>
+                ))
+              ) : (
+                <span className="flex min-w-[110px] flex-col">
+                  <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">Fees</span>
+                  <span className="tabular text-[13px] text-[var(--color-ink-soft)]">0.00% · 000</span>
+                </span>
+              )}
+            </div>
+            <span className="absolute inset-0 flex items-center gap-1.5 whitespace-nowrap bg-white/55 pl-2 text-[12px] font-medium text-[var(--color-purple)] backdrop-blur-[1px] transition group-hover:bg-white/70">
+              <span aria-hidden>🔒</span>
+              Sign in to see fees, limits &amp; evidence
             </span>
-          ))}
-        </div>
+          </button>
+        ) : (
+          <div className="flex flex-1 flex-wrap gap-x-6 gap-y-1">
+            {facts.map((f) => (
+              <span key={f.label} className="flex min-w-[110px] flex-col">
+                <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">
+                  {f.label}
+                </span>
+                <span className="tabular text-[13px] text-[var(--color-ink-soft)]">{f.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <ConfidenceDot confidence={confidence} showValue />
@@ -94,7 +127,15 @@ export function ResultRow({
             >
               {open ? "Hide why" : "Why?"}
             </button>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={onUnlock}
+              className="flex items-center gap-1 rounded-full border border-dashed border-[var(--color-line-strong)] px-2 py-1 text-[12px] text-[var(--color-muted)] hover:border-[var(--color-purple)] hover:text-[var(--color-purple)]"
+            >
+              <span aria-hidden>🔒</span> Why?
+            </button>
+          )}
         </div>
       </div>
 

@@ -45,15 +45,19 @@ export async function POST(request: Request) {
   const result = await searchCorridors(query, { preset, satisfiedRequirements });
   const authenticated = Boolean(session);
 
+  // Anonymous visitors see two previews, matching what the marketing copy
+  // promises ("Show 2 provider previews"). The name, category and verdict
+  // are real and unblurred — that's the hook. Everything that would let
+  // someone actually act (fees, limits, evidence, the full reasoning) is
+  // withheld server-side, not just hidden by CSS: the response never
+  // contains it, so it can't leak through devtools either.
   const results = authenticated
     ? result.results
-    : result.results.slice(0, 3).map((r, i) => ({
+    : result.results.slice(0, 2).map((r) => ({
         ...r,
-        // Preview: the verdict and one supporting fact stay visible; the
-        // commercial detail is withheld until sign-in, never fabricated.
-        facts: i < 2 ? { productLabel: r.facts.productLabel, kybSummary: r.facts.kybSummary } : {},
-        evidence: i < 2 ? r.evidence.slice(0, 1) : [],
-        reasons: r.reasons.slice(0, 1),
+        facts: { productLabel: r.facts.productLabel },
+        evidence: [],
+        reasons: [],
       }));
 
   return NextResponse.json({

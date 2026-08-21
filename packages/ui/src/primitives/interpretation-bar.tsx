@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../cn.js";
 import { Chip, ConfidenceDot } from "./badges.js";
 import { SmartPicker, type PickerOption } from "./smart-picker.js";
@@ -39,19 +40,40 @@ export function InterpretationBar({
   dense?: boolean;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
+  const close = () => setEditing(null);
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("relative flex flex-wrap items-center gap-2", className)}>
+      {/* A dimmed backdrop, not just an absolutely-positioned box: without it
+          the picker panel floats over whatever happens to sit below it in the
+          page (results, other rows) and that content bleeds in around the
+          panel's edges. The backdrop gives the open picker a surface of its
+          own and doubles as click-outside-to-close. */}
+      <AnimatePresence>
+        {editing ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-40 bg-[rgb(23_23_27/0.24)] backdrop-blur-[2px]"
+            onClick={close}
+            aria-hidden
+          />
+        ) : null}
+      </AnimatePresence>
+
       {tokens.map((token) => {
         const editable = Boolean(onChange && optionsByField[token.field]?.length);
         const inferred = !token.matchedText;
+        const isEditing = editing === token.field;
         return (
           <div key={`${token.field}:${token.value}`} className="relative">
             <Chip
               active
-              onClick={editable ? () => setEditing(editing === token.field ? null : token.field) : undefined}
+              onClick={editable ? () => setEditing(isEditing ? null : token.field) : undefined}
               onRemove={onRemove ? () => onRemove(token.field) : undefined}
-              className={cn(dense && "py-1 text-[13px]")}
+              className={cn(dense && "py-1 text-[13px]", isEditing && "relative z-50")}
               title={
                 inferred
                   ? "Railor inferred this — click to change"
@@ -67,15 +89,18 @@ export function InterpretationBar({
               ) : null}
             </Chip>
 
-            {editing === token.field ? (
-              <div className="absolute left-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-[var(--color-line)] bg-white p-3 shadow-[var(--shadow-lift)]">
+            {isEditing ? (
+              <div
+                className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-2xl border border-[var(--color-line)] bg-white p-3 shadow-[var(--shadow-panel)]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <SmartPicker
                   label={fieldLabels[token.field] ?? token.field}
                   options={optionsByField[token.field] ?? []}
                   value={[String(token.value)]}
                   onChange={(next) => {
                     if (next[0]) onChange?.(token.field, next[0]);
-                    setEditing(null);
+                    close();
                   }}
                 />
               </div>
@@ -84,29 +109,39 @@ export function InterpretationBar({
         );
       })}
 
-      {missing.map((field) => (
-        <div key={`missing:${field}`} className="relative">
-          <Chip
-            onClick={() => setEditing(editing === field ? null : field)}
-            className={cn("border-dashed text-[var(--color-muted)]", dense && "py-1 text-[13px]")}
-          >
-            + {fieldLabels[field] ?? field}
-          </Chip>
-          {editing === field ? (
-            <div className="absolute left-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-[var(--color-line)] bg-white p-3 shadow-[var(--shadow-lift)]">
-              <SmartPicker
-                label={fieldLabels[field] ?? field}
-                options={optionsByField[field] ?? []}
-                value={[]}
-                onChange={(next) => {
-                  if (next[0]) onChange?.(field, next[0]);
-                  setEditing(null);
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
-      ))}
+      {missing.map((field) => {
+        const isEditing = editing === field;
+        return (
+          <div key={`missing:${field}`} className="relative">
+            <Chip
+              onClick={() => setEditing(isEditing ? null : field)}
+              className={cn(
+                "border-dashed text-[var(--color-muted)]",
+                dense && "py-1 text-[13px]",
+                isEditing && "relative z-50",
+              )}
+            >
+              + {fieldLabels[field] ?? field}
+            </Chip>
+            {isEditing ? (
+              <div
+                className="absolute left-0 top-full z-50 mt-2 w-[320px] rounded-2xl border border-[var(--color-line)] bg-white p-3 shadow-[var(--shadow-panel)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SmartPicker
+                  label={fieldLabels[field] ?? field}
+                  options={optionsByField[field] ?? []}
+                  value={[]}
+                  onChange={(next) => {
+                    if (next[0]) onChange?.(field, next[0]);
+                    close();
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
