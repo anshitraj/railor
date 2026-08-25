@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { loadProviderSummaries } from "@railor/core";
 import { getSession } from "../../lib/auth";
+import { DEMO_EMAIL } from "../../lib/demo";
 import { getSavedCorridors } from "../../lib/org";
 import { AppShell } from "../../components/app/shell";
 
@@ -41,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       orgName={session.organization.name}
       userEmail={session.user.email}
+      isDemo={session.user.email === DEMO_EMAIL}
       palette={palette}
     >
       {children}

@@ -11,6 +11,7 @@ import {
   providers,
   requirements,
   savedCorridors,
+  users,
   watchlists,
 } from "@railor/database";
 import { corridorLabel, DEFAULT_LIVE_MONTHLY_CAP, DEFAULT_TEST_MONTHLY_CAP } from "@railor/core";
@@ -118,6 +119,58 @@ export async function saveOnboarding(
     .where(eq(organizations.id, organizationId));
 }
 
+/** A user's most recent organization, or null — same lookup `getSession` does, usable without a cookie. */
+export async function getPrimaryOrgForUser(userId: string) {
+  const db = await getDb();
+  const [row] = await db
+    .select({ org: organizations })
+    .from(organizationMembers)
+    .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+    .where(eq(organizationMembers.userId, userId))
+    .orderBy(desc(organizations.createdAt))
+    .limit(1);
+  return row?.org ?? null;
+}
+
+/**
+ * Wipes an organization's corridors, monitors, alerts and KYB profile.
+ *
+ * Used only by the demo workspace: it's one fixed, public-facing account, so
+ * every "View demo" click resets it to a clean slate first. A visitor can't
+ * leave it broken for the next one, and nothing here runs for real users.
+ */
+export async function resetOrgWorkspace(organizationId: string) {
+  const db = await getDb();
+  await db.delete(alerts).where(eq(alerts.organizationId, organizationId));
+  await db.delete(watchlists).where(eq(watchlists.organizationId, organizationId));
+  await db.delete(savedCorridors).where(eq(savedCorridors.organizationId, organizationId));
+  await db.delete(orgKybItems).where(eq(orgKybItems.organizationId, organizationId));
+}
+
+export async function renameOrganization(organizationId: string, name: string) {
+  const db = await getDb();
+  await db
+    .update(organizations)
+    .set({ name, updatedAt: new Date() })
+    .where(eq(organizations.id, organizationId));
+}
+
+export async function getOrgMembers(organizationId: string) {
+  const db = await getDb();
+  return db
+    .select({
+      userId: users.id,
+      name: users.name,
+      email: users.email,
+      role: organizationMembers.role,
+      joinedAt: organizationMembers.createdAt,
+    })
+    .from(organizationMembers)
+    .innerJoin(users, eq(organizationMembers.userId, users.id))
+    .where(eq(organizationMembers.organizationId, organizationId))
+    .orderBy(desc(organizationMembers.createdAt));
+}
+
 const INTEREST_TO_PRODUCT: Record<string, CorridorQuery["product"]> = {
   stablecoin_to_fiat: "off_ramp",
   fiat_to_stablecoin: "on_ramp",
@@ -129,6 +182,34 @@ const INTEREST_TO_PRODUCT: Record<string, CorridorQuery["product"]> = {
   treasury: "treasury",
   wallet_infrastructure: "wallet",
 };
+
+/**
+ * Which interests describe a *route* — something with an origin, a destination
+ * and a rail — in the order we'd rather build the first corridor from.
+ *
+ * "KYC / KYB", "Treasury" and "Wallet infrastructure" are real interests, but
+ * they are not corridor-shaped: constraining a country-to-country money
+ * movement by `product: kyc_kyb` matches nothing, which used to hand a brand
+ * new user a dashboard reading "0 compatible / 15 checked" plus a false
+ * coverage warning. They still drive what Railor monitors; they just never
+ * become the route's product filter.
+ */
+const CORRIDOR_PRODUCT_PRIORITY: ReadonlyArray<NonNullable<CorridorQuery["product"]>> = [
+  "off_ramp",
+  "payout",
+  "on_ramp",
+  "collection",
+  "virtual_account",
+  "card_issuing",
+];
+
+/** The best corridor-shaped product among the answers, or undefined for "any". */
+function corridorProduct(interests: string[]): CorridorQuery["product"] | undefined {
+  const chosen = new Set(
+    interests.map((i) => INTEREST_TO_PRODUCT[i]).filter(Boolean),
+  );
+  return CORRIDOR_PRODUCT_PRIORITY.find((p) => chosen.has(p));
+}
 
 /**
  * Turns onboarding answers into a working workspace: corridors, a monitor and
@@ -145,9 +226,7 @@ export async function materializeWorkspace(
   const entityCountry = answers.entityCountry ?? "US";
   const targets = answers.targetCountries.length ? answers.targetCountries : ["AE"];
   const currencies = answers.settlementCurrencies;
-  const products = answers.interests
-    .map((i) => INTEREST_TO_PRODUCT[i])
-    .filter((p): p is NonNullable<CorridorQuery["product"]> => Boolean(p));
+  const product = corridorProduct(answers.interests) ?? "payout";
 
   const asset = "USDC";
   const created: string[] = [];
@@ -159,7 +238,7 @@ export async function materializeWorkspace(
       destinationCountry: country,
       destinationCurrency: currencies[index] ?? currencies[0],
       sourceAsset: asset,
-      product: products[0] ?? "payout",
+      product,
     };
     const [row] = await db
       .insert(savedCorridors)

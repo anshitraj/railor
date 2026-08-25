@@ -5,6 +5,7 @@ import { CorridorQuery } from "@railor/types";
 import { Card, EmptyState, Freshness, SectionLabel, Stat, VerdictPill } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { getKybProfile, getOrgAlerts, getSavedCorridors, getSatisfiedRequirements } from "../../lib/org";
+import { RoutePill } from "../../components/app/route-pill";
 
 export const dynamic = "force-dynamic";
 
@@ -115,9 +116,7 @@ export default async function OverviewPage() {
                           .filter(Boolean)
                           .map((node, i, arr) => (
                             <span key={`${node}-${i}`} className="flex items-center gap-2">
-                              <span className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12px]">
-                                {node}
-                              </span>
+                              <RoutePill value={String(node)} />
                               {i < arr.length - 1 ? (
                                 <span className="relative h-px w-8 overflow-hidden bg-[var(--color-line-strong)]">
                                   <span className={`absolute inset-y-0 left-0 w-full ${tone} opacity-70`} />
