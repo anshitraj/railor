@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@google/genai": "^1.9.0",
     "@railor/database": "workspace:*",
     "@railor/types": "workspace:*",
     "drizzle-orm": "^0.44.0",

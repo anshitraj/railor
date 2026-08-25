@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { interpretRules, searchCorridors } from "@railor/core";
+import { fillMissingFields, interpretRules, searchCorridors } from "@railor/core";
 import { CorridorQuery, RankingPreset } from "@railor/types";
 import { ensureMigrated } from "@railor/database";
 import { getSession } from "../../../lib/auth";
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const { input, query: overrides, preset } = parsed.data;
 
   const interpretation = input
-    ? interpretRules(input)
+    ? await fillMissingFields(input, interpretRules(input))
     : { input: "", query: { customerType: "business" as const }, tokens: [], missing: [], interpreter: "rules" as const };
 
   const query = CorridorQuery.parse({ ...interpretation.query, ...(overrides ?? {}) });

@@ -1,4 +1,5 @@
 export * from "./interpret.js";
+export * from "./llm.js";
 export * from "./eligibility.js";
 export * from "./repository.js";
 export * from "./search.js";
