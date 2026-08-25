@@ -1,9 +1,10 @@
 """Worker entry point.
 
-    python -m railor_worker.cli crawl            # process every due source
+    python -m railor_worker.cli seed-sources      # register real providers + their sources (once)
+    python -m railor_worker.cli crawl             # process every due source
     python -m railor_worker.cli crawl --limit 5
-    python -m railor_worker.cli status           # registry health
-    python -m railor_worker.cli extract <file>   # dry-run extraction on saved HTML
+    python -m railor_worker.cli status            # registry health
+    python -m railor_worker.cli extract <file>    # dry-run extraction on saved HTML
 """
 
 from __future__ import annotations
@@ -14,8 +15,10 @@ import sys
 from pathlib import Path
 
 from . import db
+from .conformance import run_all as run_conformance
 from .extract import RuleExtractor, to_text
 from .pipeline import run_due
+from .seed_sources import bootstrap
 
 
 def _crawl(args: argparse.Namespace) -> int:
@@ -53,6 +56,22 @@ def _status(_: argparse.Namespace) -> int:
     return 0
 
 
+def _seed_sources(_: argparse.Namespace) -> int:
+    for line in bootstrap():
+        print(line)
+    return 0
+
+
+def _conformance(_: argparse.Namespace) -> int:
+    lines = run_conformance()
+    if not lines:
+        print("no real providers registered yet — run seed-sources first")
+        return 0
+    for line in lines:
+        print(line)
+    return 0
+
+
 def _extract(args: argparse.Namespace) -> int:
     html = Path(args.path).read_text(encoding="utf-8")
     claims = RuleExtractor().extract(to_text(html))
@@ -74,6 +93,16 @@ def main() -> int:
 
     status = sub.add_parser("status", help="show source registry health")
     status.set_defaults(func=_status)
+
+    seed_sources = sub.add_parser(
+        "seed-sources", help="register the real (non-demo) providers this worker crawls"
+    )
+    seed_sources.set_defaults(func=_seed_sources)
+
+    conformance = sub.add_parser(
+        "conformance", help="run the conformance test catalog against real providers"
+    )
+    conformance.set_defaults(func=_conformance)
 
     extract = sub.add_parser("extract", help="dry-run extraction against a saved HTML file")
     extract.add_argument("path")

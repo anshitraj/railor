@@ -78,8 +78,8 @@ def touch_source(
                    content_hash = coalesce(%s, content_hash),
                    etag = coalesce(%s, etag),
                    last_modified = coalesce(%s, last_modified),
-                   failure_count = case when %s is null then 0 else failure_count + 1 end,
-                   last_error = %s
+                   failure_count = case when %s::text is null then 0 else failure_count + 1 end,
+                   last_error = %s::text
              where id = %s
             """,
             (interval_hours, content_hash, etag, last_modified, error, error, source_id),
