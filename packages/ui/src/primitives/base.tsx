@@ -16,14 +16,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full font-medium transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50",
+        // duration/ease are explicit so every button shares one motion feel
+        // with the rest of the system rather than Tailwind's default 150ms.
+        "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 ease-[var(--ease-out-quint)] active:translate-y-px active:duration-75 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none",
         size === "sm" && "px-3.5 py-1.5 text-[13px]",
         size === "md" && "px-4.5 py-2.5 text-sm",
         size === "lg" && "px-6 py-3.5 text-[15px]",
+        // The glow is derived from the live accent token — it used to be a
+        // hard-coded purple left over from the pre-rebrand palette, which
+        // rendered a blue-violet halo under an orange button.
         variant === "primary" &&
-          "bg-[var(--color-purple)] text-white shadow-[0_8px_24px_-12px_rgb(91_46_255/0.8)] hover:bg-[var(--color-purple-deep)]",
+          "bg-[var(--color-orange)] text-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--color-orange)_85%,transparent)] hover:-translate-y-px hover:bg-[var(--color-orange-deep)] hover:shadow-[0_14px_30px_-12px_color-mix(in_srgb,var(--color-orange)_75%,transparent)]",
         variant === "secondary" &&
-          "border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]",
+          "border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:-translate-y-px hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]",
         variant === "ghost" && "text-[var(--color-ink-soft)] hover:bg-[var(--color-lavender)]",
         variant === "danger" && "bg-[var(--color-bad)] text-white hover:brightness-95",
         className,

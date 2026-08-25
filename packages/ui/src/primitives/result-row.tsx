@@ -46,8 +46,12 @@ export function ResultRow({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[var(--radius-card)] border bg-white transition",
-        open ? "border-[var(--color-line-strong)] shadow-[var(--shadow-soft)]" : "border-[var(--color-line)]",
+        // group/row (not bare `group`) so the nested lock button's own
+        // `group-hover` styling can't be driven by the row's hover state.
+        "group/row overflow-hidden rounded-[var(--radius-card)] border bg-white transition-all duration-200 ease-[var(--ease-out-quint)]",
+        open
+          ? "border-[var(--color-line-strong)] shadow-[var(--shadow-soft)]"
+          : "border-[var(--color-line)] hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]",
       )}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-4">
@@ -59,7 +63,7 @@ export function ResultRow({
         >
           <span
             className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-lavender)] text-[13px] font-semibold text-[var(--color-purple)]",
+              "grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-lavender)] text-[13px] font-semibold text-[var(--color-purple)] transition-transform duration-200 ease-[var(--ease-out-quint)] group-hover/row:scale-[1.06]",
             )}
             aria-hidden
           >
@@ -123,9 +127,23 @@ export function ResultRow({
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? "Collapse details" : "Expand details"}
-              className="rounded-full border border-[var(--color-line)] px-2 py-1 text-[12px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)]"
+              className={cn(
+                "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] transition-all duration-200 ease-[var(--ease-out-quint)] active:translate-y-px",
+                open
+                  ? "border-[var(--color-orange)] bg-[var(--color-lavender)] text-[var(--color-orange-deep)]"
+                  : "border-[var(--color-line)] text-[var(--color-muted)] group-hover/row:border-[var(--color-orange)] group-hover/row:text-[var(--color-orange-deep)]",
+              )}
             >
               {open ? "Hide why" : "Why?"}
+              <span
+                aria-hidden
+                className={cn(
+                  "text-[9px] transition-transform duration-200 ease-[var(--ease-out-quint)]",
+                  open && "rotate-180",
+                )}
+              >
+                ▾
+              </span>
             </button>
           ) : (
             <button
