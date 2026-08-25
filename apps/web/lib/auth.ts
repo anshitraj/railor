@@ -89,14 +89,23 @@ export async function consumeMagicLink(value: string) {
   if (!link || link.consumedAt) return null;
   await db.update(magicLinks).set({ consumedAt: new Date() }).where(eq(magicLinks.token, value));
 
-  let [user] = await db.select().from(users).where(eq(users.email, link.email)).limit(1);
-  if (!user) {
-    [user] = await db.insert(users).values({ email: link.email }).returning();
-  }
+  const user = await findOrCreateUserByEmail(link.email);
   if (!user) return null;
 
   await startSession(user.id);
   return { user, returnTo: link.returnTo };
+}
+
+/** Shared by magic-link and OAuth sign-in so "who counts as the same user" never diverges between paths. */
+export async function findOrCreateUserByEmail(email: string, name?: string | null) {
+  await ensureMigrated();
+  const db = await getDb();
+  const normalized = email.trim().toLowerCase();
+  let [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  if (!user) {
+    [user] = await db.insert(users).values({ email: normalized, name: name ?? undefined }).returning();
+  }
+  return user ?? null;
 }
 
 export async function startSession(userId: string) {

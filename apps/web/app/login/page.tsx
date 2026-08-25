@@ -17,6 +17,7 @@ export default async function LoginPage({
   if (session) redirect(session.organization?.onboardingCompletedAt ? "/app" : "/welcome");
 
   const query = typeof params.q === "string" ? params.q : undefined;
+  const error = typeof params.error === "string" ? params.error : undefined;
   // The visitor's question survives authentication — it is carried into
   // onboarding and pre-fills their first corridor.
   const returnTo = query ? `/welcome?q=${encodeURIComponent(query)}` : "/welcome";
@@ -50,6 +51,7 @@ export default async function LoginPage({
         <LoginForm
           returnTo={returnTo}
           savedQuery={query}
+          initialError={error}
           oauth={{
             google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
             github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),

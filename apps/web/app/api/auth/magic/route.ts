@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createMagicLink } from "../../../../lib/auth";
+import { sendMail } from "../../../../lib/mail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,10 +30,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ sent: true, devLink: url, transport });
   }
 
-  // SMTP delivery is provided by the mail adapter; until one is configured we
-  // say so instead of pretending the mail was sent.
-  return NextResponse.json(
-    { sent: false, error: "mail_transport_not_configured", transport },
-    { status: 501 },
-  );
+  const result = await sendMail({
+    to: parsed.data.email,
+    subject: "Sign in to Railor",
+    text: `Sign in to Railor: ${url}\n\nThis link expires in 20 minutes.`,
+    html: `<p><a href="${url}">Sign in to Railor</a></p><p>This link expires in 20 minutes.</p>`,
+  });
+
+  if (!result.sent) {
+    return NextResponse.json({ sent: false, error: result.error, transport }, { status: 501 });
+  }
+  return NextResponse.json({ sent: true, transport });
 }
