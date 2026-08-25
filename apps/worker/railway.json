@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install -e '.[crawl]'"
+  },
+  "deploy": {
+    "startCommand": "python -m railor_worker.cli crawl",
+    "cronSchedule": "0 */6 * * *",
+    "restartPolicyType": "NEVER"
+  }
+}

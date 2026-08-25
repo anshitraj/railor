@@ -32,3 +32,8 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, rollup, pruned });
 }
+
+// Vercel Cron only issues GET requests, and injects `Authorization: Bearer
+// $CRON_SECRET` automatically when the target path is listed in vercel.json's
+// `crons` — so GET needs to do exactly what POST does, not a separate route.
+export { POST as GET };
