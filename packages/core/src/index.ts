@@ -1,6 +1,7 @@
 export * from "./interpret.js";
 export * from "./llm.js";
 export * from "./adapters.js";
+export * from "./unified.js";
 export * from "./eligibility.js";
 export * from "./repository.js";
 export * from "./search.js";
