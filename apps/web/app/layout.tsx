@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   description:
     "Discover, compare and monitor the stablecoin, banking, card and compliance infrastructure powering global money movement — backed by verifiable sources.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#f6f1e9",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

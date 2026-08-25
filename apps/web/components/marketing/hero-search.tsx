@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Search } from "lucide-react";
 import {
   Button,
   Chip,
-  InterpretationBar,
   ResultRow,
   VerdictPill,
   WhyPanel,
   type PickerOption,
   type Verdict,
 } from "@railor/ui";
-import { CurrencyLogo, type CurrencySymbol } from "./currency-logo";
-import { CountryFlag, type CountryCode } from "./country-flag";
+import { QueryConfirmation } from "./query-confirmation";
 
 interface SearchResponse {
   interpretation: {
@@ -52,25 +50,12 @@ interface SearchResponse {
   authenticated: boolean;
 }
 
-const PLACEHOLDERS = [
-  "USDC → AED business payouts from India",
-  "Virtual card providers for UAE customers",
-  "Stablecoin off-ramps supporting Nigerian businesses",
-  "Which providers support Base + EUR payouts?",
-  "Compare business ramps in the GCC",
-];
+const PLACEHOLDER = "Indian company → USDC on Base → AED business payout in UAE";
 
-const EXAMPLES: Array<{
-  query: string;
-  source: CountryCode;
-  destination: CountryCode;
-  asset: CurrencySymbol;
-  label: string;
-}> = [
-  { query: "Indian company sending USDC to a UAE supplier who receives AED", source: "IN", destination: "AE", asset: "USDC", label: "India to UAE" },
-  { query: "USDT off-ramp to NGN for a Nigerian business", source: "WORLD", destination: "NG", asset: "USDT", label: "to Nigeria" },
-  { query: "Virtual cards for a UAE company funded with USDC", source: "AE", destination: "AE", asset: "USDC", label: "UAE cards" },
-  { query: "EUR payouts from a Singapore entity using EURC", source: "SG", destination: "EU", asset: "EURC", label: "to Europe" },
+const EXAMPLES: Array<{ query: string; label: string }> = [
+  { query: "USDC payouts to EUR business bank accounts", label: "USDC → EUR payouts" },
+  { query: "Virtual cards for a UAE company funded with USDC", label: "Virtual cards in UAE" },
+  { query: "USDT off-ramp to NGN for a Nigerian business", label: "Business off-ramp in Nigeria" },
 ];
 
 const PIPELINE = [
@@ -90,18 +75,11 @@ export function HeroSearch({
 }) {
   const router = useRouter();
   const [input, setInput] = useState("");
-  const [placeholder, setPlaceholder] = useState(0);
   const [stage, setStage] = useState(-1);
   const [data, setData] = useState<SearchResponse | null>(null);
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const runIdRef = useRef(0);
-
-  useEffect(() => {
-    if (input || data) return;
-    const id = window.setInterval(() => setPlaceholder((p) => (p + 1) % PLACEHOLDERS.length), 3600);
-    return () => window.clearInterval(id);
-  }, [input, data]);
 
   /**
    * The pipeline states are tied to the real request: if the answer lands
@@ -166,33 +144,19 @@ export function HeroSearch({
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="w-full bg-transparent px-2 py-2.5 text-[14px] outline-none sm:px-0 sm:text-[15px]"
-              aria-label="Describe the infrastructure you need"
+              placeholder={PLACEHOLDER}
+              className="w-full bg-transparent px-2 py-2.5 text-[14px] outline-none placeholder:text-[var(--color-faint)] sm:px-0 sm:text-[15px]"
+              aria-label="What are you trying to build or move?"
             />
-            {!input ? (
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={placeholder}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.25 }}
-                  className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[15px] text-[var(--color-faint)]"
-                >
-                  {PLACEHOLDERS[placeholder]}
-                </motion.span>
-              </AnimatePresence>
-            ) : null}
           </div>
           <Button type="submit" disabled={pending} className="w-full shrink-0 sm:w-auto">
-            {pending ? "Checking…" : "Search rails"}
+            {pending ? "Checking…" : "Check compatibility"}
           </Button>
         </div>
       </form>
 
       {!data ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[12px] text-[var(--color-faint)]">Try</span>
           {EXAMPLES.map((example) => (
             <Chip
               key={example.query}
@@ -200,12 +164,9 @@ export function HeroSearch({
                 setInput(example.query);
                 void run(example.query);
               }}
-              className="inline-flex items-center gap-1.5 text-[12px]"
+              className="text-[12px]"
             >
-              <CountryFlag code={example.source} size={14} />
-              <CurrencyLogo symbol={example.asset} size={16} />
-              <span>{example.label}</span>
-              <CountryFlag code={example.destination} size={14} />
+              {example.label}
             </Chip>
           ))}
         </div>
@@ -254,19 +215,12 @@ export function HeroSearch({
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-white p-5 shadow-[var(--shadow-soft)]"
         >
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
-              Railor read your question as
-            </p>
-            <InterpretationBar
-              tokens={data.interpretation.tokens}
-              missing={data.interpretation.missing}
-              optionsByField={optionsByField}
-              fieldLabels={fieldLabels}
-              onChange={editToken}
-              dense
-            />
-          </div>
+          <QueryConfirmation
+            query={data.interpretation.query}
+            optionsByField={optionsByField}
+            fieldLabels={fieldLabels}
+            onChange={editToken}
+          />
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-[var(--color-line)] py-3">
             <Metric value={data.providersChecked} label="providers checked" />

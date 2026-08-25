@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Menu, X } from "lucide-react";
 import { StageBadge, cn, type Stage } from "@railor/ui";
 
 interface MenuItem {
@@ -72,6 +73,7 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
 
 export function MarketingNav() {
   const [open, setOpen] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header
@@ -125,6 +127,15 @@ export function MarketingNav() {
         >
           Get started
         </Link>
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-expanded={mobileOpen}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-sand)] md:hidden"
+        >
+          {mobileOpen ? <X size={19} /> : <Menu size={19} />}
+        </button>
       </nav>
 
       <AnimatePresence>
@@ -134,7 +145,7 @@ export function MarketingNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-full w-[min(980px,calc(100%-2rem))] -translate-x-1/2 pt-3"
+            className="absolute left-1/2 top-full hidden w-[min(980px,calc(100%-2rem))] -translate-x-1/2 pt-3 md:block"
             onMouseEnter={() => setOpen(open)}
           >
             <div className="grid gap-6 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-[var(--color-paper)] p-6 shadow-[var(--shadow-panel)] lg:grid-cols-[1.5fr_1fr]">
@@ -173,6 +184,49 @@ export function MarketingNav() {
                 </div>
                 <span className="text-[13px] font-medium text-[var(--color-orange)]">Open →</span>
               </Link>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mobileOpen ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden border-t border-[var(--color-line)] md:hidden"
+          >
+            <div className="max-h-[75vh] overflow-y-auto px-4 py-3">
+              <Link
+                href="/#search"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-xl px-3 py-2.5 text-[14px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
+              >
+                Search rails
+              </Link>
+              {Object.entries(MENUS).map(([key, menu]) => (
+                <div key={key} className="mt-3 border-t border-[var(--color-line)] pt-3 first:mt-0 first:border-0 first:pt-0">
+                  <p className="mb-1 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-faint)]">
+                    {key}
+                  </p>
+                  <ul className="flex flex-col">
+                    {menu.items.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
+                        >
+                          {item.label}
+                          {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </motion.div>
         ) : null}

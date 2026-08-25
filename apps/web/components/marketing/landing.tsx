@@ -13,7 +13,15 @@ import { AnimatedRouteMap } from "./animated-route-map";
 import { CurrencyLogo, type CurrencySymbol } from "./currency-logo";
 import { CountryFlag, type CountryCode } from "./country-flag";
 import { HeroSearch } from "./hero-search";
-import type { PickerOption } from "@railor/ui";
+import { RailsStrip } from "./rails-strip";
+import {
+  CommandBlock,
+  CountUp,
+  Reveal,
+  Stagger,
+  StaggerItem,
+  type PickerOption,
+} from "@railor/ui";
 
 type LandingProps = {
   counts: { providers: number; countries: number; sources: number; capabilities: number };
@@ -72,11 +80,11 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels }: Landin
                   <span className="h-px w-8 bg-[var(--color-orange)]" /> Financial infrastructure, mapped
                 </p>
                 <h1 className="font-display text-[clamp(3.35rem,6.4vw,7rem)] font-medium leading-[0.9] tracking-[-0.07em] text-[var(--color-ink)]">
-                  Find the rail<br />
-                  that <span className="text-[var(--color-orange)]">actually works.</span>
+                  Know which stablecoin rail<br />
+                  <span className="text-[var(--color-orange)]">actually works.</span>
                 </h1>
                 <p className="mt-5 max-w-[600px] text-[16px] leading-[1.55] text-[var(--color-muted)] sm:text-[18px]">
-                  Ask where money needs to move. Railor checks entity eligibility, stablecoins, networks, payout rails and published requirements.
+                  Check provider compatibility, requirements and infrastructure health before you integrate.
                 </p>
                 <div className="mt-7 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-sand)] p-3 sm:p-4">
                   <HeroSearch optionsByField={optionsByField} fieldLabels={fieldLabels} />
@@ -93,19 +101,39 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels }: Landin
               </motion.div>
             </motion.div>
 
-            <motion.div {...reveal} className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-4">
+            <Stagger className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-4" step={0.07}>
               {[
-                [counts.providers.toLocaleString(), "providers mapped"],
-                [counts.countries.toLocaleString(), "markets indexed"],
-                [counts.sources.toLocaleString(), "sources monitored"],
-                [counts.capabilities.toLocaleString(), "facts structured"],
+                [counts.providers, "providers mapped"],
+                [counts.countries, "markets indexed"],
+                [counts.sources, "sources monitored"],
+                [counts.capabilities, "facts structured"],
               ].map(([value, label]) => (
-                <div key={label} className="bg-[var(--color-paper)] px-5 py-5 sm:px-6">
-                  <p className="font-display text-[32px] font-medium leading-none tracking-[-0.055em] text-[var(--color-ink)]">{value}</p>
-                  <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)]">{label}</p>
-                </div>
+                <StaggerItem key={label as string} className="group bg-[var(--color-paper)] px-5 py-5 transition-colors duration-200 hover:bg-[var(--color-lavender)] sm:px-6">
+                  <p className="font-display text-[32px] font-medium leading-none tracking-[-0.055em] text-[var(--color-ink)]">
+                    <CountUp value={value as number} />
+                  </p>
+                  <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)] transition-colors duration-200 group-hover:text-[var(--color-orange-deep)]">{label}</p>
+                </StaggerItem>
               ))}
-            </motion.div>
+            </Stagger>
+
+            <Reveal className="mt-2">
+              <RailsStrip />
+            </Reveal>
+
+            <Reveal delay={0.05} className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+              <CommandBlock
+                label="Or query it from your terminal"
+                command="npx railor corridors search --entity IN --to AE --asset USDC --currency AED"
+              />
+              <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
+                Every screen here is a thin client over the same public API.{" "}
+                <Link href="/docs/api" className="font-semibold text-[var(--color-orange-deep)] underline decoration-[var(--color-orange)]/40 underline-offset-2 transition hover:decoration-[var(--color-orange)]">
+                  Read the API docs
+                </Link>
+                .
+              </p>
+            </Reveal>
           </div>
         </section>
 
