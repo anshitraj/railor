@@ -7,17 +7,30 @@
  * fake key and confirming a clean 401 (not a 404 or connection error) —
  * that's real evidence the URL and auth-header shape are correct, the most
  * this adapter can prove without a live account. Railor holds no provider
- * credentials of its own; every testConnection call here only ever runs
- * against whatever a user pastes in themselves (see `providerConnections`
- * in schema.ts — "Stage 5 architecture... no credentials in V1" before this).
+ * credentials of its own; every call here only ever runs against whatever a
+ * user pastes in themselves (see `providerConnections` in schema.ts —
+ * "Stage 5 architecture... no credentials in V1" before this).
  *
- * Circle, Bridge, MoonPay: real, request-shape-verified as above.
+ * No adapter executes a transfer. That is not a gap to fill in — see
+ * executeTransfer at the bottom of this file, which refuses unconditionally
+ * regardless of provider or credentials.
+ *
+ * Circle, Bridge, MoonPay: testConnection is real, request-shape-verified
+ * as above.
  * Paxos: real token endpoint (verified the same way), but testConnection
  * only proves the client_credentials exchange works, not that the resulting
  * token can call anything.
  * Coinbase: honest stub — CDP signs every request with a JWT, not
  * implemented, says so instead of faking a result.
+ *
+ * getQuote on Bridge and MoonPay: the endpoint and auth are verified the
+ * same empirical way (a fake key gets a clean 401 from a real, named
+ * error, not a 404). The *response body* parsing below is not verified —
+ * every real call so far has only ever returned an auth-error body, never
+ * a success body, so the field names a successful quote actually returns
+ * are a best-effort reading of public docs, unconfirmed against live data.
  */
+import type { ExecutionRequest, ExecutionResult, QuoteRequest, UnifiedQuote } from "./unified.js";
 
 export interface CredentialField {
   key: string;
@@ -36,13 +49,8 @@ export interface ProviderAdapter {
   credentialFields: CredentialField[];
   /** A cheap authenticated call that proves the credentials are real and live, not just well-formed. */
   testConnection(credentials: Record<string, string>): Promise<ConnectionTestResult>;
-  /**
-   * Not implemented by any adapter yet — no provider's actual quote/rate
-   * endpoint has been verified the way testConnection's endpoints have.
-   * Declared now so UnifiedQuote (see unified.ts) has somewhere real to
-   * land instead of needing the interface redesigned when it does exist.
-   */
-  getQuote?(credentials: Record<string, string>, request: Record<string, unknown>): Promise<unknown>;
+  /** Not implemented by every adapter — absent means this provider has no quote support yet. */
+  getQuote?(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote>;
 }
 
 async function circleTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
@@ -117,6 +125,66 @@ async function moonpayTestConnection(credentials: Record<string, string>): Promi
   }
 }
 
+async function bridgeGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
+  const apiKey = credentials.apiKey?.trim();
+  if (!apiKey) throw new Error("API key is required.");
+  const params = new URLSearchParams({
+    from: request.sourceAsset.toLowerCase(),
+    to: request.destinationCurrency.toLowerCase(),
+  });
+  const response = await fetch(`https://api.bridge.xyz/v0/exchange_rates?${params}`, {
+    headers: { "Api-Key": apiKey },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Bridge quote request failed (HTTP ${response.status}).`);
+  // Field names below are a best-effort reading of public docs — see this
+  // file's header comment. Unknown/missing fields degrade to undefined
+  // rather than throwing, so a wrong guess here shows up as a thin quote,
+  // not a crash.
+  const body = (await response.json()) as { midmarket_rate?: string; buy_rate?: string };
+  const rate = Number(body.midmarket_rate ?? body.buy_rate);
+  return {
+    providerSlug: "bridge",
+    sourceAsset: request.sourceAsset,
+    sourceNetwork: request.sourceNetwork,
+    destinationCurrency: request.destinationCurrency,
+    destinationCountry: request.destinationCountry,
+    amount: request.amount,
+    feeAmount: Number.isFinite(rate) ? request.amount - request.amount * rate : undefined,
+    feeCurrency: request.destinationCurrency,
+    quotedAt: new Date().toISOString(),
+  };
+}
+
+async function moonpayGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
+  const apiKey = credentials.apiKey?.trim();
+  if (!apiKey) throw new Error("Secret API key is required.");
+  const params = new URLSearchParams({
+    baseCurrencyAmount: String(request.amount),
+    baseCurrencyCode: request.destinationCurrency.toLowerCase(),
+    apiKey,
+  });
+  const response = await fetch(
+    `https://api.moonpay.com/v3/currencies/${request.sourceAsset.toLowerCase()}/buy_quote?${params}`,
+    { signal: AbortSignal.timeout(10_000) },
+  );
+  if (!response.ok) throw new Error(`MoonPay quote request failed (HTTP ${response.status}).`);
+  // Same caveat as Bridge's quote above: endpoint and auth are verified,
+  // these field names are not.
+  const body = (await response.json()) as { feeAmount?: number; quoteCurrencyAmount?: number };
+  return {
+    providerSlug: "moonpay",
+    sourceAsset: request.sourceAsset,
+    sourceNetwork: request.sourceNetwork,
+    destinationCurrency: request.destinationCurrency,
+    destinationCountry: request.destinationCountry,
+    amount: request.amount,
+    feeAmount: body.feeAmount,
+    feeCurrency: request.destinationCurrency,
+    quotedAt: new Date().toISOString(),
+  };
+}
+
 async function paxosTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
   const clientId = credentials.clientId?.trim();
   const clientSecret = credentials.clientSecret?.trim();
@@ -159,11 +227,13 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
     slug: "bridge",
     credentialFields: [{ key: "apiKey", label: "API key", secret: true }],
     testConnection: bridgeTestConnection,
+    getQuote: bridgeGetQuote,
   },
   moonpay: {
     slug: "moonpay",
     credentialFields: [{ key: "apiKey", label: "Secret API key", secret: true }],
     testConnection: moonpayTestConnection,
+    getQuote: moonpayGetQuote,
   },
   paxos: {
     slug: "paxos",
@@ -177,4 +247,26 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
 
 export function getAdapter(slug: string): ProviderAdapter | null {
   return ADAPTERS[slug] ?? null;
+}
+
+/**
+ * Execution — deliberately not implemented by any adapter, and not part of
+ * the ProviderAdapter interface at all, so there is no per-provider surface
+ * where a real transfer call could be added quietly. This is the one
+ * function anything in Railor that wants to move money would have to call,
+ * and it always refuses. Real execution needs money-transmission compliance
+ * this codebase has no way to verify — that is a decision for a human to
+ * make deliberately, not something to wire up as a side effect of a feature
+ * request.
+ */
+export async function executeTransfer(
+  providerSlug: string,
+  _credentials: Record<string, string>,
+  _request: ExecutionRequest,
+): Promise<ExecutionResult> {
+  return {
+    providerSlug,
+    status: "not_implemented",
+    detail: "Railor does not execute transfers. This call was refused, not attempted.",
+  };
 }

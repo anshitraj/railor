@@ -1,13 +1,20 @@
+import { fallbackFill } from "./logo-fallback";
+
 export type CurrencySymbol = "USDC" | "USDT" | "EURC" | (string & {});
 
-const FALLBACK_FILLS = ["#2775CA", "#6F5DD9", "#B4552B", "#1F8A5F", "#7B3FE4", "#C4306B"];
-
-/** Stable pseudo-random pick so the same unmapped symbol always gets the same colour. */
-function fallbackFill(symbol: string): string {
-  let hash = 0;
-  for (let i = 0; i < symbol.length; i++) hash = (hash * 31 + symbol.charCodeAt(i)) >>> 0;
-  return FALLBACK_FILLS[hash % FALLBACK_FILLS.length]!;
-}
+/**
+ * Brand colour (verified against each issuer's own brand page or a reputable
+ * brand-color reference, not guessed) for stablecoins that don't get a fully
+ * bespoke mark below — rendered as a plain "$" glyph in that colour, the
+ * same treatment USDC/EURC use, rather than a fabricated icon shape nobody
+ * confirmed. `dark: true` symbols are light enough to need dark text.
+ */
+const DOLLAR_MARK_FILLS: Record<string, { fill: string; dark?: boolean }> = {
+  PYUSD: { fill: "#003087" }, // PayPal dark blue
+  GUSD: { fill: "#00DCFA", dark: true }, // Gemini turquoise
+  RLUSD: { fill: "#00A5DF" }, // Ripple light blue
+  FDUSD: { fill: "#4AFAB4", dark: true }, // First Digital Labs green
+};
 
 export function CurrencyLogo({
   symbol,
@@ -36,7 +43,27 @@ export function CurrencyLogo({
     );
   }
 
-  /** No bespoke mark for this symbol yet — a stable-coloured monogram instead of a broken image. */
+  const dollarMark = DOLLAR_MARK_FILLS[symbol];
+  if (dollarMark) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-label={symbol} role="img">
+        <circle cx="16" cy="16" r="16" fill={dollarMark.fill} />
+        <text
+          x="16"
+          y="21"
+          textAnchor="middle"
+          fill={dollarMark.dark ? "#17171B" : "white"}
+          fontSize="14"
+          fontWeight="700"
+          fontFamily="system-ui, sans-serif"
+        >
+          $
+        </text>
+      </svg>
+    );
+  }
+
+  /** No verified brand colour for this symbol yet — a stable-coloured monogram instead of a guessed one. */
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-label={symbol} role="img">
       <circle cx="16" cy="16" r="16" fill={fallbackFill(symbol)} />

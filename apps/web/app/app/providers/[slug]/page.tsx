@@ -12,6 +12,8 @@ import {
   VerdictPill,
 } from "@railor/ui";
 import { MonitorProviderButton } from "../../../../components/app/monitor-button";
+import { CurrencyLogo } from "../../../../components/marketing/currency-logo";
+import { NetworkLogo } from "../../../../components/marketing/network-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -275,7 +277,11 @@ export default async function ProviderProfile({
             <SectionLabel>Assets & networks</SectionLabel>
             <div className="flex flex-wrap gap-1.5">
               {assets.map((a) => (
-                <span key={a} className="rounded-full bg-[var(--color-lavender)] px-2.5 py-1 text-[12px]">
+                <span
+                  key={a}
+                  className="flex items-center gap-1.5 rounded-full bg-[var(--color-lavender)] py-1 pl-1 pr-2.5 text-[12px]"
+                >
+                  <CurrencyLogo symbol={a} size={16} />
                   {a}
                 </span>
               ))}
@@ -284,8 +290,9 @@ export default async function ProviderProfile({
               {networks.map((n) => (
                 <span
                   key={n}
-                  className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12px] text-[var(--color-ink-soft)]"
+                  className="flex items-center gap-1.5 rounded-full border border-[var(--color-line)] py-1 pl-1 pr-2.5 text-[12px] text-[var(--color-ink-soft)]"
                 >
+                  <NetworkLogo slug={n} size={16} />
                   {n}
                 </span>
               ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Search } from "lucide-react";
 import { cn } from "../cn.js";
 
 export interface CommandItem {
@@ -77,10 +78,11 @@ export function CommandPalette({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-3 py-1.5 text-[13px] text-[var(--color-muted)] transition hover:border-[var(--color-line-strong)]"
+        className="flex min-w-[240px] items-center gap-2.5 rounded-full border border-[var(--color-line)] bg-white px-4 py-2.5 text-[14.5px] text-[var(--color-muted)] shadow-[var(--shadow-soft)] transition hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-panel)]"
       >
-        <span>Search</span>
-        <kbd className="rounded border border-[var(--color-line)] px-1 text-[10px]">⌘K</kbd>
+        <Search size={17} className="shrink-0 opacity-70" aria-hidden />
+        <span className="flex-1 text-left">{placeholder.replace(/…$/, "")}</span>
+        <kbd className="shrink-0 rounded-md border border-[var(--color-line)] px-1.5 py-0.5 text-[11px] font-medium">⌘K</kbd>
       </button>
 
       <AnimatePresence>

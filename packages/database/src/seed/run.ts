@@ -21,6 +21,7 @@ import {
   changeEvents as changeSpecs,
   countries,
   currencies,
+  namedRails,
   providerSpecs,
   requirements as requirementSpecs,
   type Availability,
@@ -73,6 +74,7 @@ export interface SeedSummary {
   countries: number;
   assets: number;
   blockchains: number;
+  namedRails: number;
 }
 
 /**
@@ -86,25 +88,87 @@ export async function seedDemoData(): Promise<SeedSummary> {
   const db = await getDb();
   await ensureMigrated();
 
-  // Provider-owned tables only. Organization data survives a re-seed.
-  await db.execute(sql`
-    truncate table
-      ${s.evidence}, ${s.providerCapabilities}, ${s.providerRequirements},
-      ${s.providerProducts}, ${s.fees}, ${s.limits}, ${s.changeEvents},
-      ${s.sourceSnapshots}, ${s.sourceDocuments}, ${s.observations},
-      ${s.healthChecks}, ${s.conformanceTests}, ${s.conformanceRuns}, ${s.incidents},
-      ${s.providers}, ${s.requirements},
-      ${s.assetNetworks}, ${s.assets}, ${s.blockchains}, ${s.currencies}, ${s.countries}
-    restart identity cascade
-  `);
+  /**
+   * Only demo providers get truncated. `providers` used to be in a blanket
+   * `truncate ... cascade` alongside every reference table — which, because
+   * countries/currencies/blockchains/assets/assetNetworks were *also* in
+   * that same statement, cascaded through every FK pointing at them
+   * (provider_capabilities.source_asset, receiving_endpoints.incoming_asset,
+   * etc.) and would have deleted a real, non-demo provider's capability and
+   * receiving-endpoint rows the moment anyone re-ran the demo seed — not
+   * hypothetically, provably, since TRUNCATE CASCADE has no WHERE clause to
+   * scope it by is_demo. Deleting only demo providers cascades (every FK
+   * below is declared onDelete: 'cascade') through exactly their own
+   * evidence, capabilities, receiving endpoints, sources, conformance tests
+   * and incidents — nothing a real provider owns is reachable from a demo
+   * provider's id, so nothing real is at risk.
+   */
+  await db.delete(s.providers).where(sql`${s.providers.isDemo} = true`);
 
-  await db.insert(s.countries).values(countries.map((c) => ({ ...c })));
-  await db.insert(s.currencies).values(currencies.map((c) => ({ ...c })));
-  await db.insert(s.blockchains).values(blockchains.map((b) => ({ ...b })));
-  await db.insert(s.assets).values(assets.map((a) => ({ ...a })));
+  // Reference tables: upserted in bulk (one statement each, `excluded.col`
+  // pulls each row's own incoming value), never truncated — a real row
+  // anywhere in the graph that references a country/currency/chain/asset/
+  // requirement can never be cascade-deleted by re-running this seed.
+  await db
+    .insert(s.countries)
+    .values(countries.map((c) => ({ ...c })))
+    .onConflictDoUpdate({
+      target: s.countries.code,
+      set: { name: sql`excluded.name`, region: sql`excluded.region`, flag: sql`excluded.flag`, popularity: sql`excluded.popularity` },
+    });
+  await db
+    .insert(s.currencies)
+    .values(currencies.map((c) => ({ ...c })))
+    .onConflictDoUpdate({
+      target: s.currencies.code,
+      set: {
+        name: sql`excluded.name`,
+        symbol: sql`excluded.symbol`,
+        countryCode: sql`excluded.country_code`,
+        popularity: sql`excluded.popularity`,
+      },
+    });
+  await db
+    .insert(s.blockchains)
+    .values(blockchains.map((b) => ({ ...b })))
+    .onConflictDoUpdate({
+      target: s.blockchains.slug,
+      set: {
+        name: sql`excluded.name`,
+        chainId: sql`excluded.chain_id`,
+        finalitySeconds: sql`excluded.finality_seconds`,
+        popularity: sql`excluded.popularity`,
+      },
+    });
+  await db
+    .insert(s.assets)
+    .values(assets.map((a) => ({ ...a })))
+    .onConflictDoUpdate({
+      target: s.assets.symbol,
+      set: {
+        name: sql`excluded.name`,
+        kind: sql`excluded.kind`,
+        issuer: sql`excluded.issuer`,
+        peggedTo: sql`excluded.pegged_to`,
+        popularity: sql`excluded.popularity`,
+      },
+    });
   await db
     .insert(s.assetNetworks)
-    .values(assetNetworks.map((a) => ({ assetSymbol: a.asset, blockchainSlug: a.chain })));
+    .values(assetNetworks.map((a) => ({ assetSymbol: a.asset, blockchainSlug: a.chain })))
+    .onConflictDoNothing({ target: [s.assetNetworks.assetSymbol, s.assetNetworks.blockchainSlug] });
+  await db
+    .insert(s.namedRails)
+    .values(namedRails.map((r) => ({ ...r })))
+    .onConflictDoUpdate({
+      target: s.namedRails.code,
+      set: {
+        name: sql`excluded.name`,
+        countryCode: sql`excluded.country_code`,
+        category: sql`excluded.category`,
+        description: sql`excluded.description`,
+      },
+    });
 
   const requirementRows = await db
     .insert(s.requirements)
@@ -117,6 +181,15 @@ export async function seedDemoData(): Promise<SeedSummary> {
         aliases: [...r.aliases],
       })),
     )
+    .onConflictDoUpdate({
+      target: s.requirements.key,
+      set: {
+        kind: sql`excluded.kind`,
+        label: sql`excluded.label`,
+        description: sql`excluded.description`,
+        aliases: sql`excluded.aliases`,
+      },
+    })
     .returning({ id: s.requirements.id, key: s.requirements.key });
   const requirementByKey = new Map(requirementRows.map((r) => [r.key, r.id]));
 
@@ -388,6 +461,7 @@ export async function seedDemoData(): Promise<SeedSummary> {
     countries: countries.length,
     assets: assets.length,
     blockchains: blockchains.length,
+    namedRails: namedRails.length,
   };
 }
 
@@ -398,7 +472,7 @@ async function main() {
   console.log(
     `✓ seeded ${summary.providers} demo providers · ${summary.capabilities} capability rows · ` +
       `${summary.changes} change events · ${summary.countries} countries · ` +
-      `${summary.assets} assets · ${summary.blockchains} networks`,
+      `${summary.assets} assets · ${summary.blockchains} networks · ${summary.namedRails} named rails`,
   );
   await close();
 }

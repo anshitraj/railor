@@ -31,7 +31,7 @@ export function CodeSample({
 
   const code = (current?.code ?? "").replaceAll(
     "RAILOR_API_KEY",
-    apiKey ?? "rk_test_your_key_here",
+    apiKey ?? "rail_test_your_key_here",
   );
 
   const copy = async () => {

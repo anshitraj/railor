@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import {
   changeEvents,
+  countries as countriesTable,
+  countryProfiles,
   evidence as evidenceTable,
   getDb,
   providers,
   sourceDocuments,
 } from "@railor/database";
-import { getAuditLog, getPlatformUsageSummary } from "@railor/core";
+import { getAuditLog, getPlatformUsageSummary, loadLatestCountryResearchRuns, RESEARCHABLE_COUNTRIES } from "@railor/core";
 import { Card, Freshness, SectionLabel } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { ReviewQueue } from "../../components/admin/review-queue";
 import { RailorMark } from "../../components/marketing/nav";
 import { UsageMaintenance } from "../../components/admin/usage-maintenance";
+import { CountryResearchPanel } from "../../components/admin/country-research-panel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Operations console" };
@@ -47,7 +50,7 @@ export default async function AdminPage() {
   }
 
   const db = await getDb();
-  const [pending, crawlers, recentEvidence, platformUsage, auditLog] = await Promise.all([
+  const [pending, crawlers, recentEvidence, platformUsage, auditLog, researchedCountries, latestRuns] = await Promise.all([
     db
       .select({
         change: changeEvents,
@@ -70,9 +73,40 @@ export default async function AdminPage() {
     db.select().from(evidenceTable).orderBy(desc(evidenceTable.createdAt)).limit(8),
     getPlatformUsageSummary(30),
     getAuditLog(20),
+    db
+      .select({ iso2: countryProfiles.iso2, lastResearchedAt: countryProfiles.lastResearchedAt })
+      .from(countryProfiles)
+      .where(inArray(countryProfiles.iso2, [...RESEARCHABLE_COUNTRIES])),
+    loadLatestCountryResearchRuns([...RESEARCHABLE_COUNTRIES]),
   ]);
 
   const failing = crawlers.filter((c) => c.source.failureCount > 0);
+
+  const countryNames = await db
+    .select({ code: countriesTable.code, name: countriesTable.name })
+    .from(countriesTable)
+    .where(inArray(countriesTable.code, [...RESEARCHABLE_COUNTRIES]));
+  const countryResearchRows = RESEARCHABLE_COUNTRIES.map((iso2) => {
+    const profile = researchedCountries.find((p) => p.iso2 === iso2);
+    const run = latestRuns.get(iso2);
+    return {
+      iso2,
+      name: countryNames.find((c) => c.code === iso2)?.name ?? iso2,
+      lastResearchedAt: profile?.lastResearchedAt?.toISOString() ?? null,
+      sourcesUsed: run?.sourcesUsed ?? null,
+      status: run?.status ?? null,
+    };
+  })
+    // Not-yet-researched first — the operator opening this panel almost
+    // always wants to know what still needs attention, not to scroll a
+    // ~60-row alphabetical list to find it. Researched countries follow, most
+    // recent first, since a stale/failed one is the next-most-actionable thing.
+    .sort((a, b) => {
+      if (!a.lastResearchedAt && !b.lastResearchedAt) return a.name.localeCompare(b.name);
+      if (!a.lastResearchedAt) return -1;
+      if (!b.lastResearchedAt) return 1;
+      return b.lastResearchedAt.localeCompare(a.lastResearchedAt);
+    });
 
   return (
     <main className="mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-col gap-6 py-10">
@@ -224,6 +258,11 @@ export default async function AdminPage() {
           </ul>
         </Card>
       </div>
+
+      <Card className="flex flex-col gap-3 p-5">
+        <SectionLabel>Country intelligence</SectionLabel>
+        <CountryResearchPanel rows={countryResearchRows} />
+      </Card>
     </main>
   );
 }

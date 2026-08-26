@@ -5,7 +5,8 @@
       "name": "railor-web",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@railor/web", "dev"],
-      "port": 3000
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

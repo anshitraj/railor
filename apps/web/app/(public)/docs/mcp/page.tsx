@@ -57,8 +57,30 @@ export default async function McpDocs() {
   }
 }`,
             },
+            {
+              language: "antigravity",
+              label: "Antigravity",
+              code: `{
+  "mcpServers": {
+    "railor": {
+      "serverUrl": "${base}/api/mcp",
+      "headers": { "Authorization": "Bearer RAILOR_API_KEY" }
+    }
+  }
+}`,
+            },
+            {
+              language: "toml",
+              label: "Codex",
+              code: `# ~/.codex/config.toml (or ./.codex/config.toml for this project only)
+export RAILOR_KEY=RAILOR_API_KEY
+
+[mcp_servers.railor]
+url = "${base}/api/mcp"
+bearer_token_env_var = "RAILOR_KEY"`,
+            },
           ]}
-          caption="Cursor, Claude Code and VS Code all read this shape. The developer portal has one-click install links."
+          caption="Cursor and VS Code read the mcp.json shape directly. Antigravity needs serverUrl instead of url — its own docs say the legacy field isn't supported. Codex reads the token from an env var, not an inline string. The developer portal has a one-click Cursor install link."
         />
       </section>
 

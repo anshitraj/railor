@@ -43,7 +43,7 @@ Sign-in uses magic links. In development (`AUTH_EMAIL_TRANSPORT=console`, the de
 5. Three onboarding questions, all answerable with clicks. Country is pre-selected as **Detected**.
 6. *Build my infrastructure map* → the dashboard is already populated: a corridor, its provider verdicts, an armed monitor and a change feed filtered to your markets.
 7. Open any result row for the reason, what is nonetheless true, what would change it, the evidence and the change history.
-8. *Copy as API call* in the Corridor Explorer → the developer portal already holds a `rk_test_…` key → the same answer over HTTP.
+8. *Copy as API call* in the Corridor Explorer → the developer portal already holds a `rail_test_…` key → the same answer over HTTP.
 
 ---
 
@@ -121,7 +121,7 @@ The worker needs a real Postgres (`DATABASE_URL`), respects robots policies, thr
 ## CLI
 
 ```bash
-pnpm cli login rk_test_your_key_here     # or: export RAILOR_API_KEY=…
+pnpm cli login rail_test_your_key_here     # or: export RAILOR_API_KEY=…
 pnpm cli corridors search --entity IN --to AE --asset USDC --currency AED
 pnpm cli watch add --type provider --target meridian-pay
 pnpm cli changes list --since 7d --json

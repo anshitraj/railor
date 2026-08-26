@@ -16,7 +16,8 @@
     "db:seed": "pnpm --filter @railor/database seed",
     "db:reset": "pnpm --filter @railor/database reset",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @railor/core test"
+    "test": "pnpm -r --if-present test",
+    "research-country": "pnpm --filter @railor/core research-country --"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -14,6 +14,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/migrate-run.ts",
     "seed": "tsx src/seed/run.ts",
+    "receiving-endpoints": "tsx src/seed/receiving-endpoints.ts",
+    "stablecoin-capabilities": "tsx src/seed/stablecoin-capabilities.ts",
     "reset": "tsx src/seed/reset.ts",
     "typecheck": "tsc --noEmit"
   },

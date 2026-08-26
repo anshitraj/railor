@@ -32,7 +32,7 @@ export async function authenticate(request: Request): Promise<ApiContext> {
   const header = request.headers.get("authorization") ?? "";
   const presented = header.replace(/^Bearer\s+/i, "").trim();
   if (!presented) {
-    throw new ApiError(401, "missing_api_key", "Provide an API key as `Authorization: Bearer rk_…`.");
+    throw new ApiError(401, "missing_api_key", "Provide an API key as `Authorization: Bearer rail_…`.");
   }
 
   const db = await getDb();

@@ -31,11 +31,25 @@ export default async function DevelopersPage() {
     getSavedCorridors(org.id),
   ]);
 
-  const liveKey = keys.find((k) => k.mode === "live" && !k.revokedAt);
-  const quota = liveKey
+  // Every active key gets its own usage count — a test-only org (the
+  // free-tier default before a live key ever exists) still has real numbers
+  // to show, not just an org that graduated to a live key.
+  const since = monthStart();
+  const activeKeys = keys.filter((k) => !k.revokedAt);
+  const usageByKey = new Map(
+    await Promise.all(
+      activeKeys.map(async (k) => [k.id, await getMonthlyUsageCount(k.id, since)] as const),
+    ),
+  );
+
+  const liveKey = activeKeys.find((k) => k.mode === "live");
+  const testKey = activeKeys.find((k) => k.mode === "test");
+  const primaryKey = liveKey ?? testKey;
+  const quota = primaryKey
     ? {
-        used: await getMonthlyUsageCount(liveKey.id, monthStart()),
-        cap: resolveMonthlyCap(liveKey),
+        used: usageByKey.get(primaryKey.id) ?? 0,
+        cap: resolveMonthlyCap(primaryKey),
+        mode: primaryKey.mode,
       }
     : null;
 
@@ -62,6 +76,8 @@ export default async function DevelopersPage() {
         lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
         createdAt: k.createdAt.toISOString(),
         revoked: Boolean(k.revokedAt),
+        monthlyUsed: k.revokedAt ? null : (usageByKey.get(k.id) ?? 0),
+        monthlyCap: k.revokedAt ? null : resolveMonthlyCap(k),
       }))}
       usage={usage}
       dailySeries={dailySeries}

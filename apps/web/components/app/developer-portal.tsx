@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check, Copy, Trash2 } from "lucide-react";
 import { Button, Card, CodeSample, Freshness, SectionLabel, StageBadge } from "@railor/ui";
 import { createKey, revokeKey } from "../../app/app/developers/actions";
 
@@ -13,6 +14,9 @@ export interface KeyRow {
   lastUsedAt: string | null;
   createdAt: string;
   revoked: boolean;
+  /** null once revoked — a dead key has no ongoing month to measure. */
+  monthlyUsed: number | null;
+  monthlyCap: number | null;
 }
 
 export interface UsageRow {
@@ -31,6 +35,8 @@ export interface DailyUsagePoint {
 export interface QuotaInfo {
   used: number;
   cap: number;
+  /** Which key this bar reflects — a test-only org sees its test key here, not a blank card. */
+  mode: "test" | "live";
 }
 
 /**
@@ -61,12 +67,24 @@ export function DeveloperPortal({
   const mcpConfig = {
     railor: {
       url: `${baseUrl}/api/mcp`,
-      headers: { Authorization: `Bearer ${testKey ?? "rk_test_your_key"}` },
+      headers: { Authorization: `Bearer ${testKey ?? "rail_test_your_key"}` },
     },
   };
   const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=railor&config=${encodeURIComponent(
     Buffer.from(JSON.stringify(mcpConfig.railor)).toString("base64"),
   )}`;
+
+  const hasLiveKey = keys.some((k) => k.mode === "live" && !k.revoked);
+  const hasCalledApi = usage.length > 0;
+  const createLiveKey = () =>
+    startTransition(async () => {
+      const res = await createKey("Live key", "live");
+      if (res.ok && res.secret) setFreshSecret(res.secret);
+    });
+
+  const copySecret = (secret: string) => {
+    void navigator.clipboard.writeText(secret);
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,7 +96,80 @@ export function DeveloperPortal({
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <Card className="flex flex-col gap-3 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <SectionLabel>API usage</SectionLabel>
+            {quota ? (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                  quota.mode === "test"
+                    ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
+                    : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
+                }`}
+              >
+                {quota.mode} key
+              </span>
+            ) : null}
+          </div>
+          <span className="text-[11px] text-[var(--color-faint)]">Resets monthly, per key</span>
+        </div>
+
+        {quota ? (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-baseline justify-between text-[14px]">
+              <span className="tabular font-medium">
+                {quota.used.toLocaleString()} / {quota.cap.toLocaleString()} requests
+              </span>
+              <span className="text-[11px] text-[var(--color-faint)]">this month</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--color-line)]">
+              <div
+                className={`h-full rounded-full ${
+                  quota.used / quota.cap >= 1
+                    ? "bg-[var(--color-bad)]"
+                    : quota.used / quota.cap >= 0.8
+                      ? "bg-[var(--color-warn)]"
+                      : "bg-[var(--color-purple)]"
+                }`}
+                style={{ width: `${Math.min(100, (quota.used / quota.cap) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-[13px] text-[var(--color-muted)]">
+            No API key on this workspace yet.
+          </p>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-1 p-5">
+        <SectionLabel className="mb-2">Getting started</SectionLabel>
+        <ChecklistRow step={1} done label="Get your API key" hint="One test key already works across every endpoint." />
+        <ChecklistRow
+          step={2}
+          done={hasCalledApi}
+          label="Run your first request"
+          hint="Copy the snippet below — it's rendered with your real test key."
+          action={!hasCalledApi ? <a href="#quickstart" className="text-[12.5px] font-medium text-[var(--color-purple)]">View snippet →</a> : null}
+        />
+        <ChecklistRow
+          step={3}
+          done={hasLiveKey}
+          label="Create a live key"
+          hint="Test keys never touch production data; a live key does."
+          action={
+            !hasLiveKey ? (
+              <Button size="sm" variant="secondary" disabled={pending} onClick={createLiveKey}>
+                New live key
+              </Button>
+            ) : null
+          }
+          last
+        />
+      </Card>
+
+      <div id="quickstart" className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <Card className="flex flex-col gap-4 p-5">
           <SectionLabel>60-second start</SectionLabel>
           <CodeSample
@@ -131,51 +222,86 @@ print(response.json()["providers_checked"])`,
             </span>
           </div>
 
-          <ul className="flex flex-col gap-2">
-            {keys.map((key) => (
-              <li
-                key={key.id}
-                className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-[var(--color-line)] p-3"
-              >
-                <div className="flex flex-1 flex-col">
-                  <span className="flex items-center gap-2 text-[13.5px] font-medium">
-                    {key.label}
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                        key.mode === "test"
-                          ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
-                          : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
-                      }`}
-                    >
-                      {key.mode}
-                    </span>
-                    {key.revoked ? (
-                      <span className="text-[11px] text-[var(--color-bad)]">revoked</span>
-                    ) : null}
-                  </span>
-                  <code className="tabular text-[12px] text-[var(--color-muted)]">
-                    {key.secret ?? `${key.prefix}…`}
-                  </code>
-                  <span className="text-[11px] text-[var(--color-faint)]">
-                    {key.lastUsedAt ? (
-                      <Freshness date={key.lastUsedAt} prefix="Last used" />
-                    ) : (
-                      "Never used"
-                    )}
-                  </span>
-                </div>
-                {!key.revoked ? (
-                  <button
-                    type="button"
-                    onClick={() => startTransition(async () => void (await revokeKey(key.id)))}
-                    className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12px] text-[var(--color-muted)] hover:border-[var(--color-bad)] hover:text-[var(--color-bad)]"
-                  >
-                    Revoke
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-left text-[13px]">
+              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <tr>
+                  <th className="pb-2 font-medium">Name</th>
+                  <th className="pb-2 font-medium">Type</th>
+                  <th className="pb-2 font-medium">Usage</th>
+                  <th className="pb-2 font-medium">Key</th>
+                  <th className="pb-2 font-medium">
+                    <span className="sr-only">Options</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map((key) => (
+                  <tr key={key.id} className="border-t border-[var(--color-line)] align-top">
+                    <td className="py-2.5 pr-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{key.label}</span>
+                        <span className="text-[11px] text-[var(--color-faint)]">
+                          {key.revoked ? (
+                            <span className="text-[var(--color-bad)]">revoked</span>
+                          ) : key.lastUsedAt ? (
+                            <Freshness date={key.lastUsedAt} prefix="Last used" />
+                          ) : (
+                            "Never used"
+                          )}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                          key.mode === "test"
+                            ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
+                            : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
+                        }`}
+                      >
+                        {key.mode}
+                      </span>
+                    </td>
+                    <td className="tabular py-2.5 pr-2 text-[var(--color-muted)]">
+                      {key.monthlyUsed !== null && key.monthlyCap !== null
+                        ? `${key.monthlyUsed.toLocaleString()} / ${key.monthlyCap.toLocaleString()}`
+                        : "—"}
+                    </td>
+                    <td className="py-2.5 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <code className="tabular text-[12px] text-[var(--color-muted)]">
+                          {key.secret ?? `${key.prefix}…`}
+                        </code>
+                        {key.secret ? (
+                          <button
+                            type="button"
+                            title="Copy key"
+                            onClick={() => copySecret(key.secret!)}
+                            className="rounded-full p-1 text-[var(--color-faint)] hover:bg-[var(--color-lavender)] hover:text-[var(--color-purple)]"
+                          >
+                            <Copy size={13} />
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      {!key.revoked ? (
+                        <button
+                          type="button"
+                          title="Revoke key"
+                          onClick={() => startTransition(async () => void (await revokeKey(key.id)))}
+                          className="rounded-full p-1.5 text-[var(--color-faint)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
             <input
@@ -270,36 +396,47 @@ print(response.json()["providers_checked"])`,
                 code: `claude mcp add --transport http railor ${baseUrl}/api/mcp \\
   --header "Authorization: Bearer RAILOR_API_KEY"`,
               },
+              {
+                language: "antigravity",
+                label: "Antigravity",
+                // Antigravity's own docs are explicit: "Legacy fields like
+                // `url` or `httpUrl` are not supported" for remote servers —
+                // it has to be `serverUrl`, unlike every other client here.
+                // Global config: ~/.gemini/config/mcp_config.json
+                // Workspace config: .agents/mcp_config.json
+                code: JSON.stringify(
+                  {
+                    mcpServers: {
+                      railor: {
+                        serverUrl: `${baseUrl}/api/mcp`,
+                        headers: { Authorization: "Bearer RAILOR_API_KEY" },
+                      },
+                    },
+                  },
+                  null,
+                  2,
+                ),
+              },
+              {
+                language: "toml",
+                label: "Codex",
+                // Codex reads the token from an env var, not an inline
+                // string — RAILOR_KEY here is just the var's name; only the
+                // value after `=` is your actual key.
+                code: `# ~/.codex/config.toml (or ./.codex/config.toml for this project only)
+export RAILOR_KEY=RAILOR_API_KEY
+
+[mcp_servers.railor]
+url = "${baseUrl}/api/mcp"
+bearer_token_env_var = "RAILOR_KEY"`,
+              },
             ]}
             caption="Ask your agent: “Which mapped providers can settle USDC to an AED business account for an Indian entity?”"
           />
         </Card>
 
         <Card className="flex flex-col gap-3 p-5">
-          <SectionLabel>Usage</SectionLabel>
-
-          {quota ? (
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-baseline justify-between text-[13px]">
-                <span className="font-medium">
-                  {quota.used.toLocaleString()} / {quota.cap.toLocaleString()} requests
-                </span>
-                <span className="text-[11px] text-[var(--color-faint)]">this month · live key</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-line)]">
-                <div
-                  className={`h-full rounded-full ${
-                    quota.used / quota.cap >= 1
-                      ? "bg-[var(--color-bad)]"
-                      : quota.used / quota.cap >= 0.8
-                        ? "bg-[var(--color-warn)]"
-                        : "bg-[var(--color-purple)]"
-                  }`}
-                  style={{ width: `${Math.min(100, (quota.used / quota.cap) * 100)}%` }}
-                />
-              </div>
-            </div>
-          ) : null}
+          <SectionLabel>Usage by endpoint</SectionLabel>
 
           {dailySeries.some((d) => d.count > 0) ? (
             <div className="flex items-end gap-[2px] border-t border-[var(--color-line)] pt-3" style={{ height: 40 }}>
@@ -356,6 +493,43 @@ print(response.json()["providers_checked"])`,
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function ChecklistRow({
+  step,
+  done,
+  label,
+  hint,
+  action,
+  last,
+}: {
+  step: number;
+  done: boolean;
+  label: string;
+  hint: string;
+  action?: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 py-2.5 ${!last ? "border-b border-[var(--color-line)]" : ""}`}
+    >
+      <span
+        className={`grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-medium ${
+          done
+            ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
+            : "bg-[var(--color-lavender)] text-[var(--color-purple)]"
+        }`}
+      >
+        {done ? <Check size={13} /> : step}
+      </span>
+      <div className="flex flex-1 flex-col">
+        <span className="text-[13.5px] font-medium">{label}</span>
+        <span className="text-[12px] text-[var(--color-muted)]">{hint}</span>
+      </div>
+      {action}
     </div>
   );
 }

@@ -10,16 +10,20 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "research-country": "tsx src/country-research/cli.ts"
   },
   "dependencies": {
     "@google/genai": "^1.9.0",
     "@railor/database": "workspace:*",
     "@railor/types": "workspace:*",
     "drizzle-orm": "^0.44.0",
-    "zod": "^3.23.8"
+    "iso-3166-1": "^2.1.1",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

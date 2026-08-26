@@ -6,7 +6,7 @@ export function registerAuthCommands(program: Command) {
   program
     .command("login")
     .description("save an API key for subsequent commands")
-    .argument("<api_key>", "a key from the dashboard, e.g. rk_test_…")
+    .argument("<api_key>", "a key from the dashboard, e.g. rail_test_…")
     .option("--base-url <url>", "Railor API origin", "http://localhost:3000")
     .action((apiKey: string, opts: { baseUrl: string }) => {
       writeConfig({ apiKey, baseUrl: opts.baseUrl });

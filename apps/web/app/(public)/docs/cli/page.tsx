@@ -25,10 +25,10 @@ export default function CliDocs() {
               language: "bash",
               label: "This repo",
               code: `# from the monorepo root — no separate install step
-pnpm cli login rk_test_your_key_here
+pnpm cli login rail_test_your_key_here
 
 # or skip login entirely and set it per-shell
-export RAILOR_API_KEY=rk_test_your_key_here`,
+export RAILOR_API_KEY=rail_test_your_key_here`,
             },
           ]}
           caption="Once published, the same binary runs as `railor` after a global install."

@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auditLogs, changeEvents, getDb, providerCapabilities } from "@railor/database";
-import { pruneApiUsage, rollupApiUsageDay } from "@railor/core";
+import { isResearchableCountry, pruneApiUsage, researchCountry, rollupApiUsageDay } from "@railor/core";
 import { requireSession } from "../../lib/auth";
 import { fanOutAlertsForChange } from "../../lib/alerting";
+import { checkBurstLimit } from "../../lib/rate-limit";
 
 async function requireAdmin() {
   const session = await requireSession();
@@ -108,4 +109,28 @@ export async function runUsageMaintenance() {
 
   revalidatePath("/admin");
   return { ok: true as const, rollup, pruned };
+}
+
+/**
+ * Admin-triggered country research — the same researchCountry() the CLI and
+ * POST /api/admin/countries/:code/refresh call, so all three entry points
+ * share one freshness/cost-safety guard and one run-tracking implementation.
+ */
+export async function refreshCountryResearch(code: string, forceRefresh = false) {
+  const session = await requireAdmin();
+  if (!isResearchableCountry(code)) throw new Error("NOT_RESEARCHABLE");
+  if (!checkBurstLimit(`admin:country-refresh:${session.user.id}`)) throw new Error("RATE_LIMITED");
+
+  const report = await researchCountry(code, { triggerType: "admin_refresh", forceRefresh });
+
+  const db = await getDb();
+  await db.insert(auditLogs).values({
+    actorId: session.user.id,
+    action: "country.research.refresh",
+    target: code,
+    metadata: { forceRefresh, runId: report.runId, status: report.status, sourcesUsed: report.sourcesUsed },
+  });
+
+  revalidatePath("/admin");
+  return report;
 }

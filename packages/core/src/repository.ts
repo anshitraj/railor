@@ -7,6 +7,10 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   changeEvents,
+  countryFactSources,
+  countryProfiles,
+  countryResearchRuns,
+  countrySources,
   evidence as evidenceTable,
   fees as feesTable,
   getDb,
@@ -383,6 +387,72 @@ export async function loadPlatformCounts() {
     changes30d: ch?.n ?? 0,
     countries: countryCount?.n ?? 0,
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Country intelligence — DB-only reads. Never calls Tavily or Gemini.        */
+/* -------------------------------------------------------------------------- */
+
+/** Null when the country exists but hasn't been researched yet — never a fabricated all-null profile. */
+export async function loadCountryProfile(iso2: string) {
+  const db = await getDb();
+  const [profile] = await db
+    .select()
+    .from(countryProfiles)
+    .where(eq(countryProfiles.iso2, iso2))
+    .limit(1);
+  return profile ?? null;
+}
+
+export async function loadCountrySources(iso2: string) {
+  const db = await getDb();
+  return db
+    .select()
+    .from(countrySources)
+    .where(and(eq(countrySources.countryIso2, iso2), eq(countrySources.isActive, true)))
+    .orderBy(desc(countrySources.authorityLevel));
+}
+
+/** Which source(s) back each researched fact for a country — the field-level provenance view. */
+export async function loadCountryFactSources(iso2: string) {
+  const db = await getDb();
+  return db
+    .select({
+      factKey: countryFactSources.factKey,
+      confidence: countryFactSources.confidence,
+      excerpt: countryFactSources.excerpt,
+      sourceId: countrySources.id,
+      sourceUrl: countrySources.url,
+      sourceTitle: countrySources.title,
+      authorityLevel: countrySources.authorityLevel,
+    })
+    .from(countryFactSources)
+    .innerJoin(countrySources, eq(countryFactSources.sourceId, countrySources.id))
+    .where(eq(countryFactSources.countryIso2, iso2));
+}
+
+export async function loadCountryResearchRuns(iso2: string, limit = 10) {
+  const db = await getDb();
+  return db
+    .select()
+    .from(countryResearchRuns)
+    .where(eq(countryResearchRuns.countryIso2, iso2))
+    .orderBy(desc(countryResearchRuns.startedAt))
+    .limit(limit);
+}
+
+/** Latest run per researched country — the admin panel's list view. */
+export async function loadLatestCountryResearchRuns(iso2List: string[]) {
+  if (iso2List.length === 0) return new Map<string, typeof countryResearchRuns.$inferSelect>();
+  const db = await getDb();
+  const rows = await db
+    .select()
+    .from(countryResearchRuns)
+    .where(inArray(countryResearchRuns.countryIso2, iso2List))
+    .orderBy(desc(countryResearchRuns.startedAt));
+  const latestByCountry = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) if (!latestByCountry.has(row.countryIso2)) latestByCountry.set(row.countryIso2, row);
+  return latestByCountry;
 }
 
 export { and, eq };

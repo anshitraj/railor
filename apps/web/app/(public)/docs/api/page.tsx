@@ -52,7 +52,7 @@ export default async function ApiDocs() {
   -H "Authorization: Bearer RAILOR_API_KEY"`,
             },
           ]}
-          caption="Test keys (rk_test_…) stay revealable in the dashboard. Live keys (rk_live_…) are shown once and stored hashed."
+          caption="Test keys (rail_test_…) stay revealable in the dashboard. Live keys (rail_live_…) are shown once and stored hashed."
         />
       </section>
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import {
   Button,
   Card,
@@ -97,10 +98,17 @@ export function CorridorExplorer({
   const [showApi, setShowApi] = useState(false);
   const [pending, startTransition] = useTransition();
   const [first, setFirst] = useState(true);
+  const [naturalInput, setNaturalInput] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const skipNextFetch = useRef(false);
 
   useEffect(() => {
     if (first) {
       setFirst(false);
+      return;
+    }
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
       return;
     }
     let cancelled = false;
@@ -120,6 +128,36 @@ export function CorridorExplorer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(query), preset]);
+
+  /**
+   * The only "type a sentence" entry point once you're signed in — the
+   * homepage's version is logged-out only. Reuses the same /api/search the
+   * homepage and every other query path here already calls, so a full
+   * corridor swap costs one request instead of two: this fetch's own
+   * response replaces `data` directly, and the effect above skips its own
+   * redundant refetch for the `query` change this triggers.
+   */
+  const runNaturalSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!naturalInput.trim() || parsing) return;
+    setParsing(true);
+    try {
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ input: naturalInput }),
+      });
+      const json: SearchPayload = await response.json();
+      skipNextFetch.current = true;
+      setData(json);
+      setQuery(json.interpretation.query);
+      setSavedId(undefined);
+      setMonitored(false);
+      setNaturalInput("");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const setField = (field: string, value: string) => setQuery((q) => ({ ...q, [field]: value }));
   const clearField = (field: string) =>
@@ -166,6 +204,23 @@ export function CorridorExplorer({
           </Button>
         </div>
       </div>
+
+      <form
+        onSubmit={runNaturalSearch}
+        className="flex flex-col gap-2 rounded-[20px] border border-[var(--color-line-strong)] bg-white p-2 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[var(--shadow-lift)] sm:flex-row sm:items-center sm:rounded-full sm:pl-5"
+      >
+        <Search size={16} className="ml-2 hidden shrink-0 text-[var(--color-faint)] sm:block" aria-hidden />
+        <input
+          value={naturalInput}
+          onChange={(e) => setNaturalInput(e.target.value)}
+          placeholder="Describe a different route — “USDT off-ramp to NGN for a Nigerian business”"
+          className="w-full flex-1 bg-transparent px-2 py-2.5 text-[14px] outline-none sm:px-0 sm:text-[15px]"
+          aria-label="Describe a new route"
+        />
+        <Button type="submit" size="sm" disabled={parsing || !naturalInput.trim()} className="w-full shrink-0 sm:w-auto">
+          {parsing ? "Reading…" : "Search"}
+        </Button>
+      </form>
 
       <Card className="flex flex-col gap-4 p-5">
         <div className="flex flex-col gap-2">

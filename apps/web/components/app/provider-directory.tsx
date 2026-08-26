@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, Chip, EmptyState, Freshness, SectionLabel } from "@railor/ui";
+import { Check, X } from "lucide-react";
+import { Card, Chip, cn, EmptyState, Freshness, SectionLabel } from "@railor/ui";
 
 export interface DirectoryProvider {
   slug: string;
@@ -60,6 +61,38 @@ export function ProviderDirectory({
     [providers],
   );
 
+  /**
+   * How many providers each option matches, against the full dataset — shown
+   * on every chip so picking one is an informed choice, not a guess. Counted
+   * against the unfiltered set (not "remaining after other filters") so a
+   * number never shifts under a chip the user didn't touch.
+   */
+  const counts = useMemo(() => {
+    const count = (get: (p: DirectoryProvider) => string[]) => {
+      const map: Record<string, number> = {};
+      for (const p of providers) for (const v of get(p)) map[v] = (map[v] ?? 0) + 1;
+      return map;
+    };
+    return {
+      products: count((p) => p.products),
+      assets: count((p) => p.assets),
+      networks: count((p) => p.networks),
+      customerTypes: count((p) => p.customerTypes),
+      apiOnly: providers.filter((p) => p.hasApi).length,
+      sandboxOnly: providers.filter((p) => p.hasSandbox).length,
+    };
+  }, [providers]);
+
+  const activeFilterCount = [product, asset, network, customerType].filter(Boolean).length + (apiOnly ? 1 : 0) + (sandboxOnly ? 1 : 0);
+  const clearFilters = () => {
+    setProduct(null);
+    setAsset(null);
+    setNetwork(null);
+    setCustomerType(null);
+    setApiOnly(false);
+    setSandboxOnly(false);
+  };
+
   const filtered = providers.filter((p) => {
     if (product && !p.products.includes(product)) return false;
     if (asset && !p.assets.includes(asset)) return false;
@@ -96,43 +129,61 @@ export function ProviderDirectory({
       <Card className="flex flex-col gap-3 p-4">
         <FilterRow label="Product">
           {facets.products.map((p) => (
-            <Chip key={p} active={product === p} onClick={() => toggle(product, p, setProduct)} className="text-[13px]">
+            <FacetChip key={p} active={product === p} count={counts.products[p]} onClick={() => toggle(product, p, setProduct)}>
               {PRODUCT_LABELS[p] ?? p}
-            </Chip>
+            </FacetChip>
           ))}
         </FilterRow>
+        <div className="h-px bg-[var(--color-line)]" />
         <FilterRow label="Asset">
           {facets.assets.map((a) => (
-            <Chip key={a} active={asset === a} onClick={() => toggle(asset, a, setAsset)} className="text-[13px]">
+            <FacetChip key={a} active={asset === a} count={counts.assets[a]} onClick={() => toggle(asset, a, setAsset)}>
               {a}
-            </Chip>
+            </FacetChip>
           ))}
         </FilterRow>
         <FilterRow label="Network">
           {facets.networks.map((n) => (
-            <Chip key={n} active={network === n} onClick={() => toggle(network, n, setNetwork)} className="text-[13px]">
+            <FacetChip key={n} active={network === n} count={counts.networks[n]} onClick={() => toggle(network, n, setNetwork)}>
               {n}
-            </Chip>
+            </FacetChip>
           ))}
         </FilterRow>
+        <div className="h-px bg-[var(--color-line)]" />
         <FilterRow label="Serves">
           {["business", "individual"].map((c) => (
-            <Chip
+            <FacetChip
               key={c}
               active={customerType === c}
+              count={counts.customerTypes[c]}
               onClick={() => toggle(customerType, c, setCustomerType)}
-              className="text-[13px]"
             >
               {c === "business" ? "Businesses" : "Individuals"}
-            </Chip>
+            </FacetChip>
           ))}
-          <Chip active={apiOnly} onClick={() => setApiOnly(!apiOnly)} className="text-[13px]">
+          <FacetChip active={apiOnly} count={counts.apiOnly} onClick={() => setApiOnly(!apiOnly)}>
             Has API
-          </Chip>
-          <Chip active={sandboxOnly} onClick={() => setSandboxOnly(!sandboxOnly)} className="text-[13px]">
+          </FacetChip>
+          <FacetChip active={sandboxOnly} count={counts.sandboxOnly} onClick={() => setSandboxOnly(!sandboxOnly)}>
             Has sandbox
-          </Chip>
+          </FacetChip>
         </FilterRow>
+
+        {activeFilterCount > 0 ? (
+          <div className="flex items-center gap-2 border-t border-[var(--color-line)] pt-3 text-[12.5px]">
+            <span className="text-[var(--color-muted)]">
+              {activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} active · {filtered.length} of {providers.length} providers match
+            </span>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="ml-auto flex items-center gap-1 rounded-full px-2 py-1 font-medium text-[var(--color-purple)] hover:bg-[var(--color-lavender)]"
+            >
+              <X className="size-3.5" />
+              Clear all
+            </button>
+          </div>
+        ) : null}
       </Card>
 
       {filtered.length ? (
@@ -200,17 +251,46 @@ export function ProviderDirectory({
           why="Nothing in the mapped dataset satisfies every filter at once. Clearing the narrowest one usually brings results back."
           actionLabel="Clear filters"
           onAction={() => {
-            setProduct(null);
-            setAsset(null);
-            setNetwork(null);
-            setCustomerType(null);
-            setApiOnly(false);
-            setSandboxOnly(false);
+            clearFilters();
             setQuery("");
           }}
         />
       )}
     </div>
+  );
+}
+
+/**
+ * A filter chip that shows the option's match count and a checkmark when
+ * selected — so picking one is an informed choice (how many results it
+ * leaves) and the selected state reads at a glance, not just by border colour.
+ */
+function FacetChip({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count?: number;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Chip active={active} onClick={onClick} className="text-[13px]">
+      {active ? <Check className="size-3.5 shrink-0" strokeWidth={2.5} /> : null}
+      {children}
+      {count !== undefined ? (
+        <span
+          className={cn(
+            "tabular rounded-full px-1.5 py-px text-[10.5px] font-semibold",
+            active ? "bg-white/70 text-[var(--color-purple-deep)]" : "bg-[var(--color-canvas)] text-[var(--color-faint)]",
+          )}
+        >
+          {count}
+        </span>
+      ) : null}
+    </Chip>
   );
 }
 

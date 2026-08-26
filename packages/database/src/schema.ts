@@ -65,6 +65,37 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "cash_pickup",
 ]);
 
+/**
+ * How a receiving endpoint relates to stablecoins — the question "Skydo vs
+ * Xflow" actually turns on. Both are real Indian receivers; only one ever
+ * touches a stablecoin. Collapsing that into a single "supported" boolean
+ * is exactly the shallowness this enum exists to fix.
+ */
+export const stablecoinModeEnum = pgEnum("stablecoin_mode", [
+  "direct_stablecoin",
+  "stablecoin_funded_fiat",
+  "fiat_only",
+  "stablecoin_only",
+  "hybrid",
+  "unknown",
+]);
+
+/** What a recipient actually ends up holding at the end of a flow. */
+export const receivingEndpointTypeEnum = pgEnum("receiving_endpoint_type", [
+  "bank_account",
+  "mobile_money",
+  "card",
+  "stablecoin_wallet",
+  "virtual_account",
+  "merchant_checkout",
+  "payment_link",
+  "local_instant_rail",
+  "cash_pickup",
+]);
+
+/** Whether Railor could plug this provider into the unified API — separate from whether it's a good receiver. */
+export const apiAccessEnum = pgEnum("api_access", ["public", "private", "partner", "none", "unknown"]);
+
 export const sourceTypeEnum = pgEnum("source_type", [
   "official_docs",
   "api",
@@ -152,6 +183,65 @@ export const incidentStatusEnum = pgEnum("incident_status", [
   "resolved",
 ]);
 
+/**
+ * Country intelligence — the research topic a source addresses, not what kind
+ * of document it is (that's countrySourceTypeEnum) or how much to trust it
+ * (that's countrySourceAuthorityEnum). Three separate axes on purpose.
+ */
+export const countrySourceCategoryEnum = pgEnum("country_source_category", [
+  "central_bank",
+  "banking",
+  "payment_rails",
+  "cross_border",
+  "stablecoin",
+  "crypto",
+  "aml",
+  "kyc",
+  "kyb",
+  "payout",
+  "government",
+  "provider",
+  "other",
+]);
+
+export const countrySourceTypeEnum = pgEnum("country_source_type", [
+  "regulation",
+  "official_guidance",
+  "news_press",
+  "help_faq",
+  "report",
+  "wiki_reference",
+  "other",
+]);
+
+/** Trust ranking used to resolve conflicts: regulator > government > network > provider > secondary. */
+export const countrySourceAuthorityEnum = pgEnum("country_source_authority", [
+  "official_regulator",
+  "government",
+  "official_network",
+  "official_provider",
+  "international_organization",
+  "reputable_secondary",
+  "unknown",
+]);
+
+export const countryResearchStatusEnum = pgEnum("country_research_status", [
+  "pending",
+  "searching",
+  "extracting",
+  "validating",
+  "completed",
+  "failed",
+  "partial",
+]);
+
+/** "scheduled" is unused today — reserved so a future scheduler needs no migration. */
+export const countryResearchTriggerEnum = pgEnum("country_research_trigger", [
+  "cli",
+  "admin_refresh",
+  "scheduled",
+]);
+
 /* -------------------------------------------------------------------------- */
 /* Reference data                                                              */
 /* -------------------------------------------------------------------------- */
@@ -203,6 +293,23 @@ export const assetNetworks = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.assetSymbol, t.blockchainSlug] }) }),
 );
 
+/**
+ * Real, named local payment rails — UPI, PIX, SPEI, M-PESA — as opposed to
+ * paymentMethodEnum's generic buckets (bank_transfer_local, wallet_transfer)
+ * that every one of these otherwise collapses into. `category` keeps the
+ * generic bucket too, so existing capability filtering by paymentMethodEnum
+ * keeps working unchanged; this table adds the specific name on top of it.
+ */
+export const namedRails = pgTable("named_rails", {
+  code: text("code").primaryKey(), // e.g. "UPI", "PIX", "MPESA"
+  name: text("name").notNull(),
+  countryCode: text("country_code")
+    .notNull()
+    .references(() => countries.code),
+  category: paymentMethodEnum("category").notNull(),
+  description: text("description"),
+});
+
 /* -------------------------------------------------------------------------- */
 /* Providers                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -223,6 +330,8 @@ export const providers = pgTable(
     headquartersCountry: text("headquarters_country").references(() => countries.code),
     licensingSummary: text("licensing_summary"),
     hasApi: boolean("has_api").default(false).notNull(),
+    /** public = anyone can self-serve a key; partner = business relationship required; private = internal only. */
+    apiAccess: apiAccessEnum("api_access").default("unknown").notNull(),
     hasSandbox: boolean("has_sandbox").default(false).notNull(),
     hasWebhooks: boolean("has_webhooks").default(false).notNull(),
     sdkLanguages: jsonb("sdk_languages").$type<string[]>().default([]).notNull(),
@@ -371,6 +480,55 @@ export const providerCapabilities = pgTable(
       t.destinationCurrency,
       t.destinationCountry,
     ),
+  }),
+);
+
+/**
+ * The other half of a corridor: not "which provider works" but "how does
+ * money actually reach someone in this country through it" — Skydo and
+ * Xflow are both real Indian receivers, and `stablecoinMode` is the one
+ * field that tells them apart (fiat_only vs stablecoin_funded_fiat). Shaped
+ * like providerCapabilities on purpose: one row per asset/network/rail
+ * combination a provider actually supports, not an array crammed into one
+ * row — multiple rows, same dimensioned-claim pattern, same evidence gate.
+ */
+export const receivingEndpoints = pgTable(
+  "receiving_endpoints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => providers.id, { onDelete: "cascade" }),
+    countryCode: text("country_code")
+      .notNull()
+      .references(() => countries.code),
+    endpointType: receivingEndpointTypeEnum("endpoint_type").notNull(),
+    stablecoinMode: stablecoinModeEnum("stablecoin_mode").default("unknown").notNull(),
+    customerType: customerTypeEnum("customer_type"),
+
+    incomingAsset: text("incoming_asset").references(() => assets.symbol),
+    incomingNetwork: text("incoming_network").references(() => blockchains.slug),
+    destinationCurrency: text("destination_currency").references(() => currencies.code),
+    namedRail: text("named_rail").references(() => namedRails.code),
+    paymentMethod: paymentMethodEnum("payment_method"),
+
+    /** Free text on purpose — "T+2", "instant", "1-3 business days" isn't worth a fake-precise enum. */
+    settlementEstimate: text("settlement_estimate"),
+    /** e.g. "e-FIRA" — compliance documentation the recipient gets, when a provider states one. */
+    complianceDocs: text("compliance_docs"),
+
+    availability: availabilityEnum("availability").default("unknown").notNull(),
+    /** Shown verbatim for anything short of a clean "yes" — composite/unverified routes especially. */
+    note: text("note"),
+    derivation: derivationEnum("derivation").default("source").notNull(),
+    evidenceId: uuid("evidence_id").references(() => evidence.id),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    lookupIdx: index("receiving_endpoints_lookup_idx").on(t.providerId, t.countryCode, t.endpointType),
+    countryModeIdx: index("receiving_endpoints_country_mode_idx").on(t.countryCode, t.stablecoinMode),
   }),
 );
 
@@ -878,6 +1036,144 @@ export const sharedComparisons = pgTable("shared_comparisons", {
 });
 
 /* -------------------------------------------------------------------------- */
+/* Country intelligence                                                       */
+/*                                                                             */
+/* A separate, additive subsystem: static/semi-static country-level payment   */
+/* infrastructure facts (regulators, rails, IBAN/SWIFT, KYC/KYB/AML, crypto    */
+/* status), researched offline by Tavily+OpenAI and read cheaply at request   */
+/* time. Deliberately NOT wired into providerCapabilities/namedRails/         */
+/* receivingEndpoints — this never feeds the live routing/eligibility graph.  */
+/* -------------------------------------------------------------------------- */
+
+/** One row per researched country. No status column — current status is always the latest countryResearchRuns row. */
+export const countryProfiles = pgTable("country_profiles", {
+  iso2: text("iso2").primaryKey().references(() => countries.code),
+  /** Filled from a static map + countries.name at ingestion — never LLM-researched. */
+  iso3: text("iso3"),
+  countryName: text("country_name"),
+  currencyCode: text("currency_code").references(() => currencies.code),
+  currencyName: text("currency_name"),
+
+  centralBankName: text("central_bank_name"),
+  regulatorNames: jsonb("regulator_names").$type<string[]>().default([]).notNull(),
+  pspLicensingSummary: text("psp_licensing_summary"),
+
+  ibanSupported: boolean("iban_supported"),
+  ibanNote: text("iban_note"),
+  swiftSupported: boolean("swift_supported"),
+  swiftNote: text("swift_note"),
+
+  instantPaymentAvailable: boolean("instant_payment_available"),
+  instantPaymentSystem: text("instant_payment_system"),
+  localPaymentRails: jsonb("local_payment_rails").$type<string[]>().default([]).notNull(),
+  bankAccountRequirements: jsonb("bank_account_requirements").$type<string[]>().default([]).notNull(),
+  routingCodeType: text("routing_code_type"),
+  routingCodeDescription: text("routing_code_description"),
+
+  cryptoStatus: text("crypto_status"),
+  stablecoinStatus: text("stablecoin_status"),
+
+  kycRequirements: jsonb("kyc_requirements").$type<string[]>().default([]).notNull(),
+  kybRequirements: jsonb("kyb_requirements").$type<string[]>().default([]).notNull(),
+  amlRequirements: jsonb("aml_requirements").$type<string[]>().default([]).notNull(),
+  crossBorderRestrictions: jsonb("cross_border_restrictions").$type<string[]>().default([]).notNull(),
+  supportedPayoutCurrencies: jsonb("supported_payout_currencies").$type<string[]>().default([]).notNull(),
+
+  lastResearchedAt: timestamp("last_researched_at", { withTimezone: true }),
+  lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+  createdAt: now(),
+  updatedAt: updated(),
+});
+
+/** One row per distinct URL used per country. The unique (countryIso2, url) index is the dedup mechanism. */
+export const countrySources = pgTable(
+  "country_sources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    countryIso2: text("country_iso2")
+      .notNull()
+      .references(() => countries.code),
+    url: text("url").notNull(),
+    domain: text("domain").notNull(),
+    title: text("title"),
+    category: countrySourceCategoryEnum("category").notNull(),
+    sourceType: countrySourceTypeEnum("source_type").notNull(),
+    authorityLevel: countrySourceAuthorityEnum("authority_level").default("unknown").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    accessedAt: timestamp("accessed_at", { withTimezone: true }).defaultNow().notNull(),
+    contentHash: text("content_hash"),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    countryUrlIdx: uniqueIndex("country_sources_country_url_idx").on(t.countryIso2, t.url),
+    categoryIdx: index("country_sources_category_idx").on(t.countryIso2, t.category),
+  }),
+);
+
+/**
+ * Field-level provenance: which source(s) back one specific fact on
+ * countryProfiles (factKey e.g. "kyc_requirements", "instant_payment_system").
+ * Without this, provenance can only be "sources used for this country
+ * somewhere," not "this fact came from this source" — and conflicting
+ * sources on different facts couldn't be represented. Rewritten (delete +
+ * reinsert) wholesale for a country on every ingestion run, in the same
+ * transaction as the countryProfiles upsert.
+ */
+export const countryFactSources = pgTable(
+  "country_fact_sources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    countryIso2: text("country_iso2")
+      .notNull()
+      .references(() => countries.code),
+    factKey: text("fact_key").notNull(),
+    sourceId: uuid("source_id")
+      .notNull()
+      .references(() => countrySources.id, { onDelete: "cascade" }),
+    confidence: numeric("confidence", { precision: 3, scale: 2 }),
+    excerpt: text("excerpt"),
+    createdAt: now(),
+  },
+  (t) => ({
+    countryFactIdx: index("country_fact_sources_country_fact_idx").on(t.countryIso2, t.factKey),
+  }),
+);
+
+/**
+ * One row per research pipeline execution, updated at each phase transition
+ * (pending -> searching -> extracting -> validating -> completed/failed/partial)
+ * rather than written once at the end, so a run's progress is observable
+ * mid-flight and a failure records exactly which phase it failed in.
+ */
+export const countryResearchRuns = pgTable(
+  "country_research_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    countryIso2: text("country_iso2")
+      .notNull()
+      .references(() => countries.code),
+    status: countryResearchStatusEnum("status").default("pending").notNull(),
+    triggerType: countryResearchTriggerEnum("trigger_type").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    queriesCount: integer("queries_count").default(0).notNull(),
+    sourcesDiscovered: integer("sources_discovered").default(0).notNull(),
+    sourcesUsed: integer("sources_used").default(0).notNull(),
+    modelUsed: text("model_used"),
+    usageMetadata: jsonb("usage_metadata").$type<Record<string, unknown>>().default({}).notNull(),
+    errorMessage: text("error_message"),
+    /** Which pipeline phase failed, e.g. "searching" — status='failed' alone doesn't say that. */
+    errorPhase: text("error_phase"),
+    createdAt: now(),
+  },
+  (t) => ({
+    countryStartedIdx: index("country_research_runs_country_started_idx").on(t.countryIso2, t.startedAt),
+    statusIdx: index("country_research_runs_status_idx").on(t.status),
+  }),
+);
+
+/* -------------------------------------------------------------------------- */
 /* Relations                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -907,6 +1203,23 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   corridors: many(savedCorridors),
   watchlists: many(watchlists),
   keys: many(apiKeys),
+}));
+
+export const countryProfilesRelations = relations(countryProfiles, ({ many }) => ({
+  sources: many(countrySources),
+  factSources: many(countryFactSources),
+  runs: many(countryResearchRuns),
+}));
+
+export const countrySourcesRelations = relations(countrySources, ({ many }) => ({
+  factSources: many(countryFactSources),
+}));
+
+export const countryFactSourcesRelations = relations(countryFactSources, ({ one }) => ({
+  source: one(countrySources, {
+    fields: [countryFactSources.sourceId],
+    references: [countrySources.id],
+  }),
 }));
 
 export const schemaVersion = sql`1`;

@@ -94,6 +94,41 @@ export const currencies = [
   { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp", countryCode: "ID", popularity: 44 },
 ] as const;
 
+/**
+ * Real, named local payment rails — as opposed to paymentMethodEnum's
+ * generic buckets that all of these otherwise collapse into ("PIX" and
+ * "a Nigerian bank transfer" are both just `bank_transfer_local` there).
+ * `category` keeps that generic bucket too, so nothing that already filters
+ * by paymentMethodEnum needs to change. Real, well-documented, low-
+ * confidence-risk facts (a national payment rail's name is public
+ * knowledge, not a claim about what any specific provider supports) —
+ * unlike provider capability rows, these don't need an evidence citation.
+ * Deliberately not exhaustive: this is the set from the markets already
+ * researched (India, Brazil, Mexico, Colombia, Argentina, the US, Kenya)
+ * plus a handful more of comparable confidence, not a global sweep.
+ */
+export const namedRails = [
+  { code: "UPI", name: "UPI", countryCode: "IN", category: "bank_transfer_local", description: "India's real-time bank-to-bank instant payment rail." },
+  { code: "IMPS", name: "IMPS", countryCode: "IN", category: "bank_transfer_local", description: "India's 24/7 interbank instant payment system, predates UPI." },
+  { code: "NEFT", name: "NEFT", countryCode: "IN", category: "bank_transfer_local", description: "India's batched (half-hourly) interbank transfer system." },
+  { code: "RTGS", name: "RTGS", countryCode: "IN", category: "bank_transfer_local", description: "India's real-time gross settlement system for high-value transfers." },
+  { code: "PIX", name: "PIX", countryCode: "BR", category: "bank_transfer_local", description: "Brazil's instant payment system, run by the central bank (BCB)." },
+  { code: "TED", name: "TED", countryCode: "BR", category: "bank_transfer_local", description: "Brazil's same-day wire transfer, largely superseded by PIX for smaller amounts." },
+  { code: "BOLETO", name: "Boleto Bancário", countryCode: "BR", category: "bank_transfer_local", description: "Brazil's voucher-based payment instrument, paid at a bank, ATM or app." },
+  { code: "SPEI", name: "SPEI", countryCode: "MX", category: "bank_transfer_local", description: "Mexico's interbank electronic payment system, run by Banco de México." },
+  { code: "PSE", name: "PSE", countryCode: "CO", category: "bank_transfer_local", description: "Colombia's online bank-debit payment rail (Pagos Seguros en Línea)." },
+  { code: "TRANSFERENCIAS_3", name: "Transferencias 3.0", countryCode: "AR", category: "bank_transfer_local", description: "Argentina's interoperable instant-transfer rail across banks and wallets." },
+  { code: "FEDNOW", name: "FedNow", countryCode: "US", category: "bank_transfer_local", description: "The Federal Reserve's instant payment rail, launched 2023." },
+  { code: "RTP", name: "RTP", countryCode: "US", category: "bank_transfer_local", description: "The Clearing House's real-time payments network." },
+  { code: "MPESA", name: "M-PESA", countryCode: "KE", category: "wallet_transfer", description: "Safaricom's mobile money service, the dominant wallet rail in Kenya." },
+  { code: "AIRTEL_MONEY_KE", name: "Airtel Money", countryCode: "KE", category: "wallet_transfer", description: "Airtel's mobile money service, Kenya's second major wallet rail." },
+  { code: "NIP", name: "NIP", countryCode: "NG", category: "bank_transfer_local", description: "Nigeria's NIBSS Instant Payment rail for interbank transfers." },
+  { code: "PAYNOW", name: "PayNow", countryCode: "SG", category: "bank_transfer_local", description: "Singapore's peer-to-peer/business instant transfer rail, addressed by phone or ID." },
+  { code: "FAST_SG", name: "FAST", countryCode: "SG", category: "bank_transfer_local", description: "Singapore's Fast and Secure Transfers interbank rail." },
+  { code: "INSTAPAY", name: "InstaPay", countryCode: "PH", category: "bank_transfer_local", description: "The Philippines' real-time low-value interbank transfer rail." },
+  { code: "PESONET", name: "PESONet", countryCode: "PH", category: "bank_transfer_local", description: "The Philippines' batched (same/next-day) interbank transfer rail." },
+] as const;
+
 export const blockchains = [
   { slug: "ethereum", name: "Ethereum", chainId: "1", finalitySeconds: 780, popularity: 95 },
   { slug: "base", name: "Base", chainId: "8453", finalitySeconds: 12, popularity: 92 },

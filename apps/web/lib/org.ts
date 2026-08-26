@@ -69,7 +69,7 @@ export async function createApiKey(
   mode: "test" | "live",
 ) {
   const db = await getDb();
-  const secret = `rk_${mode}_${randomBytes(24).toString("base64url")}`;
+  const secret = `rail_${mode}_${randomBytes(24).toString("base64url")}`;
   const [key] = await db
     .insert(apiKeys)
     .values({
