@@ -92,6 +92,12 @@ export const currencies = [
   { code: "TRY", name: "Turkish Lira", symbol: "₺", countryCode: "TR", popularity: 48 },
   { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", countryCode: "MY", popularity: 46 },
   { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp", countryCode: "ID", popularity: 44 },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$", countryCode: "HK", popularity: 55 },
+  { code: "ILS", name: "Israeli New Shekel", symbol: "₪", countryCode: "IL", popularity: 42 },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$", countryCode: "NZ", popularity: 41 },
+  { code: "PLN", name: "Polish Złoty", symbol: "zł", countryCode: "PL", popularity: 40 },
+  { code: "COP", name: "Colombian Peso", symbol: "$", countryCode: "CO", popularity: 39 },
+  { code: "ARS", name: "Argentine Peso", symbol: "$", countryCode: "AR", popularity: 38 },
 ] as const;
 
 /**
@@ -104,8 +110,17 @@ export const currencies = [
  * knowledge, not a claim about what any specific provider supports) —
  * unlike provider capability rows, these don't need an evidence citation.
  * Deliberately not exhaustive: this is the set from the markets already
- * researched (India, Brazil, Mexico, Colombia, Argentina, the US, Kenya)
- * plus a handful more of comparable confidence, not a global sweep.
+ * researched (India, Brazil, Mexico, Colombia, Argentina, the US, Kenya,
+ * the UK, the Eurozone) plus a handful more of comparable confidence, not
+ * a global sweep — see PROJECT_STATUS.md for exactly which countries in
+ * the 58-country research pipeline still have no named_rails rows.
+ *
+ * category picks the *specific* paymentMethodEnum value where one exists
+ * for this rail by name (faster_payments/sepa/ach/wire all double as
+ * literal search terms — see vocab.ts's METHOD_TERMS), falling back to the
+ * generic bank_transfer_local/wallet_transfer bucket otherwise — same
+ * choice FedNow/RTP already made above for a "real named rail, no
+ * dedicated enum value" case.
  */
 export const namedRails = [
   { code: "UPI", name: "UPI", countryCode: "IN", category: "bank_transfer_local", description: "India's real-time bank-to-bank instant payment rail." },
@@ -127,6 +142,37 @@ export const namedRails = [
   { code: "FAST_SG", name: "FAST", countryCode: "SG", category: "bank_transfer_local", description: "Singapore's Fast and Secure Transfers interbank rail." },
   { code: "INSTAPAY", name: "InstaPay", countryCode: "PH", category: "bank_transfer_local", description: "The Philippines' real-time low-value interbank transfer rail." },
   { code: "PESONET", name: "PESONet", countryCode: "PH", category: "bank_transfer_local", description: "The Philippines' batched (same/next-day) interbank transfer rail." },
+
+  // United Kingdom
+  { code: "FASTER_PAYMENTS_GB", name: "Faster Payments", countryCode: "GB", category: "faster_payments", description: "The UK's near-instant interbank push-payment system, run by Pay.UK." },
+  { code: "BACS", name: "Bacs", countryCode: "GB", category: "bank_transfer_local", description: "The UK's batched (3-day) direct-debit and direct-credit clearing system." },
+  { code: "CHAPS", name: "CHAPS", countryCode: "GB", category: "wire", description: "The UK's same-day, high-value real-time gross settlement wire system." },
+
+  // United States (FedNow/RTP already listed above)
+  { code: "ACH_US", name: "ACH", countryCode: "US", category: "ach", description: "The US's batched (same/next-day) interbank clearing network, run by Nacha." },
+  { code: "FEDWIRE", name: "Fedwire", countryCode: "US", category: "wire", description: "The Federal Reserve's same-day, high-value real-time gross settlement wire system." },
+
+  // Eurozone — scoped to countries in Railor's dataset that actually settle in EUR;
+  // SEPA also reaches non-Euro participants (UK, Switzerland, Nordics), but that's
+  // a secondary fact this file isn't confident enough in to assert without
+  // per-country verification, consistent with this dataset's "null over a shaky
+  // guess" rule elsewhere.
+  ...["DE", "FR", "NL", "IT", "ES", "PT", "IE", "BE"].flatMap((cc) => [
+    {
+      code: `SEPA_CT_${cc}`,
+      name: "SEPA Credit Transfer",
+      countryCode: cc,
+      category: "sepa" as const,
+      description: "Eurozone-wide EUR bank transfer, same or next business day, run under the SEPA scheme.",
+    },
+    {
+      code: `SEPA_ICT_${cc}`,
+      name: "SEPA Instant Credit Transfer",
+      countryCode: cc,
+      category: "sepa" as const,
+      description: "Eurozone-wide EUR instant bank transfer (funds available within 10 seconds), run under the SEPA scheme.",
+    },
+  ]),
 ] as const;
 
 export const blockchains = [

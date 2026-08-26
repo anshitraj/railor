@@ -110,6 +110,73 @@ PROVIDERS: tuple[RealProvider, ...] = (
         website_url="https://ripple.com",
         docs_url="https://docs.ripple.com/",
     ),
+    # Second batch — registered in packages/database/src/seed/provider-batch-2.ts
+    # with real capability/receiving-endpoint data; added here too so this
+    # worker's crawl/conformance pipeline covers them the same as batch one.
+    RealProvider(
+        slug="wise",
+        name="Wise",
+        category="Cross-border payments",
+        description="Cross-border money transfer and business payments infrastructure at the mid-market exchange rate.",
+        website_url="https://wise.com",
+        docs_url="https://api-docs.wise.com/",
+    ),
+    RealProvider(
+        slug="bvnk",
+        name="BVNK",
+        category="Stablecoin infrastructure",
+        description="Stablecoin payments infrastructure: global payouts, payment acceptance, unified fiat/stablecoin accounts.",
+        website_url="https://www.bvnk.com",
+        docs_url="https://docs.bvnk.com",
+    ),
+    RealProvider(
+        slug="brale",
+        name="Brale",
+        category="Stablecoin infrastructure",
+        description="Stablecoin issuance-as-a-service: banking, compliance, custody and multi-chain infrastructure on one API.",
+        website_url="https://brale.xyz",
+        docs_url="https://docs.brale.xyz",
+    ),
+    RealProvider(
+        slug="airwallex",
+        name="Airwallex",
+        category="Cross-border payments",
+        description="Global payments and financial infrastructure platform; multi-currency Global Accounts.",
+        website_url="https://www.airwallex.com",
+        docs_url="https://www.airwallex.com/docs",
+    ),
+    RealProvider(
+        slug="conduit",
+        name="Conduit",
+        category="Stablecoin infrastructure",
+        description="Cross-border money movement combining USD accounts and stablecoins on one API.",
+        website_url="https://conduitpay.com",
+        docs_url="https://conduitpay.com",
+    ),
+    RealProvider(
+        slug="transak",
+        name="Transak",
+        category="On/off-ramp",
+        description="Fiat-to-crypto and crypto-to-fiat on/off-ramp infrastructure, embeddable as a widget or white-label API.",
+        website_url="https://transak.com",
+        docs_url="https://docs.transak.com",
+    ),
+    RealProvider(
+        slug="yellow-card",
+        name="Yellow Card",
+        category="Stablecoin infrastructure",
+        description="Licensed stablecoin payments infrastructure for emerging markets.",
+        website_url="https://yellowcard.io",
+        docs_url="https://docs.yellowcard.engineering",
+    ),
+    RealProvider(
+        slug="mural-pay",
+        name="Mural Pay",
+        category="Stablecoin infrastructure",
+        description="Stablecoin account infrastructure for global money movement, focused on Latin America.",
+        website_url="https://muralpay.com",
+        docs_url="https://developers.muralpay.com/docs/getting-started",
+    ),
 )
 
 

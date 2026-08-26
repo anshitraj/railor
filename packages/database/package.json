@@ -16,6 +16,7 @@
     "seed": "tsx src/seed/run.ts",
     "receiving-endpoints": "tsx src/seed/receiving-endpoints.ts",
     "stablecoin-capabilities": "tsx src/seed/stablecoin-capabilities.ts",
+    "provider-batch-2": "tsx src/seed/provider-batch-2.ts",
     "reset": "tsx src/seed/reset.ts",
     "typecheck": "tsc --noEmit"
   },
