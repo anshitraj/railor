@@ -12,7 +12,7 @@
  *
  *   pnpm --filter @railor/database receiving-endpoints
  */
-import "dotenv/config";
+import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";

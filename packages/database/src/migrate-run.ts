@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./dev-env.js";
 import { getDbHandle } from "./client.js";
 
 async function main() {

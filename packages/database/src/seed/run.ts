@@ -7,7 +7,7 @@
  *
  *   pnpm db:seed
  */
-import "dotenv/config";
+import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";

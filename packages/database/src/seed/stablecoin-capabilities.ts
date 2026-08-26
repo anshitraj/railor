@@ -18,7 +18,7 @@
  *
  *   pnpm --filter @railor/database stablecoin-capabilities
  */
-import "dotenv/config";
+import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { and, eq } from "drizzle-orm";

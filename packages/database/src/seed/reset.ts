@@ -4,7 +4,7 @@
  *
  *   pnpm db:reset && pnpm db:seed
  */
-import "dotenv/config";
+import "../dev-env.js";
 import { sql } from "drizzle-orm";
 import { getDbHandle } from "../client.js";
 
