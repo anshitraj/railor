@@ -93,6 +93,7 @@ export const currencies = [
   { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", countryCode: "MY", popularity: 46 },
   { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp", countryCode: "ID", popularity: 44 },
   { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$", countryCode: "HK", popularity: 55 },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥", countryCode: "CN", popularity: 78 },
   { code: "ILS", name: "Israeli New Shekel", symbol: "₪", countryCode: "IL", popularity: 42 },
   { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$", countryCode: "NZ", popularity: 41 },
   { code: "PLN", name: "Polish Złoty", symbol: "zł", countryCode: "PL", popularity: 40 },

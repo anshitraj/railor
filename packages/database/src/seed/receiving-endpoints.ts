@@ -167,6 +167,10 @@ export async function bootstrap(): Promise<string[]> {
 
   const existingEndpoints = await db.select().from(s.receivingEndpoints);
   const has = (providerId: string) => existingEndpoints.some((e) => e.providerId === providerId);
+  const hasAssetRow = (providerId: string, asset: string, network: string) =>
+    existingEndpoints.some(
+      (e) => e.providerId === providerId && e.incomingAsset === asset && e.incomingNetwork === network,
+    );
 
   if (!has(providerIds.skydo!)) {
     await db.insert(s.receivingEndpoints).values({
@@ -186,24 +190,35 @@ export async function bootstrap(): Promise<string[]> {
     log.push("receiving endpoint already exists: skydo");
   }
 
-  if (!has(providerIds.xflow!)) {
-    await db.insert(s.receivingEndpoints).values({
-      providerId: providerIds.xflow!,
-      countryCode: "IN",
-      endpointType: "bank_account",
-      stablecoinMode: "stablecoin_funded_fiat",
-      customerType: "business",
-      destinationCurrency: "INR",
-      complianceDocs: "e-FIRA",
-      availability: "supported",
-      note: "Accepts USDC/USDT from overseas buyers on Solana, Tron and EVM chains (Polygon, Ethereum). The stablecoin leg never enters India — it converts offshore, and only INR fiat is settled to the Indian business's bank account. Public API/integration docs referenced on the product page.",
-      evidenceId: xflowEvidence,
-      lastVerifiedAt: new Date(),
-    });
-    log.push("receiving endpoint created: xflow (IN, stablecoin_funded_fiat)");
-  } else {
-    log.push("receiving endpoint already exists: xflow");
+  // One row per (asset, network) pair the product page itself names — "Buyers
+  // pay in USDC or USDT ... Networks: Solana, Tron, EVM (Polygon, Ethereum)" —
+  // rather than one asset-less row, so a query for a specific asset/network
+  // (the shape every real corridor search uses) actually matches Xflow.
+  const xflowAssets = ["USDC", "USDT"];
+  const xflowNetworks = ["solana", "tron", "polygon", "ethereum"];
+  let xflowCreated = 0;
+  for (const asset of xflowAssets) {
+    for (const network of xflowNetworks) {
+      if (hasAssetRow(providerIds.xflow!, asset, network)) continue;
+      await db.insert(s.receivingEndpoints).values({
+        providerId: providerIds.xflow!,
+        countryCode: "IN",
+        endpointType: "bank_account",
+        stablecoinMode: "stablecoin_funded_fiat",
+        customerType: "business",
+        incomingAsset: asset,
+        incomingNetwork: network,
+        destinationCurrency: "INR",
+        complianceDocs: "e-FIRA",
+        availability: "supported",
+        note: "Accepts USDC/USDT from overseas buyers on Solana, Tron and EVM chains (Polygon, Ethereum). The stablecoin leg never enters India — it converts offshore, and only INR fiat is settled to the Indian business's bank account. Public API/integration docs referenced on the product page.",
+        evidenceId: xflowEvidence,
+        lastVerifiedAt: new Date(),
+      });
+      xflowCreated += 1;
+    }
   }
+  log.push(`receiving endpoints created: xflow (IN, stablecoin_funded_fiat) — ${xflowCreated} asset/network row(s), ${xflowAssets.length * xflowNetworks.length - xflowCreated} already present`);
 
   return log;
 }

@@ -10,8 +10,27 @@ import type {
   RankingPreset,
 } from "@railor/types";
 import { evaluateProvider, scoreProvider, settlementMinutes } from "./eligibility.js";
-import { loadProviderInputs } from "./repository.js";
+import { loadCountryProfile, loadProviderInputs } from "./repository.js";
 import { PRODUCT_TERMS } from "./vocab.js";
+
+async function loadCountryContext(iso2: string | undefined) {
+  if (!iso2) return null;
+  const profile = await loadCountryProfile(iso2);
+  if (!profile) return null;
+  return {
+    iso2: profile.iso2,
+    countryName: profile.countryName,
+    cryptoStatus: profile.cryptoStatus,
+    stablecoinStatus: profile.stablecoinStatus,
+    instantPaymentSystem: profile.instantPaymentSystem,
+    localPaymentRails: profile.localPaymentRails,
+    kycRequirements: profile.kycRequirements,
+    kybRequirements: profile.kybRequirements,
+    amlRequirements: profile.amlRequirements,
+    crossBorderRestrictions: profile.crossBorderRestrictions,
+    lastResearchedAt: profile.lastResearchedAt,
+  };
+}
 
 export interface SearchOptions {
   preset?: RankingPreset;
@@ -27,7 +46,10 @@ export async function searchCorridors(
   options: SearchOptions = {},
 ): Promise<CorridorSearchResult> {
   const preset = options.preset ?? "balanced";
-  const inputs = await loadProviderInputs();
+  const [inputs, countryContext] = await Promise.all([
+    loadProviderInputs(),
+    loadCountryContext(query.destinationCountry),
+  ]);
   const now = options.now ?? new Date();
 
   const results: ProviderResult[] = inputs.map((provider) => {
@@ -69,6 +91,7 @@ export async function searchCorridors(
       },
       evidence: evaluation.evidence,
       score,
+      receivingMode: evaluation.receivingMode,
     } satisfies ProviderResult;
   });
 
@@ -97,6 +120,7 @@ export async function searchCorridors(
     counts,
     results: options.limit ? results.slice(0, options.limit) : results,
     generatedAt: now,
+    countryContext,
   };
 }
 

@@ -177,6 +177,25 @@ PROVIDERS: tuple[RealProvider, ...] = (
         website_url="https://muralpay.com",
         docs_url="https://developers.muralpay.com/docs/getting-started",
     ),
+    # Third batch — registered in packages/database/src/seed/provider-batch-3.ts
+    # with real capability/receiving-endpoint data; added here too so this
+    # worker's crawl/conformance pipeline covers them the same as batches 1-2.
+    RealProvider(
+        slug="dashx",
+        name="DashX",
+        category="Cross-border payments",
+        description="Receiving platform for Indian freelancers and businesses: multi-currency virtual accounts and stablecoin-funded INR settlement with automated FIRA.",
+        website_url="https://dashx.xyz",
+        docs_url="https://gateway.dashx.xyz",
+    ),
+    RealProvider(
+        slug="payoneer",
+        name="Payoneer",
+        category="Cross-border payments",
+        description="Global cross-border payments platform: multi-currency receiving accounts, marketplace mass payouts, Digital FIRC for Indian exporters, and a Bridge-powered stablecoin wallet.",
+        website_url="https://www.payoneer.com",
+        docs_url="https://developer.payoneer.com",
+    ),
 )
 
 

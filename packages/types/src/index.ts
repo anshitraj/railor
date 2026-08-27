@@ -273,6 +273,16 @@ export const EligibilityReason = z.object({
 });
 export type EligibilityReason = z.infer<typeof EligibilityReason>;
 
+/** How the money actually lands for the recipient — the Skydo-vs-Xflow distinction. */
+export const ReceivingMode = z.object({
+  stablecoinMode: z.string(),
+  endpointType: z.string().nullable(),
+  namedRail: z.string().nullable(),
+  settlementEstimate: z.string().nullable(),
+  complianceDocs: z.string().nullable(),
+});
+export type ReceivingMode = z.infer<typeof ReceivingMode>;
+
 export const ProviderResult = z.object({
   provider: z.object({
     id: z.string(),
@@ -299,8 +309,26 @@ export const ProviderResult = z.object({
   evidence: z.array(Evidence).default([]),
   /** Preset-dependent score, 0–100. Ineligible providers are never ranked up. */
   score: z.number().min(0).max(100).default(0),
+  /** Set only when a receiving_endpoints fact decided the corridor. */
+  receivingMode: ReceivingMode.nullable().default(null),
 });
 export type ProviderResult = z.infer<typeof ProviderResult>;
+
+/** Country-level regulatory context for the destination — never gates a verdict, only informs it. */
+export const CountryContext = z.object({
+  iso2: z.string(),
+  countryName: z.string().nullable(),
+  cryptoStatus: z.string().nullable(),
+  stablecoinStatus: z.string().nullable(),
+  instantPaymentSystem: z.string().nullable(),
+  localPaymentRails: z.array(z.string()).default([]),
+  kycRequirements: z.array(z.string()).default([]),
+  kybRequirements: z.array(z.string()).default([]),
+  amlRequirements: z.array(z.string()).default([]),
+  crossBorderRestrictions: z.array(z.string()).default([]),
+  lastResearchedAt: z.coerce.date().nullable(),
+});
+export type CountryContext = z.infer<typeof CountryContext>;
 
 export const CorridorSearchResult = z.object({
   query: CorridorQuery,
@@ -314,6 +342,8 @@ export const CorridorSearchResult = z.object({
   }),
   results: z.array(ProviderResult),
   generatedAt: z.coerce.date(),
+  /** Regulatory context for the destination country, when Railor has researched it. */
+  countryContext: CountryContext.nullable().default(null),
 });
 export type CorridorSearchResult = z.infer<typeof CorridorSearchResult>;
 

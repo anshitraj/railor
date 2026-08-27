@@ -16,10 +16,12 @@ import {
   getDb,
   healthChecks,
   limits as limitsTable,
+  namedRails,
   providerCapabilities,
   providerProducts,
   providerRequirements,
   providers,
+  receivingEndpoints,
   requirements as requirementsTable,
   sourceDocuments,
 } from "@railor/database";
@@ -61,7 +63,7 @@ const num = (v: string | number | null | undefined): number | undefined => {
 export async function loadProviderInputs(): Promise<ProviderInput[]> {
   const db = await getDb();
 
-  const [providerRows, productRows, facetRows, reqRows, feeRows, limitRows, healthRows] =
+  const [providerRows, productRows, facetRows, endpointRows, reqRows, feeRows, limitRows, healthRows] =
     await Promise.all([
       db.select().from(providers),
       db.select().from(providerProducts),
@@ -92,6 +94,37 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
         })
         .from(providerCapabilities)
         .leftJoin(evidenceTable, eq(providerCapabilities.evidenceId, evidenceTable.id)),
+      db
+        .select({
+          id: receivingEndpoints.id,
+          providerId: receivingEndpoints.providerId,
+          countryCode: receivingEndpoints.countryCode,
+          endpointType: receivingEndpoints.endpointType,
+          stablecoinMode: receivingEndpoints.stablecoinMode,
+          customerType: receivingEndpoints.customerType,
+          incomingAsset: receivingEndpoints.incomingAsset,
+          incomingNetwork: receivingEndpoints.incomingNetwork,
+          destinationCurrency: receivingEndpoints.destinationCurrency,
+          namedRailCode: receivingEndpoints.namedRail,
+          namedRailName: namedRails.name,
+          paymentMethod: receivingEndpoints.paymentMethod,
+          settlementEstimate: receivingEndpoints.settlementEstimate,
+          complianceDocs: receivingEndpoints.complianceDocs,
+          availability: receivingEndpoints.availability,
+          note: receivingEndpoints.note,
+          lastVerifiedAt: receivingEndpoints.lastVerifiedAt,
+          evidenceId: evidenceTable.id,
+          evidenceUrl: evidenceTable.sourceUrl,
+          evidenceTitle: evidenceTable.sourceTitle,
+          evidenceType: evidenceTable.sourceType,
+          evidenceConfidence: evidenceTable.confidence,
+          evidenceRetrievedAt: evidenceTable.retrievedAt,
+          evidenceRawHash: evidenceTable.rawHash,
+          evidenceExcerpt: evidenceTable.rawExcerpt,
+        })
+        .from(receivingEndpoints)
+        .leftJoin(evidenceTable, eq(receivingEndpoints.evidenceId, evidenceTable.id))
+        .leftJoin(namedRails, eq(receivingEndpoints.namedRail, namedRails.code)),
       db
         .select({
           providerId: providerRequirements.providerId,
@@ -144,6 +177,85 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
     facetsByProvider.set(f.providerId, list);
   }
 
+  // `receiving_endpoints` rows describe how money lands for a recipient in a
+  // country — a "payout"/"off_ramp" fact by nature, so they fold into the
+  // corridor family checks under a synthetic `product: "payout"` alongside
+  // any providerCapabilities row for the same product family. This is how
+  // the Skydo-vs-Xflow stablecoin_mode distinction reaches the eligibility
+  // engine without a parallel evaluation path.
+  //
+  // `familyOf()` in eligibility.ts buckets a facet into exactly one family,
+  // by priority: entity > corridor (destinationCountry) > asset > network.
+  // A receiving_endpoints row naturally carries country + asset + network
+  // all at once, so a single synthetic facet would only ever classify as
+  // "corridor" and the asset/network checks would never see it. The demo
+  // dataset avoids this by writing separate asset-only and network-only
+  // capability rows (see seed/run.ts's two push() loops) — mirrored here by
+  // emitting up to three shaped copies of the same underlying fact.
+  const providersWithReceivingEndpoints = new Set<string>();
+  for (const e of endpointRows) {
+    providersWithReceivingEndpoints.add(e.providerId);
+    const list = facetsByProvider.get(e.providerId) ?? [];
+
+    const shared = {
+      product: "payout" as const,
+      entityCountry: null,
+      customerCountry: null,
+      customerType: e.customerType,
+      paymentMethod: e.paymentMethod,
+      availability: e.availability,
+      note: e.note,
+      lastVerifiedAt: e.lastVerifiedAt,
+      evidenceConfidence: num(e.evidenceConfidence) ?? null,
+      evidenceSourceType: (e.evidenceType as SourceType | null) ?? null,
+      evidenceId: e.evidenceId,
+      evidenceUrl: e.evidenceUrl,
+      evidenceTitle: e.evidenceTitle,
+      evidenceRetrievedAt: e.evidenceRetrievedAt,
+      evidenceRawHash: e.evidenceRawHash,
+      evidenceExcerpt: e.evidenceExcerpt,
+      stablecoinMode: e.stablecoinMode,
+      endpointType: e.endpointType,
+      namedRailCode: e.namedRailCode,
+      namedRailName: e.namedRailName,
+      settlementEstimate: e.settlementEstimate,
+      complianceDocs: e.complianceDocs,
+    };
+
+    // Corridor-shaped: how this country/currency/rail combination is served.
+    list.push({
+      ...shared,
+      id: e.id,
+      sourceAsset: e.incomingAsset,
+      sourceNetwork: e.incomingNetwork,
+      destinationCountry: e.countryCode,
+      destinationCurrency: e.destinationCurrency,
+    });
+    // Asset-shaped: so a query's asset check can find this fact too.
+    if (e.incomingAsset) {
+      list.push({
+        ...shared,
+        id: `${e.id}:asset`,
+        sourceAsset: e.incomingAsset,
+        sourceNetwork: null,
+        destinationCountry: null,
+        destinationCurrency: null,
+      });
+    }
+    // Network-shaped: same reasoning, for the network check.
+    if (e.incomingNetwork) {
+      list.push({
+        ...shared,
+        id: `${e.id}:network`,
+        sourceAsset: null,
+        sourceNetwork: e.incomingNetwork,
+        destinationCountry: null,
+        destinationCurrency: null,
+      });
+    }
+    facetsByProvider.set(e.providerId, list);
+  }
+
   const health = new Map<string, { ok: number; total: number }>();
   for (const h of healthRows) {
     const agg = health.get(h.providerId) ?? { ok: 0, total: 0 };
@@ -168,7 +280,17 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       slug: p.slug,
       name: p.name,
       category: p.category,
-      products: productRows.filter((x) => x.providerId === p.id).map((x) => x.product),
+      // A receiving_endpoints row is itself evidence of a "payout" product,
+      // even when the provider has no explicit providerProducts catalog
+      // entry (real providers like Xflow/Skydo were seeded with the former
+      // but not the latter) — without this union, evaluateProvider's first
+      // gate rejects them before their receiving-endpoint facts are ever read.
+      products: [
+        ...new Set([
+          ...productRows.filter((x) => x.providerId === p.id).map((x) => x.product),
+          ...(providersWithReceivingEndpoints.has(p.id) ? ["payout"] : []),
+        ]),
+      ],
       facets,
       advertisedSettlement: p.advertisedSettlement,
       onboardingDays: p.onboardingDays,
@@ -240,7 +362,7 @@ export async function loadProviderBySlug(slug: string) {
   const [provider] = await db.select().from(providers).where(eq(providers.slug, slug)).limit(1);
   if (!provider) return null;
 
-  const [products, facets, reqs, fees, limits, changes, sources, health, observed, conformance, incidents] =
+  const [products, facets, receiving, reqs, fees, limits, changes, sources, health, observed, conformance, incidents] =
     await Promise.all([
     db.select().from(providerProducts).where(eq(providerProducts.providerId, provider.id)),
     db
@@ -251,6 +373,16 @@ export async function loadProviderBySlug(slug: string) {
       .from(providerCapabilities)
       .leftJoin(evidenceTable, eq(providerCapabilities.evidenceId, evidenceTable.id))
       .where(eq(providerCapabilities.providerId, provider.id)),
+    db
+      .select({
+        endpoint: receivingEndpoints,
+        namedRailName: namedRails.name,
+        evidence: evidenceTable,
+      })
+      .from(receivingEndpoints)
+      .leftJoin(evidenceTable, eq(receivingEndpoints.evidenceId, evidenceTable.id))
+      .leftJoin(namedRails, eq(receivingEndpoints.namedRail, namedRails.code))
+      .where(eq(receivingEndpoints.providerId, provider.id)),
     db
       .select({
         key: requirementsTable.key,
@@ -288,6 +420,7 @@ export async function loadProviderBySlug(slug: string) {
     provider,
     products,
     facets,
+    receivingEndpoints: receiving,
     requirements: reqs,
     fees,
     limits,
@@ -429,6 +562,25 @@ export async function loadCountryFactSources(iso2: string) {
     .from(countryFactSources)
     .innerJoin(countrySources, eq(countryFactSources.sourceId, countrySources.id))
     .where(eq(countryFactSources.countryIso2, iso2));
+}
+
+/** Which providers can actually receive money in this country, and how — the country↔provider↔rail view. */
+export async function loadReceivingEndpointsForCountry(iso2: string) {
+  const db = await getDb();
+  return db
+    .select({
+      endpoint: receivingEndpoints,
+      providerSlug: providers.slug,
+      providerName: providers.name,
+      providerCategory: providers.category,
+      namedRailName: namedRails.name,
+      evidence: evidenceTable,
+    })
+    .from(receivingEndpoints)
+    .innerJoin(providers, eq(receivingEndpoints.providerId, providers.id))
+    .leftJoin(namedRails, eq(receivingEndpoints.namedRail, namedRails.code))
+    .leftJoin(evidenceTable, eq(receivingEndpoints.evidenceId, evidenceTable.id))
+    .where(eq(receivingEndpoints.countryCode, iso2));
 }
 
 export async function loadCountryResearchRuns(iso2: string, limit = 10) {

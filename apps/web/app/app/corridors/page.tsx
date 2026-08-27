@@ -85,6 +85,7 @@ export default async function CorridorsPage({
         providersChecked: result.providersChecked,
         counts: result.counts,
         results: JSON.parse(JSON.stringify(result.results)),
+        countryContext: JSON.parse(JSON.stringify(result.countryContext)),
       }}
     />
   );

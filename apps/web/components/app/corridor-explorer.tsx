@@ -51,8 +51,37 @@ interface SearchPayload {
       confidence: number;
       rawExcerpt?: string;
     }>;
+    receivingMode: {
+      stablecoinMode: string;
+      endpointType: string | null;
+      namedRail: string | null;
+      settlementEstimate: string | null;
+      complianceDocs: string | null;
+    } | null;
   }>;
+  countryContext: {
+    iso2: string;
+    countryName: string | null;
+    cryptoStatus: string | null;
+    stablecoinStatus: string | null;
+    instantPaymentSystem: string | null;
+    localPaymentRails: string[];
+    kycRequirements: string[];
+    kybRequirements: string[];
+    amlRequirements: string[];
+    crossBorderRestrictions: string[];
+    lastResearchedAt: string | null;
+  } | null;
 }
+
+const STABLECOIN_MODE_LABEL: Record<string, string> = {
+  direct_stablecoin: "Direct stablecoin",
+  stablecoin_funded_fiat: "Stablecoin-funded fiat",
+  fiat_only: "Fiat only",
+  stablecoin_only: "Stablecoin only",
+  hybrid: "Hybrid",
+  unknown: "Unknown mode",
+};
 
 const PRESETS: Array<{ value: string; label: string; hint: string }> = [
   { value: "balanced", label: "Balanced", hint: "Default ranking across cost, speed and reliability" },
@@ -295,6 +324,46 @@ export function CorridorExplorer({
         {loading ? <span className="text-[12px] text-[var(--color-muted)]">Re-evaluating…</span> : null}
       </div>
 
+      {data.countryContext ? (
+        <Card className="flex flex-col gap-2 p-5">
+          <SectionLabel>
+            {data.countryContext.countryName ?? data.countryContext.iso2} — regulatory context
+          </SectionLabel>
+          <div className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+            {data.countryContext.cryptoStatus ? (
+              <p>
+                <span className="font-medium">Crypto: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.cryptoStatus}</span>
+              </p>
+            ) : null}
+            {data.countryContext.stablecoinStatus ? (
+              <p>
+                <span className="font-medium">Stablecoins: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.stablecoinStatus}</span>
+              </p>
+            ) : null}
+            {data.countryContext.instantPaymentSystem ? (
+              <p>
+                <span className="font-medium">Instant rail: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.instantPaymentSystem}</span>
+              </p>
+            ) : null}
+            {data.countryContext.localPaymentRails.length ? (
+              <p>
+                <span className="font-medium">Local rails: </span>
+                <span className="text-[var(--color-muted)]">
+                  {data.countryContext.localPaymentRails.join(", ")}
+                </span>
+              </p>
+            ) : null}
+          </div>
+          <p className="text-[11px] text-[var(--color-faint)]">
+            Country-level research, not a per-provider statement — it never changes a verdict above, only
+            explains the market.
+          </p>
+        </Card>
+      ) : null}
+
       {data.results.length ? (
         <div className="flex flex-col gap-2">
           {data.results.map((result) => (
@@ -305,9 +374,21 @@ export function CorridorExplorer({
               verdict={result.eligibility}
               confidence={result.confidence}
               lastVerifiedAt={result.lastVerifiedAt}
-              facts={Object.entries(result.facts)
-                .filter(([, v]) => Boolean(v))
-                .map(([k, v]) => ({ label: FACT_LABELS[k] ?? k, value: String(v) }))}
+              facts={[
+                ...Object.entries(result.facts)
+                  .filter(([, v]) => Boolean(v))
+                  .map(([k, v]) => ({ label: FACT_LABELS[k] ?? k, value: String(v) })),
+                ...(result.receivingMode
+                  ? [
+                      {
+                        label: "Receiving mode",
+                        value:
+                          STABLECOIN_MODE_LABEL[result.receivingMode.stablecoinMode] ??
+                          result.receivingMode.stablecoinMode,
+                      },
+                    ]
+                  : []),
+              ]}
               actions={
                 <Link
                   href={`/app/providers/${result.provider.slug}`}

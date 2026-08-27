@@ -47,6 +47,17 @@ export interface CapabilityFacet {
   evidenceRetrievedAt: Date | null;
   evidenceRawHash: string | null;
   evidenceExcerpt: string | null;
+  /**
+   * Only set on facets derived from `receiving_endpoints` — how the money
+   * actually lands for the recipient, a distinct question from whether the
+   * corridor is merely "supported" (the Skydo-vs-Xflow distinction).
+   */
+  stablecoinMode?: string | null;
+  endpointType?: string | null;
+  namedRailCode?: string | null;
+  namedRailName?: string | null;
+  settlementEstimate?: string | null;
+  complianceDocs?: string | null;
 }
 
 export interface ProviderInput {
@@ -79,6 +90,15 @@ export interface EvaluationOptions {
   now?: Date;
 }
 
+/** How the money actually lands, when a `receiving_endpoints` fact decided the corridor. */
+export interface ReceivingModeInfo {
+  stablecoinMode: string;
+  endpointType: string | null;
+  namedRail: string | null;
+  settlementEstimate: string | null;
+  complianceDocs: string | null;
+}
+
 export interface Evaluation {
   verdict: EligibilityVerdict;
   confidence: number;
@@ -89,6 +109,20 @@ export interface Evaluation {
   matchedProduct: string | null;
   /** Exactly the sources this verdict rests on — deduped, never decorative. */
   evidence: Evidence[];
+  receivingMode: ReceivingModeInfo | null;
+}
+
+/** First depended-on facet that carries a receiving-endpoint mode, if any. */
+function receivingModeFrom(facets: CapabilityFacet[]): ReceivingModeInfo | null {
+  const withMode = facets.find((f) => f.stablecoinMode);
+  if (!withMode?.stablecoinMode) return null;
+  return {
+    stablecoinMode: withMode.stablecoinMode,
+    endpointType: withMode.endpointType ?? null,
+    namedRail: withMode.namedRailName ?? withMode.namedRailCode ?? null,
+    settlementEstimate: withMode.settlementEstimate ?? null,
+    complianceDocs: withMode.complianceDocs ?? null,
+  };
 }
 
 /** Evidence for the facets a verdict depended on, deduped by source URL. */
@@ -210,6 +244,7 @@ export function evaluateProvider(
       lastVerifiedAt: provider.lastVerifiedAt,
       matchedProduct: null,
       evidence: [],
+      receivingMode: null,
     };
   }
 
@@ -488,6 +523,7 @@ export function evaluateProvider(
     lastVerifiedAt: verifiedDates[0] ?? provider.lastVerifiedAt,
     matchedProduct,
     evidence: collectEvidence(dependedOn),
+    receivingMode: receivingModeFrom(dependedOn),
   };
 }
 

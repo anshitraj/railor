@@ -43,6 +43,7 @@ export default async function ProviderProfile({
     provider,
     products,
     facets,
+    receivingEndpoints,
     requirements,
     fees,
     limits,
@@ -53,6 +54,15 @@ export default async function ProviderProfile({
     conformance,
     incidents,
   } = data;
+
+  const STABLECOIN_MODE_LABEL: Record<string, string> = {
+    direct_stablecoin: "Direct stablecoin",
+    stablecoin_funded_fiat: "Stablecoin-funded fiat",
+    fiat_only: "Fiat only",
+    stablecoin_only: "Stablecoin only",
+    hybrid: "Hybrid",
+    unknown: "Unknown",
+  };
 
   const CONFORMANCE_STATUS_STYLE: Record<string, string> = {
     pass: "bg-[var(--color-ok-bg)] text-[var(--color-ok)]",
@@ -244,6 +254,96 @@ export default async function ProviderProfile({
               {!corridors.length ? (
                 <p className="py-3 text-[13px] text-[var(--color-muted)]">
                   This provider publishes no payout corridors in the mapped dataset.
+                </p>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card className="flex flex-col gap-3 p-5">
+            <SectionLabel>Receiving endpoints — how money actually lands</SectionLabel>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left text-[13px]">
+                <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                  <tr>
+                    <th className="pb-2">Country</th>
+                    <th className="pb-2">Incoming</th>
+                    <th className="pb-2">Stablecoin mode</th>
+                    <th className="pb-2">Rail / settlement</th>
+                    <th className="pb-2">Status</th>
+                    <th className="pb-2">Evidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {receivingEndpoints.map((r) => (
+                    <tr key={r.endpoint.id} className="border-t border-[var(--color-line)]">
+                      <td className="py-2">
+                        {r.endpoint.countryCode} · {r.endpoint.destinationCurrency}
+                      </td>
+                      <td className="py-2 text-[var(--color-muted)]">
+                        {r.endpoint.incomingAsset
+                          ? `${r.endpoint.incomingAsset}${r.endpoint.incomingNetwork ? ` / ${r.endpoint.incomingNetwork}` : ""}`
+                          : "—"}
+                      </td>
+                      <td className="py-2">
+                        <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-purple)]">
+                          {STABLECOIN_MODE_LABEL[r.endpoint.stablecoinMode] ?? r.endpoint.stablecoinMode}
+                        </span>
+                      </td>
+                      <td className="py-2 text-[var(--color-muted)]">
+                        {[r.namedRailName, r.endpoint.settlementEstimate].filter(Boolean).join(" · ") || "—"}
+                        {r.endpoint.complianceDocs ? (
+                          <span className="block text-[11px] text-[var(--color-faint)]">
+                            Docs: {r.endpoint.complianceDocs}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-2">
+                        <VerdictPill
+                          compact
+                          verdict={
+                            r.endpoint.availability === "supported"
+                              ? "supported"
+                              : r.endpoint.availability === "partial"
+                                ? "additional_requirements"
+                                : r.endpoint.availability === "unsupported"
+                                  ? "unavailable"
+                                  : "unknown"
+                          }
+                        />
+                        {r.endpoint.note ? (
+                          <p className="mt-1 max-w-md text-[12px] leading-snug text-[var(--color-muted)]">
+                            {r.endpoint.note}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="py-2">
+                        {r.evidence ? (
+                          <EvidencePopover
+                            label="Source"
+                            evidence={[
+                              {
+                                sourceUrl: r.evidence.sourceUrl,
+                                sourceTitle: r.evidence.sourceTitle,
+                                sourceType: r.evidence.sourceType,
+                                retrievedAt: r.evidence.retrievedAt,
+                                lastVerifiedAt: r.evidence.lastVerifiedAt,
+                                confidence: Number(r.evidence.confidence),
+                                rawExcerpt: r.evidence.rawExcerpt ?? undefined,
+                              },
+                            ]}
+                          />
+                        ) : (
+                          <span className="text-[12px] text-[var(--color-muted)]">Unknown</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!receivingEndpoints.length ? (
+                <p className="py-3 text-[13px] text-[var(--color-muted)]">
+                  Railor has no verified receiving-endpoint data for this provider — see Corridors above for its
+                  published payout coverage instead.
                 </p>
               ) : null}
             </div>

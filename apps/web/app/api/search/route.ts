@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         facts: { productLabel: r.facts.productLabel },
         evidence: [],
         reasons: [],
+        receivingMode: null,
       }));
 
   return NextResponse.json({
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
     results,
     authenticated,
     generatedAt: result.generatedAt,
+    countryContext: result.countryContext,
   });
 }
 
