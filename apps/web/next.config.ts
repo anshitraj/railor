@@ -16,6 +16,14 @@ const config: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@railor/ui", "@railor/core", "@railor/database", "@railor/types"],
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
+  // ensureMigrated() reads packages/database/drizzle/*.sql off disk at
+  // runtime (drizzle-orm's migrator does a plain fs.readdir, not an import),
+  // so Next's output-file-tracing never discovers it on its own — every
+  // route that calls it would 500 on Vercel with the migrations folder
+  // missing from the deployed function bundle.
+  outputFileTracingIncludes: {
+    "/**": ["../../packages/database/drizzle/**/*"],
+  },
   // Workspace packages are ESM-correct TypeScript: they import siblings with a
   // ".js" specifier. Teach the bundler to resolve those to the .ts/.tsx source.
   webpack: (config) => {
