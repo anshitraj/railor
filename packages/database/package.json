@@ -15,6 +15,7 @@
     "migrate": "tsx src/migrate-run.ts",
     "seed": "tsx src/seed/run.ts",
     "receiving-endpoints": "tsx src/seed/receiving-endpoints.ts",
+    "xflow-routes": "tsx src/seed/xflow-atomic-routes.ts",
     "stablecoin-capabilities": "tsx src/seed/stablecoin-capabilities.ts",
     "provider-batch-2": "tsx src/seed/provider-batch-2.ts",
     "provider-batch-3": "tsx src/seed/provider-batch-3.ts",

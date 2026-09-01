@@ -15,11 +15,13 @@ import { CountryFlag, type CountryCode } from "./country-flag";
 import { HeroSearch } from "./hero-search";
 import { RailsStrip } from "./rails-strip";
 import {
+  CodeSample,
   CommandBlock,
   CountUp,
   Reveal,
   Stagger,
   StaggerItem,
+  StageBadge,
   type PickerOption,
 } from "@railor/ui";
 
@@ -202,6 +204,101 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels }: Landin
               <Link href="/changes" className="flex items-center justify-between px-5 py-4 text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--color-orange-deep)] transition hover:bg-[var(--color-lavender)] sm:px-6">Open full change feed <ArrowUpRight size={15} /></Link>
             </div>
           </motion.div>
+        </section>
+
+        <section className="border-t border-[var(--color-line)] bg-[var(--color-sand)] py-20 sm:py-28">
+          <div className="mx-auto grid w-[min(1360px,calc(100%-2rem))] gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-center">
+            <motion.div {...reveal} className="flex flex-col gap-4">
+              <p className="section-kicker">Built API-first</p>
+              <h2 className="max-w-lg font-display text-[clamp(2.75rem,5vw,5.3rem)] font-medium leading-[0.91] tracking-[-0.065em]">
+                Every screen here is a thin client.
+              </h2>
+              <p className="max-w-lg text-[15px] leading-relaxed text-[var(--color-muted)]">
+                A test key exists the moment your workspace does. The docs render with it, so nothing
+                below is a hypothetical.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "REST", stage: "beta" as const },
+                  { label: "TypeScript", stage: "beta" as const },
+                  { label: "Python", stage: "beta" as const },
+                  { label: "MCP", stage: "beta" as const },
+                ].map((item) => (
+                  <span
+                    key={item.label}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-1.5 text-[13px]"
+                  >
+                    {item.label}
+                    <StageBadge stage={item.stage} />
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div {...reveal} transition={{ ...reveal.transition, delay: 0.08 }}>
+              <CodeSample
+                variants={[
+                  {
+                    language: "ts",
+                    label: "TypeScript",
+                    code: `import { Railor } from "@railor/sdk"
+
+const railor = new Railor({ apiKey: "RAILOR_API_KEY" })
+
+const routes = await railor.corridors.search({
+  entityCountry: "IN",
+  destinationCountry: "AE",
+  sourceAsset: "USDC",
+  destinationCurrency: "AED",
+  customerType: "business",
+})
+
+routes.data[0]
+// {
+//   provider: { slug: "ramp-network", name: "Ramp Network" },
+//   eligibility: "unknown",
+//   confidence: 0.83,
+//   connectivity: "discovered",
+//   ranking_confidence: 0.2,
+//   last_verified_at: "2026-08-28T05:43:21.397Z"
+// }`,
+                  },
+                  {
+                    language: "curl",
+                    label: "cURL",
+                    code: `curl ${process.env.NEXT_PUBLIC_APP_URL ?? "https://your-deployment.vercel.app"}/v1/corridors/search \\
+  -H "Authorization: Bearer RAILOR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "entity_country": "IN",
+    "destination_country": "AE",
+    "source_asset": "USDC",
+    "destination_currency": "AED",
+    "customer_type": "business"
+  }'`,
+                  },
+                  {
+                    language: "python",
+                    label: "Python",
+                    code: `from railor import Railor
+
+railor = Railor(api_key="RAILOR_API_KEY")
+
+routes = railor.corridors.search(
+    entity_country="IN",
+    destination_country="AE",
+    source_asset="USDC",
+    destination_currency="AED",
+    customer_type="business",
+)
+
+routes.data[0]`,
+                  },
+                ]}
+                caption="One key works across REST, TypeScript and Python — every claim still carries its own evidence and confidence."
+              />
+            </motion.div>
+          </div>
         </section>
 
         <section className="border-y border-[var(--color-line)] bg-[var(--color-paper)]">

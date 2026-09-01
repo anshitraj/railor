@@ -19,14 +19,17 @@ import {
   DESTINATION_MARKERS,
   INDIVIDUAL_TERMS,
   METHOD_TERMS,
+  NAMED_RAIL_TERMS,
   NETWORK_TERMS,
   ORIGIN_MARKERS,
   PRODUCT_TERMS,
   REGION_TERMS,
+  SEPA_RAIL_COUNTRIES,
+  SEPA_RAIL_TEMPLATES,
 } from "./vocab.js";
 
 interface Match {
-  kind: "country" | "currency" | "asset" | "network" | "product" | "method" | "customerType";
+  kind: "country" | "currency" | "asset" | "network" | "product" | "method" | "customerType" | "namedRail" | "sepaTemplate";
   value: string;
   index: number;
   text: string;
@@ -85,13 +88,20 @@ function findTerms(
   return out;
 }
 
-/** Drops shorter matches that sit inside a longer one ("us" inside "russia"). */
+/**
+ * Drops shorter matches that sit inside a longer one of the *same kind*
+ * ("us" inside "russia", both countries). Different kinds are allowed to
+ * overlap on purpose: "sepa instant" is a method match ("sepa") and a
+ * sepaTemplate match ("sepa instant") at the same position, and both need
+ * to survive — paymentMethod and namedRail are independent facts, not
+ * alternatives competing for the same span of text.
+ */
 function dedupeOverlaps(matches: Match[]): Match[] {
   const sorted = [...matches].sort((a, b) => b.length - a.length);
   const kept: Match[] = [];
   for (const m of sorted) {
     const overlapping = kept.some(
-      (k) => m.index < k.index + k.length && k.index < m.index + m.length,
+      (k) => k.kind === m.kind && m.index < k.index + k.length && k.index < m.index + m.length,
     );
     if (!overlapping) kept.push(m);
   }
@@ -161,6 +171,8 @@ export function interpretRules(input: string): Interpretation {
   for (const n of NETWORK_TERMS) raw.push(...findTerms(text, n.terms, "network", n.slug));
   for (const p of PRODUCT_TERMS) raw.push(...findTerms(text, p.terms, "product", p.product));
   for (const m of METHOD_TERMS) raw.push(...findTerms(text, m.terms, "method", m.method));
+  for (const r of NAMED_RAIL_TERMS) raw.push(...findTerms(text, r.terms, "namedRail", r.code));
+  for (const s of SEPA_RAIL_TEMPLATES) raw.push(...findTerms(text, s.qualifierTerms, "sepaTemplate", s.suffix));
   raw.push(...findTerms(text, BUSINESS_TERMS, "customerType", "business"));
   raw.push(...findTerms(text, INDIVIDUAL_TERMS, "customerType", "individual"));
 
@@ -270,6 +282,44 @@ export function interpretRules(input: string): Interpretation {
       label: `Rail: ${label}`,
       confidence: 0.85,
       matchedText: method.text,
+      derivation: "source",
+    });
+  }
+
+  /* ---- named rails: independent of, never collapsed into, paymentMethod - */
+  const namedRailMatch = matches.find((m) => m.kind === "namedRail");
+  if (namedRailMatch) {
+    query.namedRail = namedRailMatch.value;
+    tokens.push({
+      field: "namedRail",
+      value: namedRailMatch.value,
+      label: `Rail: ${namedRailMatch.value}`,
+      confidence: 0.9,
+      matchedText: namedRailMatch.text,
+      derivation: "source",
+    });
+  }
+
+  // SEPA's rails are country-specific rows (SEPA_ICT_DE, SEPA_ICT_FR, ...);
+  // "SEPA Instant" alone never names one, so this only resolves once a
+  // destination country is known — and only to a country named_rails
+  // actually has that pair for. No country, or a non-SEPA country: no
+  // resolution, no fallback guess.
+  const sepaTemplateMatch = matches.find((m) => m.kind === "sepaTemplate");
+  if (
+    sepaTemplateMatch &&
+    !query.namedRail &&
+    query.destinationCountry &&
+    SEPA_RAIL_COUNTRIES.includes(query.destinationCountry)
+  ) {
+    const code = `SEPA_${sepaTemplateMatch.value}_${query.destinationCountry}`;
+    query.namedRail = code;
+    tokens.push({
+      field: "namedRail",
+      value: code,
+      label: `Rail: SEPA ${sepaTemplateMatch.value === "ICT" ? "Instant" : "Credit Transfer"} (${query.destinationCountry})`,
+      confidence: 0.85,
+      matchedText: sepaTemplateMatch.text,
       derivation: "source",
     });
   }

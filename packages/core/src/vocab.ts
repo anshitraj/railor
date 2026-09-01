@@ -208,6 +208,58 @@ export const METHOD_TERMS: Array<{ method: string; terms: string[]; label: strin
   { method: "cash_pickup", terms: ["cash pickup", "cash payout"], label: "Cash pickup" },
 ];
 
+/**
+ * Specific named rails — UPI, CHAPS, Pix — as opposed to METHOD_TERMS'
+ * generic buckets that all of these otherwise collapse into. Matching a
+ * term here ADDS a `namedRail` token; it never replaces the generic
+ * `paymentMethod` match ("sepa" still sets paymentMethod:"sepa" *and*, with
+ * a qualifier, namedRail:"SEPA_ICT_DE" — independent facts, independent
+ * fields, exactly per named_rails' own doc comment.
+ *
+ * Deliberately excludes terms too short or too generic to trust as a rail
+ * name rather than an unrelated word: bare "rtp" (broadcast/gaming
+ * acronym), "pse"/"nip" (2-3 letters, high false-positive rate), "swish"
+ * (ordinary English word), "pay now" (generic CTA phrase — "paynow" as one
+ * word is fine). Codes must exist in packages/database/src/seed/data.ts's
+ * `namedRails` array or this is a dangling reference nothing can resolve.
+ */
+export const NAMED_RAIL_TERMS: Array<{ code: string; terms: string[] }> = [
+  { code: "UPI", terms: ["upi"] },
+  { code: "IMPS", terms: ["imps"] },
+  { code: "NEFT", terms: ["neft"] },
+  { code: "PIX", terms: ["pix"] },
+  { code: "BOLETO", terms: ["boleto"] },
+  { code: "SPEI", terms: ["spei"] },
+  { code: "FEDNOW", terms: ["fednow", "fed now"] },
+  { code: "CHAPS", terms: ["chaps"] },
+  { code: "BACS", terms: ["bacs"] },
+  { code: "FASTER_PAYMENTS_GB", terms: ["faster payments", "fps"] },
+  { code: "MPESA", terms: ["m-pesa", "mpesa"] },
+  { code: "AIRTEL_MONEY_KE", terms: ["airtel money"] },
+  { code: "PAYSHAP", terms: ["payshap", "pay shap"] },
+  { code: "ZENGIN", terms: ["zengin"] },
+  { code: "INTERAC_E_TRANSFER", terms: ["interac e-transfer", "interac"] },
+  { code: "PAYNOW", terms: ["paynow"] },
+  { code: "INSTAPAY", terms: ["instapay"] },
+  { code: "PESONET", terms: ["pesonet"] },
+];
+
+/**
+ * SEPA's two rails are the same country-by-country problem as everything
+ * else in named_rails (SEPA_ICT_DE and SEPA_ICT_FR are different rows, same
+ * as how UPI and PIX are), except a person typing "SEPA Instant" never
+ * names the country — it has to come from whatever country the rest of the
+ * query already resolved. `qualifierTerms` alone (no country in the same
+ * query) intentionally resolves to nothing rather than guessing a Eurozone
+ * country: an unresolvable SEPA_ICT reference is worse than an honest miss.
+ */
+export const SEPA_RAIL_TEMPLATES: Array<{ suffix: "ICT" | "CT"; qualifierTerms: string[] }> = [
+  { suffix: "ICT", qualifierTerms: ["sepa instant", "sepa inst", "instant sepa"] },
+  { suffix: "CT", qualifierTerms: ["sepa credit transfer", "sepa credit", "regular sepa", "standard sepa"] },
+];
+/** Countries named_rails actually has a SEPA_ICT_{cc}/SEPA_CT_{cc} pair for. */
+export const SEPA_RAIL_COUNTRIES = ["DE", "FR", "NL", "IT", "ES", "PT", "IE", "BE"];
+
 export const BUSINESS_TERMS = [
   "business",
   "businesses",

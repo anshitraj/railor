@@ -104,6 +104,18 @@ const FACT_LABELS: Record<string, string> = {
   kybSummary: "KYB",
 };
 
+const ENDPOINT_TYPE_LABEL: Record<string, string> = {
+  bank_account: "Bank account",
+  mobile_money: "Mobile money",
+  card: "Card",
+  stablecoin_wallet: "Stablecoin wallet",
+  virtual_account: "Virtual account",
+  merchant_checkout: "Merchant checkout",
+  payment_link: "Payment link",
+  local_instant_rail: "Local instant rail",
+  cash_pickup: "Cash pickup",
+};
+
 /**
  * The signature operational screen. It opens with a working answer on the
  * Balanced preset — filters refine, they are never a prerequisite.
@@ -392,6 +404,25 @@ export function CorridorExplorer({
                           STABLECOIN_MODE_LABEL[result.receivingMode.stablecoinMode] ??
                           result.receivingMode.stablecoinMode,
                       },
+                      ...(result.receivingMode.namedRail
+                        ? [{ label: "Named rail", value: result.receivingMode.namedRail }]
+                        : []),
+                      ...(result.receivingMode.endpointType
+                        ? [
+                            {
+                              label: "Endpoint",
+                              value:
+                                ENDPOINT_TYPE_LABEL[result.receivingMode.endpointType] ??
+                                result.receivingMode.endpointType,
+                            },
+                          ]
+                        : []),
+                      ...(result.receivingMode.settlementEstimate
+                        ? [{ label: "Settlement", value: result.receivingMode.settlementEstimate }]
+                        : []),
+                      ...(result.receivingMode.complianceDocs
+                        ? [{ label: "Compliance docs", value: result.receivingMode.complianceDocs }]
+                        : []),
                     ]
                   : []),
               ]}

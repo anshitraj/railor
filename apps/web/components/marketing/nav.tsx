@@ -3,7 +3,28 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X } from "lucide-react";
+import {
+  BookOpen,
+  Code2,
+  GitCompare,
+  Globe,
+  History,
+  Info,
+  Map as MapIcon,
+  Menu,
+  Package,
+  Plug,
+  Radar,
+  Radio,
+  Route,
+  Search,
+  ShieldCheck,
+  Terminal,
+  Warehouse,
+  X,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { StageBadge, cn, type Stage } from "@railor/ui";
 
 interface MenuItem {
@@ -11,17 +32,18 @@ interface MenuItem {
   href: string;
   hint: string;
   stage: Stage;
+  icon: LucideIcon;
 }
 
 const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: string; href: string } }> = {
   Product: {
     items: [
-      { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live" },
-      { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live" },
-      { label: "Provider Intelligence", href: "/providers", hint: "Coverage, requirements, limits, sources", stage: "live" },
-      { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live" },
-      { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live" },
-      { label: "Connections", href: "/company/roadmap", hint: "Connect the providers you already use", stage: "soon" },
+      { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live", icon: Search },
+      { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live", icon: Route },
+      { label: "Provider Intelligence", href: "/providers", hint: "Coverage, requirements, limits, sources", stage: "live", icon: Warehouse },
+      { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live", icon: Radar },
+      { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live", icon: GitCompare },
+      { label: "Connections", href: "/company/roadmap", hint: "Connect the providers you already use", stage: "soon", icon: Plug },
     ],
     panel: {
       title: "One question, one answer",
@@ -31,12 +53,12 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
   },
   Developers: {
     items: [
-      { label: "API", href: "/docs/api", hint: "REST with evidence on every claim", stage: "beta" },
-      { label: "Documentation", href: "/docs", hint: "Runnable snippets, your own test key", stage: "live" },
-      { label: "MCP", href: "/docs/mcp", hint: "Let coding agents query verified data", stage: "beta" },
-      { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", stage: "beta" },
-      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "soon" },
-      { label: "Changelog", href: "/docs/changelog", hint: "What shipped", stage: "live" },
+      { label: "API", href: "/docs/api", hint: "REST with evidence on every claim", stage: "beta", icon: Code2 },
+      { label: "Documentation", href: "/docs", hint: "Runnable snippets, your own test key", stage: "live", icon: BookOpen },
+      { label: "MCP", href: "/docs/mcp", hint: "Let coding agents query verified data", stage: "beta", icon: Zap },
+      { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", stage: "beta", icon: Package },
+      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "soon", icon: Terminal },
+      { label: "Changelog", href: "/docs/changelog", hint: "What shipped", stage: "live", icon: History },
     ],
     panel: {
       title: "Built API-first",
@@ -46,10 +68,10 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
   },
   Resources: {
     items: [
-      { label: "Provider Directory", href: "/providers", hint: "Filter by market, product, rail", stage: "live" },
-      { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live" },
-      { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live" },
-      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "soon" },
+      { label: "Provider Directory", href: "/providers", hint: "Filter by market, product, rail", stage: "live", icon: Warehouse },
+      { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live", icon: Globe },
+      { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live", icon: Radio },
+      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "soon", icon: BookOpen },
     ],
     panel: {
       title: "Evidence, not vibes",
@@ -59,9 +81,9 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
   },
   Company: {
     items: [
-      { label: "About", href: "/company", hint: "Why Railor exists", stage: "live" },
-      { label: "Roadmap", href: "/company/roadmap", hint: "Intelligence → orchestration", stage: "live" },
-      { label: "Trust", href: "/company/trust", hint: "How we handle data and claims", stage: "live" },
+      { label: "About", href: "/company", hint: "Why Railor exists", stage: "live", icon: Info },
+      { label: "Roadmap", href: "/company/roadmap", hint: "Intelligence → orchestration", stage: "live", icon: MapIcon },
+      { label: "Trust", href: "/company/trust", hint: "How we handle data and claims", stage: "live", icon: ShieldCheck },
     ],
     panel: {
       title: "Say unknown, not wrong",
@@ -154,15 +176,20 @@ export function MarketingNav() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="flex flex-col gap-0.5 rounded-2xl px-3 py-2.5 transition hover:bg-[var(--color-canvas)]"
+                      className="flex items-start gap-3 rounded-2xl px-3 py-2.5 transition hover:bg-[var(--color-canvas)]"
                       onClick={() => setOpen(null)}
                     >
-                      <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-ink)]">
-                        {item.label}
-                        {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
+                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--color-sand)] text-[var(--color-orange-deep)]">
+                        <item.icon size={16} strokeWidth={2} />
                       </span>
-                      <span className="text-[12.5px] leading-snug text-[var(--color-muted)]">
-                        {item.hint}
+                      <span className="flex flex-col gap-0.5">
+                        <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-ink)]">
+                          {item.label}
+                          {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
+                        </span>
+                        <span className="text-[12.5px] leading-snug text-[var(--color-muted)]">
+                          {item.hint}
+                        </span>
                       </span>
                     </Link>
                   </li>
@@ -217,8 +244,9 @@ export function MarketingNav() {
                         <Link
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
-                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
                         >
+                          <item.icon size={16} strokeWidth={2} className="text-[var(--color-orange-deep)]" />
                           {item.label}
                           {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
                         </Link>

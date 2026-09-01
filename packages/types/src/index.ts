@@ -265,6 +265,8 @@ export const QueryToken = z.object({
     "sourceNetwork",
     "destinationCurrency",
     "paymentMethod",
+    "endpointType",
+    "namedRail",
     "product",
     "amount",
   ]),

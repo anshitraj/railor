@@ -10,6 +10,8 @@ export interface ReferenceOptions {
   customerTypes: PickerOption[];
   products: PickerOption[];
   methods: PickerOption[];
+  /** Specific named rails (UPI, CHAPS, SEPA_ICT_DE, ...) — independent of `methods`' generic buckets. */
+  namedRails: PickerOption[];
 }
 
 const PRODUCTS: PickerOption[] = [
@@ -39,7 +41,7 @@ const METHODS: PickerOption[] = [
 /** Picker data for every SmartPicker in the product, ordered by likelihood. */
 export async function getReferenceOptions(): Promise<ReferenceOptions> {
   await ensureMigrated();
-  const { countries, currencies, assets, chains } = await loadReferenceData();
+  const { countries, currencies, assets, chains, namedRails } = await loadReferenceData();
 
   return {
     countries: countries.map((c) => ({
@@ -72,6 +74,10 @@ export async function getReferenceOptions(): Promise<ReferenceOptions> {
     ],
     products: PRODUCTS,
     methods: METHODS,
+    namedRails: namedRails.map((r) => ({
+      value: r.code,
+      label: `${r.name} (${r.countryCode})`,
+    })),
   };
 }
 
@@ -84,6 +90,9 @@ export const FIELD_LABELS: Record<string, string> = {
   sourceNetwork: "Network",
   destinationCurrency: "Destination currency",
   paymentMethod: "Rail",
+  /** Deliberately distinct from `paymentMethod`'s label ("Rail") — this is the specific named one. */
+  namedRail: "Named rail",
+  sourceNamedRail: "Source named rail",
   product: "Product",
   amount: "Amount",
 };
@@ -99,5 +108,7 @@ export function optionsByField(ref: ReferenceOptions): Record<string, PickerOpti
     customerType: ref.customerTypes,
     product: ref.products,
     paymentMethod: ref.methods,
+    namedRail: ref.namedRails,
+    sourceNamedRail: ref.namedRails,
   };
 }

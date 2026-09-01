@@ -583,14 +583,21 @@ export async function loadChangeFeed(filter: ChangeFeedFilter = {}) {
 
 export async function loadReferenceData() {
   const db = await getDb();
-  const { countries, currencies, assets, blockchains } = await import("@railor/database");
-  const [countryRows, currencyRows, assetRows, chainRows] = await Promise.all([
+  const { countries, currencies, assets, blockchains, namedRails: namedRailsTable } = await import("@railor/database");
+  const [countryRows, currencyRows, assetRows, chainRows, railRows] = await Promise.all([
     db.select().from(countries).orderBy(desc(countries.popularity)),
     db.select().from(currencies).orderBy(desc(currencies.popularity)),
     db.select().from(assets).orderBy(desc(assets.popularity)),
     db.select().from(blockchains).orderBy(desc(blockchains.popularity)),
+    db.select().from(namedRailsTable).orderBy(namedRailsTable.countryCode, namedRailsTable.name),
   ]);
-  return { countries: countryRows, currencies: currencyRows, assets: assetRows, chains: chainRows };
+  return {
+    countries: countryRows,
+    currencies: currencyRows,
+    assets: assetRows,
+    chains: chainRows,
+    namedRails: railRows,
+  };
 }
 
 export async function loadPlatformCounts() {
