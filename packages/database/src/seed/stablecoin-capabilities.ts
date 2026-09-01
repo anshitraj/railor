@@ -117,7 +117,11 @@ async function upsertSourceDocument(
   url: string,
   title: string,
 ): Promise<string> {
-  const [existing] = await db.select().from(s.sourceDocuments).where(eq(s.sourceDocuments.url, url)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(s.sourceDocuments)
+    .where(and(eq(s.sourceDocuments.providerId, providerId), eq(s.sourceDocuments.url, url)))
+    .limit(1);
   if (existing) return existing.id;
   const [row] = await db
     .insert(s.sourceDocuments)

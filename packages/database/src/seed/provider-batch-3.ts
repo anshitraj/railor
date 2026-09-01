@@ -16,7 +16,7 @@
  * withdrawal to a local bank account) and its separate stablecoin wallet
  * (USDC/USDT, launched Feb 2026 via Bridge) are two distinct, separately
  * evidenced facts — no source ties the two together, so they are kept
- * apart: the India receiving_endpoints row stays `stablecoinMode: fiat_only`
+ * apart: the India receiving_endpoints row stays `stablecoinMode: unknown`
  * and the wallet stablecoins are recorded as ordinary providerCapabilities
  * "wallet" facets with no country attached.
  *
@@ -28,7 +28,7 @@
 import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb, getDbHandle } from "../client.js";
 import * as s from "../schema.js";
 
@@ -99,7 +99,11 @@ async function upsertProvider(db: Awaited<ReturnType<typeof getDb>>, p: RealProv
 }
 
 async function upsertSourceDocument(db: Awaited<ReturnType<typeof getDb>>, providerId: string, url: string, title: string): Promise<string> {
-  const [existing] = await db.select().from(s.sourceDocuments).where(eq(s.sourceDocuments.url, url)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(s.sourceDocuments)
+    .where(and(eq(s.sourceDocuments.providerId, providerId), eq(s.sourceDocuments.url, url)))
+    .limit(1);
   if (existing) return existing.id;
   const [row] = await db
     .insert(s.sourceDocuments)
@@ -204,7 +208,7 @@ const SPECS: EvidenceSpec[] = [
       {
         countryCode: "IN",
         endpointType: "bank_account",
-        stablecoinMode: "fiat_only",
+        stablecoinMode: "unknown",
         destinationCurrency: "INR",
         complianceDocs: "FIRA/FIRS/NOC",
         note: "Automatic FIRA/FIRS/NOC for India-based sellers, at no additional cost; multi-currency balances withdraw to the user's local Indian bank account. No stablecoin/crypto path confirmed for this India-specific product — see the separate wallet fact below.",
@@ -232,6 +236,31 @@ const SPECS: EvidenceSpec[] = [
   },
 ];
 
+/**
+ * The India FIRA source proves a local-bank receiving endpoint, but does not
+ * say that the endpoint is fiat-only.  Retain the endpoint and correct only
+ * the stale legacy assertion whose note came from the earlier seed.
+ */
+async function downgradeLegacyPayoneerMode(
+  db: Awaited<ReturnType<typeof getDb>>,
+  providerId: string,
+  log: string[],
+): Promise<void> {
+  const rows = await db
+    .select({ id: s.receivingEndpoints.id, note: s.receivingEndpoints.note })
+    .from(s.receivingEndpoints)
+    .where(and(eq(s.receivingEndpoints.providerId, providerId), eq(s.receivingEndpoints.stablecoinMode, "fiat_only")));
+  const ids = rows
+    .filter((row) => row.note?.startsWith("Automatic FIRA/FIRS/NOC for India-based sellers") === true)
+    .map((row) => row.id);
+  if (!ids.length) return;
+  await db
+    .update(s.receivingEndpoints)
+    .set({ stablecoinMode: "unknown" })
+    .where(inArray(s.receivingEndpoints.id, ids));
+  log.push(`downgraded ${ids.length} legacy Payoneer stablecoin mode(s) to unknown`);
+}
+
 export async function bootstrap(): Promise<string[]> {
   const db = await getDb();
   const log: string[] = [];
@@ -241,6 +270,8 @@ export async function bootstrap(): Promise<string[]> {
     providerIds[p.slug] = await upsertProvider(db, p);
     log.push(`provider ready: ${p.slug}`);
   }
+
+  await downgradeLegacyPayoneerMode(db, providerIds.payoneer!, log);
 
   for (const spec of SPECS) {
     const providerId = providerIds[spec.slug]!;

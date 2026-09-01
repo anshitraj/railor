@@ -1,0 +1,2 @@
+CREATE TYPE "public"."verification_type" AS ENUM('provider_reported', 'railor_observed', 'provider_verified');--> statement-breakpoint
+ALTER TABLE "evidence" ADD COLUMN "verification_type" "verification_type" DEFAULT 'provider_reported' NOT NULL;

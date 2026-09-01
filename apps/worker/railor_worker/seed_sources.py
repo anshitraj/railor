@@ -221,7 +221,8 @@ def bootstrap() -> list[str]:
                 log.append(f"created provider: {p.slug}")
 
             existing = conn.execute(
-                "select id from source_documents where url = %s", (p.docs_url,)
+                "select id from source_documents where provider_id = %s and url = %s",
+                (provider_id, p.docs_url),
             ).fetchone()
             if existing:
                 log.append(f"  source already registered: {p.docs_url}")

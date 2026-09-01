@@ -99,6 +99,12 @@ export const currencies = [
   { code: "PLN", name: "Polish Złoty", symbol: "zł", countryCode: "PL", popularity: 40 },
   { code: "COP", name: "Colombian Peso", symbol: "$", countryCode: "CO", popularity: 39 },
   { code: "ARS", name: "Argentine Peso", symbol: "$", countryCode: "AR", popularity: 38 },
+  { code: "SAR", name: "Saudi Riyal", symbol: "ر.س", countryCode: "SA", popularity: 52 },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr", countryCode: "SE", popularity: 45 },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr", countryCode: "NO", popularity: 43 },
+  { code: "THB", name: "Thai Baht", symbol: "฿", countryCode: "TH", popularity: 47 },
+  { code: "CLP", name: "Chilean Peso", symbol: "$", countryCode: "CL", popularity: 37 },
+  { code: "PEN", name: "Peruvian Sol", symbol: "S/", countryCode: "PE", popularity: 35 },
 ] as const;
 
 /**
@@ -153,6 +159,32 @@ export const namedRails = [
   { code: "ACH_US", name: "ACH", countryCode: "US", category: "ach", description: "The US's batched (same/next-day) interbank clearing network, run by Nacha." },
   { code: "FEDWIRE", name: "Fedwire", countryCode: "US", category: "wire", description: "The Federal Reserve's same-day, high-value real-time gross settlement wire system." },
 
+  // Additional named local rails present in Airwallex's official Global
+  // Accounts coverage table. They are reference entities only; a provider
+  // endpoint links one only where its own source states that exact rail.
+  { code: "BECS", name: "BECS", countryCode: "AU", category: "bank_transfer_local", description: "Australia's Bulk Electronic Clearing System bank-transfer rail." },
+  { code: "EFT_CA", name: "EFT", countryCode: "CA", category: "bank_transfer_local", description: "Canada's electronic funds transfer rail." },
+  { code: "INTERAC_E_TRANSFER", name: "Interac e-Transfer", countryCode: "CA", category: "bank_transfer_local", description: "Canada's Interac account-to-account transfer service." },
+  { code: "INTRADAGCLEARING", name: "Intradagclearing", countryCode: "DK", category: "bank_transfer_local", description: "A Danish local clearing system named in provider coverage documentation." },
+  { code: "KRONOS2", name: "KRONOS2 RTGS", countryCode: "DK", category: "bank_transfer_local", description: "Denmark's KRONOS2 real-time gross-settlement system." },
+  { code: "ACH_HK", name: "ACH", countryCode: "HK", category: "bank_transfer_local", description: "Hong Kong's automated clearing-house transfer system." },
+  { code: "RTGS_HK", name: "RTGS", countryCode: "HK", category: "bank_transfer_local", description: "Hong Kong's real-time gross-settlement system." },
+  { code: "FPS_HK", name: "Faster Payment System", countryCode: "HK", category: "bank_transfer_local", description: "Hong Kong's Faster Payment System." },
+  { code: "RTGS_ID", name: "BI-RTGS", countryCode: "ID", category: "bank_transfer_local", description: "Indonesia's real-time gross-settlement system." },
+  { code: "SKN", name: "SKN", countryCode: "ID", category: "bank_transfer_local", description: "Indonesia's national clearing system." },
+  { code: "BI_FAST", name: "BI-FAST", countryCode: "ID", category: "bank_transfer_local", description: "Indonesia's fast-payment infrastructure." },
+  { code: "FASTER_PAYMENTS_IL", name: "Faster Payments", countryCode: "IL", category: "bank_transfer_local", description: "Israel's Faster Payments rail." },
+  { code: "MASAV", name: "MASAV", countryCode: "IL", category: "bank_transfer_local", description: "Israel's automated bank settlement centre." },
+  { code: "ZAHAV", name: "ZAHAV", countryCode: "IL", category: "bank_transfer_local", description: "Israel's real-time gross-settlement system." },
+  { code: "DIRECT_CREDIT_NZ", name: "Direct Credit", countryCode: "NZ", category: "bank_transfer_local", description: "New Zealand's direct-credit bank-transfer rail." },
+  { code: "ELIXIR", name: "Elixir", countryCode: "PL", category: "bank_transfer_local", description: "Poland's Elixir interbank clearing system." },
+  { code: "EXPRESS_ELIXIR", name: "Express Elixir", countryCode: "PL", category: "bank_transfer_local", description: "Poland's instant interbank transfer system." },
+  { code: "SORBNET", name: "SORBNET", countryCode: "PL", category: "bank_transfer_local", description: "Poland's real-time gross-settlement system." },
+  { code: "GIRO_SG", name: "GIRO", countryCode: "SG", category: "bank_transfer_local", description: "Singapore's GIRO bank-transfer rail." },
+  { code: "MEPS", name: "MEPS+", countryCode: "SG", category: "bank_transfer_local", description: "Singapore's MEPS+ real-time gross-settlement system." },
+  { code: "IPI_AE", name: "Instant Payment Instructions", countryCode: "AE", category: "bank_transfer_local", description: "The UAE's Instant Payment Instructions rail." },
+  { code: "RTGS_AE", name: "RTGS", countryCode: "AE", category: "bank_transfer_local", description: "The UAE's real-time gross-settlement system." },
+
   // Eurozone — scoped to countries in Railor's dataset that actually settle in EUR;
   // SEPA also reaches non-Euro participants (UK, Switzerland, Nordics), but that's
   // a secondary fact this file isn't confident enough in to assert without
@@ -198,13 +230,19 @@ export const blockchains = [
 ] as const;
 
 export const assets = [
-  { symbol: "USDC", name: "USD Coin", kind: "stablecoin", issuer: "Demo Issuer A", peggedTo: "USD", popularity: 99 },
-  { symbol: "USDT", name: "Tether USD", kind: "stablecoin", issuer: "Demo Issuer B", peggedTo: "USD", popularity: 96 },
-  { symbol: "EURC", name: "Euro Coin", kind: "stablecoin", issuer: "Demo Issuer A", peggedTo: "EUR", popularity: 72 },
-  { symbol: "PYUSD", name: "Demo Payments USD", kind: "stablecoin", issuer: "Demo Issuer C", peggedTo: "USD", popularity: 58 },
+  // Reference-token identities are real public issuer facts. Provider-route
+  // support remains separately evidence-gated; these rows do not imply a
+  // provider supports any asset/network/country combination.
+  { symbol: "USDC", name: "USD Coin", kind: "stablecoin", issuer: "Circle", peggedTo: "USD", popularity: 99 },
+  { symbol: "USDT", name: "Tether USD", kind: "stablecoin", issuer: "Tether", peggedTo: "USD", popularity: 96 },
+  { symbol: "EURC", name: "Euro Coin", kind: "stablecoin", issuer: "Circle", peggedTo: "EUR", popularity: 72 },
+  { symbol: "PYUSD", name: "PayPal USD", kind: "stablecoin", issuer: "Paxos for PayPal", peggedTo: "USD", popularity: 58 },
   { symbol: "USDe", name: "USDe", kind: "stablecoin", issuer: "Ethena Labs", peggedTo: "USD", popularity: 68 },
   { symbol: "FDUSD", name: "First Digital USD", kind: "stablecoin", issuer: "First Digital Labs", peggedTo: "USD", popularity: 55 },
   { symbol: "RLUSD", name: "Ripple USD", kind: "stablecoin", issuer: "Ripple", peggedTo: "USD", popularity: 45 },
+  { symbol: "USDG", name: "Global Dollar", kind: "stablecoin", issuer: "Paxos", peggedTo: "USD", popularity: 20 },
+  { symbol: "GHO", name: "GHO", kind: "stablecoin", issuer: "Aave DAO / Protocol", peggedTo: "USD", popularity: 18 },
+  { symbol: "USDS", name: "USDS", kind: "stablecoin", issuer: "Sky Protocol", peggedTo: "USD", popularity: 18 },
   { symbol: "USDP", name: "Pax Dollar", kind: "stablecoin", issuer: "Paxos", peggedTo: "USD", popularity: 40 },
   { symbol: "TUSD", name: "TrueUSD", kind: "stablecoin", issuer: "Techteryx", peggedTo: "USD", popularity: 38 },
   { symbol: "GUSD", name: "Gemini Dollar", kind: "stablecoin", issuer: "Gemini", peggedTo: "USD", popularity: 30 },
@@ -360,11 +398,17 @@ export interface ProviderSpec {
   customerTypes: Array<"business" | "individual">;
   assets: string[];
   networks: string[];
-  /** Payout corridors: destination country → currencies + methods. */
+  /**
+   * Payout corridors. Asset/network are optional and, when present, mean the
+   * source established this exact tuple — they are never populated by joining
+   * the provider's independent asset and network lists.
+   */
   payouts: Array<{
     country: string;
     currencies: string[];
     methods: PaymentMethod[];
+    sourceAsset?: string;
+    sourceNetwork?: string;
     availability?: Availability;
     note?: string;
   }>;
@@ -828,7 +872,7 @@ export const providerSpecs: ProviderSpec[] = [
     assets: ["USDC", "USDT"],
     networks: ["ethereum", "base", "arbitrum", "tron"],
     payouts: [
-      { country: "AE", currencies: ["AED", "USD"], methods: ["bank_transfer_local", "bank_transfer_swift"] },
+      { country: "AE", currencies: ["AED", "USD"], methods: ["bank_transfer_local", "bank_transfer_swift"], sourceAsset: "USDC", sourceNetwork: "base" },
       { country: "SA", currencies: ["USD"], methods: ["bank_transfer_swift"] },
       { country: "IN", currencies: ["INR"], methods: ["bank_transfer_local"], availability: "partial", note: "INR payouts supported for goods and services invoices only." },
     ],

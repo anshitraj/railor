@@ -29,6 +29,62 @@
       "when": 1787735583510,
       "tag": "0003_fancy_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787897841255,
+      "tag": "0004_silly_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787897993391,
+      "tag": "0005_ambitious_nitro",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787920060393,
+      "tag": "0006_nervous_havok",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787920708783,
+      "tag": "0007_organic_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787920987033,
+      "tag": "0008_lovely_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787961600000,
+      "tag": "0009_v5_1_exact_routes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787965200000,
+      "tag": "0010_source_fiat_currency",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788251590619,
+      "tag": "0011_early_exiles",
+      "breakpoints": true
     }
   ]
 }

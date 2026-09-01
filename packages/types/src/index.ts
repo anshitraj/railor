@@ -8,6 +8,7 @@
 import { z } from "zod";
 
 export * from "./country.js";
+export * from "./provider-research.js";
 
 /* -------------------------------------------------------------------------- */
 /* Primitives                                                                  */
@@ -48,6 +49,28 @@ export const PaymentMethod = z.enum([
 ]);
 export type PaymentMethod = z.infer<typeof PaymentMethod>;
 
+/**
+ * How a recipient actually holds the money — deliberately a different axis
+ * from `namedRail` below. "mobile_money" + "M_PESA" and "bank_account" +
+ * "SEPA_INSTANT" are both real, distinct combinations; collapsing either one
+ * into `PaymentMethod`'s generic buckets is exactly the loss of precision
+ * that made V4's rail-specific route tests unanswerable (Faster Payments,
+ * Bacs and CHAPS all queried identically because nothing let a query ask for
+ * one by name). Mirrors receivingEndpointTypeEnum in the database schema.
+ */
+export const ReceivingEndpointType = z.enum([
+  "bank_account",
+  "mobile_money",
+  "card",
+  "stablecoin_wallet",
+  "virtual_account",
+  "merchant_checkout",
+  "payment_link",
+  "local_instant_rail",
+  "cash_pickup",
+]);
+export type ReceivingEndpointType = z.infer<typeof ReceivingEndpointType>;
+
 /* -------------------------------------------------------------------------- */
 /* Evidence & confidence                                                       */
 /* -------------------------------------------------------------------------- */
@@ -65,6 +88,18 @@ export const SourceType = z.enum([
   "third_party",
 ]);
 export type SourceType = z.infer<typeof SourceType>;
+
+/**
+ * Keep provider assertions, Railor measurements, and independently verified
+ * facts visibly separate. A caller can never mistake a provider marketing
+ * statement for a Railor-observed execution result.
+ */
+export const VerificationType = z.enum([
+  "provider_reported",
+  "railor_observed",
+  "provider_verified",
+]);
+export type VerificationType = z.infer<typeof VerificationType>;
 
 /**
  * Base confidence by source type. Age decay is applied on read — see
@@ -98,6 +133,7 @@ export const Evidence = z.object({
   sourceUrl: z.string().url(),
   sourceTitle: z.string(),
   sourceType: SourceType,
+  verificationType: VerificationType.default("provider_reported"),
   retrievedAt: z.coerce.date(),
   lastVerifiedAt: z.coerce.date(),
   confidence: z.number().min(0).max(1),
@@ -162,25 +198,44 @@ export const CorridorQuery = z.object({
   entityCountry: CountryCode.optional(),
   customerType: CustomerType.default("business"),
   sourceCountry: CountryCode.optional(),
+  /** How the sender funds the provider; deliberately distinct from the receiving endpoint. */
+  sourceEndpointType: ReceivingEndpointType.optional(),
+  /** A named inbound rail such as SEPA, ACH, UPI, or PIX. */
+  sourceNamedRail: z.string().optional(),
   destinationCountry: CountryCode.optional(),
-  /** Stablecoin or fiat symbol being sent, e.g. USDC. */
+  /** Stablecoin asset being sent, e.g. USDC. Kept separate from source fiat. */
   sourceAsset: z.string().optional(),
   sourceNetwork: z.string().optional(),
+  /** Fiat funding currency, e.g. INR or AED. Never stored as a crypto asset. */
+  sourceCurrency: CurrencyCode.optional(),
   destinationCurrency: CurrencyCode.optional(),
   paymentMethod: PaymentMethod.optional(),
+  /** How the recipient holds the money — bank account vs. mobile money vs. wallet, independent of which named rail moves it there. */
+  endpointType: ReceivingEndpointType.optional(),
+  /** A specific named rail, e.g. "SEPA_INSTANT" or "MPESA" — see named_rails.code. Independent of `endpointType`: a bank account can be reached via SEPA_INSTANT or plain SWIFT. */
+  namedRail: z.string().optional(),
   product: ProductType.optional(),
   amount: z.number().positive().optional(),
   amountCurrency: CurrencyCode.optional(),
 });
 export type CorridorQuery = z.infer<typeof CorridorQuery>;
 
-/** Ranking presets. A user who configures nothing still gets a good answer. */
+/**
+ * Ranking presets. A user who configures nothing still gets a good answer.
+ * `max_recipient_amount` and `most_reliable` are the decision-engine's
+ * customer preference modes (alongside cheapest/fastest/balanced) — real
+ * quote routing (`routeQuote`) uses all five; provider-level search
+ * (`scoreProvider`) additionally supports easiest_onboarding/widest_coverage,
+ * which only make sense pre-connection.
+ */
 export const RankingPreset = z.enum([
   "balanced",
   "cheapest",
   "fastest",
   "easiest_onboarding",
   "widest_coverage",
+  "max_recipient_amount",
+  "most_reliable",
 ]);
 export type RankingPreset = z.infer<typeof RankingPreset>;
 
@@ -190,6 +245,8 @@ export const RANKING_PRESET_LABEL: Record<RankingPreset, string> = {
   fastest: "Fastest settlement",
   easiest_onboarding: "Easiest onboarding",
   widest_coverage: "Widest coverage",
+  max_recipient_amount: "Max recipient amount",
+  most_reliable: "Most reliable",
 };
 
 /**
@@ -201,6 +258,8 @@ export const QueryToken = z.object({
     "entityCountry",
     "customerType",
     "sourceCountry",
+    "sourceEndpointType",
+    "sourceNamedRail",
     "destinationCountry",
     "sourceAsset",
     "sourceNetwork",
@@ -239,6 +298,10 @@ export const EligibilityVerdict = z.enum([
   "unknown",
 ]);
 export type EligibilityVerdict = z.infer<typeof EligibilityVerdict>;
+
+/** Operational readiness is separate from evidence eligibility. */
+export const OperationalReadiness = z.enum(["normal", "degraded", "access_required", "not_tested"]);
+export type OperationalReadiness = z.infer<typeof OperationalReadiness>;
 
 export const VERDICT_LABEL: Record<EligibilityVerdict, string> = {
   supported: "Supported",
@@ -283,12 +346,40 @@ export const ReceivingMode = z.object({
 });
 export type ReceivingMode = z.infer<typeof ReceivingMode>;
 
+/**
+ * How far Railor could actually take this specific route today — a
+ * different axis from `eligibility` (which says whether the route is
+ * *true*) and from `operationalReadiness` (which says whether the provider
+ * is currently *healthy*). A route can be fully SUPPORTED and still cap out
+ * at "compatible" because nobody has connected credentials for it yet.
+ * Never inferred backwards: reaching a later state always requires the
+ * earlier ones to hold, but holding an earlier one never implies a later one.
+ */
+export const RouteConnectivityState = z.enum([
+  "discovered",
+  "compatible",
+  "connected",
+  "live_quotable",
+  "executable",
+]);
+export type RouteConnectivityState = z.infer<typeof RouteConnectivityState>;
+
+export const CONNECTIVITY_STATE_LABEL: Record<RouteConnectivityState, string> = {
+  discovered: "Discovered",
+  compatible: "Compatible",
+  connected: "Connected",
+  live_quotable: "Live quote available",
+  executable: "Executable",
+};
+
 export const ProviderResult = z.object({
   provider: z.object({
     id: z.string(),
     slug: z.string(),
     name: z.string(),
     category: z.string(),
+    /** True for Railor's own seeded demo companies — never a real business. Excluded from search by default; see searchCorridors's `includeDemoProviders` option. */
+    isDemo: z.boolean().default(false),
   }),
   eligibility: EligibilityVerdict,
   confidence: z.number().min(0).max(1),
@@ -309,6 +400,15 @@ export const ProviderResult = z.object({
   evidence: z.array(Evidence).default([]),
   /** Preset-dependent score, 0–100. Ineligible providers are never ranked up. */
   score: z.number().min(0).max(100).default(0),
+  /** What fraction of the preset's weight was backed by real data — see rankingInputsMissing. 1.0 means every factor was real; a low value means the score leans heavily on eligibility/confidence alone. */
+  rankingConfidence: z.number().min(0).max(1).default(0),
+  /** Which of cost/speed/onboarding/reliability/coverage/confidence actually had real data for this provider. */
+  rankingInputsUsed: z.array(z.string()).default([]),
+  /** The complement of rankingInputsUsed — named explicitly so "why is this ranked here" never requires reverse-engineering a missing 0.5. */
+  rankingInputsMissing: z.array(z.string()).default([]),
+  /** How far this specific route can actually be taken today — see RouteConnectivityState's doc comment. Only computed past "compatible" when the caller passes an organizationId to searchCorridors. */
+  connectivity: RouteConnectivityState.default("discovered"),
+  operationalReadiness: OperationalReadiness.default("not_tested"),
   /** Set only when a receiving_endpoints fact decided the corridor. */
   receivingMode: ReceivingMode.nullable().default(null),
 });

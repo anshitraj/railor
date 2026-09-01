@@ -111,6 +111,18 @@ export const sourceTypeEnum = pgEnum("source_type", [
 
 export const derivationEnum = pgEnum("derivation", ["source", "manual", "model"]);
 
+/**
+ * What Railor knows about the origin of an evidence-backed fact.  This is
+ * intentionally independent from `source_type`: an official API can report
+ * a capability, while a Railor conformance run can observe behaviour.  The
+ * two must never be collapsed in a routing response.
+ */
+export const verificationTypeEnum = pgEnum("verification_type", [
+  "provider_reported",
+  "railor_observed",
+  "provider_verified",
+]);
+
 export const changeKindEnum = pgEnum("change_kind", [
   "coverage_changed",
   "requirement_changed",
@@ -139,6 +151,8 @@ export const watchTargetEnum = pgEnum("watch_target", [
   "asset",
   "product",
 ]);
+
+export const coverageGapStatusEnum = pgEnum("coverage_gap_status", ["open", "resolved"]);
 
 export const kybItemStatusEnum = pgEnum("kyb_item_status", [
   "have",
@@ -293,6 +307,107 @@ export const assetNetworks = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.assetSymbol, t.blockchainSlug] }) }),
 );
 
+/* -------------------------------------------------------------------------- */
+/* Global reference catalog                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A source registry for standards bodies, regulators and token issuers. These
+ * are deliberately separate from `source_documents`: a World Bank or ISO
+ * dataset is not a payment-provider document and must never enter the
+ * provider-crawler/change-event path by accident.
+ */
+export const referenceSources = pgTable(
+  "reference_sources",
+  {
+    id: text("id").primaryKey(),
+    category: text("category").notNull(),
+    authority: text("authority").notNull(),
+    entity: text("entity"),
+    sourceUrl: text("source_url").notNull(),
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    verificationType: verificationTypeEnum("verification_type").notNull(),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull(),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+    evidenceExcerpt: text("evidence_excerpt").notNull(),
+    confidence: numeric("confidence", { precision: 3, scale: 2 }).notNull(),
+    recommendedRefreshHours: integer("recommended_refresh_hours").notNull(),
+    inputHash: text("input_hash").notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ urlIdx: index("reference_sources_url_idx").on(t.sourceUrl) }),
+);
+
+/**
+ * Source-backed token metadata. A row is a reference assertion about an asset
+ * (not a provider capability and not evidence that it can be paid out in any
+ * country). `status` exposes supplied conflicts/research requirements instead
+ * of silently treating an incomplete source as an active chain deployment.
+ */
+export const assetReferences = pgTable(
+  "asset_references",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetSymbol: text("asset_symbol")
+      .notNull()
+      .references(() => assets.symbol, { onDelete: "cascade" }),
+    referenceSourceId: text("reference_source_id")
+      .notNull()
+      .references(() => referenceSources.id, { onDelete: "cascade" }),
+    issuer: text("issuer").notNull(),
+    referenceCurrency: text("reference_currency").references(() => currencies.code),
+    sourceUrl: text("source_url").notNull(),
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    verificationType: verificationTypeEnum("verification_type").notNull(),
+    sourceAsOf: timestamp("source_as_of", { withTimezone: true }),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull(),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+    evidenceExcerpt: text("evidence_excerpt").notNull(),
+    confidence: numeric("confidence", { precision: 3, scale: 2 }).notNull(),
+    status: text("status").default("accepted").notNull(),
+    note: text("note"),
+    inputHash: text("input_hash").notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    assetSourceIdx: uniqueIndex("asset_references_asset_source_idx").on(t.assetSymbol, t.referenceSourceId),
+  }),
+);
+
+/** One issuer/protocol-reported asset-to-network reference per source label. */
+export const assetNetworkReferences = pgTable(
+  "asset_network_references",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetReferenceId: uuid("asset_reference_id")
+      .notNull()
+      .references(() => assetReferences.id, { onDelete: "cascade" }),
+    networkName: text("network_name").notNull(),
+    blockchainSlug: text("blockchain_slug").references(() => blockchains.slug),
+    sourceUrl: text("source_url").notNull(),
+    sourceType: sourceTypeEnum("source_type").notNull(),
+    verificationType: verificationTypeEnum("verification_type").notNull(),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull(),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+    evidenceExcerpt: text("evidence_excerpt").notNull(),
+    confidence: numeric("confidence", { precision: 3, scale: 2 }).notNull(),
+    status: text("status").default("accepted").notNull(),
+    note: text("note"),
+    inputHash: text("input_hash").notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    assetNetworkSourceIdx: uniqueIndex("asset_network_references_source_name_idx").on(
+      t.assetReferenceId,
+      t.networkName,
+    ),
+  }),
+);
+
 /**
  * Real, named local payment rails — UPI, PIX, SPEI, M-PESA — as opposed to
  * paymentMethodEnum's generic buckets (bank_transfer_local, wallet_transfer)
@@ -389,7 +504,10 @@ export const sourceDocuments = pgTable(
     lastError: text("last_error"),
     createdAt: now(),
   },
-  (t) => ({ urlIdx: uniqueIndex("source_documents_url_idx").on(t.url) }),
+  // A URL can legitimately document multiple providers (for example a
+  // marketplace or regulator page). Scope identity to the provider so one
+  // provider can never inherit another provider's source document.
+  (t) => ({ providerUrlIdx: uniqueIndex("source_documents_provider_url_idx").on(t.providerId, t.url) }),
 );
 
 export const sourceSnapshots = pgTable(
@@ -410,6 +528,42 @@ export const sourceSnapshots = pgTable(
   (t) => ({ docIdx: index("source_snapshots_doc_idx").on(t.sourceDocumentId, t.fetchedAt) }),
 );
 
+/**
+ * Exact corridor questions collected for source research.  These are not
+ * provider capabilities: they deliberately stay out of the routing graph
+ * until a provider API, documentation page, or observed run proves the
+ * complete tuple.
+ */
+export const routeResearchQueue = pgTable(
+  "route_research_queue",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inputHash: text("input_hash").notNull(),
+    sourceName: text("source_name").notNull(),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
+    status: text("status").default("RESEARCH_REQUIRED").notNull(),
+    // Research targets may mention a valid ISO/code not yet in Railor's
+    // reference catalog. Keep them verbatim so a catalog gap cannot erase
+    // the target before a researcher has reviewed it.
+    entityCountry: text("entity_country"),
+    customerType: customerTypeEnum("customer_type"),
+    sourceAsset: text("source_asset"),
+    sourceNetwork: text("source_network"),
+    sourceCurrency: text("source_currency"),
+    destinationCountry: text("destination_country"),
+    destinationCurrency: text("destination_currency"),
+    endpointType: receivingEndpointTypeEnum("endpoint_type"),
+    namedRail: text("named_rail"),
+    query: jsonb("query").$type<Record<string, string>>().notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    inputHashIdx: uniqueIndex("route_research_queue_input_hash_idx").on(t.inputHash),
+    statusIdx: index("route_research_queue_status_idx").on(t.status, t.generatedAt),
+  }),
+);
+
 export const evidence = pgTable(
   "evidence",
   {
@@ -420,6 +574,15 @@ export const evidence = pgTable(
     sourceUrl: text("source_url").notNull(),
     sourceTitle: text("source_title").notNull(),
     sourceType: sourceTypeEnum("source_type").notNull(),
+    /**
+     * `provider_reported` is a statement in the provider's own material;
+     * `railor_observed` is measured by a real Railor run; and
+     * `provider_verified` is manually corroborated against an authoritative
+     * primary source such as a regulator or payment-network registry.
+     */
+    verificationType: verificationTypeEnum("verification_type")
+      .default("provider_reported")
+      .notNull(),
     retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull(),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
     confidence: numeric("confidence", { precision: 3, scale: 2 }).notNull(),
@@ -451,8 +614,13 @@ export const providerCapabilities = pgTable(
     entityCountry: text("entity_country").references(() => countries.code),
     customerCountry: text("customer_country").references(() => countries.code),
     customerType: customerTypeEnum("customer_type"),
+    /** Explicit payer jurisdiction/funding details. These are never inferred from destination facts. */
+    sourceCountry: text("source_country").references(() => countries.code),
+    sourceEndpointType: receivingEndpointTypeEnum("source_endpoint_type"),
+    sourceNamedRail: text("source_named_rail").references(() => namedRails.code),
     sourceAsset: text("source_asset").references(() => assets.symbol),
     sourceNetwork: text("source_network").references(() => blockchains.slug),
+    sourceCurrency: text("source_currency").references(() => currencies.code),
     destinationCountry: text("destination_country").references(() => countries.code),
     destinationCurrency: text("destination_currency").references(() => currencies.code),
     paymentMethod: paymentMethodEnum("payment_method"),
@@ -480,6 +648,46 @@ export const providerCapabilities = pgTable(
       t.destinationCurrency,
       t.destinationCountry,
     ),
+  }),
+);
+
+/**
+ * An atomic, evidence-backed route assertion. Unlike providerCapabilities and
+ * receivingEndpoints, this is the only graph fact that can prove a complete
+ * source-to-destination route. Null does not authorize a join to another row.
+ */
+export const providerRoutes = pgTable(
+  "provider_routes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id").notNull().references(() => providers.id, { onDelete: "cascade" }),
+    product: productTypeEnum("product").notNull(),
+    entityCountry: text("entity_country").references(() => countries.code),
+    customerType: customerTypeEnum("customer_type"),
+    sourceCountry: text("source_country").references(() => countries.code),
+    sourceEndpointType: receivingEndpointTypeEnum("source_endpoint_type"),
+    sourceNamedRail: text("source_named_rail").references(() => namedRails.code),
+    sourceAsset: text("source_asset").references(() => assets.symbol),
+    sourceNetwork: text("source_network").references(() => blockchains.slug),
+    sourceCurrency: text("source_currency").references(() => currencies.code),
+    destinationCountry: text("destination_country").notNull().references(() => countries.code),
+    destinationCurrency: text("destination_currency").references(() => currencies.code),
+    destinationEndpointType: receivingEndpointTypeEnum("destination_endpoint_type"),
+    destinationNamedRail: text("destination_named_rail").references(() => namedRails.code),
+    paymentMethod: paymentMethodEnum("payment_method"),
+    minAmount: numeric("min_amount", { precision: 20, scale: 8 }),
+    maxAmount: numeric("max_amount", { precision: 20, scale: 8 }),
+    amountCurrency: text("amount_currency").references(() => currencies.code),
+    availability: availabilityEnum("availability").notNull(),
+    note: text("note"),
+    evidenceId: uuid("evidence_id").references(() => evidence.id),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    exactLookupIdx: index("provider_routes_exact_lookup_idx").on(t.providerId, t.product, t.entityCountry, t.sourceAsset, t.sourceCurrency, t.destinationCountry),
+    destinationIdx: index("provider_routes_destination_idx").on(t.destinationCountry, t.destinationCurrency),
   }),
 );
 
@@ -886,6 +1094,68 @@ export const alerts = pgTable(
   (t) => ({ orgIdx: index("alerts_org_idx").on(t.organizationId, t.createdAt) }),
 );
 
+/* -------------------------------------------------------------------------- */
+/* Coverage gaps & demand telemetry                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One row per (provider, corridor) that a real search evaluated to
+ * `unknown` — the structured "missing edge" from evaluateProvider's own
+ * reasons, not a reinterpretation. Self-accumulating (times_requested) on
+ * every repeat search, and self-resolving: coverage-gaps.ts re-runs the same
+ * evaluation later and flips this to resolved (linking the change_events row
+ * that told existing watchers) the moment real data answers it — nobody has
+ * to remember to close it out by hand.
+ */
+export const coverageGaps = pgTable(
+  "coverage_gaps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => providers.id, { onDelete: "cascade" }),
+    corridorKey: text("corridor_key").notNull(),
+    /** The exact CorridorQuery that produced this gap — replayed verbatim on revalidation, never reconstructed from corridorKey. */
+    query: jsonb("query").$type<Record<string, unknown>>().notNull(),
+    /** evaluateProvider's own EligibilityReason[] at gap-creation time. */
+    reasons: jsonb("reasons").$type<Array<Record<string, unknown>>>().notNull(),
+    status: coverageGapStatusEnum("status").default("open").notNull(),
+    timesRequested: integer("times_requested").default(1).notNull(),
+    firstRequestedAt: timestamp("first_requested_at", { withTimezone: true }).defaultNow().notNull(),
+    lastRequestedAt: timestamp("last_requested_at", { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedChangeEventId: uuid("resolved_change_event_id").references(() => changeEvents.id),
+  },
+  (t) => ({
+    providerCorridorIdx: uniqueIndex("coverage_gaps_provider_corridor_idx").on(t.providerId, t.corridorKey),
+    statusIdx: index("coverage_gaps_status_idx").on(t.status),
+  }),
+);
+
+/**
+ * One row per distinct corridor shape, aggregated across every real search —
+ * never per-user, never storing who searched. Purely a demand signal: which
+ * corridors people actually ask about, and how often, to rank research and
+ * provider-integration priority. `totalRequestedVolume` only sums searches
+ * that specified a real amount — `volumeSearchCount` is the honest
+ * denominator for an average, since most searches don't specify one and
+ * treating those as zero would understate real demand.
+ */
+export const corridorDemand = pgTable(
+  "corridor_demand",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    corridorKey: text("corridor_key").notNull(),
+    query: jsonb("query").$type<Record<string, unknown>>().notNull(),
+    searchCount: integer("search_count").default(1).notNull(),
+    totalRequestedVolume: numeric("total_requested_volume", { precision: 18, scale: 2 }),
+    volumeSearchCount: integer("volume_search_count").default(0).notNull(),
+    firstSearchedAt: timestamp("first_searched_at", { withTimezone: true }).defaultNow().notNull(),
+    lastSearchedAt: timestamp("last_searched_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ corridorKeyIdx: uniqueIndex("corridor_demand_key_idx").on(t.corridorKey) }),
+);
+
 export const orgKybItems = pgTable(
   "org_kyb_items",
   {
@@ -906,7 +1176,7 @@ export const orgKybItems = pgTable(
   }),
 );
 
-/** Stage 5 architecture. No credentials are stored or used in V1. */
+/** Customer-owned credentials for their own provider accounts (apps/web/lib/connections.ts writes/reads this) — never Railor's own credentials, and never returned to a client; only decrypted server-side, immediately before an adapter call. */
 export const providerConnections = pgTable("provider_connections", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id")
@@ -916,7 +1186,7 @@ export const providerConnections = pgTable("provider_connections", {
     .notNull()
     .references(() => providers.id, { onDelete: "cascade" }),
   status: text("status").default("not_connected").notNull(),
-  /** Ciphertext only, written by the adapter layer. Empty in V1. */
+  /** AES-256-GCM ciphertext (apps/web/lib/credentials.ts), written by connectProvider(). Requires CREDENTIALS_ENCRYPTION_KEY — connectProvider refuses to write if that's unset. */
   encryptedCredentials: text("encrypted_credentials"),
   connectedAt: timestamp("connected_at", { withTimezone: true }),
   createdAt: now(),
@@ -1173,6 +1443,48 @@ export const countryResearchRuns = pgTable(
   }),
 );
 
+/** Durable paid-research budget. A scope can be a monthly or campaign ledger. */
+export const researchBudgetAccounts = pgTable(
+  "research_budget_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    vendor: text("vendor").notNull(),
+    scopeKey: text("scope_key").notNull(),
+    maxSpendUsd: numeric("max_spend_usd", { precision: 12, scale: 4 }).notNull(),
+    reserveUsd: numeric("reserve_usd", { precision: 12, scale: 4 }).notNull(),
+    committedUsd: numeric("committed_usd", { precision: 12, scale: 4 }).default("0").notNull(),
+    reservedUsd: numeric("reserved_usd", { precision: 12, scale: 4 }).default("0").notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ vendorScopeIdx: uniqueIndex("research_budget_accounts_vendor_scope_idx").on(t.vendor, t.scopeKey) }),
+);
+
+/** Append-only reservation/commit history for paid research calls. */
+export const researchSpendLedger = pgTable(
+  "research_spend_ledger",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id").notNull().references(() => researchBudgetAccounts.id, { onDelete: "cascade" }),
+    idempotencyKey: text("idempotency_key").notNull(),
+    operationType: text("operation_type").notNull(),
+    mode: text("mode").notNull(),
+    unitCount: integer("unit_count").notNull(),
+    estimatedUsd: numeric("estimated_usd", { precision: 12, scale: 4 }).notNull(),
+    status: text("status").notNull(),
+    country: text("country"),
+    provider: text("provider"),
+    summary: text("summary"),
+    errorMessage: text("error_message"),
+    createdAt: now(),
+    finalizedAt: timestamp("finalized_at", { withTimezone: true }),
+  },
+  (t) => ({
+    idempotencyIdx: uniqueIndex("research_spend_ledger_idempotency_idx").on(t.idempotencyKey),
+    accountStatusIdx: index("research_spend_ledger_account_status_idx").on(t.accountId, t.status, t.createdAt),
+  }),
+);
+
 /* -------------------------------------------------------------------------- */
 /* Relations                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -1196,6 +1508,11 @@ export const providerCapabilitiesRelations = relations(providerCapabilities, ({ 
     fields: [providerCapabilities.evidenceId],
     references: [evidence.id],
   }),
+}));
+
+export const providerRoutesRelations = relations(providerRoutes, ({ one }) => ({
+  provider: one(providers, { fields: [providerRoutes.providerId], references: [providers.id] }),
+  evidence: one(evidence, { fields: [providerRoutes.evidenceId], references: [evidence.id] }),
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({

@@ -118,8 +118,8 @@ def insert_evidence(
             """
             insert into evidence
               (provider_id, source_document_id, snapshot_id, source_url, source_title,
-               source_type, retrieved_at, last_verified_at, confidence, raw_excerpt, raw_hash)
-            values (%s, %s, %s, %s, %s, %s, now(), now(), %s, %s, %s)
+               source_type, verification_type, retrieved_at, last_verified_at, confidence, raw_excerpt, raw_hash)
+            values (%s, %s, %s, %s, %s, %s, 'provider_reported', now(), now(), %s, %s, %s)
             returning id
             """,
             (

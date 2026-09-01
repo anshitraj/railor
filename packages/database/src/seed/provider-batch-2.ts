@@ -11,11 +11,10 @@
  * and this file only ever encodes facts it can point at directly. Same
  * principle stablecoin-capabilities.ts already applied to Coinbase.
  *
- * Where a provider names a real payment rail this dataset already tracks
- * (Conduit explicitly lists Fedwire/PIX/SEPA Instant/FedNow/TED/RTP/SPEI and
- * "RTGS (UK)" — the UK's RTGS system is CHAPS), receiving_endpoints link to
- * that named_rails row via namedRail — provider capabilities pointing at the
- * actual rail entities, not a generic bucket.
+ * A provider listing stablecoins and named payment rails on the same page is
+ * not evidence that every stablecoin works on every rail.  Those independent
+ * facts are kept unpaired here; only an API route/configuration response may
+ * establish a complete stablecoin → network → country → rail tuple.
  *
  * Insert-only and idempotent, like both files above: safe to run again.
  *
@@ -24,7 +23,7 @@
 import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb, getDbHandle } from "../client.js";
 import * as s from "../schema.js";
 
@@ -157,7 +156,11 @@ async function upsertProvider(db: Awaited<ReturnType<typeof getDb>>, p: RealProv
 }
 
 async function upsertSourceDocument(db: Awaited<ReturnType<typeof getDb>>, providerId: string, url: string, title: string): Promise<string> {
-  const [existing] = await db.select().from(s.sourceDocuments).where(eq(s.sourceDocuments.url, url)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(s.sourceDocuments)
+    .where(and(eq(s.sourceDocuments.providerId, providerId), eq(s.sourceDocuments.url, url)))
+    .limit(1);
   if (existing) return existing.id;
   const [row] = await db
     .insert(s.sourceDocuments)
@@ -242,10 +245,6 @@ const SPECS: EvidenceSpec[] = [
     excerpt:
       "\"Stablecoin infrastructure for the builders making money flow.\" Six product pillars: Send, Receive, Store, Convert, Spend, Earn. \"130+ countries\", \"40+ licenses worldwide\" across the UK, EU and US. \"Support all major chains and tokens through a single API platform.\" Minimum $500k/month processing volume, 6+ months trading history.",
     capabilities: [{ product: "virtual_account" }],
-    receivingEndpoints: [
-      { countryCode: "GB", endpointType: "virtual_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "GBP", note: "UK-licensed; unified fiat/stablecoin accounts, stablecoin-native payout rail into GBP." },
-      { countryCode: "US", endpointType: "virtual_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "USD", note: "US-licensed; unified fiat/stablecoin accounts, stablecoin-native payout rail into USD." },
-    ],
   },
   {
     slug: "brale",
@@ -264,21 +263,6 @@ const SPECS: EvidenceSpec[] = [
     sourceTitle: "Airwallex — Supported regions and currencies",
     excerpt:
       "\"You can create Global Accounts in the following regions and currencies, and receive bank transfers via local payment methods and/or SWIFT.\" 14 regions, 23 currencies including AUD, CAD, EUR, GBP, HKD, IDR, ILS, MXN, NZD, PLN, SGD, USD, ZAR. Regions: Australia, Canada, Denmark, Estonia, Germany, Hong Kong SAR, Indonesia, Israel, Mexico, Netherlands, New Zealand, Poland, Singapore, UAE, UK, US.",
-    receivingEndpoints: [
-      { countryCode: "AU", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "AUD", note: "Global Account in AUD, local payment methods and/or SWIFT." },
-      { countryCode: "CA", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "CAD", note: "Global Account in CAD, local payment methods and/or SWIFT." },
-      { countryCode: "DE", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "EUR", namedRail: "SEPA_CT_DE", note: "Global Account in EUR (Germany-domiciled), local payment methods and/or SWIFT." },
-      { countryCode: "HK", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "HKD", note: "Global Account in HKD, local payment methods and/or SWIFT." },
-      { countryCode: "ID", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "IDR", note: "Global Account in IDR, local payment methods and/or SWIFT." },
-      { countryCode: "IL", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "ILS", note: "Global Account in ILS, local payment methods and/or SWIFT." },
-      { countryCode: "MX", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "MXN", note: "Global Account in MXN, local payment methods and/or SWIFT." },
-      { countryCode: "NZ", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "NZD", note: "Global Account in NZD, local payment methods and/or SWIFT." },
-      { countryCode: "PL", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "PLN", note: "Global Account in PLN, local payment methods and/or SWIFT." },
-      { countryCode: "SG", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "SGD", namedRail: "PAYNOW", note: "Global Account in SGD, local payment methods and/or SWIFT." },
-      { countryCode: "AE", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "AED", note: "Global Account in AED, local payment methods and/or SWIFT." },
-      { countryCode: "GB", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "GBP", namedRail: "FASTER_PAYMENTS_GB", note: "Global Account in GBP, local payment methods and/or SWIFT." },
-      { countryCode: "US", endpointType: "virtual_account", stablecoinMode: "fiat_only", destinationCurrency: "USD", note: "Global Account in USD, local payment methods and/or SWIFT." },
-    ],
   },
   {
     slug: "conduit",
@@ -289,16 +273,6 @@ const SPECS: EvidenceSpec[] = [
     capabilities: [
       { product: "wallet", sourceAsset: "USDC" },
       { product: "wallet", sourceAsset: "USDT" },
-    ],
-    receivingEndpoints: [
-      { countryCode: "US", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "USD", namedRail: "FEDWIRE", note: "USD accounts funded by USDC/USDT/USDH, settled via Fedwire." },
-      { countryCode: "US", endpointType: "local_instant_rail", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "USD", namedRail: "FEDNOW", note: "USD accounts funded by USDC/USDT/USDH, settled via FedNow." },
-      { countryCode: "US", endpointType: "local_instant_rail", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "USD", namedRail: "RTP", note: "USD accounts funded by USDC/USDT/USDH, settled via RTP." },
-      { countryCode: "BR", endpointType: "local_instant_rail", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "BRL", namedRail: "PIX", note: "Stablecoin-funded payouts settled via PIX." },
-      { countryCode: "BR", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "BRL", namedRail: "TED", note: "Stablecoin-funded payouts settled via TED." },
-      { countryCode: "MX", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "MXN", namedRail: "SPEI", note: "Stablecoin-funded payouts settled via SPEI." },
-      { countryCode: "DE", endpointType: "local_instant_rail", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "EUR", namedRail: "SEPA_ICT_DE", note: "Stablecoin-funded EUR payouts settled via SEPA Instant Credit Transfer." },
-      { countryCode: "GB", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "GBP", namedRail: "CHAPS", note: "Provider names this rail \"RTGS (UK)\" — the UK's real-time gross settlement system is CHAPS." },
     ],
   },
   {
@@ -321,13 +295,84 @@ const SPECS: EvidenceSpec[] = [
     sourceTitle: "Mural Pay — Global Accounts. Realtime Payments. One API.",
     excerpt:
       "\"Deploy enterprise-grade stablecoin infrastructure with Mural Pay — launch accounts, wallets, and payments in weeks.\" Payouts named on-page: USD, COP (Colombian Peso), ARS (Argentine Peso), MXN (Mexican Peso), plus unspecified stablecoins. References Latin America via a customer example (Koywe). \"Move money across borders to anyone, anywhere, in their preferred currency.\"",
-    receivingEndpoints: [
-      { countryCode: "CO", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "COP", note: "Stablecoin-funded payouts to Colombian bank accounts in COP." },
-      { countryCode: "AR", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "ARS", note: "Stablecoin-funded payouts to Argentine bank accounts in ARS." },
-      { countryCode: "MX", endpointType: "bank_account", stablecoinMode: "stablecoin_funded_fiat", destinationCurrency: "MXN", note: "Stablecoin-funded payouts to Mexican bank accounts in MXN." },
-    ],
   },
 ];
+
+/**
+ * Remove only the rows emitted by an earlier version of this same seed when
+ * it joined independent stablecoin, rail and jurisdiction mentions.  Keeping
+ * them would continue to advertise routes the cited pages never established.
+ * The predicates intentionally use the old seed's exact note wording, so a
+ * future, genuinely verified endpoint for the same provider is never touched.
+ */
+async function retractLegacyInferences(
+  db: Awaited<ReturnType<typeof getDb>>,
+  providerIds: Record<string, string>,
+  log: string[],
+): Promise<void> {
+  const legacyNotes: Record<string, (note: string | null) => boolean> = {
+    bvnk: (note) => note?.startsWith("UK-licensed; unified fiat/stablecoin accounts") === true || note?.startsWith("US-licensed; unified fiat/stablecoin accounts") === true,
+    conduit: (note) =>
+      note?.startsWith("Stablecoin-funded payouts") === true ||
+      note?.startsWith("Stablecoin-funded EUR payouts") === true ||
+      note?.startsWith("USD accounts funded by USDC/USDT/USDH") === true ||
+      note?.startsWith('Provider names this rail "RTGS (UK)"') === true,
+    "mural-pay": (note) => note?.startsWith("Stablecoin-funded payouts") === true,
+  };
+
+  for (const [slug, match] of Object.entries(legacyNotes)) {
+    const rows = await db
+      .select({ id: s.receivingEndpoints.id, note: s.receivingEndpoints.note })
+      .from(s.receivingEndpoints)
+      .where(eq(s.receivingEndpoints.providerId, providerIds[slug]!));
+    const ids = rows.filter((row) => match(row.note)).map((row) => row.id);
+    if (!ids.length) continue;
+    await db.delete(s.receivingEndpoints).where(inArray(s.receivingEndpoints.id, ids));
+    log.push(`removed ${ids.length} legacy inferred ${slug} endpoint(s)`);
+  }
+
+  // The earlier Airwallex rows correctly establish receiving accounts, but
+  // incorrectly labelled an absent crypto statement as "fiat_only". Preserve
+  // the endpoint fact and make the compatibility mode explicitly unknown.
+  const airwallexRows = await db
+    .select({ id: s.receivingEndpoints.id, note: s.receivingEndpoints.note })
+    .from(s.receivingEndpoints)
+    .where(and(eq(s.receivingEndpoints.providerId, providerIds.airwallex!), eq(s.receivingEndpoints.stablecoinMode, "fiat_only")));
+  const ambiguousAirwallexIds = airwallexRows
+    .filter((row) => row.note?.startsWith("Global Account in ") || row.note?.startsWith("Local receiving account (Global Accounts)"))
+    .map((row) => row.id);
+  if (ambiguousAirwallexIds.length) {
+    await db
+      .update(s.receivingEndpoints)
+      .set({ stablecoinMode: "unknown" })
+      .where(inArray(s.receivingEndpoints.id, ambiguousAirwallexIds));
+    log.push(`downgraded ${ambiguousAirwallexIds.length} Airwallex stablecoin mode(s) to unknown`);
+  }
+
+  // The older generic "local payment methods" interpretation chose PayNow
+  // for Singapore.  The coverage table does not establish that rail, so keep
+  // the receiving account but remove the unverified rail label.
+  const legacyPayNowRows = await db
+    .select({ id: s.receivingEndpoints.id, note: s.receivingEndpoints.note })
+    .from(s.receivingEndpoints)
+    .where(
+      and(
+        eq(s.receivingEndpoints.providerId, providerIds.airwallex!),
+        eq(s.receivingEndpoints.namedRail, "PAYNOW"),
+        eq(s.receivingEndpoints.destinationCurrency, "SGD"),
+      ),
+    );
+  const legacyPayNowIds = legacyPayNowRows
+    .filter((row) => row.note === "Global Account in SGD, local payment methods and/or SWIFT.")
+    .map((row) => row.id);
+  if (legacyPayNowIds.length) {
+    await db
+      .update(s.receivingEndpoints)
+      .set({ namedRail: null })
+      .where(inArray(s.receivingEndpoints.id, legacyPayNowIds));
+    log.push(`removed ${legacyPayNowIds.length} unverified Airwallex PayNow rail label(s)`);
+  }
+}
 
 export async function bootstrap(): Promise<string[]> {
   const db = await getDb();
@@ -338,6 +383,8 @@ export async function bootstrap(): Promise<string[]> {
     providerIds[p.slug] = await upsertProvider(db, p);
     log.push(`provider ready: ${p.slug}`);
   }
+
+  await retractLegacyInferences(db, providerIds, log);
 
   for (const spec of SPECS) {
     const providerId = providerIds[spec.slug]!;

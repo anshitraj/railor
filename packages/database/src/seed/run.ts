@@ -342,6 +342,8 @@ export async function seedDemoData(): Promise<SeedSummary> {
             for (const method of corridor.methods) {
               push({
                 product,
+                sourceAsset: corridor.sourceAsset,
+                sourceNetwork: corridor.sourceNetwork,
                 destinationCountry: corridor.country,
                 destinationCurrency: cur,
                 paymentMethod: method,

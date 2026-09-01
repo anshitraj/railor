@@ -15,7 +15,7 @@
 import "../dev-env.js";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb, getDbHandle } from "../client.js";
 import * as s from "../schema.js";
 
@@ -82,7 +82,11 @@ async function upsertProvider(db: Awaited<ReturnType<typeof getDb>>, p: RealProv
 }
 
 async function upsertSourceDocument(db: Awaited<ReturnType<typeof getDb>>, providerId: string, url: string, title: string): Promise<string> {
-  const [existing] = await db.select().from(s.sourceDocuments).where(eq(s.sourceDocuments.url, url)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(s.sourceDocuments)
+    .where(and(eq(s.sourceDocuments.providerId, providerId), eq(s.sourceDocuments.url, url)))
+    .limit(1);
   if (existing) return existing.id;
   const [row] = await db
     .insert(s.sourceDocuments)
@@ -167,10 +171,24 @@ export async function bootstrap(): Promise<string[]> {
 
   const existingEndpoints = await db.select().from(s.receivingEndpoints);
   const has = (providerId: string) => existingEndpoints.some((e) => e.providerId === providerId);
-  const hasAssetRow = (providerId: string, asset: string, network: string) =>
-    existingEndpoints.some(
-      (e) => e.providerId === providerId && e.incomingAsset === asset && e.incomingNetwork === network,
-    );
+
+  // Earlier revisions expanded Xflow's independently named assets and
+  // networks into a Cartesian product. These rows are known to be an
+  // unsupported inference, so remove only that narrow, previously-seeded
+  // shape before adding the unpaired facts below.
+  const inferredXflowPairIds = existingEndpoints
+    .filter(
+      (endpoint) =>
+        endpoint.providerId === providerIds.xflow &&
+        endpoint.countryCode === "IN" &&
+        endpoint.incomingAsset !== null &&
+        endpoint.incomingNetwork !== null,
+    )
+    .map((endpoint) => endpoint.id);
+  if (inferredXflowPairIds.length) {
+    await db.delete(s.receivingEndpoints).where(inArray(s.receivingEndpoints.id, inferredXflowPairIds));
+    log.push(`removed ${inferredXflowPairIds.length} inferred Xflow asset/network endpoint pair(s)`);
+  }
 
   if (!has(providerIds.skydo!)) {
     await db.insert(s.receivingEndpoints).values({
@@ -190,35 +208,69 @@ export async function bootstrap(): Promise<string[]> {
     log.push("receiving endpoint already exists: skydo");
   }
 
-  // One row per (asset, network) pair the product page itself names — "Buyers
-  // pay in USDC or USDT ... Networks: Solana, Tron, EVM (Polygon, Ethereum)" —
-  // rather than one asset-less row, so a query for a specific asset/network
-  // (the shape every real corridor search uses) actually matches Xflow.
+  // The page names two stablecoins and four networks, but it does not publish
+  // the asset/network matrix.  Do not manufacture the eight Cartesian pairs:
+  // we preserve the supported assets as independent facts and record the
+  // India endpoint without an incoming pair. A USDC/Base → India query stays
+  // UNKNOWN until Xflow's API or documentation establishes that exact tuple.
   const xflowAssets = ["USDC", "USDT"];
-  const xflowNetworks = ["solana", "tron", "polygon", "ethereum"];
-  let xflowCreated = 0;
+  const xflowCapabilities = await db
+    .select()
+    .from(s.providerCapabilities)
+    .where(eq(s.providerCapabilities.providerId, providerIds.xflow!));
+  let xflowAssetsCreated = 0;
   for (const asset of xflowAssets) {
-    for (const network of xflowNetworks) {
-      if (hasAssetRow(providerIds.xflow!, asset, network)) continue;
-      await db.insert(s.receivingEndpoints).values({
-        providerId: providerIds.xflow!,
-        countryCode: "IN",
-        endpointType: "bank_account",
-        stablecoinMode: "stablecoin_funded_fiat",
-        customerType: "business",
-        incomingAsset: asset,
-        incomingNetwork: network,
-        destinationCurrency: "INR",
-        complianceDocs: "e-FIRA",
-        availability: "supported",
-        note: "Accepts USDC/USDT from overseas buyers on Solana, Tron and EVM chains (Polygon, Ethereum). The stablecoin leg never enters India — it converts offshore, and only INR fiat is settled to the Indian business's bank account. Public API/integration docs referenced on the product page.",
-        evidenceId: xflowEvidence,
-        lastVerifiedAt: new Date(),
-      });
-      xflowCreated += 1;
-    }
+    const alreadyPresent = xflowCapabilities.some(
+      (capability) =>
+        capability.product === "payout" &&
+        capability.sourceAsset === asset &&
+        capability.sourceNetwork === null &&
+        capability.destinationCountry === null,
+    );
+    if (alreadyPresent) continue;
+    await db.insert(s.providerCapabilities).values({
+      providerId: providerIds.xflow!,
+      product: "payout",
+      sourceAsset: asset,
+      customerType: "business",
+      availability: "supported",
+      note: "Xflow names this stablecoin as an accepted buyer-payment asset. It does not publish an asset-to-network or asset-to-India route matrix.",
+      derivation: "source",
+      evidenceId: xflowEvidence,
+      lastVerifiedAt: new Date(),
+    });
+    xflowAssetsCreated += 1;
   }
-  log.push(`receiving endpoints created: xflow (IN, stablecoin_funded_fiat) — ${xflowCreated} asset/network row(s), ${xflowAssets.length * xflowNetworks.length - xflowCreated} already present`);
+
+  const hasXflowEndpoint = existingEndpoints.some(
+    (endpoint) =>
+      endpoint.providerId === providerIds.xflow &&
+      endpoint.countryCode === "IN" &&
+      endpoint.endpointType === "bank_account" &&
+      endpoint.destinationCurrency === "INR" &&
+      endpoint.incomingAsset === null &&
+      endpoint.incomingNetwork === null,
+  );
+  if (!hasXflowEndpoint) {
+    await db.insert(s.receivingEndpoints).values({
+      providerId: providerIds.xflow!,
+      countryCode: "IN",
+      endpointType: "bank_account",
+      stablecoinMode: "stablecoin_funded_fiat",
+      customerType: "business",
+      destinationCurrency: "INR",
+      complianceDocs: "e-FIRA",
+      availability: "supported",
+      note: "Xflow documents a stablecoin-funded offshore conversion followed by INR settlement to an Indian business bank account. It does not publish asset/network pairs for that endpoint.",
+      derivation: "source",
+      evidenceId: xflowEvidence,
+      lastVerifiedAt: new Date(),
+    });
+    log.push("receiving endpoint created: xflow (IN, stablecoin_funded_fiat; asset/network unpaired)");
+  } else {
+    log.push("receiving endpoint already exists: xflow (IN, unpaired)");
+  }
+  log.push(`Xflow asset facets created: ${xflowAssetsCreated}; exact asset/network pairs remain UNKNOWN`);
 
   return log;
 }
