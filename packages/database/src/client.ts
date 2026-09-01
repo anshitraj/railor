@@ -8,6 +8,7 @@
  * The embedded default exists so `pnpm dev` works on a fresh clone with no
  * containers, no accounts and no configuration. Same SQL, same migrations.
  */
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PgDatabase } from "drizzle-orm/pg-core";
@@ -24,7 +25,35 @@ export interface DbHandle {
 }
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const migrationsFolder = path.join(packageRoot, "drizzle");
+
+/**
+ * Next.js transpiles this package's source directly into its own server
+ * chunk (see apps/web/next.config.ts's transpilePackages) instead of
+ * importing a pre-built dist/ — inside that bundled chunk, import.meta.url
+ * points at the chunk file itself (e.g. .next/server/chunks/5252.js), not
+ * this file's real location, so a naive packageRoot-relative path silently
+ * resolves to a directory that doesn't exist in the deployed function
+ * (confirmed in production: "Can't find meta/_journal.json file"). The
+ * migrations folder IS present in the bundle (next.config.ts's
+ * outputFileTracingIncludes copies it) — only the runtime path computation
+ * was wrong. Try every layout a real deployment could plausibly have and use
+ * whichever one is actually there, rather than trusting import.meta.url
+ * unconditionally.
+ */
+function resolveMigrationsFolder(): string {
+  const candidates = [
+    path.join(packageRoot, "drizzle"),
+    path.join(process.cwd(), "packages/database/drizzle"),
+    path.join(process.cwd(), "../../packages/database/drizzle"),
+    path.join(process.cwd(), "drizzle"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, "meta", "_journal.json"))) return candidate;
+  }
+  return candidates[0]!;
+}
+
+const migrationsFolder = resolveMigrationsFolder();
 
 export function embeddedDataDir(): string {
   return (
@@ -52,11 +81,10 @@ async function createHandle(): Promise<DbHandle> {
     };
   }
 
-  const [{ PGlite }, { drizzle }, { migrate }, fs] = await Promise.all([
+  const [{ PGlite }, { drizzle }, { migrate }] = await Promise.all([
     import("@electric-sql/pglite"),
     import("drizzle-orm/pglite"),
     import("drizzle-orm/pglite/migrator"),
-    import("node:fs"),
   ]);
   const dataDir = embeddedDataDir();
   // PGlite creates the leaf directory but not its parents.
