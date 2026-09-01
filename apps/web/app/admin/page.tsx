@@ -10,7 +10,14 @@ import {
   providers,
   sourceDocuments,
 } from "@railor/database";
-import { getAuditLog, getPlatformUsageSummary, loadLatestCountryResearchRuns, RESEARCHABLE_COUNTRIES } from "@railor/core";
+import {
+  corridorLabel,
+  getAuditLog,
+  getPlatformUsageSummary,
+  loadLatestCountryResearchRuns,
+  loadTopCorridorDemand,
+  RESEARCHABLE_COUNTRIES,
+} from "@railor/core";
 import { Card, Freshness, SectionLabel } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { ReviewQueue } from "../../components/admin/review-queue";
@@ -50,7 +57,7 @@ export default async function AdminPage() {
   }
 
   const db = await getDb();
-  const [pending, crawlers, recentEvidence, platformUsage, auditLog, researchedCountries, latestRuns] = await Promise.all([
+  const [pending, crawlers, recentEvidence, platformUsage, auditLog, researchedCountries, latestRuns, topDemand] = await Promise.all([
     db
       .select({
         change: changeEvents,
@@ -78,6 +85,7 @@ export default async function AdminPage() {
       .from(countryProfiles)
       .where(inArray(countryProfiles.iso2, [...RESEARCHABLE_COUNTRIES])),
     loadLatestCountryResearchRuns([...RESEARCHABLE_COUNTRIES]),
+    loadTopCorridorDemand(15),
   ]);
 
   const failing = crawlers.filter((c) => c.source.failureCount > 0);
@@ -258,6 +266,42 @@ export default async function AdminPage() {
           </ul>
         </Card>
       </div>
+
+      <Card className="flex flex-col gap-3 p-5">
+        <SectionLabel>Demand telemetry</SectionLabel>
+        <p className="text-[12px] text-[var(--color-muted)]">
+          Real corridor search intent, aggregated across every real (non-demo) search — anonymous, no
+          per-user or per-org data. Ranked by real search count, not a guessed priority score.
+        </p>
+        {topDemand.length ? (
+          <table className="w-full text-left text-[13px]">
+            <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+              <tr>
+                <th className="pb-2">Corridor</th>
+                <th className="pb-2">Searches</th>
+                <th className="pb-2">Avg. requested amount</th>
+                <th className="pb-2">Last searched</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topDemand.map((row) => (
+                <tr key={row.id} className="border-t border-[var(--color-line)]">
+                  <td className="py-2">{corridorLabel(row.query)}</td>
+                  <td className="tabular py-2">{row.searchCount}</td>
+                  <td className="tabular py-2 text-[var(--color-muted)]">
+                    {row.averageRequestedVolume !== null
+                      ? `${Math.round(row.averageRequestedVolume).toLocaleString()} (${row.volumeSearchCount} of ${row.searchCount} specified an amount)`
+                      : "No amount specified yet"}
+                  </td>
+                  <td className="tabular py-2 text-[var(--color-muted)]">{relativeTime(row.lastSearchedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-[13px] text-[var(--color-muted)]">No real searches recorded yet.</p>
+        )}
+      </Card>
 
       <Card className="flex flex-col gap-3 p-5">
         <SectionLabel>Country intelligence</SectionLabel>

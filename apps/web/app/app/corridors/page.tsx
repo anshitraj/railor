@@ -55,7 +55,7 @@ export default async function CorridorsPage({
     getOrgTestKey(org.id),
   ]);
 
-  const result = await searchCorridors(query, { satisfiedRequirements: satisfied });
+  const result = await searchCorridors(query, { satisfiedRequirements: satisfied, organizationId: org.id });
 
   // Reuse the interpreter's token shape so the chips render identically to the
   // public search, whether or not the user typed a sentence.

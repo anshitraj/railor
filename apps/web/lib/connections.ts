@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb, providerConnections, providers } from "@railor/database";
 import { getAdapter } from "@railor/core";
 import { credentialsConfigured, decryptCredentials, encryptCredentials } from "./credentials";
@@ -82,6 +82,25 @@ export async function getConnectionCredentials(
     .select()
     .from(providerConnections)
     .where(and(eq(providerConnections.organizationId, organizationId), eq(providerConnections.providerId, providerId)))
+    .limit(1);
+  if (!row?.encryptedCredentials) return null;
+  return decryptCredentials(row.encryptedCredentials);
+}
+
+/**
+ * For the conformance runner only (packages/core/src/conformance.ts): does
+ * ANY organization have this provider actually connected, real credentials
+ * and all. Which org proved it is never stored or exposed — the check it
+ * feeds answers "does Railor's integration correctly authenticate against
+ * this provider's real API," a fact independent of whose account confirmed it.
+ */
+export async function getAnyConnectedCredentials(providerId: string): Promise<Record<string, string> | null> {
+  const db = await getDb();
+  const [row] = await db
+    .select()
+    .from(providerConnections)
+    .where(and(eq(providerConnections.providerId, providerId), eq(providerConnections.status, "connected")))
+    .orderBy(desc(providerConnections.connectedAt))
     .limit(1);
   if (!row?.encryptedCredentials) return null;
   return decryptCredentials(row.encryptedCredentials);

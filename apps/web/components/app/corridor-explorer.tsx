@@ -35,7 +35,7 @@ interface SearchPayload {
   providersChecked: number;
   counts: Record<Verdict, number>;
   results: Array<{
-    provider: { slug: string; name: string; category: string };
+    provider: { slug: string; name: string; category: string; isDemo?: boolean };
     eligibility: Verdict;
     confidence: number;
     lastVerifiedAt: string | null;
@@ -58,6 +58,9 @@ interface SearchPayload {
       settlementEstimate: string | null;
       complianceDocs: string | null;
     } | null;
+    rankingConfidence: number;
+    rankingInputsUsed: string[];
+    rankingInputsMissing: string[];
   }>;
   countryContext: {
     iso2: string;
@@ -89,6 +92,8 @@ const PRESETS: Array<{ value: string; label: string; hint: string }> = [
   { value: "fastest", label: "Fastest settlement", hint: "Weights advertised settlement time" },
   { value: "easiest_onboarding", label: "Easiest onboarding", hint: "Weights documents and days to live" },
   { value: "widest_coverage", label: "Widest coverage", hint: "Weights published destination reach" },
+  { value: "max_recipient_amount", label: "Max recipient amount", hint: "Weights published fees, proxying for what the recipient would net" },
+  { value: "most_reliable", label: "Most reliable", hint: "Weights observed uptime over cost or speed" },
 ];
 
 const FACT_LABELS: Record<string, string> = {
@@ -374,6 +379,7 @@ export function CorridorExplorer({
               verdict={result.eligibility}
               confidence={result.confidence}
               lastVerifiedAt={result.lastVerifiedAt}
+              isDemo={result.provider.isDemo}
               facts={[
                 ...Object.entries(result.facts)
                   .filter(([, v]) => Boolean(v))
@@ -405,6 +411,9 @@ export function CorridorExplorer({
                 evidence={result.evidence}
                 lastVerifiedAt={result.lastVerifiedAt}
                 outstandingRequirements={result.outstandingRequirements}
+                rankingConfidence={result.rankingConfidence}
+                rankingInputsUsed={result.rankingInputsUsed}
+                rankingInputsMissing={result.rankingInputsMissing}
               />
             </ResultRow>
           ))}

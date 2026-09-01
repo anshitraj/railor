@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { RankingPreset } from "@railor/types";
-import { routeQuote } from "@railor/core";
+import { loadProviderInputs, routeQuote } from "@railor/core";
 import { ApiError, authenticate, recordUsage, snake, type ApiContext } from "../../../lib/api-auth";
 import { getConnectableProviders, getConnectionCredentials } from "../../../lib/connections";
 
@@ -45,13 +45,18 @@ export async function POST(request: Request) {
       preset,
     } = parsed.data;
 
-    const rows = await getConnectableProviders(context.organizationId);
+    const [rows, providerInputs] = await Promise.all([
+      getConnectableProviders(context.organizationId),
+      loadProviderInputs(),
+    ]);
+    const healthBySlug = new Map(providerInputs.map((p) => [p.slug, p.healthOkRatio]));
     const providers = await Promise.all(
       rows.map(async ({ provider, connection, adapter }) => ({
         slug: provider.slug,
         name: provider.name,
         adapter,
         credentials: connection ? await getConnectionCredentials(context!.organizationId, provider.id) : null,
+        healthOkRatio: healthBySlug.get(provider.slug) ?? null,
       })),
     );
 
@@ -67,6 +72,9 @@ export async function POST(request: Request) {
       preset: result.preset,
       selected: result.selected ? snake(result.selected as unknown as Record<string, unknown>) : null,
       attempts: result.attempts.map((a) => snake(a as unknown as Record<string, unknown>)),
+      ranking_confidence: result.rankingConfidence,
+      ranking_inputs_used: result.rankingInputsUsed,
+      ranking_inputs_missing: result.rankingInputsMissing,
       generated_at: new Date().toISOString(),
     };
 

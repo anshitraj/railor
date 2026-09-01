@@ -42,7 +42,11 @@ export async function POST(request: Request) {
     ? await getSatisfiedRequirements(session.organization.id)
     : undefined;
 
-  const result = await searchCorridors(query, { preset, satisfiedRequirements });
+  const result = await searchCorridors(query, {
+    preset,
+    satisfiedRequirements,
+    organizationId: session?.organization?.id,
+  });
   const authenticated = Boolean(session);
 
   // Anonymous visitors see two previews, matching what the marketing copy

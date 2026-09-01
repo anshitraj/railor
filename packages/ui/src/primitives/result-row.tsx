@@ -26,6 +26,7 @@ export function ResultRow({
   defaultOpen = false,
   blurred = false,
   onUnlock,
+  isDemo = false,
 }: {
   name: string;
   category: string;
@@ -40,6 +41,8 @@ export function ResultRow({
   blurred?: boolean;
   /** Where the lock affordance sends an anonymous visitor. */
   onUnlock?: () => void;
+  /** Railor's own seeded sample company, never a real business — labelled, never hidden, never silently blended in. */
+  isDemo?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -70,7 +73,14 @@ export function ResultRow({
             {name.slice(0, 2).toUpperCase()}
           </span>
           <span className="flex flex-col">
-            <span className="text-[15px] font-medium text-[var(--color-ink)]">{name}</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-[15px] font-medium text-[var(--color-ink)]">{name}</span>
+              {isDemo ? (
+                <span className="rounded-full border border-[var(--color-line-strong)] bg-[var(--color-lavender)] px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-[var(--color-purple)]">
+                  Demo
+                </span>
+              ) : null}
+            </span>
             <span className="text-[12px] text-[var(--color-muted)]">{category}</span>
           </span>
         </button>

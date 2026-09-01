@@ -30,7 +30,11 @@ export async function POST(request: Request) {
     const query = CorridorQuery.parse(camelQuery(body));
 
     const satisfied = await getSatisfiedRequirements(context.organizationId);
-    const result = await searchCorridors(query, { preset, satisfiedRequirements: satisfied });
+    const result = await searchCorridors(query, {
+      preset,
+      satisfiedRequirements: satisfied,
+      organizationId: context.organizationId,
+    });
 
     const payload = {
       object: "corridor_search",
@@ -51,6 +55,10 @@ export async function POST(request: Request) {
         facts: snake(r.facts as Record<string, unknown>),
         evidence: r.evidence.map((e) => snake(e as unknown as Record<string, unknown>)),
         score: r.score,
+        ranking_confidence: r.rankingConfidence,
+        ranking_inputs_used: r.rankingInputsUsed,
+        ranking_inputs_missing: r.rankingInputsMissing,
+        connectivity: r.connectivity,
       })),
       has_more: false,
       generated_at: result.generatedAt.toISOString(),

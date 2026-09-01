@@ -31,7 +31,7 @@ interface SearchResponse {
   providersChecked: number;
   counts: Record<Verdict, number>;
   results: Array<{
-    provider: { slug: string; name: string; category: string };
+    provider: { slug: string; name: string; category: string; isDemo?: boolean };
     eligibility: Verdict;
     confidence: number;
     lastVerifiedAt: string | null;
@@ -247,6 +247,7 @@ export function HeroSearch({
                 lastVerifiedAt={result.lastVerifiedAt}
                 blurred={!data.authenticated}
                 onUnlock={continueToFull}
+                isDemo={result.provider.isDemo}
                 facts={Object.entries(result.facts)
                   .filter(([, v]) => Boolean(v))
                   .slice(0, 3)

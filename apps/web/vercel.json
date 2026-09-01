@@ -1,5 +1,8 @@
 {
   "crons": [
-    { "path": "/api/internal/usage-rollup", "schedule": "0 3 * * *" }
+    { "path": "/api/internal/usage-rollup", "schedule": "0 3 * * *" },
+    { "path": "/api/internal/source-monitor", "schedule": "0 4 * * *" },
+    { "path": "/api/internal/coverage-gap-revalidation", "schedule": "0 5 * * *" },
+    { "path": "/api/internal/conformance-check", "schedule": "0 6 * * *" }
   ]
 }

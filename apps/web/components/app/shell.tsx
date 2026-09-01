@@ -10,6 +10,7 @@ import { RailorMark } from "../marketing/nav";
 const NAV: Array<{ href: string; label: string; icon: string; stage?: "beta" | "soon" }> = [
   { href: "/app", label: "Overview", icon: "▤" },
   { href: "/app/corridors", label: "Corridors", icon: "⇄" },
+  { href: "/app/map", label: "Route map", icon: "◍" },
   { href: "/app/providers", label: "Providers", icon: "◎" },
   { href: "/app/compare", label: "Compare", icon: "≣" },
   { href: "/app/monitoring", label: "Monitoring", icon: "◔" },

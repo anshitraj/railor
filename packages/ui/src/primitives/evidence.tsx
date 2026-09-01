@@ -8,6 +8,7 @@ export interface EvidenceItem {
   sourceUrl: string;
   sourceTitle: string;
   sourceType: string;
+  verificationType?: string;
   retrievedAt: string | Date;
   lastVerifiedAt: string | Date;
   confidence: number;
@@ -25,6 +26,12 @@ const SOURCE_LABEL: Record<string, string> = {
   official_announcement: "Announcement",
   manual_verified: "Manually verified",
   third_party: "Third-party source",
+};
+
+const VERIFICATION_LABEL: Record<string, string> = {
+  provider_reported: "Provider-reported",
+  railor_observed: "Railor-observed",
+  provider_verified: "Provider-verified",
 };
 
 /**
@@ -68,7 +75,7 @@ export function EvidencePopover({
               <li key={e.sourceUrl} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
-                    {SOURCE_LABEL[e.sourceType] ?? e.sourceType}
+                    {VERIFICATION_LABEL[e.verificationType ?? "provider_reported"]} · {SOURCE_LABEL[e.sourceType] ?? e.sourceType}
                   </span>
                   <ConfidenceDot confidence={e.confidence} showValue />
                 </div>

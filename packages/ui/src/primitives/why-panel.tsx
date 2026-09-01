@@ -23,6 +23,19 @@ export interface ChangeEntry {
  * verdict always arrives with the reason, what is nonetheless true, what would
  * change it, the sources, and when the claim was last verified.
  */
+/** Turns a snake_case ranking-input key into the short label a result card already shows it under. */
+const RANKING_INPUT_LABEL: Record<string, string> = {
+  cost: "Fees",
+  speed: "Settlement speed",
+  onboarding: "Onboarding time",
+  reliability: "Reliability",
+  coverage: "Coverage",
+  confidence: "Evidence confidence",
+  recipientAmount: "Recipient amount",
+  eta: "ETA",
+};
+const rankingInputLabel = (key: string) => RANKING_INPUT_LABEL[key] ?? key;
+
 export function WhyPanel({
   providerName,
   verdict,
@@ -31,6 +44,9 @@ export function WhyPanel({
   lastVerifiedAt,
   outstandingRequirements = [],
   history = [],
+  rankingConfidence,
+  rankingInputsUsed = [],
+  rankingInputsMissing = [],
   className,
 }: {
   providerName: string;
@@ -40,6 +56,10 @@ export function WhyPanel({
   lastVerifiedAt: string | Date | null;
   outstandingRequirements?: string[];
   history?: ChangeEntry[];
+  /** How much of the ranking score is backed by real data (0-1) — omit to hide this section entirely. */
+  rankingConfidence?: number;
+  rankingInputsUsed?: string[];
+  rankingInputsMissing?: string[];
   className?: string;
 }) {
   const alsoTrue = [...new Set(reasons.flatMap((r) => r.alsoTrue))];
@@ -140,6 +160,23 @@ export function WhyPanel({
           </p>
           <Freshness date={lastVerifiedAt} prefix="" />
         </div>
+
+        {rankingConfidence !== undefined ? (
+          <div className="border-t border-[var(--color-line)] pt-3">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+              Ranking confidence
+            </p>
+            <p className="text-[13px] text-[var(--color-ink-soft)]">
+              {Math.round(rankingConfidence * 100)}% of the score is backed by real data
+              {rankingInputsUsed.length ? ` — ${rankingInputsUsed.map(rankingInputLabel).join(", ")}` : ""}.
+            </p>
+            {rankingInputsMissing.length ? (
+              <p className="mt-1 text-[12px] text-[var(--color-faint)]">
+                No data yet for: {rankingInputsMissing.map(rankingInputLabel).join(", ")} — never guessed, dropped from the score instead.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {history.length ? (
           <div className="border-t border-[var(--color-line)] pt-3">
