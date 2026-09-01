@@ -18,6 +18,7 @@ import {
   limits as limitsTable,
   namedRails,
   providerCapabilities,
+  providerRoutes,
   providerProducts,
   providerRequirements,
   providers,
@@ -63,7 +64,7 @@ const num = (v: string | number | null | undefined): number | undefined => {
 export async function loadProviderInputs(): Promise<ProviderInput[]> {
   const db = await getDb();
 
-  const [providerRows, productRows, facetRows, endpointRows, reqRows, feeRows, limitRows, healthRows] =
+  const [providerRows, productRows, facetRows, exactRouteRows, endpointRows, reqRows, feeRows, limitRows, healthRows] =
     await Promise.all([
       db.select().from(providers),
       db.select().from(providerProducts),
@@ -75,8 +76,12 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
           entityCountry: providerCapabilities.entityCountry,
           customerCountry: providerCapabilities.customerCountry,
           customerType: providerCapabilities.customerType,
+          sourceCountry: providerCapabilities.sourceCountry,
+          sourceEndpointType: providerCapabilities.sourceEndpointType,
+          sourceNamedRail: providerCapabilities.sourceNamedRail,
           sourceAsset: providerCapabilities.sourceAsset,
           sourceNetwork: providerCapabilities.sourceNetwork,
+          sourceCurrency: providerCapabilities.sourceCurrency,
           destinationCountry: providerCapabilities.destinationCountry,
           destinationCurrency: providerCapabilities.destinationCurrency,
           paymentMethod: providerCapabilities.paymentMethod,
@@ -87,6 +92,7 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
           evidenceUrl: evidenceTable.sourceUrl,
           evidenceTitle: evidenceTable.sourceTitle,
           evidenceType: evidenceTable.sourceType,
+          evidenceVerificationType: evidenceTable.verificationType,
           evidenceConfidence: evidenceTable.confidence,
           evidenceRetrievedAt: evidenceTable.retrievedAt,
           evidenceRawHash: evidenceTable.rawHash,
@@ -94,6 +100,39 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
         })
         .from(providerCapabilities)
         .leftJoin(evidenceTable, eq(providerCapabilities.evidenceId, evidenceTable.id)),
+      db
+        .select({
+          id: providerRoutes.id,
+          providerId: providerRoutes.providerId,
+          product: providerRoutes.product,
+          entityCountry: providerRoutes.entityCountry,
+          customerType: providerRoutes.customerType,
+          sourceCountry: providerRoutes.sourceCountry,
+          sourceEndpointType: providerRoutes.sourceEndpointType,
+          sourceNamedRail: providerRoutes.sourceNamedRail,
+          sourceAsset: providerRoutes.sourceAsset,
+          sourceNetwork: providerRoutes.sourceNetwork,
+          sourceCurrency: providerRoutes.sourceCurrency,
+          destinationCountry: providerRoutes.destinationCountry,
+          destinationCurrency: providerRoutes.destinationCurrency,
+          endpointType: providerRoutes.destinationEndpointType,
+          namedRailCode: providerRoutes.destinationNamedRail,
+          paymentMethod: providerRoutes.paymentMethod,
+          availability: providerRoutes.availability,
+          note: providerRoutes.note,
+          lastVerifiedAt: providerRoutes.lastVerifiedAt,
+          evidenceId: evidenceTable.id,
+          evidenceUrl: evidenceTable.sourceUrl,
+          evidenceTitle: evidenceTable.sourceTitle,
+          evidenceType: evidenceTable.sourceType,
+          evidenceVerificationType: evidenceTable.verificationType,
+          evidenceConfidence: evidenceTable.confidence,
+          evidenceRetrievedAt: evidenceTable.retrievedAt,
+          evidenceRawHash: evidenceTable.rawHash,
+          evidenceExcerpt: evidenceTable.rawExcerpt,
+        })
+        .from(providerRoutes)
+        .leftJoin(evidenceTable, eq(providerRoutes.evidenceId, evidenceTable.id)),
       db
         .select({
           id: receivingEndpoints.id,
@@ -117,6 +156,7 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
           evidenceUrl: evidenceTable.sourceUrl,
           evidenceTitle: evidenceTable.sourceTitle,
           evidenceType: evidenceTable.sourceType,
+          evidenceVerificationType: evidenceTable.verificationType,
           evidenceConfidence: evidenceTable.confidence,
           evidenceRetrievedAt: evidenceTable.retrievedAt,
           evidenceRawHash: evidenceTable.rawHash,
@@ -157,8 +197,12 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       entityCountry: f.entityCountry,
       customerCountry: f.customerCountry,
       customerType: f.customerType,
+      sourceCountry: f.sourceCountry,
+      sourceEndpointType: f.sourceEndpointType,
+      sourceNamedRail: f.sourceNamedRail,
       sourceAsset: f.sourceAsset,
       sourceNetwork: f.sourceNetwork,
+      sourceCurrency: f.sourceCurrency,
       destinationCountry: f.destinationCountry,
       destinationCurrency: f.destinationCurrency,
       paymentMethod: f.paymentMethod,
@@ -167,12 +211,53 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       lastVerifiedAt: f.lastVerifiedAt,
       evidenceConfidence: num(f.evidenceConfidence) ?? null,
       evidenceSourceType: (f.evidenceType as SourceType | null) ?? null,
+      evidenceVerificationType: f.evidenceVerificationType ?? null,
       evidenceId: f.evidenceId,
       evidenceUrl: f.evidenceUrl,
       evidenceTitle: f.evidenceTitle,
       evidenceRetrievedAt: f.evidenceRetrievedAt,
       evidenceRawHash: f.evidenceRawHash,
       evidenceExcerpt: f.evidenceExcerpt,
+    });
+    facetsByProvider.set(f.providerId, list);
+  }
+
+  // Atomic routes are deliberately loaded separately. They may contribute to
+  // ordinary capability explanations, but only these rows can satisfy the
+  // strict exact-route gate in eligibility.ts.
+  for (const f of exactRouteRows) {
+    const list = facetsByProvider.get(f.providerId) ?? [];
+    list.push({
+      id: f.id,
+      product: f.product,
+      entityCountry: f.entityCountry,
+      customerCountry: null,
+      customerType: f.customerType,
+      sourceCountry: f.sourceCountry,
+      sourceEndpointType: f.sourceEndpointType,
+      sourceNamedRail: f.sourceNamedRail,
+      sourceAsset: f.sourceAsset,
+      sourceNetwork: f.sourceNetwork,
+      sourceCurrency: f.sourceCurrency,
+      destinationCountry: f.destinationCountry,
+      destinationCurrency: f.destinationCurrency,
+      paymentMethod: f.paymentMethod,
+      endpointType: f.endpointType,
+      namedRailCode: f.namedRailCode,
+      namedRailName: f.namedRailCode,
+      availability: f.availability,
+      note: f.note,
+      lastVerifiedAt: f.lastVerifiedAt,
+      evidenceConfidence: num(f.evidenceConfidence) ?? null,
+      evidenceSourceType: (f.evidenceType as SourceType | null) ?? null,
+      evidenceVerificationType: f.evidenceVerificationType ?? null,
+      evidenceId: f.evidenceId,
+      evidenceUrl: f.evidenceUrl,
+      evidenceTitle: f.evidenceTitle,
+      evidenceRetrievedAt: f.evidenceRetrievedAt,
+      evidenceRawHash: f.evidenceRawHash,
+      evidenceExcerpt: f.evidenceExcerpt,
+      isAtomicRoute: true,
     });
     facetsByProvider.set(f.providerId, list);
   }
@@ -202,12 +287,17 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       entityCountry: null,
       customerCountry: null,
       customerType: e.customerType,
+      sourceCountry: null,
+      sourceEndpointType: null,
+      sourceNamedRail: null,
+      sourceCurrency: null,
       paymentMethod: e.paymentMethod,
       availability: e.availability,
       note: e.note,
       lastVerifiedAt: e.lastVerifiedAt,
       evidenceConfidence: num(e.evidenceConfidence) ?? null,
       evidenceSourceType: (e.evidenceType as SourceType | null) ?? null,
+      evidenceVerificationType: e.evidenceVerificationType ?? null,
       evidenceId: e.evidenceId,
       evidenceUrl: e.evidenceUrl,
       evidenceTitle: e.evidenceTitle,
@@ -280,6 +370,7 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       slug: p.slug,
       name: p.name,
       category: p.category,
+      isDemo: p.isDemo,
       // A receiving_endpoints row is itself evidence of a "payout" product,
       // even when the provider has no explicit providerProducts catalog
       // entry (real providers like Xflow/Skydo were seeded with the former
@@ -304,7 +395,11 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
       limitMax: num(providerLimits[0]?.maxAmount),
       requirementKeys: reqs.filter((r) => r.mandatory).map((r) => r.key),
       requirementLabels: Object.fromEntries(reqs.map((r) => [r.key, r.label])),
-      healthOkRatio: agg && agg.total ? agg.ok / agg.total : 1,
+      // null (not a fabricated 1.0) when Railor has zero real health-check
+      // rows for this provider — see eligibility.ts's ProviderInput doc
+      // comment and scoreProvider, which excludes a null factor from ranking
+      // instead of quietly crediting an unobserved provider with perfect uptime.
+      healthOkRatio: agg && agg.total ? agg.ok / agg.total : null,
       destinationCountryCount: new Set(
         facets.filter((f) => f.destinationCountry).map((f) => f.destinationCountry),
       ).size,

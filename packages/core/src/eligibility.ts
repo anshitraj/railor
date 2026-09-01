@@ -20,8 +20,10 @@ import {
   type EligibilityReason,
   type EligibilityVerdict,
   type Evidence,
+  type OperationalReadiness,
   type RankingPreset,
   type SourceType,
+  type VerificationType,
 } from "@railor/types";
 import { COUNTRY_TERMS, METHOD_TERMS, PRODUCT_TERMS } from "./vocab.js";
 
@@ -31,8 +33,12 @@ export interface CapabilityFacet {
   entityCountry: string | null;
   customerCountry: string | null;
   customerType: string | null;
+  sourceCountry: string | null;
+  sourceEndpointType: string | null;
+  sourceNamedRail: string | null;
   sourceAsset: string | null;
   sourceNetwork: string | null;
+  sourceCurrency: string | null;
   destinationCountry: string | null;
   destinationCurrency: string | null;
   paymentMethod: string | null;
@@ -41,12 +47,15 @@ export interface CapabilityFacet {
   lastVerifiedAt: Date | null;
   evidenceConfidence: number | null;
   evidenceSourceType: SourceType | null;
+  evidenceVerificationType: VerificationType | null;
   evidenceId: string | null;
   evidenceUrl: string | null;
   evidenceTitle: string | null;
   evidenceRetrievedAt: Date | null;
   evidenceRawHash: string | null;
   evidenceExcerpt: string | null;
+  /** True only for one provider_routes row whose evidence states the full tuple. */
+  isAtomicRoute?: boolean;
   /**
    * Only set on facets derived from `receiving_endpoints` — how the money
    * actually lands for the recipient, a distinct question from whether the
@@ -65,6 +74,8 @@ export interface ProviderInput {
   slug: string;
   name: string;
   category: string;
+  /** True for Railor's own seeded demo companies — never a real business. */
+  isDemo: boolean;
   products: string[];
   facets: CapabilityFacet[];
   advertisedSettlement: string | null;
@@ -80,7 +91,8 @@ export interface ProviderInput {
   limitMax?: number;
   requirementKeys: string[];
   requirementLabels: Record<string, string>;
-  healthOkRatio: number;
+  /** null when Railor has zero health-check observations for this provider — never defaulted to a fabricated "1.0 = perfectly healthy". See scoreProvider's norm(). */
+  healthOkRatio: number | null;
   destinationCountryCount: number;
 }
 
@@ -88,6 +100,8 @@ export interface EvaluationOptions {
   /** Requirement keys the organization already holds, from its KYB profile. */
   satisfiedRequirements?: string[];
   now?: Date;
+  /** Incident/conformance state. Never upgrades an evidence verdict. */
+  operationalReadiness?: OperationalReadiness;
 }
 
 /** How the money actually lands, when a `receiving_endpoints` fact decided the corridor. */
@@ -110,6 +124,7 @@ export interface Evaluation {
   /** Exactly the sources this verdict rests on — deduped, never decorative. */
   evidence: Evidence[];
   receivingMode: ReceivingModeInfo | null;
+  operationalReadiness: OperationalReadiness;
 }
 
 /** First depended-on facet that carries a receiving-endpoint mode, if any. */
@@ -136,6 +151,7 @@ function collectEvidence(facets: CapabilityFacet[]): Evidence[] {
       sourceUrl: f.evidenceUrl,
       sourceTitle: f.evidenceTitle,
       sourceType: f.evidenceSourceType ?? "official_docs",
+      verificationType: f.evidenceVerificationType ?? "provider_reported",
       retrievedAt: f.evidenceRetrievedAt ?? f.lastVerifiedAt ?? new Date(),
       lastVerifiedAt: f.lastVerifiedAt ?? new Date(),
       confidence: f.evidenceConfidence ?? 0.6,
@@ -152,15 +168,18 @@ const productLabel = (p?: string | null) =>
   PRODUCT_TERMS.find((x) => x.product === p)?.label ?? p ?? "this product";
 const methodLabel = (m?: string | null) =>
   METHOD_TERMS.find((x) => x.method === m)?.label ?? m ?? "this rail";
+/** No static vocab table needed — receiving_endpoint_type values are already short enough to prettify inline. */
+const endpointLabel = (t?: string | null) => (t ? t.replace(/_/g, " ") : "this endpoint type");
 
 /** Facet families — a facet asserts only about the dimensions it names. */
-type Family = "entity" | "customer_type" | "asset" | "network" | "corridor" | "other";
+type Family = "entity" | "customer_type" | "asset" | "network" | "source_currency" | "corridor" | "other";
 
 function familyOf(f: CapabilityFacet): Family {
   if (f.entityCountry) return "entity";
   if (f.destinationCountry) return "corridor";
   if (f.sourceAsset) return "asset";
   if (f.sourceNetwork) return "network";
+  if (f.sourceCurrency) return "source_currency";
   if (f.customerType) return "customer_type";
   return "other";
 }
@@ -245,11 +264,23 @@ export function evaluateProvider(
       matchedProduct: null,
       evidence: [],
       receivingMode: null,
+      operationalReadiness: options.operationalReadiness ?? "not_tested",
     };
   }
 
   const facets = provider.facets.filter((f) => f.product === matchedProduct);
-  const byFamily = (family: Family) => facets.filter((f) => familyOf(f) === family);
+  // An atomic provider_routes row deliberately carries several dimensions.
+  // It must be visible to every relevant check, while broad capability facts
+  // retain the one-family behavior that prevents accidental Cartesian joins.
+  const byFamily = (family: Family) => facets.filter((f) => {
+    if (familyOf(f) === family) return true;
+    if (!f.isAtomicRoute) return false;
+    return (family === "entity" && Boolean(f.entityCountry)) ||
+      (family === "customer_type" && Boolean(f.customerType)) ||
+      (family === "asset" && Boolean(f.sourceAsset)) ||
+      (family === "network" && Boolean(f.sourceNetwork)) ||
+      (family === "corridor" && Boolean(f.destinationCountry));
+  });
 
   /* ---- 1. entity jurisdiction ----------------------------------------- */
   if (query.entityCountry) {
@@ -337,13 +368,15 @@ export function evaluateProvider(
 
   /* ---- 3. asset + network ---------------------------------------------- */
   if (query.sourceAsset) {
-    const rows = byFamily("asset").filter((f) => f.sourceAsset === query.sourceAsset);
+    // A complete route facet can carry an asset *and* a destination. Do not
+    // discard it merely because `familyOf` classifies it as a corridor.
+    const rows = facets.filter((f) => f.sourceAsset === query.sourceAsset);
     if (!rows.length) {
-      downgrade("unavailable");
-      const supportedAssets = [...new Set(byFamily("asset").map((f) => f.sourceAsset!))];
+      downgrade("unknown");
+      const supportedAssets = [...new Set(facets.map((f) => f.sourceAsset).filter((a): a is string => Boolean(a)))];
       reasons.push({
-        code: "asset_unsupported",
-        message: `${query.sourceAsset} is not listed among the assets ${provider.name} settles.`,
+        code: "no_data",
+        message: `Railor has no verified statement that ${provider.name} settles ${query.sourceAsset} for this product.`,
         alsoTrue: supportedAssets.length ? [`Supported assets: ${supportedAssets.join(", ")}.`] : [],
         wouldChange: supportedAssets.length ? [`Send ${supportedAssets[0]} instead`] : [],
       });
@@ -353,17 +386,35 @@ export function evaluateProvider(
   }
 
   if (query.sourceNetwork) {
-    const rows = byFamily("network").filter((f) => f.sourceNetwork === query.sourceNetwork);
+    // Same for an exact asset/network/corridor row: it is evidence of its
+    // network without becoming a separately-combinable network assertion.
+    const rows = facets.filter((f) => f.sourceNetwork === query.sourceNetwork);
     if (!rows.length) {
-      downgrade("unavailable");
-      const supportedNetworks = [...new Set(byFamily("network").map((f) => f.sourceNetwork!))];
+      downgrade("unknown");
+      const supportedNetworks = [...new Set(facets.map((f) => f.sourceNetwork).filter((n): n is string => Boolean(n)))];
       reasons.push({
-        code: "network_unsupported",
-        message: `${provider.name} does not accept deposits on ${query.sourceNetwork}.`,
+        code: "no_data",
+        message: `Railor has no verified statement that ${provider.name} accepts ${query.sourceNetwork} for this product.`,
         alsoTrue: supportedNetworks.length
           ? [`Supported networks: ${supportedNetworks.join(", ")}.`]
           : [],
         wouldChange: supportedNetworks.length ? [`Use ${supportedNetworks[0]}`] : [],
+      });
+    } else {
+      dependedOn.push(rows[0]!);
+    }
+  }
+
+  if (query.sourceCurrency) {
+    const rows = facets.filter((f) => f.sourceCurrency === query.sourceCurrency);
+    if (!rows.length) {
+      downgrade("unknown");
+      const currencies = [...new Set(facets.map((f) => f.sourceCurrency).filter((c): c is string => Boolean(c)))];
+      reasons.push({
+        code: "no_data",
+        message: `Railor has no verified statement that ${provider.name} accepts ${query.sourceCurrency} as funding currency for this product.`,
+        alsoTrue: currencies.length ? [`Known funding currencies: ${currencies.join(", ")}.`] : [],
+        wouldChange: currencies.length ? [`Fund in ${currencies[0]}`] : [],
       });
     } else {
       dependedOn.push(rows[0]!);
@@ -376,15 +427,13 @@ export function evaluateProvider(
       (f) => f.destinationCountry === query.destinationCountry,
     );
     if (!inCountry.length) {
-      downgrade("unavailable");
+      downgrade("unknown");
       const countries = [
         ...new Set(byFamily("corridor").map((f) => f.destinationCountry!)),
       ].slice(0, 5);
       reasons.push({
-        code: "customer_country_unsupported",
-        message: `${provider.name} does not publish payouts into ${countryName(
-          query.destinationCountry,
-        )}.`,
+        code: "no_data",
+        message: `Railor has no verified payout statement for ${countryName(query.destinationCountry)} from ${provider.name}.`,
         alsoTrue: countries.length
           ? [`Publishes payouts into ${countries.map(countryName).join(", ")}.`]
           : [],
@@ -396,13 +445,11 @@ export function evaluateProvider(
         : inCountry;
 
       if (!byCurrency.length) {
-        downgrade("unavailable");
+        downgrade("unknown");
         const currencies = [...new Set(inCountry.map((f) => f.destinationCurrency!))];
         reasons.push({
-          code: "currency_unsupported",
-          message: `${provider.name} settles into ${countryName(
-            query.destinationCountry,
-          )} but not in ${query.destinationCurrency}.`,
+          code: "no_data",
+          message: `Railor has no verified ${query.destinationCurrency} payout statement for ${countryName(query.destinationCountry)} from ${provider.name}.`,
           alsoTrue: currencies.length ? [`Settles in ${currencies.join(", ")}.`] : [],
           wouldChange: currencies.length ? [`Settle in ${currencies[0]}`] : [],
         });
@@ -412,13 +459,11 @@ export function evaluateProvider(
           : byCurrency;
 
         if (!byMethod.length) {
-          downgrade("additional_requirements");
+          downgrade("unknown");
           const methods = [...new Set(byCurrency.map((f) => f.paymentMethod!))];
           reasons.push({
-            code: "payment_method_unsupported",
-            message: `${provider.name} reaches ${query.destinationCurrency} accounts, but not over ${methodLabel(
-              query.paymentMethod,
-            )}.`,
+            code: "no_data",
+            message: `Railor has no verified ${methodLabel(query.paymentMethod)} payout statement for this destination from ${provider.name}.`,
             alsoTrue: methods.length
               ? [`Available rails: ${methods.map(methodLabel).join(", ")}.`]
               : [],
@@ -426,32 +471,132 @@ export function evaluateProvider(
           });
           dependedOn.push(byCurrency[0]!);
         } else {
-          const unsupported = byMethod.find((f) => f.availability === "unsupported");
-          const partial = byMethod.find((f) => f.availability === "partial");
-          const supported = byMethod.find((f) => f.availability === "supported");
-          if (unsupported) {
-            dependedOn.push(unsupported);
-            downgrade("unavailable");
+          // Endpoint type (bank_account/mobile_money/...) and named rail
+          // (SEPA_INSTANT, MPESA, ...) are two independent axes on the same
+          // receiving-endpoint fact — narrow by each only when the query asks
+          // for it, so a query with neither still evaluates exactly as before.
+          const byEndpointType = query.endpointType
+            ? byMethod.filter((f) => f.endpointType === query.endpointType)
+            : byMethod;
+
+          if (!byEndpointType.length) {
+            downgrade("unknown");
+            const endpointTypes = [...new Set(byMethod.map((f) => f.endpointType).filter((t): t is string => Boolean(t)))];
             reasons.push({
-              code: "customer_country_unsupported",
-              message: unsupported.note ?? `This corridor is marked unsupported by ${provider.name}.`,
-              alsoTrue: [],
-              wouldChange: [],
+              code: "no_data",
+              message: `Railor has no verified statement that ${provider.name} delivers to a ${endpointLabel(query.endpointType)} for this destination.`,
+              alsoTrue: endpointTypes.length ? [`Available endpoint types: ${endpointTypes.map(endpointLabel).join(", ")}.`] : [],
+              wouldChange: endpointTypes.length ? [`Request a ${endpointLabel(endpointTypes[0])} instead`] : [],
             });
-          } else if (partial) {
-            dependedOn.push(partial);
-            downgrade("additional_requirements");
-            reasons.push({
-              code: "requirements_outstanding",
-              message: partial.note ?? `${provider.name} supports this corridor with conditions.`,
-              alsoTrue: [],
-              wouldChange: [],
-            });
-          } else if (supported) {
-            dependedOn.push(supported);
+            dependedOn.push(byMethod[0]!);
+          } else {
+            const byNamedRail = query.namedRail
+              ? byEndpointType.filter((f) => f.namedRailCode === query.namedRail)
+              : byEndpointType;
+
+            if (!byNamedRail.length) {
+              downgrade("unknown");
+              const rails = [...new Set(byEndpointType.map((f) => f.namedRailName ?? f.namedRailCode).filter((r): r is string => Boolean(r)))];
+              reasons.push({
+                code: "no_data",
+                message: `Railor has no verified statement that ${provider.name} uses ${query.namedRail} for this destination.`,
+                alsoTrue: rails.length ? [`Named rails on record: ${rails.join(", ")}.`] : [`${provider.name} does not name a specific rail for this destination.`],
+                wouldChange: rails.length ? [`Ask for ${rails[0]} instead`] : [],
+              });
+              dependedOn.push(byEndpointType[0]!);
+            } else {
+              const unsupported = byNamedRail.find((f) => f.availability === "unsupported");
+              const partial = byNamedRail.find((f) => f.availability === "partial");
+              const supported = byNamedRail.find((f) => f.availability === "supported");
+              if (unsupported) {
+                dependedOn.push(unsupported);
+                downgrade("unavailable");
+                reasons.push({
+                  code: "customer_country_unsupported",
+                  message: unsupported.note ?? `This corridor is marked unsupported by ${provider.name}.`,
+                  alsoTrue: [],
+                  wouldChange: [],
+                });
+              } else if (partial) {
+                dependedOn.push(partial);
+                downgrade("additional_requirements");
+                reasons.push({
+                  code: "requirements_outstanding",
+                  message: partial.note ?? `${provider.name} supports this corridor with conditions.`,
+                  alsoTrue: [],
+                  wouldChange: [],
+                });
+              } else if (supported) {
+                dependedOn.push(supported);
+              }
+            }
           }
         }
       }
+    }
+  }
+
+  /*
+   * A country list, an asset list, and a network list are three independent
+   * provider statements — not proof that their Cartesian product works. Run
+   * this after the individual checks so explicit exclusions (for example, an
+   * ineligible entity country) remain the first and clearest explanation.
+   */
+  const routeDimensionsRequested = Boolean(
+    query.destinationCountry &&
+      (query.entityCountry || query.sourceCountry || query.sourceAsset || query.sourceNetwork || query.sourceCurrency ||
+        query.sourceEndpointType || query.sourceNamedRail),
+  );
+  if (routeDimensionsRequested) {
+    const exactRouteRows = facets.filter(
+      (f) =>
+        f.isAtomicRoute === true &&
+        f.destinationCountry === query.destinationCountry &&
+        (!query.entityCountry || f.entityCountry === query.entityCountry) &&
+        (!query.customerType || f.customerType === query.customerType) &&
+        (!query.sourceCountry || f.sourceCountry === query.sourceCountry) &&
+        (!query.sourceEndpointType || f.sourceEndpointType === query.sourceEndpointType) &&
+        (!query.sourceNamedRail || f.sourceNamedRail === query.sourceNamedRail) &&
+        (!query.destinationCurrency || f.destinationCurrency === query.destinationCurrency) &&
+        (!query.sourceAsset || f.sourceAsset === query.sourceAsset) &&
+        (!query.sourceNetwork || f.sourceNetwork === query.sourceNetwork) &&
+        (!query.sourceCurrency || f.sourceCurrency === query.sourceCurrency) &&
+        (!query.paymentMethod || f.paymentMethod === query.paymentMethod) &&
+        (!query.endpointType || f.endpointType === query.endpointType) &&
+        (!query.namedRail || f.namedRailCode === query.namedRail),
+    );
+    const exactSupported = exactRouteRows.find((f) => f.availability === "supported");
+    const exactPartial = exactRouteRows.find((f) => f.availability === "partial");
+    const exactUnsupported = exactRouteRows.find((f) => f.availability === "unsupported");
+
+    if (exactUnsupported) {
+      dependedOn.push(exactUnsupported);
+      downgrade("unavailable");
+      reasons.push({
+        code: "customer_country_unsupported",
+        message: exactUnsupported.note ?? `This exact route is marked unsupported by ${provider.name}.`,
+        alsoTrue: [],
+        wouldChange: [],
+      });
+    } else if (exactPartial) {
+      dependedOn.push(exactPartial);
+      downgrade("additional_requirements");
+      reasons.push({
+        code: "requirements_outstanding",
+        message: exactPartial.note ?? `${provider.name} supports this exact route with conditions.`,
+        alsoTrue: [],
+        wouldChange: [],
+      });
+    } else if (exactSupported) {
+      dependedOn.push(exactSupported);
+    } else {
+      downgrade("unknown");
+      reasons.push({
+        code: "no_data",
+        message: `${provider.name} publishes individual capability facts, but Railor has no verified statement for this exact route combination.`,
+        alsoTrue: [],
+        wouldChange: ["Verify this route through the provider's quote or route-configuration API"],
+      });
     }
   }
 
@@ -524,6 +669,7 @@ export function evaluateProvider(
     matchedProduct,
     evidence: collectEvidence(dependedOn),
     receivingMode: receivingModeFrom(dependedOn),
+    operationalReadiness: options.operationalReadiness ?? "not_tested",
   };
 }
 
@@ -546,6 +692,12 @@ const PRESETS: Record<RankingPreset, PresetWeights> = {
   fastest: { cost: 0.1, speed: 0.5, onboarding: 0.05, reliability: 0.2, coverage: 0.05, confidence: 0.1 },
   easiest_onboarding: { cost: 0.1, speed: 0.05, onboarding: 0.5, reliability: 0.15, coverage: 0.1, confidence: 0.1 },
   widest_coverage: { cost: 0.1, speed: 0.05, onboarding: 0.1, reliability: 0.15, coverage: 0.5, confidence: 0.1 },
+  // Pre-connection, advertised fee bps is the best real proxy for what a
+  // recipient would net — there is no live recipientAmount until a quote
+  // exists (see routing.ts's rankQuotes for the real-quote version of this
+  // preference, which uses actual recipientAmount instead of a proxy).
+  max_recipient_amount: { cost: 0.5, speed: 0.05, onboarding: 0.05, reliability: 0.25, coverage: 0.05, confidence: 0.1 },
+  most_reliable: { cost: 0.05, speed: 0.05, onboarding: 0.05, reliability: 0.65, coverage: 0.05, confidence: 0.15 },
 };
 
 /** Parses "AED payouts within 4 hours" → 240 minutes. Unknown → null. */
@@ -565,36 +717,56 @@ export function settlementMinutes(text: string | null): number | null {
   return null;
 }
 
+export interface ScoreResult {
+  score: number;
+  /** Fraction of the preset's total weight actually backed by real data (0-1). 1.0 means every factor was real; low means the score leans on eligibility/confidence alone because cost/speed/onboarding/reliability were all missing. */
+  rankingConfidence: number;
+  rankingInputsUsed: string[];
+  rankingInputsMissing: string[];
+}
+
 /**
  * Eligibility is a gate, not a weight: an unavailable provider can never
  * outrank an available one regardless of price or speed.
+ *
+ * Missing data is never defaulted to a fabricated neutral 0.5 — a provider
+ * with no published fee is not "medium-priced," it is unranked on cost. Each
+ * factor either contributes real data or drops out of the weighted average
+ * entirely, and the remaining weight is renormalized over whatever factors
+ * *did* have data. `rankingConfidence` reports exactly how much of the
+ * preset's weight that renormalization covered, so a caller can tell "this
+ * 82 is backed by real fees and real settlement time" apart from "this 82 is
+ * mostly eligibility confidence because nothing else was on file."
  */
 export function scoreProvider(
   provider: ProviderInput,
   evaluation: Evaluation,
   preset: RankingPreset,
-): number {
+): ScoreResult {
   const w = PRESETS[preset];
-  const norm = (value: number | null | undefined, best: number, worst: number) => {
-    if (value === null || value === undefined) return 0.5;
+  const norm = (value: number | null | undefined, best: number, worst: number): number | null => {
+    if (value === null || value === undefined) return null;
     const clamped = Math.max(Math.min(value, worst), best);
     return 1 - (clamped - best) / (worst - best || 1);
   };
 
-  const cost = norm(provider.feeCostBps ?? null, 20, 200);
-  const speed = norm(settlementMinutes(provider.advertisedSettlement), 5, 2880);
-  const onboarding = norm(provider.onboardingDays ?? null, 3, 45);
-  const reliability = provider.healthOkRatio;
-  const coverage = Math.min(provider.destinationCountryCount / 8, 1);
-  const confidence = evaluation.confidence;
+  const factors: Array<{ key: string; weight: number; value: number | null }> = [
+    { key: "cost", weight: w.cost, value: norm(provider.feeCostBps ?? null, 20, 200) },
+    { key: "speed", weight: w.speed, value: norm(settlementMinutes(provider.advertisedSettlement), 5, 2880) },
+    { key: "onboarding", weight: w.onboarding, value: norm(provider.onboardingDays ?? null, 3, 45) },
+    // healthOkRatio is null (not 1.0) when Railor has zero real health-check
+    // observations — see ProviderInput's doc comment — so "no data" correctly
+    // drops out here instead of masquerading as a perfect reliability record.
+    { key: "reliability", weight: w.reliability, value: provider.healthOkRatio },
+    // Always real, never "missing": a provider with zero known destinations
+    // genuinely covers zero, which is a fact, not an absence of one.
+    { key: "coverage", weight: w.coverage, value: Math.min(provider.destinationCountryCount / 8, 1) },
+    { key: "confidence", weight: w.confidence, value: evaluation.confidence },
+  ];
 
-  const raw =
-    cost * w.cost +
-    speed * w.speed +
-    onboarding * w.onboarding +
-    reliability * w.reliability +
-    coverage * w.coverage +
-    confidence * w.confidence;
+  const used = factors.filter((f): f is { key: string; weight: number; value: number } => f.value !== null);
+  const totalWeight = used.reduce((sum, f) => sum + f.weight, 0);
+  const raw = totalWeight > 0 ? used.reduce((sum, f) => sum + f.value * f.weight, 0) / totalWeight : 0;
 
   const gate =
     evaluation.verdict === "supported"
@@ -605,5 +777,11 @@ export function scoreProvider(
           ? 0.3
           : 0.08;
 
-  return Math.round(raw * gate * 100);
+  return {
+    score: Math.round(raw * gate * 100),
+    // Preset weights sum to 1.0, so the used weight is directly the covered fraction.
+    rankingConfidence: Math.round(totalWeight * 100) / 100,
+    rankingInputsUsed: used.map((f) => f.key),
+    rankingInputsMissing: factors.filter((f) => f.value === null).map((f) => f.key),
+  };
 }

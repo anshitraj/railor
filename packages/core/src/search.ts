@@ -9,6 +9,8 @@ import type {
   ProviderResult,
   RankingPreset,
 } from "@railor/types";
+import { connectivityFor, loadConnectionStatuses } from "./connectivity.js";
+import { recordSearchTelemetry } from "./coverage-gaps.js";
 import { evaluateProvider, scoreProvider, settlementMinutes } from "./eligibility.js";
 import { loadCountryProfile, loadProviderInputs } from "./repository.js";
 import { PRODUCT_TERMS } from "./vocab.js";
@@ -39,6 +41,16 @@ export interface SearchOptions {
   /** Cap the result list (public preview shows a subset). */
   limit?: number;
   now?: Date;
+  /**
+   * Real Railor companies only, by default — Railor's own seeded demo
+   * providers (fabricated names, fabricated health_checks) never mix into a
+   * real search unless a caller explicitly opts in for a demo-tour
+   * experience. This is the fix for the search path silently blending fake
+   * companies' made-up reliability data into real rankings.
+   */
+  includeDemoProviders?: boolean;
+  /** When provided, `connectivity` reflects this org's real provider_connections rows instead of capping at "compatible". */
+  organizationId?: string;
 }
 
 export async function searchCorridors(
@@ -46,10 +58,12 @@ export async function searchCorridors(
   options: SearchOptions = {},
 ): Promise<CorridorSearchResult> {
   const preset = options.preset ?? "balanced";
-  const [inputs, countryContext] = await Promise.all([
+  const [allInputs, countryContext, connectionStatuses] = await Promise.all([
     loadProviderInputs(),
     loadCountryContext(query.destinationCountry),
+    options.organizationId ? loadConnectionStatuses(options.organizationId) : Promise.resolve(new Map<string, string>()),
   ]);
+  const inputs = options.includeDemoProviders ? allInputs : allInputs.filter((p) => !p.isDemo);
   const now = options.now ?? new Date();
 
   const results: ProviderResult[] = inputs.map((provider) => {
@@ -57,7 +71,7 @@ export async function searchCorridors(
       satisfiedRequirements: options.satisfiedRequirements,
       now,
     });
-    const score = scoreProvider(provider, evaluation, preset);
+    const { score, rankingConfidence, rankingInputsUsed, rankingInputsMissing } = scoreProvider(provider, evaluation, preset);
     const minutes = settlementMinutes(provider.advertisedSettlement);
 
     return {
@@ -66,6 +80,7 @@ export async function searchCorridors(
         slug: provider.slug,
         name: provider.name,
         category: provider.category,
+        isDemo: provider.isDemo,
       },
       eligibility: evaluation.verdict,
       confidence: evaluation.confidence,
@@ -91,7 +106,12 @@ export async function searchCorridors(
       },
       evidence: evaluation.evidence,
       score,
+      rankingConfidence,
+      rankingInputsUsed,
+      rankingInputsMissing,
+      connectivity: connectivityFor(provider.slug, evaluation.verdict, connectionStatuses.get(provider.id)),
       receivingMode: evaluation.receivingMode,
+      operationalReadiness: evaluation.operationalReadiness,
     } satisfies ProviderResult;
   });
 
@@ -113,6 +133,12 @@ export async function searchCorridors(
     unknown: results.filter((r) => r.eligibility === "unknown").length,
   };
 
+  // Real customer intent only — a demo-tour search isn't real demand, and
+  // recording it would pollute the one signal this exists to keep honest.
+  if (!options.includeDemoProviders) {
+    await recordSearchTelemetry(query, corridorKey(query), results);
+  }
+
   return {
     query,
     preset,
@@ -131,6 +157,7 @@ export function corridorKey(query: CorridorQuery): string {
     query.customerType ?? "business",
     query.sourceAsset ?? "any",
     query.sourceNetwork ?? "any",
+    query.sourceCurrency ?? "any",
     query.destinationCountry ?? "any",
     query.destinationCurrency ?? "any",
     query.paymentMethod ?? "any",
@@ -140,7 +167,7 @@ export function corridorKey(query: CorridorQuery): string {
 /** Human label for a corridor: "IN → AE · USDC → AED · Business". */
 export function corridorLabel(query: CorridorQuery): string {
   const left = [query.entityCountry, query.destinationCountry].filter(Boolean).join(" → ");
-  const assets = [query.sourceAsset, query.destinationCurrency].filter(Boolean).join(" → ");
+  const assets = [query.sourceAsset ?? query.sourceCurrency, query.destinationCurrency].filter(Boolean).join(" → ");
   const who = query.customerType === "individual" ? "Individual" : "Business";
   return [left, assets, who].filter(Boolean).join(" · ");
 }

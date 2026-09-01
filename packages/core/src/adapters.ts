@@ -7,9 +7,12 @@
  * fake key and confirming a clean 401 (not a 404 or connection error) —
  * that's real evidence the URL and auth-header shape are correct, the most
  * this adapter can prove without a live account. Railor holds no provider
- * credentials of its own; every call here only ever runs against whatever a
- * user pastes in themselves (see `providerConnections` in schema.ts —
- * "Stage 5 architecture... no credentials in V1" before this).
+ * credentials of its own here; every call in this file runs against
+ * whatever a customer connects through Settings > Connections, which
+ * `apps/web/lib/connections.ts` encrypts (AES-256-GCM) into
+ * `provider_connections.encrypted_credentials` and only ever decrypts
+ * server-side, immediately before an adapter call — never returned to a
+ * client, never logged.
  *
  * No adapter executes a transfer. That is not a gap to fill in — see
  * executeTransfer at the bottom of this file, which refuses unconditionally
@@ -17,6 +20,11 @@
  *
  * Circle, Bridge, MoonPay: testConnection is real, request-shape-verified
  * as above.
+ * Nium: auth shape (x-api-key header + clientHashId path param) and the
+ * testConnection endpoint are both real, from Nium's own published curl
+ * example — but unlike Circle/Bridge/MoonPay, no empirical fake-key probe
+ * was run against it this session, so it is unverified against a live
+ * response until a real key confirms it.
  * Paxos: real token endpoint (verified the same way), but testConnection
  * only proves the client_credentials exchange works, not that the resulting
  * token can call anything.
@@ -29,6 +37,10 @@
  * every real call so far has only ever returned an auth-error body, never
  * a success body, so the field names a successful quote actually returns
  * are a best-effort reading of public docs, unconfirmed against live data.
+ * getQuote on Circle: request/response shape is fully verified (copied
+ * directly from Circle's own CPN quickstart example, not summarized) — but
+ * requires the caller to supply `paymentMethodType` and `entityCountry`
+ * explicitly; this file never infers either from the destination currency.
  */
 import type { ExecutionRequest, ExecutionResult, QuoteRequest, UnifiedQuote } from "./unified.js";
 
@@ -143,6 +155,7 @@ async function bridgeGetQuote(credentials: Record<string, string>, request: Quot
   // not a crash.
   const body = (await response.json()) as { midmarket_rate?: string; buy_rate?: string };
   const rate = Number(body.midmarket_rate ?? body.buy_rate);
+  const now = new Date().toISOString();
   return {
     providerSlug: "bridge",
     sourceAsset: request.sourceAsset,
@@ -152,7 +165,17 @@ async function bridgeGetQuote(credentials: Record<string, string>, request: Quot
     amount: request.amount,
     feeAmount: Number.isFinite(rate) ? request.amount - request.amount * rate : undefined,
     feeCurrency: request.destinationCurrency,
-    quotedAt: new Date().toISOString(),
+    exchangeRate: Number.isFinite(rate) ? String(rate) : undefined,
+    // This is a mid-market/buy rate reference, not a bound quote from a
+    // payout-specific endpoint — see this file's header comment on why the
+    // response body here is unverified against live data. Honest label
+    // rather than claiming a firm LIVE price this call didn't actually bind.
+    costPartial: true,
+    quoteType: "indicative",
+    accountContext: "customer_connected",
+    verificationType: "provider_reported",
+    observedAt: now,
+    quotedAt: now,
   };
 }
 
@@ -172,6 +195,7 @@ async function moonpayGetQuote(credentials: Record<string, string>, request: Quo
   // Same caveat as Bridge's quote above: endpoint and auth are verified,
   // these field names are not.
   const body = (await response.json()) as { feeAmount?: number; quoteCurrencyAmount?: number };
+  const now = new Date().toISOString();
   return {
     providerSlug: "moonpay",
     sourceAsset: request.sourceAsset,
@@ -179,8 +203,95 @@ async function moonpayGetQuote(credentials: Record<string, string>, request: Quo
     destinationCurrency: request.destinationCurrency,
     destinationCountry: request.destinationCountry,
     amount: request.amount,
+    recipientAmount: body.quoteCurrencyAmount,
     feeAmount: body.feeAmount,
     feeCurrency: request.destinationCurrency,
+    // MoonPay's buy_quote is a real, live-called endpoint (see this file's
+    // header comment), so this is a genuine LIVE quote — but the response
+    // is not broken into fee components, so the total may not be complete.
+    costPartial: true,
+    quoteType: "live",
+    accountContext: "customer_connected",
+    verificationType: "provider_reported",
+    observedAt: now,
+    quotedAt: now,
+  };
+}
+
+async function niumTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
+  const apiKey = credentials.apiKey?.trim();
+  const clientHashId = credentials.clientHashId?.trim();
+  if (!apiKey || !clientHashId) return { ok: false, detail: "API key and Client Hash ID are both required." };
+  try {
+    // Real, read-only "get client info" endpoint — verified via WebSearch
+    // against Nium's own documented curl example (docs.nium.com), not
+    // guessed: GET /api/v1/client/{clientHashId} with an x-api-key header.
+    // No fake-key empirical probe was run for this one (unlike Circle/
+    // Bridge/MoonPay above) — this adapter is unverified against a live
+    // response until a real key confirms it.
+    const response = await fetch(`https://gateway.nium.com/api/v1/client/${encodeURIComponent(clientHashId)}`, {
+      headers: { "x-api-key": apiKey, "x-request-id": crypto.randomUUID() },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, detail: `Nium rejected the credentials (HTTP ${response.status}).` };
+    }
+    if (response.status === 404) {
+      return { ok: false, detail: "Nium returned 404 — check the Client Hash ID (this is a path parameter, not a header)." };
+    }
+    if (!response.ok) return { ok: false, detail: `Unexpected response from Nium (HTTP ${response.status}).` };
+    return { ok: true, detail: "Connected." };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : "Network error reaching Nium." };
+  }
+}
+
+async function circleCpnGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
+  const apiKey = credentials.apiKey?.trim();
+  if (!apiKey) throw new Error("API key is required.");
+  if (!request.destinationCountry) throw new Error("destinationCountry is required for a Circle CPN quote.");
+  // CPN's paymentMethodType (SPEI/SEPA/PIX/WIRE/...) is never inferred from
+  // the currency — that mapping isn't 1:1 (EUR alone spans SEPA and WIRE)
+  // and guessing it is exactly the kind of fabricated route dimension this
+  // codebase's evidence discipline forbids. The caller must know it.
+  if (!request.paymentMethodType) throw new Error("paymentMethodType is required for a Circle CPN quote (e.g. SPEI, SEPA, PIX) — Railor does not infer it from the destination currency.");
+  if (!request.entityCountry) throw new Error("entityCountry is required for a Circle CPN quote.");
+  const { getCpnQuote } = await import("./provider-research/circle-cpn.js");
+  // Circle's core Payments API key and its Payments Network (CPN) enrollment
+  // are not guaranteed to be the same grant — if this key isn't CPN-enrolled,
+  // Circle's own 401/403 surfaces through CircleCpnRequestError untouched
+  // rather than this adapter guessing at a fallback.
+  const quote = await getCpnQuote(
+    {
+      paymentMethodType: request.paymentMethodType,
+      senderCountry: request.entityCountry,
+      destinationCountry: request.destinationCountry,
+      sourceCurrency: request.sourceAsset,
+      destinationAmount: String(request.amount),
+      destinationCurrency: request.destinationCurrency,
+      blockchain: request.sourceNetwork ?? "ETH",
+    },
+    apiKey,
+  );
+  return {
+    providerSlug: "circle",
+    providerQuoteId: quote.id,
+    sourceAsset: quote.sourceAmount.currency,
+    sourceNetwork: quote.blockchain,
+    destinationCurrency: quote.destinationAmount.currency,
+    destinationCountry: quote.destinationCountry,
+    amount: Number(quote.sourceAmount.amount),
+    recipientAmount: Number(quote.destinationAmount.amount),
+    feeAmount: quote.totalFee ? Number(quote.totalFee.amount) : undefined,
+    feeCurrency: quote.totalFee?.currency,
+    exchangeRate: quote.exchangeRate?.rate,
+    estimatedArrivalMinutes: quote.settlementMinutesMax ?? undefined,
+    costPartial: false,
+    quoteType: "live",
+    accountContext: "customer_connected",
+    verificationType: "provider_reported",
+    observedAt: new Date().toISOString(),
+    expiresAt: quote.quoteExpireDate,
     quotedAt: new Date().toISOString(),
   };
 }
@@ -214,6 +325,17 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
       { key: "environment", label: "Environment", placeholder: "sandbox or production" },
     ],
     testConnection: circleTestConnection,
+    // Tests the core Payments API; quotes against the separate CPN product —
+    // see circleCpnGetQuote's own comment on why that distinction matters.
+    getQuote: circleCpnGetQuote,
+  },
+  nium: {
+    slug: "nium",
+    credentialFields: [
+      { key: "apiKey", label: "API key", secret: true },
+      { key: "clientHashId", label: "Client Hash ID" },
+    ],
+    testConnection: niumTestConnection,
   },
   coinbase: {
     slug: "coinbase",

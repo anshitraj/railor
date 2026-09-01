@@ -90,6 +90,27 @@ export interface FirecrawlFailure {
   error: string;
 }
 
+/**
+ * Firecrawl bills and rate-limits per minute, and a 429 is a *lost page*, not
+ * a retryable blip — the URL is simply dropped from that run's evidence. A
+ * research pass over a discovered URL set can easily exceed the plan's
+ * per-minute allowance, so requests are paced rather than fired as fast as
+ * concurrency allows. Tune with FIRECRAWL_REQUESTS_PER_MINUTE.
+ */
+const REQUESTS_PER_MINUTE = Number(process.env.FIRECRAWL_REQUESTS_PER_MINUTE ?? 8);
+const MIN_INTERVAL_MS = Math.ceil(60_000 / Math.max(1, REQUESTS_PER_MINUTE));
+
+let nextSlotAt = 0;
+
+/** Serializes slot allocation so concurrent workers can't claim the same instant. */
+async function takeRateLimitSlot(): Promise<void> {
+  const now = Date.now();
+  const slot = Math.max(now, nextSlotAt);
+  nextSlotAt = slot + MIN_INTERVAL_MS;
+  const wait = slot - now;
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+}
+
 /** Scrapes each URL independently (bounded concurrency, per-URL try/catch) — one bad page never drops the rest. */
 export async function firecrawlExtract(urls: string[]): Promise<{ results: FirecrawlResult[]; failedResults: FirecrawlFailure[] }> {
   if (urls.length === 0) return { results: [], failedResults: [] };
@@ -102,9 +123,23 @@ export async function firecrawlExtract(urls: string[]): Promise<{ results: Firec
   async function worker() {
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
+      await takeRateLimitSlot();
       try {
         results.push(await scrapeOne(url));
       } catch (error) {
+        // A rate-limited URL is retried once on a fresh slot: the first 429
+        // usually means the burst outran the window, not that the plan is
+        // exhausted, and the page is otherwise lost outright.
+        if (error instanceof FirecrawlRequestError && error.kind === "rate_limited") {
+          await takeRateLimitSlot();
+          try {
+            results.push(await scrapeOne(url));
+            continue;
+          } catch (retryError) {
+            failedResults.push({ url, error: retryError instanceof Error ? retryError.message : String(retryError) });
+            continue;
+          }
+        }
         failedResults.push({ url, error: error instanceof Error ? error.message : String(error) });
       }
     }

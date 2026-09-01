@@ -63,6 +63,8 @@ export const COUNTRY_RESEARCH_CONFIG = {
   extractionTimeoutMs: envInt("COUNTRY_RESEARCH_EXTRACTION_TIMEOUT_MS", 120_000),
   /** Optional fallback content fetcher, used only for URLs Tavily's own extract() couldn't retrieve. */
   firecrawlTimeoutMs: envInt("COUNTRY_RESEARCH_FIRECRAWL_TIMEOUT_MS", 30_000),
+  /** Parallel.ai search()/extract() — optional, unused until PARALLEL_API_KEY is set and something calls it. */
+  parallelTimeoutMs: envInt("COUNTRY_RESEARCH_PARALLEL_TIMEOUT_MS", 30_000),
   /** Bounded retries for transient Tavily failures — never infinite. */
   maxRetries: envInt("COUNTRY_RESEARCH_MAX_RETRIES", 3),
   /** How many Tavily searches run at once. */

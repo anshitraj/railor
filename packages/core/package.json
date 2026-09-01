@@ -6,12 +6,17 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./geo": "./src/geo.ts",
+    "./route-map": "./src/route-map.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "research-country": "tsx src/country-research/cli.ts"
+    "research-country": "tsx src/country-research/cli.ts",
+    "research-provider": "tsx src/provider-research/cli.ts",
+    "v5-1-exact-route-matrix": "tsx src/country-research/v5-1-exact-route-matrix.ts",
+    "circle-cpn-route-import": "tsx src/provider-research/circle-cpn-route-import.ts"
   },
   "dependencies": {
     "@google/genai": "^1.9.0",
