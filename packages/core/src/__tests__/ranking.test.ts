@@ -42,6 +42,7 @@ function evaluation(verdict: EligibilityVerdict, confidence = 0.9): Evaluation {
     confirmedDimensions: [],
     unconfirmedDimensions: [],
     dependedOnRouteId: null,
+    entityEligibility: null,
   };
 }
 

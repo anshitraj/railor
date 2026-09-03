@@ -1717,6 +1717,8 @@ export const decisionCandidates = pgTable(
     routeId: uuid("route_id"),
     eligibilityStatus: decisionEligibilityStatusEnum("eligibility_status").notNull(),
     routeCertainty: routeConfirmationEnum("route_certainty"),
+    /** Independent from routeCertainty — reuses the same tier vocabulary (this type never stores "unconfirmed") because both express "how well is this fact established," just about two different, orthogonal questions. See EntityEligibility in @railor/types. */
+    entityEligibility: routeConfirmationEnum("entity_eligibility"),
     policyResult: policyEvalResultEnum("policy_result").notNull(),
     policyReasonCodes: jsonb("policy_reason_codes").$type<string[]>().default([]).notNull(),
     quoteSnapshot: jsonb("quote_snapshot").$type<Record<string, unknown> | null>(),
@@ -1784,4 +1786,4 @@ export const decisionEventsRelations = relations(decisionEvents, ({ one }) => ({
   decision: one(decisions, { fields: [decisionEvents.decisionId], references: [decisions.id] }),
 }));
 
-export const schemaVersion = sql`2`;
+export const schemaVersion = sql`3`;

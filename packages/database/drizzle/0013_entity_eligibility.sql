@@ -1,0 +1,1 @@
+ALTER TABLE "decision_candidates" ADD COLUMN "entity_eligibility" "route_confirmation";

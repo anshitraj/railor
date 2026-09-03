@@ -78,6 +78,7 @@ export async function serializeDecisionById(organizationId: string, decisionId: 
       route_id: c.routeId,
       eligibility_status: c.eligibilityStatus,
       route_certainty: c.routeCertainty,
+      entity_eligibility: c.entityEligibility,
       policy_result: c.policyResult,
       policy_reason_codes: c.policyReasonCodes,
       quote_snapshot: c.quoteSnapshot,

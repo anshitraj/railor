@@ -30,6 +30,7 @@
     "v5-25-country-rails": "tsx src/seed/v5-25-country-rails.ts",
     "v5-25-country-ingest": "tsx src/seed/v5-25-country-ingest.ts",
     "ramp-network-route-import": "tsx src/seed/ramp-network-route-import.ts",
+    "ramp-network-entity-eligibility": "tsx src/seed/ramp-network-entity-eligibility.ts",
     "v5-1-targeted-ingest": "tsx src/seed/v5-1-targeted-ingest.ts",
     "v5-2-fiat-leg-ingest": "tsx src/seed/v5-2-fiat-leg-ingest.ts",
     "reset": "tsx src/seed/reset.ts",

@@ -15,6 +15,7 @@
  */
 import type {
   CandidatePolicyEvaluation,
+  EntityEligibility,
   PaymentIntent,
   PolicyEvalResult,
   PolicyReasonCode,
@@ -31,6 +32,8 @@ export interface PolicyCandidateInput {
   /** Free-text providers.category - the only real signal available for the aggregator rules; see PolicyRules.allowAggregators in @railor/types for why this is best-effort, not a controlled taxonomy. */
   providerCategory: string;
   routeConfirmation: RouteConfirmation | null;
+  /** Independent from routeConfirmation - see EntityEligibility's doc comment in @railor/types. Evaluation.entityEligibility from eligibility.ts, not recomputed here. */
+  entityEligibility: EntityEligibility | null;
   /** Oldest evidence date this candidate's eligibility depended on - Evaluation.lastVerifiedAt from eligibility.ts, not recomputed here. */
   lastVerifiedAt: Date | null;
   connected: boolean;
@@ -142,6 +145,22 @@ export function evaluatePolicy(
         "fail",
         `This policy requires atomic, single-source route evidence ("confirmed"); this candidate is "${candidate.routeConfirmation ?? "not applicable"}".`,
         "exact_route_required",
+      ),
+    );
+  }
+
+  // An explicit "unsupported" entity is never reachable here as a pass/fail
+  // choice - evaluateProvider already downgrades the shared verdict to
+  // "unavailable" for that case, which excludes the candidate before policy
+  // ever runs (see isDecisionEligible in eligibility.ts). This rule only ever
+  // sees "confirmed" / "partially_confirmed" / "unknown" / null in practice.
+  if (rules.requireConfirmedEntityEligibility && candidate.entityEligibility !== "confirmed") {
+    results.push(
+      rule(
+        "requireConfirmedEntityEligibility",
+        "fail",
+        `This policy requires confirmed entity-jurisdiction eligibility; this candidate is "${candidate.entityEligibility ?? "not applicable"}".`,
+        "entity_eligibility_not_confirmed",
       ),
     );
   }

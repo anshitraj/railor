@@ -19,6 +19,7 @@ import {
   type CorridorQuery,
   type EligibilityReason,
   type EligibilityVerdict,
+  type EntityEligibility,
   type Evidence,
   type OperationalReadiness,
   type RankingPreset,
@@ -126,17 +127,24 @@ export interface Evaluation {
   evidence: Evidence[];
   receivingMode: ReceivingModeInfo | null;
   operationalReadiness: OperationalReadiness;
-  /** Set only when the query asked for a full route — see RouteConfirmation's doc comment in @railor/types. */
+  /** Set only when the query asked for a full route — see RouteConfirmation's doc comment in @railor/types. Deliberately never depends on entityCountry — see EntityEligibility's doc comment for why jurisdiction is tracked as its own, separate fact instead of a required dimension of the atomic route tuple. */
   routeConfirmation: RouteConfirmation | null;
   confirmedDimensions: string[];
   unconfirmedDimensions: string[];
   /** The provider_routes.id of the atomic row that produced routeConfirmation, when one atomic row settled it either way ("confirmed" or "unsupported") — null for partially_confirmed/unconfirmed/unknown, which by definition have no single atomic row to point at. Purely additive: not read by any existing caller, added for decision-engine.ts to record exactly which route fact a Decision depended on. */
   dependedOnRouteId: string | null;
+  /** Set only when the query named an entity country — the entity-jurisdiction section's own sub-verdict, exposed separately from `verdict` (which still folds it in, unchanged, for every existing caller). See EntityEligibility in @railor/types. */
+  entityEligibility: EntityEligibility | null;
 }
 
-/** Human labels for query dimension keys, used only in route-confirmation reasoning text. */
+/**
+ * Human labels for query dimension keys, used only in route-confirmation
+ * reasoning text. Deliberately excludes entityCountry — jurisdiction is not
+ * a transport-route dimension, it is its own fact (EntityEligibility,
+ * computed separately below and reported through its own field, not through
+ * confirmedDimensions/unconfirmedDimensions).
+ */
 const DIMENSION_LABEL: Record<string, string> = {
-  entityCountry: "entity jurisdiction",
   sourceCountry: "funding country",
   customerType: "customer type",
   sourceAsset: "source asset",
@@ -302,6 +310,7 @@ export function evaluateProvider(
       confirmedDimensions: [],
       unconfirmedDimensions: [],
       dependedOnRouteId: null,
+      entityEligibility: null,
     };
   }
 
@@ -319,8 +328,10 @@ export function evaluateProvider(
       (family === "corridor" && Boolean(f.destinationCountry));
   });
 
-  /* ---- 1. entity jurisdiction ----------------------------------------- */
+  /* ---- 1. entity jurisdiction (a separate fact from route confirmation, see EntityEligibility) ---- */
+  let entityEligibility: EntityEligibility | null = null;
   if (query.entityCountry) {
+    entityEligibility = "unknown";
     const rows = byFamily("entity").filter(
       (f) =>
         f.entityCountry === query.entityCountry &&
@@ -333,6 +344,7 @@ export function evaluateProvider(
     if (unsupported) {
       dependedOn.push(unsupported);
       downgrade("unavailable");
+      entityEligibility = "unsupported";
       const otherEntities = [
         ...new Set(
           byFamily("entity")
@@ -357,6 +369,7 @@ export function evaluateProvider(
     } else if (partial) {
       dependedOn.push(partial);
       downgrade("additional_requirements");
+      entityEligibility = "partially_confirmed";
       reasons.push({
         code: "requirements_outstanding",
         message:
@@ -368,6 +381,7 @@ export function evaluateProvider(
     } else if (supported) {
       dependedOn.push(supported);
       confirmedDims.add("entityCountry");
+      entityEligibility = "confirmed";
     } else {
       downgrade("unknown");
       reasons.push({
@@ -588,9 +602,14 @@ export function evaluateProvider(
    * this after the individual checks so explicit exclusions (for example, an
    * ineligible entity country) remain the first and clearest explanation.
    */
+  // entityCountry deliberately excluded from this list — it is always present
+  // on a real PaymentIntent (see @railor/types), so including it here would
+  // make routeConfirmation depend on jurisdiction, exactly the coupling this
+  // model removes. A route worth confirming is one that names an actual
+  // transport dimension, not merely who is asking.
   const routeDimensionsRequested = Boolean(
     query.destinationCountry &&
-      (query.entityCountry || query.sourceCountry || query.sourceAsset || query.sourceNetwork || query.sourceCurrency ||
+      (query.sourceCountry || query.sourceAsset || query.sourceNetwork || query.sourceCurrency ||
         query.sourceEndpointType || query.sourceNamedRail),
   );
   let routeConfirmation: RouteConfirmation | null = null;
@@ -603,7 +622,15 @@ export function evaluateProvider(
       (f) =>
         f.isAtomicRoute === true &&
         f.destinationCountry === query.destinationCountry &&
-        (!query.entityCountry || f.entityCountry === query.entityCountry) &&
+        // entityCountry is compatible, not required-equal: a route silent on
+        // jurisdiction (the overwhelming real-world case — see this file's
+        // module doc) makes no claim either way, so it transports for any
+        // entity country; a route that explicitly names one only transports
+        // for that one. Preserves a genuine "this corridor is jurisdiction-
+        // gated" fact without forcing every route to state a jurisdiction it
+        // never actually addressed. Whether the entity itself may use this
+        // provider at all is EntityEligibility's question, not this one's.
+        (f.entityCountry === null || f.entityCountry === query.entityCountry) &&
         (!query.customerType || f.customerType === query.customerType) &&
         (!query.sourceCountry || f.sourceCountry === query.sourceCountry) &&
         (!query.sourceEndpointType || f.sourceEndpointType === query.sourceEndpointType) &&
@@ -756,7 +783,27 @@ export function evaluateProvider(
     confirmedDimensions,
     unconfirmedDimensions,
     dependedOnRouteId,
+    entityEligibility,
   };
+}
+
+/**
+ * Whether a candidate is worth carrying into Decision/quote consideration at
+ * all — a genuinely wider gate than `verdict`, which still conflates entity
+ * jurisdiction into one shared signal for existing callers (see
+ * EntityEligibility's doc comment). A candidate with a confirmed or
+ * partially-confirmed transport route is decision-plausible even when
+ * `verdict` reads "unknown" solely because entity-jurisdiction evidence
+ * doesn't exist yet — whether that missing jurisdiction evidence should then
+ * block the recommendation is a policy question (requireConfirmedEntityEligibility
+ * in @railor/core's policy.ts), not a pre-filter question. An *explicit*
+ * "unsupported" (entity or route) still excludes here exactly as before,
+ * since `verdict` already downgrades to "unavailable" for either.
+ */
+export function isDecisionEligible(evaluation: Evaluation): boolean {
+  if (evaluation.verdict === "supported" || evaluation.verdict === "additional_requirements") return true;
+  if (evaluation.verdict !== "unknown") return false;
+  return evaluation.routeConfirmation === "confirmed" || evaluation.routeConfirmation === "partially_confirmed";
 }
 
 /* -------------------------------------------------------------------------- */

@@ -34,7 +34,7 @@ import type {
 import { intentToCorridorQuery } from "@railor/types";
 import { loadConnectionStatuses } from "./connectivity.js";
 import { loadProviderIdsWithActiveIncidents, type DecisionCandidateInsert, type DecisionInsert } from "./decision-repository.js";
-import { evaluateProvider, scoreProvider, settlementMinutes, type Evaluation, type ProviderInput } from "./eligibility.js";
+import { evaluateProvider, isDecisionEligible, scoreProvider, settlementMinutes, type Evaluation, type ProviderInput } from "./eligibility.js";
 import { directProviderBonus, evaluatePolicy, type PolicyCandidateInput } from "./policy.js";
 import { loadProviderInputs } from "./repository.js";
 import { getAdapter } from "./adapters.js";
@@ -156,6 +156,7 @@ export async function runDecisionEngine(
       providerSlug: provider.slug,
       providerCategory: provider.category,
       routeConfirmation: evaluation.routeConfirmation,
+      entityEligibility: evaluation.entityEligibility,
       lastVerifiedAt: evaluation.lastVerifiedAt,
       connected,
       quote: null,
@@ -183,11 +184,7 @@ export async function runDecisionEngine(
   // is actually connected with quote support - fetching a quote nobody could
   // ever use would just spend a real network call for nothing.
   const quoteWorthy = enginedByProvider.filter(
-    (c) =>
-      (c.evaluation.verdict === "supported" || c.evaluation.verdict === "additional_requirements") &&
-      c.prePolicy.result !== "fail" &&
-      c.connected &&
-      c.hasQuoteAdapter,
+    (c) => isDecisionEligible(c.evaluation) && c.prePolicy.result !== "fail" && c.connected && c.hasQuoteAdapter,
   );
 
   const warnings: string[] = [];
@@ -222,6 +219,7 @@ export async function runDecisionEngine(
       providerSlug: c.provider.slug,
       providerCategory: c.provider.category,
       routeConfirmation: c.evaluation.routeConfirmation,
+      entityEligibility: c.evaluation.entityEligibility,
       lastVerifiedAt: c.evaluation.lastVerifiedAt,
       connected: c.connected,
       quote: c.quote,
@@ -236,12 +234,15 @@ export async function runDecisionEngine(
     c.rankingConfidence = rankingConfidence;
   }
 
-  // Eligible = has a plausible base route at all. Everyone else (unavailable
-  // base eligibility) is reported for auditability but was never in the
-  // running for a recommendation regardless of policy.
-  const eligible = enginedByProvider.filter(
-    (c) => c.evaluation.verdict === "supported" || c.evaluation.verdict === "additional_requirements",
-  );
+  // Eligible = has a plausible base route at all, per isDecisionEligible
+  // (which also admits a confirmed/partially-confirmed transport route whose
+  // shared verdict merely reads "unknown" for lack of entity-jurisdiction
+  // evidence - that missing evidence is then either fatal or not per
+  // requireConfirmedEntityEligibility, decided by policy below, not here).
+  // Everyone else (unavailable base eligibility) is reported for
+  // auditability but was never in the running for a recommendation
+  // regardless of policy.
+  const eligible = enginedByProvider.filter((c) => isDecisionEligible(c.evaluation));
   const policyPassers = eligible.filter((c) => c.finalPolicy.result === "pass");
   const policyUnknowns = eligible.filter((c) => c.finalPolicy.result === "unknown");
 
@@ -291,6 +292,7 @@ export async function runDecisionEngine(
       routeId: c.evaluation.dependedOnRouteId,
       eligibilityStatus: c.evaluation.verdict,
       routeCertainty: c.evaluation.routeConfirmation,
+      entityEligibility: c.evaluation.entityEligibility,
       policyEvaluation: c.finalPolicy,
       quoteSnapshot: c.quote ? toQuoteSnapshot(c.quote) : null,
       costCompleteness: costCompletenessOf(c.quote),
@@ -349,6 +351,7 @@ function buildExplain(
   if (winner) {
     whySelected.push(`${winner.provider.name} passed every configured policy rule.`);
     whySelected.push(`Route certainty: ${winner.evaluation.routeConfirmation ?? "not applicable"}.`);
+    if (winner.evaluation.entityEligibility) whySelected.push(`Entity eligibility: ${winner.evaluation.entityEligibility}.`);
     whySelected.push(`Ranking score ${winner.score}/100 (${Math.round(winner.rankingConfidence * 100)}% of ranking inputs were real data).`);
     if (winner.quote) whySelected.push(`Backed by a ${winner.quote.quoteType} quote observed at ${winner.quote.observedAt}.`);
   }

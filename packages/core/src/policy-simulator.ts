@@ -11,7 +11,7 @@
 import type { PaymentIntent, PolicyRules, PolicySimulationCandidate, PolicySimulationResult } from "@railor/types";
 import { loadConnectionStatuses } from "./connectivity.js";
 import { loadProviderIdsWithActiveIncidents } from "./decision-repository.js";
-import { evaluateProvider, scoreProvider, settlementMinutes } from "./eligibility.js";
+import { evaluateProvider, isDecisionEligible, scoreProvider, settlementMinutes } from "./eligibility.js";
 import { evaluatePolicy, type PolicyCandidateInput } from "./policy.js";
 import { loadProviderInputs } from "./repository.js";
 import { intentToCorridorQuery } from "@railor/types";
@@ -48,13 +48,14 @@ export async function simulatePolicy(
 
   for (const provider of realInputs) {
     const evaluation = evaluateProvider(provider, query, { now });
-    if (evaluation.verdict !== "supported" && evaluation.verdict !== "additional_requirements") continue;
+    if (!isDecisionEligible(evaluation)) continue;
 
     const candidateInput: PolicyCandidateInput = {
       providerId: provider.id,
       providerSlug: provider.slug,
       providerCategory: provider.category,
       routeConfirmation: evaluation.routeConfirmation,
+      entityEligibility: evaluation.entityEligibility,
       lastVerifiedAt: evaluation.lastVerifiedAt,
       connected: connectionStatuses.get(provider.id) === "connected",
       quote: null,

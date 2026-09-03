@@ -33,6 +33,7 @@ function candidate(overrides: Partial<PolicyCandidateInput> = {}): PolicyCandida
     providerSlug: "circle",
     providerCategory: "Stablecoin infrastructure",
     routeConfirmation: "confirmed",
+    entityEligibility: null,
     lastVerifiedAt: now,
     connected: true,
     quote: null,
@@ -128,6 +129,39 @@ describe("minimum route certainty", () => {
   it("passes a confirmed candidate against a confirmed requirement", () => {
     const result = evaluatePolicy(intent(), rules({ minimumRouteCertainty: "confirmed" }), candidate({ routeConfirmation: "confirmed" }), now);
     expect(result.result).toBe("pass");
+  });
+});
+
+describe("require confirmed entity eligibility", () => {
+  it("is skipped entirely when the rule is not configured", () => {
+    const result = evaluatePolicy(intent(), rules({}), candidate({ entityEligibility: "unknown" }), now);
+    expect(result.ruleResults.find((r) => r.rule === "requireConfirmedEntityEligibility")).toBeUndefined();
+  });
+
+  it("fails an unknown entity eligibility when required, instead of silently passing it", () => {
+    const result = evaluatePolicy(intent(), rules({ requireConfirmedEntityEligibility: true }), candidate({ entityEligibility: "unknown" }), now);
+    expect(result.result).toBe("fail");
+    expect(result.ruleResults.find((r) => r.code === "entity_eligibility_not_confirmed")).toBeDefined();
+  });
+
+  it("fails a merely partially-confirmed entity eligibility when the rule demands exactly confirmed", () => {
+    const result = evaluatePolicy(intent(), rules({ requireConfirmedEntityEligibility: true }), candidate({ entityEligibility: "partially_confirmed" }), now);
+    expect(result.result).toBe("fail");
+  });
+
+  it("passes a confirmed entity eligibility", () => {
+    const result = evaluatePolicy(intent(), rules({ requireConfirmedEntityEligibility: true }), candidate({ entityEligibility: "confirmed" }), now);
+    expect(result.result).toBe("pass");
+  });
+
+  it("is independent from route certainty — a confirmed route does not substitute for confirmed entity eligibility", () => {
+    const result = evaluatePolicy(
+      intent(),
+      rules({ requireConfirmedEntityEligibility: true }),
+      candidate({ routeConfirmation: "confirmed", entityEligibility: "unknown" }),
+      now,
+    );
+    expect(result.result).toBe("fail");
   });
 });
 

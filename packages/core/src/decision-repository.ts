@@ -23,6 +23,7 @@ import type {
   CostCompleteness,
   DecisionEventKind,
   DecisionStatus,
+  EntityEligibility,
   PolicyRules,
   QuoteSnapshot,
   RouteConfirmation,
@@ -209,6 +210,7 @@ export interface DecisionCandidateInsert {
   routeId: string | null;
   eligibilityStatus: "supported" | "additional_requirements" | "unavailable" | "unknown";
   routeCertainty: RouteConfirmation | null;
+  entityEligibility: EntityEligibility | null;
   policyEvaluation: CandidatePolicyEvaluation;
   quoteSnapshot: QuoteSnapshot | null;
   costCompleteness: CostCompleteness;
@@ -284,6 +286,7 @@ export async function persistDecision(input: DecisionInsert) {
           routeId: c.routeId,
           eligibilityStatus: c.eligibilityStatus,
           routeCertainty: c.routeCertainty,
+          entityEligibility: c.entityEligibility,
           policyResult: c.policyEvaluation.result,
           policyReasonCodes: c.policyEvaluation.ruleResults.filter((r) => r.code).map((r) => r.code!),
           quoteSnapshot: c.quoteSnapshot,

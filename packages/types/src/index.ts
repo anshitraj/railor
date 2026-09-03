@@ -421,6 +421,37 @@ export const ROUTE_CONFIRMATION_LABEL: Record<RouteConfirmation, string> = {
   unknown: "Unknown",
 };
 
+/**
+ * A second, orthogonal axis from RouteConfirmation: not "does this transport
+ * route exist" but "may this specific customer/entity use this provider at
+ * all." Kept as its own fact with its own evidence and certainty on purpose —
+ * folding entity jurisdiction into the atomic route tuple is exactly what
+ * made every real PaymentIntent unreachable as ALLOW (every real
+ * provider_routes row is silent on entity jurisdiction; requiring an exact
+ * per-country match on that same atomic row meant no route could ever be
+ * "confirmed" for anyone, since jurisdiction and transport are independently
+ * authoritative, genuinely orthogonal facts a provider states separately).
+ *
+ *   CONFIRMED           the provider has stated this entity country (+ customer type) is accepted.
+ *   PARTIALLY_CONFIRMED accepted, but with additional onboarding requirements.
+ *   UNSUPPORTED         the provider has explicitly excluded this entity country.
+ *   UNKNOWN             no evidence either way — never defaults to permissive.
+ *
+ * Never inferred from the absence of a statement, and never inferred from
+ * one entity country's acceptance to another's. See eligibility.ts's entity
+ * jurisdiction section — this is that section's own sub-verdict, exposed as
+ * a first-class field instead of only feeding the shared EligibilityVerdict.
+ */
+export const EntityEligibility = z.enum(["confirmed", "partially_confirmed", "unsupported", "unknown"]);
+export type EntityEligibility = z.infer<typeof EntityEligibility>;
+
+export const ENTITY_ELIGIBILITY_LABEL: Record<EntityEligibility, string> = {
+  confirmed: "Confirmed",
+  partially_confirmed: "Partially confirmed",
+  unsupported: "Unsupported",
+  unknown: "Unknown",
+};
+
 export const ProviderResult = z.object({
   provider: z.object({
     id: z.string(),
@@ -704,6 +735,14 @@ export const PolicyRules = z.object({
   maximumEvidenceAgeHours: z.number().int().positive().optional(),
   /** Requires RouteConfirmation === "confirmed" exactly — the atomic-evidence tier, never partially_confirmed. */
   requireExactRouteEvidence: z.boolean().default(false),
+  /**
+   * Requires EntityEligibility === "confirmed" — an "unknown" (no
+   * jurisdiction evidence yet) is a hard fail when this is set, not silently
+   * passed. An explicit "unsupported" entity always excludes a candidate
+   * regardless of this flag, since that is a provider's own stated "no," not
+   * a policy choice — see evaluateProvider in @railor/core.
+   */
+  requireConfirmedEntityEligibility: z.boolean().default(false),
   requireCustomerConnectedProvider: z.boolean().default(false),
   requireLiveQuote: z.boolean().default(false),
   /**
@@ -780,6 +819,7 @@ export const PolicyReasonCode = z.enum([
   "route_certainty_too_low",
   "evidence_too_old",
   "exact_route_required",
+  "entity_eligibility_not_confirmed",
   "provider_not_connected",
   "live_quote_required",
   "prefunding_forbidden",
@@ -870,6 +910,8 @@ export const DecisionCandidateRecord = z.object({
   routeId: z.string().nullable(),
   eligibilityStatus: EligibilityVerdict,
   routeCertainty: RouteConfirmation.nullable(),
+  /** Independent from routeCertainty on purpose — see EntityEligibility's doc comment. Both are exposed so a policy (or a human reading this record) can see which of the two orthogonal facts was actually missing. */
+  entityEligibility: EntityEligibility.nullable(),
   policyEvaluation: CandidatePolicyEvaluation,
   quoteSnapshot: QuoteSnapshot.nullable(),
   costCompleteness: CostCompleteness,
