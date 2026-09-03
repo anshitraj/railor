@@ -1,0 +1,3192 @@
+{
+  "generatedAt": "2026-09-02T08:21:30.153Z",
+  "methodology": "Every field is a live query against real (is_demo:false) database rows. byoCredentials and commercialAccess are per-provider commercial terms not yet researched for this batch and read 'Not researched', not a guess.",
+  "totals": {
+    "totalRegistered": 90,
+    "l1_officialSourceFound": 90,
+    "l2_capabilityMapped": 48,
+    "l3_routeMapped": 20,
+    "l4_customerConnectable": 17,
+    "l5_liveQuotable": 17,
+    "l6_railorObserved": 17,
+    "l7_executable": 0
+  },
+  "extra": {
+    "meaningfullyMappedProviders": 48,
+    "providersWithExactRouteEvidence": 20,
+    "providersWithNamedRails": 5,
+    "customerConnectableProviders": 17,
+    "providersWithRealGetQuote": 3,
+    "providersWithObservedReliability": 17,
+    "providersWithStaleEvidence": 0,
+    "providersWithZeroEvidence": 41
+  },
+  "providers": [
+    {
+      "slug": "1money",
+      "name": "1Money",
+      "categories": [
+        "PAYMENT_NETWORK",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.1money.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "airwallex",
+      "name": "Airwallex",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "BANKING_INFRA"
+      ],
+      "website": "https://www.airwallex.com",
+      "docs": "https://www.airwallex.com/docs",
+      "apiDocs": "https://www.airwallex.com/docs",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "AU",
+        "CA",
+        "CH",
+        "CO",
+        "DE",
+        "DK",
+        "EE",
+        "GB",
+        "HK",
+        "ID",
+        "IL",
+        "IN",
+        "MX",
+        "NL",
+        "NZ",
+        "PL",
+        "SE",
+        "SG",
+        "TH",
+        "TR",
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 22,
+      "currencies": [
+        "AED",
+        "AUD",
+        "CAD",
+        "CHF",
+        "COP",
+        "DKK",
+        "EUR",
+        "GBP",
+        "HKD",
+        "IDR",
+        "ILS",
+        "INR",
+        "MXN",
+        "NZD",
+        "PLN",
+        "SEK",
+        "SGD",
+        "THB",
+        "TRY",
+        "USD"
+      ],
+      "localRails": [
+        "ACH_HK",
+        "ACH_US",
+        "BACS",
+        "BECS",
+        "BI_FAST",
+        "CENIT",
+        "CHAPS",
+        "DATACLEARINGEN",
+        "DIRECT_CREDIT_NZ",
+        "EFT_CA",
+        "ELIXIR",
+        "EXPRESS_ELIXIR",
+        "FASTER_PAYMENTS_GB",
+        "FASTER_PAYMENTS_IL",
+        "FAST_SG",
+        "FAST_TR",
+        "FEDNOW",
+        "FEDWIRE",
+        "FPS_HK",
+        "GIRO_SG",
+        "IMPS",
+        "INTERAC_E_TRANSFER",
+        "INTRADAGCLEARING",
+        "IPI_AE",
+        "KRONOS2",
+        "MASAV",
+        "MEPS",
+        "NEFT",
+        "PROMPTPAY",
+        "RTGS",
+        "RTGS_AE",
+        "RTGS_HK",
+        "RTGS_ID",
+        "RTP",
+        "SEPA_CT_DE",
+        "SEPA_CT_NL",
+        "SEPA_ICT_DE",
+        "SEPA_ICT_NL",
+        "SIC",
+        "SKN",
+        "SORBNET",
+        "SPEI",
+        "STRAKSCLEARING",
+        "ZAHAV",
+        "bank_transfer_local"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 14,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "alchemy-pay",
+      "name": "Alchemy Pay",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://alchemypay.org",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [
+        "BW",
+        "CM",
+        "GB",
+        "KE",
+        "MW",
+        "NG",
+        "RW",
+        "TZ",
+        "UG",
+        "ZA",
+        "ZM"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 11,
+      "currencies": [
+        "GBP",
+        "KES",
+        "NGN",
+        "RWF",
+        "TZS",
+        "UGX",
+        "XAF",
+        "ZAR",
+        "ZMW"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 9,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "alfred",
+      "name": "Alfred",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://alfredpay.io",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "anchorage",
+      "name": "Anchorage Digital",
+      "categories": [
+        "CUSTODY_SIGNING"
+      ],
+      "website": "https://www.anchorage.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "anclap",
+      "name": "Anclap",
+      "categories": [
+        "OFFRAMP",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.anclap.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "b2c2",
+      "name": "B2C2",
+      "categories": [
+        "FX_LIQUIDITY",
+        "LIQUIDITY_PROVIDER"
+      ],
+      "website": "https://www.b2c2.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "baanx",
+      "name": "Baanx",
+      "categories": [
+        "CARD_INFRA",
+        "WALLET_INFRA"
+      ],
+      "website": "https://www.baanx.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "banking-circle",
+      "name": "Banking Circle",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://www.bankingcircle.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "banxa",
+      "name": "Banxa",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://banxa.com",
+      "docs": "https://docs.banxa.com",
+      "apiDocs": "https://docs.banxa.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "BR",
+        "CA",
+        "GB",
+        "NL",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "tron"
+      ],
+      "countryCount": 6,
+      "currencies": [
+        "AUD",
+        "BRL",
+        "CAD",
+        "EUR",
+        "GBP",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 17,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "bitgo",
+      "name": "BitGo",
+      "categories": [
+        "CUSTODY_SIGNING"
+      ],
+      "website": "https://www.bitgo.com",
+      "docs": "https://developers.bitgo.com",
+      "apiDocs": "https://developers.bitgo.com",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "USDC"
+      ],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 5,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "bitso",
+      "name": "Bitso",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "ONRAMP"
+      ],
+      "website": "https://bitso.com",
+      "docs": "https://docs.bitso.com",
+      "apiDocs": "https://docs.bitso.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AR",
+        "BR",
+        "CO",
+        "MX",
+        "US"
+      ],
+      "stablecoins": [
+        "BRL1",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "arbitrum",
+        "avalanche",
+        "polygon",
+        "stellar",
+        "tron"
+      ],
+      "countryCount": 5,
+      "currencies": [
+        "ARS",
+        "BRL",
+        "COP",
+        "MXN",
+        "USD"
+      ],
+      "localRails": [
+        "bank_transfer_local"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 14,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "bitso-juno",
+      "name": "Bitso / Juno",
+      "categories": [
+        "LOCAL_PAYOUT_PROVIDER"
+      ],
+      "website": null,
+      "docs": "https://docs.bitso.com/juno/docs/product-overview-mass-payments",
+      "apiDocs": "https://docs.bitso.com/juno/docs/product-overview-mass-payments",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "MX"
+      ],
+      "stablecoins": [
+        "MXNB"
+      ],
+      "networks": [
+        "arbitrum"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "MXN"
+      ],
+      "localRails": [
+        "bank_transfer_local"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 2,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "blindpay",
+      "name": "BlindPay",
+      "categories": [
+        "OFFRAMP",
+        "STABLECOIN_INFRA"
+      ],
+      "website": null,
+      "docs": "https://blindpay.com/changelog",
+      "apiDocs": "https://blindpay.com/changelog",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
+      "networks": [
+        "arbitrum",
+        "base",
+        "ethereum",
+        "polygon",
+        "solana",
+        "stellar"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "EUR",
+        "USD"
+      ],
+      "localRails": [
+        "ach",
+        "bank_transfer_local",
+        "bank_transfer_swift",
+        "sepa",
+        "wire"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 14,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "brale",
+      "name": "Brale",
+      "categories": [
+        "ISSUER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://brale.xyz",
+      "docs": "https://docs.brale.xyz",
+      "apiDocs": "https://docs.brale.xyz",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [
+        "PYUSD",
+        "USDC",
+        "USDP"
+      ],
+      "networks": [
+        "arbitrum",
+        "avalanche",
+        "base",
+        "celo",
+        "ethereum",
+        "optimism",
+        "polygon",
+        "solana",
+        "stellar"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 11,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "bridge",
+      "name": "Bridge",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://bridge.xyz",
+      "docs": "https://apidocs.bridge.xyz/",
+      "apiDocs": "https://apidocs.bridge.xyz/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "DE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "base"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "EUR",
+        "GBP",
+        "MXN",
+        "USD"
+      ],
+      "localRails": [
+        "sepa"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 12,
+      "providerLevel": "L6",
+      "quoteSupport": true,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "bvnk",
+      "name": "BVNK",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.bvnk.com",
+      "docs": "https://docs.bvnk.com/",
+      "apiDocs": "https://docs.bvnk.com/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "PYUSD",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "ethereum",
+        "polygon",
+        "tron"
+      ],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 10,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "cashfree",
+      "name": "Cashfree Payments",
+      "categories": [
+        "LOCAL_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.cashfree.com",
+      "docs": "https://www.cashfree.com",
+      "apiDocs": "https://www.cashfree.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "IN"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 1,
+      "currencies": [
+        "INR"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "cbw-bank",
+      "name": "CBW Bank",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://www.cbw.bank",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "checkout-com",
+      "name": "Checkout.com",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.checkout.com",
+      "docs": "https://www.checkout.com",
+      "apiDocs": "https://www.checkout.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 1,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "circle",
+      "name": "Circle",
+      "categories": [
+        "ISSUER",
+        "PAYMENT_NETWORK"
+      ],
+      "website": "https://www.circle.com",
+      "docs": "https://developers.circle.com/",
+      "apiDocs": "https://developers.circle.com/",
+      "llmsOrOpenapi": true,
+      "regions": [
+        "AE",
+        "BR",
+        "GB",
+        "MX",
+        "SG",
+        "US"
+      ],
+      "stablecoins": [
+        "CIRBTC",
+        "EURC",
+        "USDC",
+        "USYC"
+      ],
+      "networks": [
+        "arbitrum",
+        "avalanche",
+        "base",
+        "celo",
+        "ethereum",
+        "optimism",
+        "polygon",
+        "solana",
+        "stellar"
+      ],
+      "countryCount": 6,
+      "currencies": [
+        "AED",
+        "MXN"
+      ],
+      "localRails": [
+        "bank_transfer_local"
+      ],
+      "routeCount": 1,
+      "evidenceCount": 17,
+      "providerLevel": "L6",
+      "quoteSupport": true,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-09-01",
+      "staleEvidence": false
+    },
+    {
+      "slug": "clickpesa",
+      "name": "ClickPesa",
+      "categories": [
+        "MOBILE_MONEY"
+      ],
+      "website": "https://clickpesa.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "coinbase",
+      "name": "Coinbase",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://www.coinbase.com",
+      "docs": "https://docs.cdp.coinbase.com/",
+      "apiDocs": "https://docs.cdp.coinbase.com/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
+      "networks": [
+        "base"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 12,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "coins-ph",
+      "name": "Coins.ph",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://coins.ph",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [
+        "PH"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "tempo"
+      ],
+      "countryCount": 1,
+      "currencies": [
+        "PHP"
+      ],
+      "localRails": [
+        "INSTAPAY",
+        "PESONET",
+        "QR_PH"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 13,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "conduit",
+      "name": "Conduit",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://conduitpay.com",
+      "docs": "https://conduitpay.com",
+      "apiDocs": "https://conduitpay.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "BR",
+        "GB",
+        "MX",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 4,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 15,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "cowrie",
+      "name": "Cowrie Integrated Systems",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.cowriesys.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "cross-river",
+      "name": "Cross River Bank",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://www.crossriver.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "crossmint",
+      "name": "Crossmint",
+      "categories": [
+        "OFFRAMP",
+        "ONRAMP"
+      ],
+      "website": null,
+      "docs": "https://www.crossmint.com/products/offramps",
+      "apiDocs": "https://www.crossmint.com/products/offramps",
+      "llmsOrOpenapi": true,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [
+        "ach",
+        "bank_transfer_local",
+        "sepa"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 7,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "currencycloud",
+      "name": "Currencycloud",
+      "categories": [
+        "BANKING_INFRA",
+        "FX_LIQUIDITY"
+      ],
+      "website": "https://www.currencycloud.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "dashx",
+      "name": "DashX",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://dashx.xyz",
+      "docs": "https://dashx.xyz/",
+      "apiDocs": "https://dashx.xyz/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "GB",
+        "IN",
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 4,
+      "currencies": [
+        "AED",
+        "EUR",
+        "GBP",
+        "INR",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 5,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "dlocal",
+      "name": "dLocal",
+      "categories": [
+        "AGGREGATOR",
+        "LOCAL_RAIL_OPERATOR"
+      ],
+      "website": "https://dlocal.com",
+      "docs": "https://docs.dlocal.com/reference/requesting-payout-v3",
+      "apiDocs": "https://docs.dlocal.com/reference/requesting-payout-v3",
+      "llmsOrOpenapi": true,
+      "regions": [
+        "AE",
+        "AR",
+        "BR",
+        "CM",
+        "EG",
+        "GH",
+        "IN",
+        "KE",
+        "MX",
+        "NG",
+        "ZA"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "arbitrum",
+        "base",
+        "bnb-chain",
+        "ethereum",
+        "polygon",
+        "solana",
+        "tron"
+      ],
+      "countryCount": 11,
+      "currencies": [
+        "AED",
+        "ARS",
+        "BRL",
+        "EGP",
+        "GHS",
+        "INR",
+        "KES",
+        "MXN",
+        "NGN",
+        "XAF",
+        "ZAR"
+      ],
+      "localRails": [
+        "bank_transfer_local"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 22,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "dtcpay",
+      "name": "dtcpay",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.dtcpay.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "eco",
+      "name": "Eco",
+      "categories": [
+        "ISSUER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://eco.com",
+      "docs": "https://docs.eco.com",
+      "apiDocs": "https://docs.eco.com",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "episode-six",
+      "name": "Episode Six",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://episodesix.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "ethena",
+      "name": "Ethena",
+      "categories": [
+        "ISSUER"
+      ],
+      "website": "https://ethena.fi",
+      "docs": "https://docs.ethena.fi/",
+      "apiDocs": "https://docs.ethena.fi/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "USDe"
+      ],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 8,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "fireblocks",
+      "name": "Fireblocks",
+      "categories": [
+        "CUSTODY_SIGNING"
+      ],
+      "website": "https://www.fireblocks.com",
+      "docs": "https://developers.fireblocks.com",
+      "apiDocs": "https://developers.fireblocks.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "BR",
+        "CO",
+        "GB",
+        "HK",
+        "MX",
+        "PH",
+        "SG"
+      ],
+      "stablecoins": [
+        "EURC",
+        "USDC"
+      ],
+      "networks": [],
+      "countryCount": 8,
+      "currencies": [
+        "AED",
+        "BRL",
+        "COP",
+        "GBP",
+        "HKD",
+        "MXN",
+        "PHP",
+        "SGD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 6,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "flutterwave",
+      "name": "Flutterwave",
+      "categories": [
+        "LOCAL_PAYOUT_PROVIDER",
+        "MOBILE_MONEY"
+      ],
+      "website": "https://flutterwave.com",
+      "docs": "https://developer.flutterwave.com",
+      "apiDocs": "https://developer.flutterwave.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "CM",
+        "GB",
+        "GH",
+        "KE",
+        "MW",
+        "NG",
+        "RW",
+        "TZ",
+        "UG",
+        "US",
+        "ZA",
+        "ZM"
+      ],
+      "stablecoins": [
+        "RLUSD",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "base",
+        "ethereum",
+        "polygon",
+        "solana"
+      ],
+      "countryCount": 13,
+      "currencies": [
+        "AED",
+        "GBP",
+        "GHS",
+        "KES",
+        "NGN",
+        "RWF",
+        "TZS",
+        "UGX",
+        "USD",
+        "ZAR",
+        "ZMW"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 27,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "fomo-pay",
+      "name": "FOMO Pay",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.fomopay.com",
+      "docs": "https://www.fomopay.com",
+      "apiDocs": "https://www.fomopay.com",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "fonbnk",
+      "name": "Fonbnk",
+      "categories": [
+        "STABLECOIN_INFRA",
+        "MOBILE_MONEY"
+      ],
+      "website": "https://fonbnk.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "fuze",
+      "name": "Fuze",
+      "categories": [
+        "STABLECOIN_INFRA",
+        "BANKING_INFRA"
+      ],
+      "website": "https://fuze.finance",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "guardarian",
+      "name": "Guardarian",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://guardarian.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "highnote",
+      "name": "Highnote",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://highnote.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "immersve",
+      "name": "Immersve",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://immersve.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "koywe",
+      "name": "Koywe",
+      "categories": [
+        "STABLECOIN_INFRA",
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.koywe.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "lirium",
+      "name": "Lirium",
+      "categories": [
+        "STABLECOIN_INFRA",
+        "LIQUIDITY_PROVIDER"
+      ],
+      "website": "https://www.lirium.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "mastercard-move",
+      "name": "Mastercard Move",
+      "categories": [
+        "PAYMENT_NETWORK"
+      ],
+      "website": "https://www.mastercard.com/us/en/business/payments/mastercard-move.html",
+      "docs": "https://developer.mastercard.com/product/move/",
+      "apiDocs": "https://developer.mastercard.com/product/move/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "mercuryo",
+      "name": "Mercuryo",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://mercuryo.io",
+      "docs": "https://docs.mercuryo.io",
+      "apiDocs": "https://docs.mercuryo.io",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "BR",
+        "CA",
+        "GB",
+        "ID",
+        "KE",
+        "NG",
+        "PH",
+        "SG",
+        "US",
+        "ZA"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "base",
+        "polygon",
+        "solana",
+        "stellar"
+      ],
+      "countryCount": 10,
+      "currencies": [
+        "BRL",
+        "GBP",
+        "NGN",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 18,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "mesh",
+      "name": "Mesh",
+      "categories": [
+        "AGGREGATOR",
+        "WALLET_INFRA"
+      ],
+      "website": "https://www.meshconnect.com",
+      "docs": "https://docs.meshconnect.com",
+      "apiDocs": "https://docs.meshconnect.com",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "EURC",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "ethereum"
+      ],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 4,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "mobee",
+      "name": "Mobee",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://mobee.com/en",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "monavate",
+      "name": "Monavate",
+      "categories": [
+        "BANKING_INFRA",
+        "CARD_INFRA"
+      ],
+      "website": "https://www.monavate.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "moneygram",
+      "name": "MoneyGram",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "LOCAL_RAIL_OPERATOR"
+      ],
+      "website": "https://www.moneygram.com",
+      "docs": "https://developer.moneygram.com",
+      "apiDocs": "https://developer.moneygram.com",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "moonpay",
+      "name": "MoonPay",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://www.moonpay.com",
+      "docs": "https://dev.moonpay.com/",
+      "apiDocs": "https://dev.moonpay.com/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AT",
+        "DE",
+        "FR",
+        "GB",
+        "US"
+      ],
+      "stablecoins": [
+        "EURC",
+        "USDC"
+      ],
+      "networks": [],
+      "countryCount": 5,
+      "currencies": [
+        "GBP",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 8,
+      "providerLevel": "L6",
+      "quoteSupport": true,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "moorwand",
+      "name": "Moorwand",
+      "categories": [
+        "CARD_INFRA",
+        "BANKING_INFRA"
+      ],
+      "website": "https://moorwand.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "mural-pay",
+      "name": "Mural Pay",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://muralpay.com",
+      "docs": "https://developers.muralpay.com/docs/getting-started",
+      "apiDocs": "https://developers.muralpay.com/docs/getting-started",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 1,
+      "currencies": [
+        "ARS",
+        "COP",
+        "MXN",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 8,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "n-exchange",
+      "name": "n.exchange",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://n.exchange",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "nium",
+      "name": "Nium",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "AGGREGATOR"
+      ],
+      "website": "https://www.nium.com",
+      "docs": "https://docs.nium.com",
+      "apiDocs": "https://docs.nium.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "AU",
+        "BR",
+        "CA",
+        "CN",
+        "DE",
+        "DK",
+        "GB",
+        "HK",
+        "ID",
+        "IN",
+        "JP",
+        "PH",
+        "PL",
+        "SG",
+        "US",
+        "ZA"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
+      "networks": [],
+      "countryCount": 17,
+      "currencies": [
+        "AED",
+        "CAD",
+        "CNY",
+        "EUR",
+        "JPY",
+        "SGD",
+        "USD",
+        "ZAR"
+      ],
+      "localRails": [
+        "INTERAC_E_TRANSFER",
+        "RTGS_AE",
+        "ZENGIN",
+        "bank_transfer_local",
+        "sepa"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 21,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-09-01",
+      "staleEvidence": false
+    },
+    {
+      "slug": "onafriq",
+      "name": "Onafriq",
+      "categories": [
+        "LOCAL_PAYOUT_PROVIDER",
+        "MOBILE_MONEY"
+      ],
+      "website": "https://onafriq.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [
+        "CI",
+        "CM",
+        "EG",
+        "GH",
+        "KE",
+        "NG",
+        "RW",
+        "TZ",
+        "UG",
+        "ZA"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 10,
+      "currencies": [
+        "GHS",
+        "NGN"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 6,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "opendue",
+      "name": "Due",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "WALLET_INFRA"
+      ],
+      "website": "https://www.opendue.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "openpayd",
+      "name": "OpenPayd",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://www.openpayd.com",
+      "docs": "https://apidocs.openpayd.com/",
+      "apiDocs": "https://apidocs.openpayd.com/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "parfin",
+      "name": "Parfin",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "CUSTODY_SIGNING"
+      ],
+      "website": "https://parfin.io",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "paxos",
+      "name": "Paxos",
+      "categories": [
+        "ISSUER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://paxos.com",
+      "docs": "https://docs.paxos.com/",
+      "apiDocs": "https://docs.paxos.com/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "BTC",
+        "PYUSD",
+        "USDP"
+      ],
+      "networks": [
+        "ethereum",
+        "solana"
+      ],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 8,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "paycaddy",
+      "name": "PayCaddy",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://paycaddy.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "payglocal",
+      "name": "PayGlocal",
+      "categories": [
+        "LOCAL_PAYOUT_PROVIDER"
+      ],
+      "website": "https://payglocal.in",
+      "docs": "https://payglocal.in",
+      "apiDocs": "https://payglocal.in",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "IN"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 1,
+      "currencies": [
+        "INR"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "payoneer",
+      "name": "Payoneer",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.payoneer.com",
+      "docs": "https://developer.payoneer.com",
+      "apiDocs": "https://developer.payoneer.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "AU",
+        "CA",
+        "GB",
+        "HK",
+        "IN",
+        "JP",
+        "PH",
+        "PK",
+        "SG",
+        "UA",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 12,
+      "currencies": [
+        "AED",
+        "AUD",
+        "CAD",
+        "CNY",
+        "EUR",
+        "GBP",
+        "HKD",
+        "INR",
+        "JPY",
+        "PKR",
+        "SGD",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 26,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "paypal",
+      "name": "PayPal",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.paypal.com/in",
+      "docs": "https://www.paypal.com/in",
+      "apiDocs": "https://www.paypal.com/in",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "peoples-group",
+      "name": "Peoples Group",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://peoplesgroup.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "pomelo-la",
+      "name": "Pomelo",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://www.pomelo.la/en",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "ramp-network",
+      "name": "Ramp Network",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://ramp.network",
+      "docs": "https://docs.rampnetwork.com/rest-api-v3-reference",
+      "apiDocs": "https://docs.rampnetwork.com/rest-api-v3-reference",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AT",
+        "BE",
+        "BG",
+        "BR",
+        "CH",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IS",
+        "IT",
+        "LT",
+        "LU",
+        "LV",
+        "MT",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "SE",
+        "SI",
+        "SK",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "arbitrum",
+        "avalanche",
+        "base",
+        "bnb-chain",
+        "celo",
+        "ethereum",
+        "linea",
+        "monad",
+        "near",
+        "optimism",
+        "polygon",
+        "solana",
+        "stellar",
+        "ton",
+        "tron",
+        "world-chain",
+        "zksync"
+      ],
+      "countryCount": 32,
+      "currencies": [
+        "BRL",
+        "EUR",
+        "USD"
+      ],
+      "localRails": [
+        "PIX",
+        "ach",
+        "bank_transfer_local",
+        "card",
+        "sepa"
+      ],
+      "routeCount": 868,
+      "evidenceCount": 21,
+      "providerLevel": "L3",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-31",
+      "staleEvidence": false
+    },
+    {
+      "slug": "rapyd",
+      "name": "Rapyd",
+      "categories": [
+        "AGGREGATOR"
+      ],
+      "website": "https://www.rapyd.net",
+      "docs": "https://docs.rapyd.net",
+      "apiDocs": "https://docs.rapyd.net",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "GB",
+        "IN",
+        "SG",
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 4,
+      "currencies": [
+        "GBP",
+        "INR",
+        "SGD",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 5,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "ripple",
+      "name": "Ripple",
+      "categories": [
+        "PAYMENT_NETWORK",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://ripple.com",
+      "docs": "https://docs.ripple.com/",
+      "apiDocs": "https://docs.ripple.com/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AR",
+        "BR",
+        "CL",
+        "CO",
+        "MX",
+        "PE",
+        "UY"
+      ],
+      "stablecoins": [
+        "RLUSD",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 7,
+      "currencies": [
+        "BRL"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 9,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "scrypt",
+      "name": "SCRYPT",
+      "categories": [
+        "CUSTODY_SIGNING"
+      ],
+      "website": "https://scrypt.swiss",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "skydo",
+      "name": "Skydo",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.skydo.com",
+      "docs": "https://www.skydo.com/features/global-remittances",
+      "apiDocs": "https://www.skydo.com/features/global-remittances",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "CA",
+        "ES",
+        "GB",
+        "IN",
+        "SG",
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 7,
+      "currencies": [
+        "AUD",
+        "CAD",
+        "GBP",
+        "INR",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 12,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "sphere",
+      "name": "Sphere",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.spherepay.co",
+      "docs": "https://docs.spherepay.co",
+      "apiDocs": "https://docs.spherepay.co",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "BR",
+        "US"
+      ],
+      "stablecoins": [
+        "EURC",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "arbitrum",
+        "avalanche",
+        "base",
+        "ethereum",
+        "polygon",
+        "solana",
+        "tron"
+      ],
+      "countryCount": 2,
+      "currencies": [
+        "BRL",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 16,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "stablecore",
+      "name": "Stablecore",
+      "categories": [
+        "STABLECOIN_INFRA",
+        "ISSUER"
+      ],
+      "website": "https://stablecore.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "straitsx",
+      "name": "StraitsX",
+      "categories": [
+        "ISSUER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.straitsx.com",
+      "docs": "https://docs.straitsx.com",
+      "apiDocs": "https://docs.straitsx.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "SG"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 1,
+      "currencies": [
+        "SGD",
+        "USD"
+      ],
+      "localRails": [
+        "PAYNOW",
+        "bank_transfer_swift",
+        "faster_payments"
+      ],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "stripe",
+      "name": "Stripe",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://stripe.com",
+      "docs": "https://docs.stripe.com/crypto",
+      "apiDocs": "https://docs.stripe.com/crypto",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "CA",
+        "CH",
+        "GB",
+        "US"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 5,
+      "currencies": [
+        "AUD",
+        "CAD",
+        "GBP",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 12,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "tazapay",
+      "name": "Tazapay",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://tazapay.com",
+      "docs": "https://docs.tazapay.com",
+      "apiDocs": "https://docs.tazapay.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AE",
+        "AU",
+        "CA",
+        "DE",
+        "GB",
+        "ID",
+        "KR",
+        "NG",
+        "SG",
+        "US",
+        "VN"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 11,
+      "currencies": [
+        "AED",
+        "AUD",
+        "CAD",
+        "EUR",
+        "GBP",
+        "IDR",
+        "KRW",
+        "NGN",
+        "SGD",
+        "USD",
+        "VND"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 11,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "tether",
+      "name": "Tether",
+      "categories": [
+        "ISSUER"
+      ],
+      "website": "https://tether.to",
+      "docs": "https://tether.to/en/supported-protocols/",
+      "apiDocs": "https://tether.to/en/supported-protocols/",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [
+        "USDT"
+      ],
+      "networks": [
+        "avalanche",
+        "bnb-chain",
+        "celo",
+        "ethereum",
+        "solana",
+        "ton",
+        "tron"
+      ],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 8,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "thredd",
+      "name": "Thredd",
+      "categories": [
+        "CARD_INFRA"
+      ],
+      "website": "https://www.thredd.ai",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "thunes",
+      "name": "Thunes",
+      "categories": [
+        "AGGREGATOR",
+        "LOCAL_RAIL_OPERATOR"
+      ],
+      "website": "https://www.thunes.com",
+      "docs": "https://docs.thunes.com",
+      "apiDocs": "https://docs.thunes.com",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AR",
+        "BR",
+        "CA",
+        "CN",
+        "CO",
+        "CR",
+        "DE",
+        "GB",
+        "GT",
+        "HK",
+        "ID",
+        "IN",
+        "JP",
+        "KE",
+        "KR",
+        "MX",
+        "MY",
+        "PH",
+        "PK",
+        "SG",
+        "TH",
+        "US",
+        "VN"
+      ],
+      "stablecoins": [
+        "EURC",
+        "USDC"
+      ],
+      "networks": [],
+      "countryCount": 23,
+      "currencies": [
+        "BRL",
+        "COP",
+        "CRC",
+        "GTQ",
+        "JPY",
+        "KRW",
+        "MXN",
+        "MYR",
+        "USD",
+        "VND"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 14,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "transak",
+      "name": "Transak",
+      "categories": [
+        "ONRAMP",
+        "OFFRAMP"
+      ],
+      "website": "https://transak.com",
+      "docs": "https://docs.transak.com/products/off-ramp",
+      "apiDocs": "https://docs.transak.com/products/off-ramp",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "CA",
+        "GB",
+        "HK",
+        "IN",
+        "MX",
+        "US"
+      ],
+      "stablecoins": [
+        "BTC",
+        "EURC",
+        "FDUSD",
+        "PYUSD",
+        "RLUSD",
+        "USDC",
+        "USDT"
+      ],
+      "networks": [
+        "bnb-chain",
+        "ethereum",
+        "tron"
+      ],
+      "countryCount": 7,
+      "currencies": [
+        "AUD",
+        "CAD",
+        "GBP",
+        "HKD",
+        "MXN",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 23,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "triple-a",
+      "name": "Triple-A",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://www.triple-a.io",
+      "docs": "https://www.triple-a.io",
+      "apiDocs": "https://www.triple-a.io",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 1,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "unlimit",
+      "name": "Unlimit",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "AGGREGATOR"
+      ],
+      "website": "https://www.unlimit.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "vibrant",
+      "name": "Vibrant",
+      "categories": [
+        "OFFRAMP",
+        "WALLET_INFRA"
+      ],
+      "website": "https://vibrantapp.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "visa-direct",
+      "name": "Visa Direct",
+      "categories": [
+        "PAYMENT_NETWORK"
+      ],
+      "website": "https://www.visa.com/en-us/products/visa-direct",
+      "docs": "https://developer.visa.com/capabilities/visa_direct",
+      "apiDocs": "https://developer.visa.com/capabilities/visa_direct",
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "webbank",
+      "name": "WebBank",
+      "categories": [
+        "BANKING_INFRA"
+      ],
+      "website": "https://webbank.com",
+      "docs": null,
+      "apiDocs": null,
+      "llmsOrOpenapi": false,
+      "regions": [],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 0,
+      "currencies": [],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 0,
+      "providerLevel": "L1",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": null,
+      "staleEvidence": false
+    },
+    {
+      "slug": "wise",
+      "name": "Wise",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://wise.com",
+      "docs": "https://api-docs.wise.com/",
+      "apiDocs": "https://api-docs.wise.com/",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "BR",
+        "CA",
+        "CN",
+        "GB",
+        "IN",
+        "KE",
+        "MX",
+        "PH",
+        "SG",
+        "US",
+        "ZA"
+      ],
+      "stablecoins": [],
+      "networks": [],
+      "countryCount": 12,
+      "currencies": [
+        "AUD",
+        "BRL",
+        "CAD",
+        "CNY",
+        "GBP",
+        "INR",
+        "MXN",
+        "SGD",
+        "USD",
+        "ZAR"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 28,
+      "providerLevel": "L6",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "xflow",
+      "name": "Xflow",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER"
+      ],
+      "website": "https://www.xflowpay.com",
+      "docs": "https://docs.xflowpay.com/exports/latest/api",
+      "apiDocs": "https://docs.xflowpay.com/exports/latest/api",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "AU",
+        "GB",
+        "IN",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 4,
+      "currencies": [
+        "AUD",
+        "GBP",
+        "INR",
+        "USD"
+      ],
+      "localRails": [],
+      "routeCount": 2,
+      "evidenceCount": 11,
+      "providerLevel": "L3",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "yellow-card",
+      "name": "Yellow Card",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://yellowcard.io",
+      "docs": "https://help.yellowcard.io/articles/8999093541-api-documentation",
+      "apiDocs": "https://help.yellowcard.io/articles/8999093541-api-documentation",
+      "llmsOrOpenapi": false,
+      "regions": [
+        "GH",
+        "KE",
+        "NG",
+        "RW",
+        "US",
+        "ZA"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
+      "networks": [],
+      "countryCount": 6,
+      "currencies": [
+        "GHS",
+        "KES",
+        "NGN",
+        "RWF",
+        "USD",
+        "ZAR"
+      ],
+      "localRails": [],
+      "routeCount": 0,
+      "evidenceCount": 14,
+      "providerLevel": "L2",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-08-28",
+      "staleEvidence": false
+    },
+    {
+      "slug": "zero-hash",
+      "name": "Zero Hash",
+      "categories": [
+        "DIRECT_PAYOUT_PROVIDER",
+        "STABLECOIN_INFRA"
+      ],
+      "website": "https://zerohash.com",
+      "docs": "https://docs.zerohash.com/docs/fiat-remittances-stablecoin-sandwich",
+      "apiDocs": "https://docs.zerohash.com/docs/fiat-remittances-stablecoin-sandwich",
+      "llmsOrOpenapi": true,
+      "regions": [
+        "AE",
+        "AR",
+        "BR",
+        "CO",
+        "DE",
+        "ID",
+        "IN",
+        "KE",
+        "MX",
+        "NG",
+        "NL",
+        "PH",
+        "PL",
+        "SA",
+        "ZA"
+      ],
+      "stablecoins": [
+        "BTC",
+        "USDC"
+      ],
+      "networks": [
+        "base",
+        "polygon"
+      ],
+      "countryCount": 15,
+      "currencies": [
+        "ARS"
+      ],
+      "localRails": [],
+      "routeCount": 1,
+      "evidenceCount": 24,
+      "providerLevel": "L3",
+      "quoteSupport": false,
+      "byoCredentialSupport": "Not researched",
+      "commercialAccessRequirement": "Not researched",
+      "lastVerified": "2026-09-02",
+      "staleEvidence": false
+    }
+  ]
+}

@@ -1,0 +1,1069 @@
+{
+  "generatedAt": "2026-09-02T08:21:30.153Z",
+  "methodology": "One entry per provider with at least one open gap. This is the punch list for the next research pass, not a criticism - most gaps here are simply 'not yet researched', which is the honest and expected state for a provider registered this pass.",
+  "providersWithGaps": [
+    {
+      "slug": "1money",
+      "name": "1Money",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "airwallex",
+      "name": "Airwallex",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "alchemy-pay",
+      "name": "Alchemy Pay",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "alfred",
+      "name": "Alfred",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "anchorage",
+      "name": "Anchorage Digital",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "anclap",
+      "name": "Anclap",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "b2c2",
+      "name": "B2C2",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "baanx",
+      "name": "Baanx",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "banking-circle",
+      "name": "Banking Circle",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "banxa",
+      "name": "Banxa",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "bitgo",
+      "name": "BitGo",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "bitso",
+      "name": "Bitso",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "bitso-juno",
+      "name": "Bitso / Juno",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "blindpay",
+      "name": "BlindPay",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "brale",
+      "name": "Brale",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "bridge",
+      "name": "Bridge",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "bvnk",
+      "name": "BVNK",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "cashfree",
+      "name": "Cashfree Payments",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "cbw-bank",
+      "name": "CBW Bank",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "checkout-com",
+      "name": "Checkout.com",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "circle",
+      "name": "Circle",
+      "level": "L6",
+      "gaps": [
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "clickpesa",
+      "name": "ClickPesa",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "coinbase",
+      "name": "Coinbase",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "adapter has no getQuote",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "coins-ph",
+      "name": "Coins.ph",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "conduit",
+      "name": "Conduit",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "cowrie",
+      "name": "Cowrie Integrated Systems",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "cross-river",
+      "name": "Cross River Bank",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "crossmint",
+      "name": "Crossmint",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "currencycloud",
+      "name": "Currencycloud",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "dashx",
+      "name": "DashX",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "dlocal",
+      "name": "dLocal",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "dtcpay",
+      "name": "dtcpay",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "eco",
+      "name": "Eco",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "episode-six",
+      "name": "Episode Six",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "ethena",
+      "name": "Ethena",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "fireblocks",
+      "name": "Fireblocks",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "flutterwave",
+      "name": "Flutterwave",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "fomo-pay",
+      "name": "FOMO Pay",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "fonbnk",
+      "name": "Fonbnk",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "fuze",
+      "name": "Fuze",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "guardarian",
+      "name": "Guardarian",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "highnote",
+      "name": "Highnote",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "immersve",
+      "name": "Immersve",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "koywe",
+      "name": "Koywe",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "lirium",
+      "name": "Lirium",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "mastercard-move",
+      "name": "Mastercard Move",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "mercuryo",
+      "name": "Mercuryo",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "mesh",
+      "name": "Mesh",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "mobee",
+      "name": "Mobee",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "monavate",
+      "name": "Monavate",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "moneygram",
+      "name": "MoneyGram",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "moonpay",
+      "name": "MoonPay",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "moorwand",
+      "name": "Moorwand",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "mural-pay",
+      "name": "Mural Pay",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "n-exchange",
+      "name": "n.exchange",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "nium",
+      "name": "Nium",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "adapter has no getQuote",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "onafriq",
+      "name": "Onafriq",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "opendue",
+      "name": "Due",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "openpayd",
+      "name": "OpenPayd",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "parfin",
+      "name": "Parfin",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "paxos",
+      "name": "Paxos",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "adapter has no getQuote",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "paycaddy",
+      "name": "PayCaddy",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "payglocal",
+      "name": "PayGlocal",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "payoneer",
+      "name": "Payoneer",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "paypal",
+      "name": "PayPal",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "peoples-group",
+      "name": "Peoples Group",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "pomelo-la",
+      "name": "Pomelo",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "ramp-network",
+      "name": "Ramp Network",
+      "level": "L3",
+      "gaps": [
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "rapyd",
+      "name": "Rapyd",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "ripple",
+      "name": "Ripple",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "scrypt",
+      "name": "SCRYPT",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "skydo",
+      "name": "Skydo",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "sphere",
+      "name": "Sphere",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "stablecore",
+      "name": "Stablecore",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "straitsx",
+      "name": "StraitsX",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "stripe",
+      "name": "Stripe",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "tazapay",
+      "name": "Tazapay",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "tether",
+      "name": "Tether",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "thredd",
+      "name": "Thredd",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "thunes",
+      "name": "Thunes",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "transak",
+      "name": "Transak",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "triple-a",
+      "name": "Triple-A",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "unlimit",
+      "name": "Unlimit",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "vibrant",
+      "name": "Vibrant",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "visa-direct",
+      "name": "Visa Direct",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "webbank",
+      "name": "WebBank",
+      "level": "L1",
+      "gaps": [
+        "no capability/coverage data mapped yet",
+        "zero evidence citations",
+        "no adapter code",
+        "no docs URL on record",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "wise",
+      "name": "Wise",
+      "level": "L6",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "xflow",
+      "name": "Xflow",
+      "level": "L3",
+      "gaps": [
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "yellow-card",
+      "name": "Yellow Card",
+      "level": "L2",
+      "gaps": [
+        "no evidence-backed atomic route yet",
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    },
+    {
+      "slug": "zero-hash",
+      "name": "Zero Hash",
+      "level": "L3",
+      "gaps": [
+        "no adapter code",
+        "BYO-credential support not researched",
+        "commercial access requirement not researched"
+      ]
+    }
+  ]
+}

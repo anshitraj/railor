@@ -38,7 +38,10 @@ export const NEW_PROVIDERS: NewProviderSpec[] = [
   { slug: "nium", name: "Nium", category: "Cross-border payments", websiteUrl: "https://www.nium.com", docsUrl: "https://docs.nium.com" },
   { slug: "rapyd", name: "Rapyd", category: "Cross-border payments", websiteUrl: "https://www.rapyd.net", docsUrl: "https://docs.rapyd.net" },
   { slug: "dlocal", name: "dLocal", category: "Cross-border payments", websiteUrl: "https://dlocal.com", docsUrl: "https://docs.dlocal.com" },
-  { slug: "zerohash", name: "Zero Hash", category: "Stablecoin infrastructure", websiteUrl: "https://zerohash.com", docsUrl: "https://docs.zerohash.com" },
+  // "zerohash" (no hyphen) was a dead duplicate entry that pre-dated this
+  // file's actual use and had never been run. The real row is "zero-hash"
+  // (packages/database/src/seed/zerohash-cpn-ae-route.ts), which already
+  // carries real routes/evidence — do not re-add "zerohash" here.
   { slug: "fireblocks", name: "Fireblocks", category: "Custody", websiteUrl: "https://www.fireblocks.com", docsUrl: "https://developers.fireblocks.com" },
   { slug: "bitgo", name: "BitGo", category: "Custody", websiteUrl: "https://www.bitgo.com", docsUrl: "https://developers.bitgo.com" },
   { slug: "ramp-network", name: "Ramp Network", category: "On/off-ramp", websiteUrl: "https://ramp.network", docsUrl: "https://docs.ramp.network" },
@@ -63,6 +66,68 @@ export const NEW_PROVIDERS: NewProviderSpec[] = [
   // caught by their own scraped descriptions and deleted. They stay out until
   // someone supplies a domain verified to be the right company — guessing a
   // second domain is what produced the wrong rows in the first place.
+
+  // Provider-universe expansion batch: discovered via the Fireblocks Network
+  // for Payments directory (fireblocks.com/platforms/fireblocks-network/directory),
+  // the Stellar Anchor Directory (anchors.stellar.org), and the explicit
+  // named-infrastructure list from the expansion brief. Every domain below
+  // was verified by search before being added here, not guessed — several of
+  // these names collide with unrelated companies (a news blog at
+  // thecowriereport.com is not the Cowrie anchor; the real one is Cowrie
+  // Integrated Systems at cowriesys.com, confirmed via Circle's own alliance
+  // directory at partners.circle.com/partner/cowrie-integrated-systems).
+  { slug: "openpayd", name: "OpenPayd", category: "Banking infrastructure", websiteUrl: "https://www.openpayd.com", docsUrl: "https://apidocs.openpayd.com/" },
+  { slug: "banking-circle", name: "Banking Circle", category: "Banking infrastructure", websiteUrl: "https://www.bankingcircle.com" },
+  { slug: "currencycloud", name: "Currencycloud", category: "FX / liquidity infrastructure", websiteUrl: "https://www.currencycloud.com" },
+  { slug: "visa-direct", name: "Visa Direct", category: "Payment network", websiteUrl: "https://www.visa.com/en-us/products/visa-direct", docsUrl: "https://developer.visa.com/capabilities/visa_direct" },
+  { slug: "mastercard-move", name: "Mastercard Move", category: "Payment network", websiteUrl: "https://www.mastercard.com/us/en/business/payments/mastercard-move.html", docsUrl: "https://developer.mastercard.com/product/move/" },
+  { slug: "moneygram", name: "MoneyGram", category: "Cross-border payments", websiteUrl: "https://www.moneygram.com", docsUrl: "https://developer.moneygram.com" },
+  // Alfred is ambiguous by name alone; the Fireblocks Network directory tile
+  // links to alfredpay.io, "Stablecoin Payment Infrastructure for Latin America".
+  { slug: "alfred", name: "Alfred", category: "Stablecoin infrastructure", websiteUrl: "https://alfredpay.io" },
+  { slug: "b2c2", name: "B2C2", category: "FX / liquidity infrastructure", websiteUrl: "https://www.b2c2.com" },
+  { slug: "mobee", name: "Mobee", category: "On/off-ramp", websiteUrl: "https://mobee.com/en" },
+  { slug: "n-exchange", name: "n.exchange", category: "On/off-ramp", websiteUrl: "https://n.exchange" },
+  { slug: "scrypt", name: "SCRYPT", category: "Custody", websiteUrl: "https://scrypt.swiss" },
+  { slug: "cowrie", name: "Cowrie Integrated Systems", category: "Cross-border payments", websiteUrl: "https://www.cowriesys.com" },
+  { slug: "clickpesa", name: "ClickPesa", category: "Mobile money", websiteUrl: "https://clickpesa.com" },
+  { slug: "anclap", name: "Anclap", category: "On/off-ramp", websiteUrl: "https://www.anclap.com" },
+  { slug: "vibrant", name: "Vibrant", category: "Stablecoin infrastructure", websiteUrl: "https://vibrantapp.com" },
+
+  // Global provider & competitor intelligence expansion batch: discovered via
+  // Mastercard's Crypto Partner Program partner list (100+ names, filtered
+  // down to entities that actually move money — blockchains, pure custody/
+  // signing infra, and pure compliance tooling from that list are excluded
+  // per the brief's own classification rule) and Meld's network-integrations
+  // page. Every domain verified by search before being added, same
+  // discipline as the earlier "zerohash"/beam/agora lessons - "Fuze" in
+  // particular collides with an unrelated telecom of the same name; the real
+  // one is the MENA stablecoin-infra company at fuze.finance.
+  { slug: "dtcpay", name: "dtcpay", category: "Stablecoin payments", websiteUrl: "https://www.dtcpay.com" },
+  { slug: "lirium", name: "Lirium", category: "Stablecoin infrastructure", websiteUrl: "https://www.lirium.com" },
+  { slug: "parfin", name: "Parfin", category: "Institutional crypto infrastructure", websiteUrl: "https://parfin.io" },
+  { slug: "fuze", name: "Fuze", category: "Stablecoin infrastructure", websiteUrl: "https://fuze.finance" },
+  { slug: "stablecore", name: "Stablecore", category: "Stablecoin infrastructure", websiteUrl: "https://stablecore.com" },
+  { slug: "1money", name: "1Money", category: "Stablecoin payment network", websiteUrl: "https://www.1money.com" },
+  { slug: "thredd", name: "Thredd", category: "Card issuing / processing", websiteUrl: "https://www.thredd.ai" },
+  { slug: "pomelo-la", name: "Pomelo", category: "Card issuing / processing", websiteUrl: "https://www.pomelo.la/en" },
+  { slug: "kulipa", name: "Kulipa", category: "Card issuing / processing", websiteUrl: "https://kulipa.xyz" },
+  { slug: "episode-six", name: "Episode Six", category: "Card issuing / processing", websiteUrl: "https://episodesix.com" },
+  { slug: "moorwand", name: "Moorwand", category: "Card issuing / processing", websiteUrl: "https://moorwand.com" },
+  { slug: "highnote", name: "Highnote", category: "Card issuing / processing", websiteUrl: "https://highnote.com" },
+  { slug: "monavate", name: "Monavate", category: "Banking infrastructure", websiteUrl: "https://www.monavate.com" },
+  { slug: "paycaddy", name: "PayCaddy", category: "Card issuing / processing", websiteUrl: "https://paycaddy.com" },
+  { slug: "baanx", name: "Baanx", category: "Card issuing / processing", websiteUrl: "https://www.baanx.com" },
+  { slug: "immersve", name: "Immersve", category: "Card issuing / processing", websiteUrl: "https://immersve.com" },
+  { slug: "unlimit", name: "Unlimit", category: "Cross-border payments", websiteUrl: "https://www.unlimit.com" },
+  { slug: "cross-river", name: "Cross River Bank", category: "Banking infrastructure", websiteUrl: "https://www.crossriver.com" },
+  { slug: "cbw-bank", name: "CBW Bank", category: "Banking infrastructure", websiteUrl: "https://www.cbw.bank" },
+  { slug: "webbank", name: "WebBank", category: "Banking infrastructure", websiteUrl: "https://webbank.com" },
+  { slug: "peoples-group", name: "Peoples Group", category: "Banking infrastructure", websiteUrl: "https://peoplesgroup.com" },
+  { slug: "koywe", name: "Koywe", category: "Stablecoin infrastructure", websiteUrl: "https://www.koywe.com" },
+  { slug: "opendue", name: "Due", category: "Cross-border payments", websiteUrl: "https://www.opendue.com" },
+  { slug: "fonbnk", name: "Fonbnk", category: "Stablecoin infrastructure", websiteUrl: "https://fonbnk.com" },
+  { slug: "guardarian", name: "Guardarian", category: "On/off-ramp", websiteUrl: "https://guardarian.com" },
 ];
 
 const DESCRIPTION_PROMPT = `You are writing ONE factual sentence describing what a payments company does, using ONLY the supplied text from its own homepage.
