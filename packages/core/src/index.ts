@@ -14,6 +14,11 @@ export * from "./connectivity.js";
 export * from "./source-monitor.js";
 export * from "./coverage-gaps.js";
 export * from "./conformance.js";
+export * from "./policy.js";
+export * from "./decision-engine.js";
+export * from "./decision-repository.js";
+export * from "./decision-revalidation.js";
+export * from "./policy-simulator.js";
 export {
   researchCountry,
   CountryNotResearchableError,

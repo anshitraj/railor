@@ -63,6 +63,9 @@ export async function POST(request: Request) {
         evidence: [],
         reasons: [],
         receivingMode: null,
+        routeConfirmation: null,
+        confirmedDimensions: [],
+        unconfirmedDimensions: [],
       }));
 
   return NextResponse.json({

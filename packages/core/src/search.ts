@@ -112,6 +112,9 @@ export async function searchCorridors(
       connectivity: connectivityFor(provider.slug, evaluation.verdict, connectionStatuses.get(provider.id)),
       receivingMode: evaluation.receivingMode,
       operationalReadiness: evaluation.operationalReadiness,
+      routeConfirmation: evaluation.routeConfirmation,
+      confirmedDimensions: evaluation.confirmedDimensions,
+      unconfirmedDimensions: evaluation.unconfirmedDimensions,
     } satisfies ProviderResult;
   });
 

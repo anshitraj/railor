@@ -374,6 +374,53 @@ export const CONNECTIVITY_STATE_LABEL: Record<RouteConnectivityState, string> = 
   executable: "Executable",
 };
 
+/**
+ * A third axis, alongside `eligibility` (is the route true?) and
+ * `RouteConnectivityState` (can Railor actually reach it?): how *complete*
+ * is the evidence for the specific route asked about — the full requested
+ * tuple (entity, asset, network, destination, currency, rail...), not each
+ * dimension checked in isolation.
+ *
+ * The AI/interpreter resolves *intent* into a query with as many dimensions
+ * as the user actually named ("USDC on Base to a UAE supplier receiving
+ * AED" becomes all four, structured). It never resolves *evidence* — that
+ * stays exactly as strict as the underlying facts, computed here, never
+ * upgraded by how well the query was understood. Only null/unset dimensions
+ * are ever treated as unconfirmed; a well-understood query with thin
+ * evidence still reports honestly.
+ *
+ *   CONFIRMED           one evidence-backed row proves the whole requested tuple at once.
+ *   PARTIALLY_CONFIRMED some requested dimensions are independently proven; the joint route is not.
+ *   UNCONFIRMED         the route is plausible (the provider serves this product) but nothing requested is independently proven.
+ *   UNSUPPORTED         a provider statement explicitly rules out this route or one of its requested dimensions.
+ *   UNKNOWN             not even a plausible route can be formed (no matching product at all).
+ *
+ * Never inferred backwards: reaching CONFIRMED always requires an atomic,
+ * single-source proof — a provider passing every dimension check separately
+ * (five different rows, five different sources) still caps at
+ * PARTIALLY_CONFIRMED, because five independent facts are not proof they
+ * hold together. This is deliberately stricter than `eligibility`, which is
+ * allowed to say "supported" from independently-combined facts when the
+ * query never asked for a full atomic route (see eligibility.ts's
+ * `routeDimensionsRequested` gate — this field is only computed when it does).
+ */
+export const RouteConfirmation = z.enum([
+  "confirmed",
+  "partially_confirmed",
+  "unconfirmed",
+  "unsupported",
+  "unknown",
+]);
+export type RouteConfirmation = z.infer<typeof RouteConfirmation>;
+
+export const ROUTE_CONFIRMATION_LABEL: Record<RouteConfirmation, string> = {
+  confirmed: "Confirmed",
+  partially_confirmed: "Partially confirmed",
+  unconfirmed: "Unconfirmed",
+  unsupported: "Unsupported",
+  unknown: "Unknown",
+};
+
 export const ProviderResult = z.object({
   provider: z.object({
     id: z.string(),
@@ -413,6 +460,12 @@ export const ProviderResult = z.object({
   operationalReadiness: OperationalReadiness.default("not_tested"),
   /** Set only when a receiving_endpoints fact decided the corridor. */
   receivingMode: ReceivingMode.nullable().default(null),
+  /** Set only when the query asked for a full route (destination + at least one source dimension) — see RouteConfirmation's doc comment. Null means the concept doesn't apply to this query. */
+  routeConfirmation: RouteConfirmation.nullable().default(null),
+  /** Requested dimensions independently proven by real facts, even without a joint atomic route. */
+  confirmedDimensions: z.array(z.string()).default([]),
+  /** The complement of confirmedDimensions — named explicitly so a thin PARTIALLY_CONFIRMED never requires reverse-engineering what's still missing. */
+  unconfirmedDimensions: z.array(z.string()).default([]),
 });
 export type ProviderResult = z.infer<typeof ProviderResult>;
 
@@ -538,3 +591,403 @@ export interface RailorEnvelope<T> {
 
 export const OrgRole = z.enum(["owner", "admin", "member", "viewer"]);
 export type OrgRole = z.infer<typeof OrgRole>;
+
+/* ============================================================================
+ * Control plane: PaymentIntent -> Policy -> Decision
+ *
+ * Everything below is additive to the vocabulary above, not a replacement.
+ * The eligibility/ranking engine (evaluateProvider, scoreProvider,
+ * searchCorridors) is reused exactly as-is; PaymentIntent maps onto the
+ * existing CorridorQuery rather than duplicating its fields, and
+ * RouteConfirmation/EligibilityVerdict are reused verbatim as the Decision
+ * Engine's only sources of route truth. Nothing here upgrades evidence
+ * quality — a Decision can only be as certain as the RouteConfirmation the
+ * existing engine already computed.
+ * ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* PaymentIntent                                                              */
+/* -------------------------------------------------------------------------- */
+
+export const BeneficiaryType = z.enum(["business", "individual"]);
+export type BeneficiaryType = z.infer<typeof BeneficiaryType>;
+
+/**
+ * The control plane's canonical request. A superset of CorridorQuery in
+ * naming clarity only (`sourceEntityCountry` instead of `entityCountry`,
+ * `beneficiaryType` alongside the existing `customerType`) — every dimension
+ * here already exists in CorridorQuery; see `intentToCorridorQuery` below,
+ * which is the only place the two shapes are reconciled. No new dimension is
+ * invented: if a field isn't checkable by the existing eligibility engine,
+ * it has no business being "required" here, because nothing downstream could
+ * ever confirm it. `destinationCountry` and `amount` are the only two fields
+ * that must be present for a Decision to mean anything; everything else is
+ * optional and stays `undefined` — never guessed — when the caller doesn't
+ * supply it.
+ */
+export const PaymentIntent = z.object({
+  /** Where the sending entity is incorporated. Maps to CorridorQuery.entityCountry. */
+  sourceEntityCountry: CountryCode,
+  /** Maps to CorridorQuery.customerType. */
+  sourceEntityType: CustomerType.default("business"),
+  sourceAsset: z.string().optional(),
+  sourceNetwork: z.string().optional(),
+  /** Fiat funding currency, only when the source leg is fiat, not a stablecoin. */
+  sourceCurrency: CurrencyCode.optional(),
+  destinationCountry: CountryCode,
+  destinationCurrency: CurrencyCode.optional(),
+  /** Who receives the money. Independent of sourceEntityType — a business can pay an individual. */
+  beneficiaryType: BeneficiaryType.default("business"),
+  endpointType: ReceivingEndpointType.optional(),
+  namedRail: z.string().optional(),
+  paymentMethod: PaymentMethod.optional(),
+  /** Which product family this intent describes. Left undefined lets the existing engine's candidateProducts() infer it exactly as CorridorQuery already does — never forced to a fabricated default here. */
+  product: ProductType.optional(),
+  amount: z.number().positive(),
+  amountCurrency: CurrencyCode.optional(),
+  /** Deterministic ranking preference — reuses RankingPreset verbatim. */
+  preference: RankingPreset.default("balanced"),
+});
+export type PaymentIntent = z.infer<typeof PaymentIntent>;
+
+/**
+ * The only place a PaymentIntent becomes a CorridorQuery. Pure field
+ * renaming plus one fixed default (`product: "payout"` only when the intent
+ * didn't name one) — never infers a value the intent didn't state, never
+ * calls the deterministic rule interpreter or the LLM gap-filler. A
+ * PaymentIntent is already structured; it has no free text left to parse.
+ */
+export function intentToCorridorQuery(intent: PaymentIntent): CorridorQuery {
+  return {
+    entityCountry: intent.sourceEntityCountry,
+    customerType: intent.sourceEntityType,
+    sourceAsset: intent.sourceAsset,
+    sourceNetwork: intent.sourceNetwork,
+    sourceCurrency: intent.sourceCurrency,
+    destinationCountry: intent.destinationCountry,
+    destinationCurrency: intent.destinationCurrency,
+    paymentMethod: intent.paymentMethod,
+    endpointType: intent.endpointType,
+    namedRail: intent.namedRail,
+    product: intent.product,
+    amount: intent.amount,
+    amountCurrency: intent.amountCurrency,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Policy                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export const PolicyStatus = z.enum(["draft", "active", "superseded", "disabled"]);
+export type PolicyStatus = z.infer<typeof PolicyStatus>;
+
+/**
+ * The launch rule set — typed JSON, not a programming language. Extending
+ * Railor's policy model means adding a field here and one branch in the
+ * deterministic evaluator, never an expression language a customer could
+ * write arbitrary logic in. Every field is independently checkable against
+ * data Railor actually has, or is explicitly documented below as not yet
+ * checkable against real data (`allowPrefunding`) — a field existing here is
+ * not a claim Railor can enforce it today, only that the shape is ready for
+ * when it can.
+ */
+export const PolicyRules = z.object({
+  providerAllowlist: z.array(z.string()).optional(),
+  providerDenylist: z.array(z.string()).default([]),
+  allowedAssets: z.array(z.string()).optional(),
+  deniedAssets: z.array(z.string()).default([]),
+  allowedNetworks: z.array(z.string()).optional(),
+  deniedNetworks: z.array(z.string()).default([]),
+  /** A candidate whose RouteConfirmation ranks below this is a hard fail — never silently passed because the tier is merely unknown. */
+  minimumRouteCertainty: RouteConfirmation.optional(),
+  maximumEvidenceAgeHours: z.number().int().positive().optional(),
+  /** Requires RouteConfirmation === "confirmed" exactly — the atomic-evidence tier, never partially_confirmed. */
+  requireExactRouteEvidence: z.boolean().default(false),
+  requireCustomerConnectedProvider: z.boolean().default(false),
+  requireLiveQuote: z.boolean().default(false),
+  /**
+   * Railor has no real, evidenced "is this provider an aggregator" data
+   * field today (providers.category is free text, never a controlled
+   * taxonomy) — so this rule can only ever be enforced when a provider's own
+   * category text happens to say "aggregator" literally, and reports
+   * `unknown` otherwise rather than fabricating a classification. See
+   * evaluatePolicy in @railor/core.
+   */
+  allowAggregators: z.boolean().default(true),
+  /** A soft ranking preference, not a hard gate — applied as a ranking nudge in the Decision Engine, never a PASS/FAIL rule (see decision-engine.ts). Same real-data caveat as allowAggregators. */
+  preferDirectProvider: z.boolean().default(false),
+  /**
+   * Not yet enforceable: Railor has no schema field recording whether a
+   * provider requires customer prefunding. Kept in the rule set so a policy
+   * can express the intent now; evaluatePolicy always reports this rule
+   * `not_applicable` until such a data field exists — never fabricated.
+   */
+  allowPrefunding: z.boolean().default(true),
+  maximumKnownCostBps: z.number().nonnegative().optional(),
+  maximumEtaMinutes: z.number().positive().optional(),
+  denyDuringActiveIncident: z.boolean().default(true),
+  minimumObservedReliability: z.number().min(0).max(1).optional(),
+  /** Not a candidate-level rule — flags the whole Decision for human review instead of filtering candidates. */
+  humanApprovalAboveAmount: z.number().positive().optional(),
+});
+export type PolicyRules = z.infer<typeof PolicyRules>;
+
+export const DEFAULT_POLICY_RULES: PolicyRules = PolicyRules.parse({});
+
+export const Policy = z.object({
+  id: z.string(),
+  organizationId: z.string(),
+  name: z.string(),
+  status: PolicyStatus,
+  activeVersionId: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+export type Policy = z.infer<typeof Policy>;
+
+export const PolicyVersion = z.object({
+  id: z.string(),
+  policyId: z.string(),
+  versionNumber: z.number().int().positive(),
+  status: PolicyStatus,
+  rules: PolicyRules,
+  createdAt: z.coerce.date(),
+  activatedAt: z.coerce.date().nullable(),
+  supersededAt: z.coerce.date().nullable(),
+});
+export type PolicyVersion = z.infer<typeof PolicyVersion>;
+
+/* -------------------------------------------------------------------------- */
+/* Policy evaluation                                                           */
+/* -------------------------------------------------------------------------- */
+
+export const PolicyEvalResult = z.enum(["pass", "fail", "unknown", "not_applicable"]);
+export type PolicyEvalResult = z.infer<typeof PolicyEvalResult>;
+
+/**
+ * Not a closed set — new codes can be added as new rules are added. The
+ * fixed meaning of each: a `_DENIED` code means an explicit denylist/statement
+ * ruled the candidate out; `_NOT_ALLOWED` means an allowlist exists and the
+ * candidate isn't on it; `INSUFFICIENT_*_DATA` means Railor has no real data
+ * to check the rule at all, never defaulted to a pass.
+ */
+export const PolicyReasonCode = z.enum([
+  "provider_denied",
+  "provider_not_allowed",
+  "network_denied",
+  "asset_denied",
+  "route_certainty_too_low",
+  "evidence_too_old",
+  "exact_route_required",
+  "provider_not_connected",
+  "live_quote_required",
+  "prefunding_forbidden",
+  "cost_limit_exceeded",
+  "eta_limit_exceeded",
+  "active_provider_incident",
+  "insufficient_reliability_data",
+  "reliability_below_threshold",
+  "aggregator_not_allowed",
+  "approval_required",
+  "policy_pass",
+]);
+export type PolicyReasonCode = z.infer<typeof PolicyReasonCode>;
+
+export const PolicyRuleEvaluation = z.object({
+  rule: z.string(),
+  result: PolicyEvalResult,
+  code: PolicyReasonCode.optional(),
+  message: z.string(),
+});
+export type PolicyRuleEvaluation = z.infer<typeof PolicyRuleEvaluation>;
+
+/**
+ * One candidate's full policy verdict. `result` is the aggregate: `fail` if
+ * any rule failed (a hard policy failure can never be outvoted by passing
+ * rules), else `unknown` if any evidence-requiring rule couldn't be checked,
+ * else `pass`. Never collapses which specific rule produced that aggregate —
+ * `ruleResults` is the full, inspectable breakdown.
+ */
+export const CandidatePolicyEvaluation = z.object({
+  result: PolicyEvalResult,
+  ruleResults: z.array(PolicyRuleEvaluation),
+});
+export type CandidatePolicyEvaluation = z.infer<typeof CandidatePolicyEvaluation>;
+
+/* -------------------------------------------------------------------------- */
+/* Decision                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Explicit, non-collapsed failure modes — never one generic "denied" bucket.
+ *   ALLOW               a candidate passed policy and was recommended.
+ *   DENY                every candidate that reached policy evaluation failed it.
+ *   NO_VERIFIED_ROUTE   no candidate had a usable route at all (base eligibility, before policy).
+ *   INSUFFICIENT_DATA   candidates exist but policy evaluation could not be completed (UNKNOWN, not FAIL) for all of them.
+ *   APPROVAL_REQUIRED   a recommendation exists but humanApprovalAboveAmount gates it on a human sign-off.
+ */
+export const DecisionStatus = z.enum([
+  "allow",
+  "deny",
+  "no_verified_route",
+  "insufficient_data",
+  "approval_required",
+]);
+export type DecisionStatus = z.infer<typeof DecisionStatus>;
+
+export const QuoteState = z.enum(["live", "indicative", "historical", "none"]);
+export type QuoteState = z.infer<typeof QuoteState>;
+
+export const ConnectionState = z.enum(["connected", "not_connected", "mixed", "unknown"]);
+export type ConnectionState = z.infer<typeof ConnectionState>;
+
+export const CostCompleteness = z.enum(["complete", "partial", "unknown"]);
+export type CostCompleteness = z.infer<typeof CostCompleteness>;
+
+/** A quote, capped to the fields worth persisting as a Decision snapshot — see UnifiedQuote in @railor/core for the live shape this is derived from. */
+export const QuoteSnapshot = z.object({
+  providerQuoteId: z.string().optional(),
+  amount: z.number(),
+  recipientAmount: z.number().optional(),
+  feeAmount: z.number().optional(),
+  feeCurrency: z.string().optional(),
+  costPartial: z.boolean(),
+  exchangeRate: z.string().optional(),
+  estimatedArrivalMinutes: z.number().optional(),
+  quoteType: z.enum(["live", "indicative", "historical"]),
+  observedAt: z.string(),
+  expiresAt: z.string().optional(),
+});
+export type QuoteSnapshot = z.infer<typeof QuoteSnapshot>;
+
+export const DecisionCandidateRecord = z.object({
+  id: z.string(),
+  decisionId: z.string(),
+  providerId: z.string(),
+  providerSlug: z.string(),
+  providerName: z.string(),
+  routeId: z.string().nullable(),
+  eligibilityStatus: EligibilityVerdict,
+  routeCertainty: RouteConfirmation.nullable(),
+  policyEvaluation: CandidatePolicyEvaluation,
+  quoteSnapshot: QuoteSnapshot.nullable(),
+  costCompleteness: CostCompleteness,
+  /** Real observed health ratio at decision time — null means Railor had zero observations, never defaulted to perfect. */
+  reliabilitySnapshot: z.number().min(0).max(1).nullable(),
+  rank: z.number().int().nullable(),
+  selected: z.boolean(),
+  rejectionReasonCodes: z.array(PolicyReasonCode),
+  /** Evidence row ids this candidate's eligibility/route facts depended on — enough to replay why, without trusting today's mutable provider state. */
+  evidenceIds: z.array(z.string()),
+  createdAt: z.coerce.date(),
+});
+export type DecisionCandidateRecord = z.infer<typeof DecisionCandidateRecord>;
+
+export const DecisionExplain = z.object({
+  whySelected: z.array(z.string()),
+  whyAlternativesLost: z.array(
+    z.object({ providerSlug: z.string(), providerName: z.string(), reasons: z.array(z.string()) }),
+  ),
+  whatWouldChange: z.array(z.string()),
+  missingInformation: z.array(z.string()),
+});
+export type DecisionExplain = z.infer<typeof DecisionExplain>;
+
+export const DecisionRecord = z.object({
+  id: z.string(),
+  organizationId: z.string(),
+  intent: PaymentIntent,
+  policyId: z.string(),
+  policyVersionId: z.string(),
+  policyVersionNumber: z.number().int(),
+  engineVersion: z.string(),
+  status: DecisionStatus,
+  recommendedProviderId: z.string().nullable(),
+  recommendedProviderSlug: z.string().nullable(),
+  recommendedRouteId: z.string().nullable(),
+  certainty: RouteConfirmation.nullable(),
+  rankingConfidence: z.number().min(0).max(1),
+  quoteState: QuoteState,
+  connectionState: ConnectionState,
+  evaluatedAt: z.coerce.date(),
+  validUntil: z.coerce.date().nullable(),
+  revalidationRequired: z.boolean(),
+  decisionHash: z.string(),
+  warnings: z.array(z.string()),
+  previousDecisionId: z.string().nullable(),
+  explain: DecisionExplain,
+  candidates: z.array(DecisionCandidateRecord),
+});
+export type DecisionRecord = z.infer<typeof DecisionRecord>;
+
+/* -------------------------------------------------------------------------- */
+/* Decision events                                                             */
+/* -------------------------------------------------------------------------- */
+
+export const DecisionEventKind = z.enum([
+  "created",
+  "revalidation_requested",
+  "quote_expired",
+  "evidence_changed",
+  "policy_changed",
+  "provider_incident",
+  "route_changed",
+  "connection_state_changed",
+  "revalidated",
+  "recommendation_changed",
+  "approval_required",
+]);
+export type DecisionEventKind = z.infer<typeof DecisionEventKind>;
+
+export const DecisionEventRecord = z.object({
+  id: z.string(),
+  decisionId: z.string(),
+  organizationId: z.string(),
+  kind: DecisionEventKind,
+  detail: z.string(),
+  data: z.record(z.unknown()).default({}),
+  createdAt: z.coerce.date(),
+});
+export type DecisionEventRecord = z.infer<typeof DecisionEventRecord>;
+
+/** What triggers a revalidation — see revalidateDecision in @railor/core. */
+export const RevalidationTrigger = z.enum([
+  "quote_expired",
+  "evidence_changed",
+  "provider_incident",
+  "policy_changed",
+  "route_changed",
+  "connection_state_changed",
+  "manual",
+]);
+export type RevalidationTrigger = z.infer<typeof RevalidationTrigger>;
+
+/* -------------------------------------------------------------------------- */
+/* Policy simulator                                                            */
+/* -------------------------------------------------------------------------- */
+
+export const PolicySimulationCandidate = z.object({
+  providerSlug: z.string(),
+  providerName: z.string(),
+  resultA: PolicyEvalResult,
+  resultB: PolicyEvalResult,
+  changed: z.boolean(),
+  reasonCodesA: z.array(PolicyReasonCode),
+  reasonCodesB: z.array(PolicyReasonCode),
+});
+export type PolicySimulationCandidate = z.infer<typeof PolicySimulationCandidate>;
+
+export const PolicySimulationResult = z.object({
+  allowedUnderA: z.array(z.string()),
+  allowedUnderB: z.array(z.string()),
+  blockedUnderA: z.array(z.string()),
+  blockedUnderB: z.array(z.string()),
+  recommendedProviderA: z.string().nullable(),
+  recommendedProviderB: z.string().nullable(),
+  recommendationChanged: z.boolean(),
+  candidates: z.array(PolicySimulationCandidate),
+  /** Which specific rules differ between the two versions and produced a changed candidate outcome. */
+  rulesResponsibleForChanges: z.array(z.string()),
+});
+export type PolicySimulationResult = z.infer<typeof PolicySimulationResult>;

@@ -22,6 +22,7 @@ import {
   type Evidence,
   type OperationalReadiness,
   type RankingPreset,
+  type RouteConfirmation,
   type SourceType,
   type VerificationType,
 } from "@railor/types";
@@ -125,7 +126,33 @@ export interface Evaluation {
   evidence: Evidence[];
   receivingMode: ReceivingModeInfo | null;
   operationalReadiness: OperationalReadiness;
+  /** Set only when the query asked for a full route — see RouteConfirmation's doc comment in @railor/types. */
+  routeConfirmation: RouteConfirmation | null;
+  confirmedDimensions: string[];
+  unconfirmedDimensions: string[];
+  /** The provider_routes.id of the atomic row that produced routeConfirmation, when one atomic row settled it either way ("confirmed" or "unsupported") — null for partially_confirmed/unconfirmed/unknown, which by definition have no single atomic row to point at. Purely additive: not read by any existing caller, added for decision-engine.ts to record exactly which route fact a Decision depended on. */
+  dependedOnRouteId: string | null;
 }
+
+/** Human labels for query dimension keys, used only in route-confirmation reasoning text. */
+const DIMENSION_LABEL: Record<string, string> = {
+  entityCountry: "entity jurisdiction",
+  sourceCountry: "funding country",
+  customerType: "customer type",
+  sourceAsset: "source asset",
+  sourceNetwork: "source network",
+  sourceCurrency: "funding currency",
+  sourceEndpointType: "funding endpoint",
+  sourceNamedRail: "funding rail",
+  destinationCountry: "destination country",
+  destinationCurrency: "destination currency",
+  paymentMethod: "payment method",
+  endpointType: "receiving endpoint",
+  namedRail: "named rail",
+};
+
+/** The dimensions a "full route" request can name — see routeDimensionsRequested below. */
+const ROUTE_DIMENSION_KEYS = Object.keys(DIMENSION_LABEL) as Array<keyof typeof DIMENSION_LABEL>;
 
 /** First depended-on facet that carries a receiving-endpoint mode, if any. */
 function receivingModeFrom(facets: CapabilityFacet[]): ReceivingModeInfo | null {
@@ -228,6 +255,11 @@ export function evaluateProvider(
 
   const reasons: EligibilityReason[] = [];
   const dependedOn: CapabilityFacet[] = [];
+  // Which requested dimensions have real, independent proof — populated as
+  // each section below finds a `supported` fact, read back only by the
+  // route-confirmation gate at the end. A dimension never enters this set on
+  // a `partial` or missing fact — only an unambiguous "yes".
+  const confirmedDims = new Set<string>();
   // Held in an object so the verdict survives mutation inside `downgrade`
   // without the compiler narrowing it to its initial value.
   const state: { verdict: EligibilityVerdict } = { verdict: "supported" };
@@ -265,6 +297,11 @@ export function evaluateProvider(
       evidence: [],
       receivingMode: null,
       operationalReadiness: options.operationalReadiness ?? "not_tested",
+      // No matching product at all — not even a plausible route to rate the evidence for.
+      routeConfirmation: "unknown",
+      confirmedDimensions: [],
+      unconfirmedDimensions: [],
+      dependedOnRouteId: null,
     };
   }
 
@@ -330,6 +367,7 @@ export function evaluateProvider(
       });
     } else if (supported) {
       dependedOn.push(supported);
+      confirmedDims.add("entityCountry");
     } else {
       downgrade("unknown");
       reasons.push({
@@ -382,6 +420,7 @@ export function evaluateProvider(
       });
     } else {
       dependedOn.push(rows[0]!);
+      confirmedDims.add("sourceAsset");
     }
   }
 
@@ -402,6 +441,7 @@ export function evaluateProvider(
       });
     } else {
       dependedOn.push(rows[0]!);
+      confirmedDims.add("sourceNetwork");
     }
   }
 
@@ -418,6 +458,7 @@ export function evaluateProvider(
       });
     } else {
       dependedOn.push(rows[0]!);
+      confirmedDims.add("sourceCurrency");
     }
   }
 
@@ -528,6 +569,11 @@ export function evaluateProvider(
                 });
               } else if (supported) {
                 dependedOn.push(supported);
+                confirmedDims.add("destinationCountry");
+                if (query.destinationCurrency) confirmedDims.add("destinationCurrency");
+                if (query.paymentMethod) confirmedDims.add("paymentMethod");
+                if (query.endpointType) confirmedDims.add("endpointType");
+                if (query.namedRail) confirmedDims.add("namedRail");
               }
             }
           }
@@ -547,7 +593,12 @@ export function evaluateProvider(
       (query.entityCountry || query.sourceCountry || query.sourceAsset || query.sourceNetwork || query.sourceCurrency ||
         query.sourceEndpointType || query.sourceNamedRail),
   );
+  let routeConfirmation: RouteConfirmation | null = null;
+  let confirmedDimensions: string[] = [];
+  let unconfirmedDimensions: string[] = [];
+  let dependedOnRouteId: string | null = null;
   if (routeDimensionsRequested) {
+    const requestedKeys = ROUTE_DIMENSION_KEYS.filter((k) => query[k as keyof CorridorQuery] !== undefined);
     const exactRouteRows = facets.filter(
       (f) =>
         f.isAtomicRoute === true &&
@@ -572,6 +623,9 @@ export function evaluateProvider(
     if (exactUnsupported) {
       dependedOn.push(exactUnsupported);
       downgrade("unavailable");
+      routeConfirmation = "unsupported";
+      confirmedDimensions = requestedKeys.map((k) => DIMENSION_LABEL[k]!);
+      dependedOnRouteId = exactUnsupported.id;
       reasons.push({
         code: "customer_country_unsupported",
         message: exactUnsupported.note ?? `This exact route is marked unsupported by ${provider.name}.`,
@@ -581,6 +635,11 @@ export function evaluateProvider(
     } else if (exactPartial) {
       dependedOn.push(exactPartial);
       downgrade("additional_requirements");
+      // A single atomic row proves the whole tuple — with conditions attached to
+      // that proof, not with gaps in it. Confirmed at the evidence level.
+      routeConfirmation = "confirmed";
+      confirmedDimensions = requestedKeys.map((k) => DIMENSION_LABEL[k]!);
+      dependedOnRouteId = exactPartial.id;
       reasons.push({
         code: "requirements_outstanding",
         message: exactPartial.note ?? `${provider.name} supports this exact route with conditions.`,
@@ -589,13 +648,36 @@ export function evaluateProvider(
       });
     } else if (exactSupported) {
       dependedOn.push(exactSupported);
+      routeConfirmation = "confirmed";
+      confirmedDimensions = requestedKeys.map((k) => DIMENSION_LABEL[k]!);
+      dependedOnRouteId = exactSupported.id;
     } else {
       downgrade("unknown");
+      const confirmedKeys = requestedKeys.filter((k) => confirmedDims.has(k));
+      const missingKeys = requestedKeys.filter((k) => !confirmedDims.has(k));
+      confirmedDimensions = confirmedKeys.map((k) => DIMENSION_LABEL[k]!);
+      unconfirmedDimensions = missingKeys.map((k) => DIMENSION_LABEL[k]!);
+
+      // An explicit unsupported hit anywhere upstream (entity, corridor,
+      // currency, rail...) already pushed the verdict to "unavailable" — that
+      // is a provider *saying no*, a stronger and different signal than
+      // Railor simply lacking proof either way.
+      routeConfirmation = state.verdict === "unavailable"
+        ? "unsupported"
+        : confirmedKeys.length === 0
+          ? "unconfirmed"
+          : "partially_confirmed";
+
       reasons.push({
         code: "no_data",
         message: `${provider.name} publishes individual capability facts, but Railor has no verified statement for this exact route combination.`,
-        alsoTrue: [],
-        wouldChange: ["Verify this route through the provider's quote or route-configuration API"],
+        alsoTrue: confirmedKeys.length
+          ? [`Independently confirmed: ${confirmedDimensions.join(", ")}.`]
+          : [],
+        wouldChange: [
+          ...(missingKeys.length ? [`Still unverified as one route: ${unconfirmedDimensions.join(", ")}.`] : []),
+          "Verify this route through the provider's quote or route-configuration API",
+        ],
       });
     }
   }
@@ -670,6 +752,10 @@ export function evaluateProvider(
     evidence: collectEvidence(dependedOn),
     receivingMode: receivingModeFrom(dependedOn),
     operationalReadiness: options.operationalReadiness ?? "not_tested",
+    routeConfirmation,
+    confirmedDimensions,
+    unconfirmedDimensions,
+    dependedOnRouteId,
   };
 }
 

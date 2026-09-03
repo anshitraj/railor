@@ -58,6 +58,10 @@ interface SearchPayload {
       settlementEstimate: string | null;
       complianceDocs: string | null;
     } | null;
+    /** How complete the evidence is for the exact requested route — a different axis from `eligibility`. Null when the query never asked for a full route. */
+    routeConfirmation: string | null;
+    confirmedDimensions: string[];
+    unconfirmedDimensions: string[];
     rankingConfidence: number;
     rankingInputsUsed: string[];
     rankingInputsMissing: string[];
@@ -76,6 +80,22 @@ interface SearchPayload {
     lastResearchedAt: string | null;
   } | null;
 }
+
+const ROUTE_CONFIRMATION_LABEL: Record<string, string> = {
+  confirmed: "Confirmed",
+  partially_confirmed: "Partially confirmed",
+  unconfirmed: "Unconfirmed",
+  unsupported: "Unsupported",
+  unknown: "Unknown",
+};
+
+const ROUTE_CONFIRMATION_STYLE: Record<string, string> = {
+  confirmed: "bg-[var(--color-ok-bg)] text-[var(--color-ok)]",
+  partially_confirmed: "bg-[var(--color-lavender)] text-[var(--color-purple-deep)]",
+  unconfirmed: "bg-[var(--color-canvas)] text-[var(--color-muted)]",
+  unsupported: "bg-[var(--color-bad-bg)] text-[var(--color-bad)]",
+  unknown: "bg-[var(--color-canvas)] text-[var(--color-muted)]",
+};
 
 const STABLECOIN_MODE_LABEL: Record<string, string> = {
   direct_stablecoin: "Direct stablecoin",
@@ -435,6 +455,40 @@ export function CorridorExplorer({
                 </Link>
               }
             >
+              {result.routeConfirmation ? (
+                <div className="flex flex-col gap-2 border-b border-[var(--color-line)] px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">
+                      Route confirmation
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        ROUTE_CONFIRMATION_STYLE[result.routeConfirmation] ?? ROUTE_CONFIRMATION_STYLE.unknown
+                      }`}
+                    >
+                      {ROUTE_CONFIRMATION_LABEL[result.routeConfirmation] ?? result.routeConfirmation}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                    {result.confirmedDimensions.map((d) => (
+                      <span key={d} className="text-[var(--color-ok)]">
+                        {d} ✓
+                      </span>
+                    ))}
+                    {result.unconfirmedDimensions.map((d) => (
+                      <span key={d} className="text-[var(--color-faint)]">
+                        {d} ✗
+                      </span>
+                    ))}
+                  </div>
+                  {result.routeConfirmation === "partially_confirmed" || result.routeConfirmation === "unconfirmed" ? (
+                    <p className="text-[11.5px] text-[var(--color-muted)]">
+                      Railor understood exactly what you asked for — the pieces above are real, individually-verified
+                      facts. It has no single source proving they hold together as one route yet.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <WhyPanel
                 providerName={result.provider.name}
                 verdict={result.eligibility}

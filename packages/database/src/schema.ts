@@ -164,6 +164,57 @@ export const requirementKindEnum = pgEnum("requirement_kind", ["kyc", "kyb", "te
 
 export const apiKeyModeEnum = pgEnum("api_key_mode", ["test", "live"]);
 
+/* -------------------------------------------------------------------------- */
+/* Control plane: Policy -> Decision                                          */
+/* -------------------------------------------------------------------------- */
+
+export const policyStatusEnum = pgEnum("policy_status", ["draft", "active", "superseded", "disabled"]);
+
+/** Mirrors @railor/types' EligibilityVerdict exactly - kept as its own DB enum, not reused, since Postgres enums can't be shared across logical domains without coupling this table's migrations to eligibility's. */
+export const decisionEligibilityStatusEnum = pgEnum("decision_eligibility_status", [
+  "supported",
+  "additional_requirements",
+  "unavailable",
+  "unknown",
+]);
+
+/** Mirrors @railor/types' RouteConfirmation exactly. */
+export const routeConfirmationEnum = pgEnum("route_confirmation", [
+  "confirmed",
+  "partially_confirmed",
+  "unconfirmed",
+  "unsupported",
+  "unknown",
+]);
+
+export const policyEvalResultEnum = pgEnum("policy_eval_result", ["pass", "fail", "unknown", "not_applicable"]);
+
+export const decisionStatusEnum = pgEnum("decision_status", [
+  "allow",
+  "deny",
+  "no_verified_route",
+  "insufficient_data",
+  "approval_required",
+]);
+
+export const quoteStateEnum = pgEnum("quote_state", ["live", "indicative", "historical", "none"]);
+export const connectionStateEnum = pgEnum("connection_state", ["connected", "not_connected", "mixed", "unknown"]);
+export const costCompletenessEnum = pgEnum("cost_completeness", ["complete", "partial", "unknown"]);
+
+export const decisionEventKindEnum = pgEnum("decision_event_kind", [
+  "created",
+  "revalidation_requested",
+  "quote_expired",
+  "evidence_changed",
+  "policy_changed",
+  "provider_incident",
+  "route_changed",
+  "connection_state_changed",
+  "revalidated",
+  "recommendation_changed",
+  "approval_required",
+]);
+
 export const conformanceTestKindEnum = pgEnum("conformance_test_kind", [
   "authentication",
   "sandbox_reachable",
@@ -1539,4 +1590,198 @@ export const countryFactSourcesRelations = relations(countryFactSources, ({ one 
   }),
 }));
 
-export const schemaVersion = sql`1`;
+/* -------------------------------------------------------------------------- */
+/* Control plane: Policy                                                      */
+/* -------------------------------------------------------------------------- */
+
+export const policies = pgTable(
+  "policies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    status: policyStatusEnum("status").default("draft").notNull(),
+    // No FK constraint: policyVersions.policyId points back at this table, so
+    // a forward reference here would be circular. Enforced at the
+    // application layer (policy.ts) instead - every write to this column
+    // goes through activatePolicyVersion, never a bare update.
+    activeVersionId: uuid("active_version_id"),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ orgIdx: index("policies_org_idx").on(t.organizationId) }),
+);
+
+export const policyVersions = pgTable(
+  "policy_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    policyId: uuid("policy_id")
+      .notNull()
+      .references(() => policies.id, { onDelete: "cascade" }),
+    // Denormalized: every row needing to prove which org a version belongs
+    // to (tenant-isolation checks, direct reads) can filter without a join
+    // back through policies.
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    versionNumber: integer("version_number").notNull(),
+    status: policyStatusEnum("status").default("draft").notNull(),
+    /** Typed JSON, validated by PolicyRules (Zod) at the application layer - never a free-form expression language. */
+    rules: jsonb("rules").$type<Record<string, unknown>>().notNull(),
+    /** Immutable once activated - see activatePolicyVersion. A DRAFT row may still be edited in place; ACTIVE/SUPERSEDED never are. */
+    createdAt: now(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  },
+  (t) => ({
+    policyVersionIdx: uniqueIndex("policy_versions_policy_version_idx").on(t.policyId, t.versionNumber),
+    orgIdx: index("policy_versions_org_idx").on(t.organizationId),
+  }),
+);
+
+/* -------------------------------------------------------------------------- */
+/* Control plane: Decision                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One immutable record per Decision Engine run. Never updated after
+ * creation - a revalidation creates a new row linked via previousDecisionId,
+ * exactly like provider_capabilities is never mutated in place elsewhere in
+ * this schema. `intentSnapshot`, `candidateSnapshotHash` inputs and
+ * `decisionHash` together are what makes a Decision replayable without
+ * trusting today's mutable provider/evidence state.
+ */
+export const decisions = pgTable(
+  "decisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    /** Canonical PaymentIntent, exactly as validated - the full input snapshot, not reconstructed from other columns. */
+    intentSnapshot: jsonb("intent_snapshot").$type<Record<string, unknown>>().notNull(),
+    policyId: uuid("policy_id")
+      .notNull()
+      .references(() => policies.id),
+    policyVersionId: uuid("policy_version_id")
+      .notNull()
+      .references(() => policyVersions.id),
+    policyVersionNumber: integer("policy_version_number").notNull(),
+    engineVersion: text("engine_version").notNull(),
+    status: decisionStatusEnum("status").notNull(),
+    recommendedProviderId: uuid("recommended_provider_id").references(() => providers.id),
+    /** Denormalized so history reads never depend on a provider row that could later be renamed. */
+    recommendedProviderSlug: text("recommended_provider_slug"),
+    recommendedRouteId: uuid("recommended_route_id"),
+    certainty: routeConfirmationEnum("certainty"),
+    rankingConfidence: numeric("ranking_confidence", { precision: 3, scale: 2 }).notNull(),
+    quoteState: quoteStateEnum("quote_state").notNull(),
+    connectionState: connectionStateEnum("connection_state").notNull(),
+    evaluatedAt: timestamp("evaluated_at", { withTimezone: true }).defaultNow().notNull(),
+    validUntil: timestamp("valid_until", { withTimezone: true }),
+    revalidationRequired: boolean("revalidation_required").default(false).notNull(),
+    /** sha256 of the canonical replay inputs - see decision-engine.ts's hashDecisionInputs. */
+    decisionHash: text("decision_hash").notNull(),
+    warnings: jsonb("warnings").$type<string[]>().default([]).notNull(),
+    explain: jsonb("explain").$type<Record<string, unknown>>().notNull(),
+    /** Set only when this Decision was produced by revalidating an earlier one. */
+    previousDecisionId: uuid("previous_decision_id"),
+    createdAt: now(),
+  },
+  (t) => ({
+    orgIdx: index("decisions_org_idx").on(t.organizationId, t.evaluatedAt),
+    previousIdx: index("decisions_previous_idx").on(t.previousDecisionId),
+  }),
+);
+
+export const decisionCandidates = pgTable(
+  "decision_candidates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    decisionId: uuid("decision_id")
+      .notNull()
+      .references(() => decisions.id, { onDelete: "cascade" }),
+    // Denormalized alongside decisionId so a tenant-isolation query never has
+    // to join back through decisions to prove ownership.
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    providerId: uuid("provider_id")
+      .notNull()
+      .references(() => providers.id),
+    providerSlug: text("provider_slug").notNull(),
+    providerName: text("provider_name").notNull(),
+    routeId: uuid("route_id"),
+    eligibilityStatus: decisionEligibilityStatusEnum("eligibility_status").notNull(),
+    routeCertainty: routeConfirmationEnum("route_certainty"),
+    policyResult: policyEvalResultEnum("policy_result").notNull(),
+    policyReasonCodes: jsonb("policy_reason_codes").$type<string[]>().default([]).notNull(),
+    quoteSnapshot: jsonb("quote_snapshot").$type<Record<string, unknown> | null>(),
+    quoteType: text("quote_type"),
+    quoteObservedAt: timestamp("quote_observed_at", { withTimezone: true }),
+    quoteExpiresAt: timestamp("quote_expires_at", { withTimezone: true }),
+    costCompleteness: costCompletenessEnum("cost_completeness").default("unknown").notNull(),
+    reliabilitySnapshot: numeric("reliability_snapshot", { precision: 3, scale: 2 }),
+    rank: integer("rank"),
+    selected: boolean("selected").default(false).notNull(),
+    rejectionReasonCodes: jsonb("rejection_reason_codes").$type<string[]>().default([]).notNull(),
+    /** Evidence row ids this candidate's facts depended on at decision time - enough to replay "why", without re-reading today's (possibly changed) evidence. */
+    evidenceIds: jsonb("evidence_ids").$type<string[]>().default([]).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    decisionIdx: index("decision_candidates_decision_idx").on(t.decisionId),
+    orgIdx: index("decision_candidates_org_idx").on(t.organizationId),
+  }),
+);
+
+export const decisionEvents = pgTable(
+  "decision_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    decisionId: uuid("decision_id")
+      .notNull()
+      .references(() => decisions.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    kind: decisionEventKindEnum("kind").notNull(),
+    detail: text("detail").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    decisionIdx: index("decision_events_decision_idx").on(t.decisionId, t.createdAt),
+    orgIdx: index("decision_events_org_idx").on(t.organizationId),
+  }),
+);
+
+export const policiesRelations = relations(policies, ({ many }) => ({
+  versions: many(policyVersions),
+  decisions: many(decisions),
+}));
+
+export const policyVersionsRelations = relations(policyVersions, ({ one }) => ({
+  policy: one(policies, { fields: [policyVersions.policyId], references: [policies.id] }),
+}));
+
+export const decisionsRelations = relations(decisions, ({ one, many }) => ({
+  policy: one(policies, { fields: [decisions.policyId], references: [policies.id] }),
+  policyVersion: one(policyVersions, { fields: [decisions.policyVersionId], references: [policyVersions.id] }),
+  candidates: many(decisionCandidates),
+  events: many(decisionEvents),
+}));
+
+export const decisionCandidatesRelations = relations(decisionCandidates, ({ one }) => ({
+  decision: one(decisions, { fields: [decisionCandidates.decisionId], references: [decisions.id] }),
+  provider: one(providers, { fields: [decisionCandidates.providerId], references: [providers.id] }),
+}));
+
+export const decisionEventsRelations = relations(decisionEvents, ({ one }) => ({
+  decision: one(decisions, { fields: [decisionEvents.decisionId], references: [decisions.id] }),
+}));
+
+export const schemaVersion = sql`2`;

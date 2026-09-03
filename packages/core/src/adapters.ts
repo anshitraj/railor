@@ -37,6 +37,12 @@
  * every real call so far has only ever returned an auth-error body, never
  * a success body, so the field names a successful quote actually returns
  * are a best-effort reading of public docs, unconfirmed against live data.
+ * MoonPay's getQuote uses a separate `publishableKey` credential from
+ * testConnection's secret `apiKey` — confirmed against MoonPay's own docs
+ * (dev.moonpay.com/reference/getbuyquote): buy_quote takes the key as a URL
+ * query parameter by the provider's own design, and the key it expects
+ * there is the publishable one, not the secret one. Two different MoonPay
+ * credential types, not one field reused for both.
  * getQuote on Circle: request/response shape is fully verified (copied
  * directly from Circle's own CPN quickstart example, not summarized) — but
  * requires the caller to supply `paymentMethodType` and `entityCountry`
@@ -180,12 +186,23 @@ async function bridgeGetQuote(credentials: Record<string, string>, request: Quot
 }
 
 async function moonpayGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
-  const apiKey = credentials.apiKey?.trim();
-  if (!apiKey) throw new Error("Secret API key is required.");
+  // MoonPay's own docs (dev.moonpay.com/reference/getbuyquote, checked live
+  // before this fix) state buy_quote "requires apiKey as a URL query
+  // parameter only — not an Authorization header" and that the key must be
+  // the publishable key (pk_test_/pk_live_, "safe to use in client-side
+  // code"), not the secret key moonpayTestConnection uses. These are two
+  // genuinely different MoonPay credential types serving different
+  // purposes — this was previously one mislabeled "Secret API key" field
+  // reused for both, meaning a customer's real secret key could end up in a
+  // URL if they only ever filled in that one field. Publishable key is
+  // intentionally not `secret: true` in credentialFields below: MoonPay's
+  // own classification says it is meant to be exposed, not Railor's guess.
+  const publishableKey = credentials.publishableKey?.trim();
+  if (!publishableKey) throw new Error("Publishable key is required for a quote (MoonPay's buy_quote endpoint takes it as a query parameter by design — see docs.moonpay.com).");
   const params = new URLSearchParams({
     baseCurrencyAmount: String(request.amount),
     baseCurrencyCode: request.destinationCurrency.toLowerCase(),
-    apiKey,
+    apiKey: publishableKey,
   });
   const response = await fetch(
     `https://api.moonpay.com/v3/currencies/${request.sourceAsset.toLowerCase()}/buy_quote?${params}`,
@@ -353,7 +370,14 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
   },
   moonpay: {
     slug: "moonpay",
-    credentialFields: [{ key: "apiKey", label: "Secret API key", secret: true }],
+    credentialFields: [
+      { key: "apiKey", label: "Secret API key", secret: true },
+      // Deliberately not secret: true - MoonPay's own docs describe
+      // publishable keys as safe for client-side use, distinct from the
+      // secret key above. See moonpayGetQuote's comment for the fix this
+      // separation is part of.
+      { key: "publishableKey", label: "Publishable key", placeholder: "pk_live_… or pk_test_…" },
+    ],
     testConnection: moonpayTestConnection,
     getQuote: moonpayGetQuote,
   },

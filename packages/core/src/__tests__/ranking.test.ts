@@ -38,6 +38,10 @@ function evaluation(verdict: EligibilityVerdict, confidence = 0.9): Evaluation {
     evidence: [],
     receivingMode: null,
     operationalReadiness: "not_tested",
+    routeConfirmation: null,
+    confirmedDimensions: [],
+    unconfirmedDimensions: [],
+    dependedOnRouteId: null,
   };
 }
 
