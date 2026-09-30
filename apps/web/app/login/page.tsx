@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "../../lib/auth";
+import { safeReturnPath } from "../../lib/security";
 import { LoginForm } from "../../components/auth/login-form";
 import { RailArtwork } from "../../components/marketing/rail-artwork";
 import { RailorMark } from "../../components/marketing/nav";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Sign in" };
 
 export default async function LoginPage({
   searchParams,
@@ -13,14 +15,17 @@ export default async function LoginPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  // `next` lets flows like /invite/:token send people back after signing in.
+  const next = typeof params.next === "string" ? safeReturnPath(params.next, "") : "";
   const session = await getSession();
-  if (session) redirect(session.organization?.onboardingCompletedAt ? "/app" : "/welcome");
+  if (session) redirect(next || (session.organization?.onboardingCompletedAt ? "/app" : "/welcome"));
 
   const query = typeof params.q === "string" ? params.q : undefined;
   const error = typeof params.error === "string" ? params.error : undefined;
   // The visitor's question survives authentication — it is carried into
   // onboarding and pre-fills their first corridor.
-  const returnTo = query ? `/welcome?q=${encodeURIComponent(query)}` : "/welcome";
+  const returnTo = next || (query ? `/welcome?q=${encodeURIComponent(query)}` : "/welcome");
+  const prefillEmail = typeof params.email === "string" ? params.email : undefined;
 
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
@@ -51,6 +56,7 @@ export default async function LoginPage({
         <LoginForm
           returnTo={returnTo}
           savedQuery={query}
+          initialEmail={prefillEmail}
           initialError={error}
           oauth={{
             google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),

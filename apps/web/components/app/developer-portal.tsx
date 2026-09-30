@@ -74,6 +74,11 @@ export function DeveloperPortal({
     Buffer.from(JSON.stringify(mcpConfig.railor)).toString("base64"),
   )}`;
 
+  // VS Code's documented install link: vscode:mcp/install?{url-encoded server config}.
+  const vscodeDeeplink = `vscode:mcp/install?${encodeURIComponent(
+    JSON.stringify({ name: "railor", type: "http", ...mcpConfig.railor }),
+  )}`;
+
   const hasLiveKey = keys.some((k) => k.mode === "live" && !k.revoked);
   const hasCalledApi = usage.length > 0;
   const createLiveKey = () =>
@@ -119,7 +124,7 @@ export function DeveloperPortal({
           <div className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between text-[14px]">
               <span className="tabular font-medium">
-                {quota.used.toLocaleString()} / {quota.cap.toLocaleString()} requests
+                {quota.used.toLocaleString("en-US")} / {quota.cap.toLocaleString("en-US")} requests
               </span>
               <span className="text-[11px] text-[var(--color-faint)]">this month</span>
             </div>
@@ -169,7 +174,7 @@ export function DeveloperPortal({
         />
       </Card>
 
-      <div id="quickstart" className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <div id="quickstart" className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Card className="flex flex-col gap-4 p-5">
           <SectionLabel>60-second start</SectionLabel>
           <CodeSample
@@ -222,14 +227,15 @@ print(response.json()["providers_checked"])`,
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* relative: keeps the sr-only header (absolutely positioned) inside the scroller on phones */}
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[420px] text-left text-[13px]">
               <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
                 <tr>
-                  <th className="pb-2 font-medium">Name</th>
-                  <th className="pb-2 font-medium">Type</th>
-                  <th className="pb-2 font-medium">Usage</th>
-                  <th className="pb-2 font-medium">Key</th>
+                  <th className="pb-2 pr-2 font-medium">Name</th>
+                  <th className="pb-2 pr-2 font-medium">Type</th>
+                  <th className="pb-2 pr-2 font-medium">Usage</th>
+                  <th className="pb-2 pr-2 font-medium">Key</th>
                   <th className="pb-2 font-medium">
                     <span className="sr-only">Options</span>
                   </th>
@@ -240,7 +246,7 @@ print(response.json()["providers_checked"])`,
                   <tr key={key.id} className="border-t border-[var(--color-line)] align-top">
                     <td className="py-2.5 pr-2">
                       <div className="flex flex-col">
-                        <span className="font-medium">{key.label}</span>
+                        <span className="whitespace-nowrap font-medium">{key.label}</span>
                         <span className="text-[11px] text-[var(--color-faint)]">
                           {key.revoked ? (
                             <span className="text-[var(--color-bad)]">revoked</span>
@@ -263,15 +269,16 @@ print(response.json()["providers_checked"])`,
                         {key.mode}
                       </span>
                     </td>
-                    <td className="tabular py-2.5 pr-2 text-[var(--color-muted)]">
+                    <td className="tabular whitespace-nowrap py-2.5 pr-2 text-[var(--color-muted)]">
                       {key.monthlyUsed !== null && key.monthlyCap !== null
-                        ? `${key.monthlyUsed.toLocaleString()} / ${key.monthlyCap.toLocaleString()}`
+                        ? `${key.monthlyUsed.toLocaleString("en-US")} / ${key.monthlyCap.toLocaleString("en-US")}`
                         : "—"}
                     </td>
                     <td className="py-2.5 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <code className="tabular text-[12px] text-[var(--color-muted)]">
-                          {key.secret ?? `${key.prefix}…`}
+                        {/* The full test key is in the snippets and the copy button; the table only needs to identify it. */}
+                        <code className="tabular whitespace-nowrap text-[12px] text-[var(--color-muted)]" title={key.secret ?? undefined}>
+                          {key.secret ? `${key.secret.slice(0, 14)}…${key.secret.slice(-4)}` : `${key.prefix}…`}
                         </code>
                         {key.secret ? (
                           <button
@@ -349,7 +356,7 @@ print(response.json()["providers_checked"])`,
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
         <Card className="flex flex-col gap-3 p-5">
           <div className="flex items-center gap-2">
             <SectionLabel>MCP server</SectionLabel>
@@ -363,6 +370,11 @@ print(response.json()["providers_checked"])`,
             <a href={cursorDeeplink}>
               <Button size="sm" variant="secondary">
                 Add to Cursor
+              </Button>
+            </a>
+            <a href={vscodeDeeplink}>
+              <Button size="sm" variant="secondary">
+                Add to VS Code
               </Button>
             </a>
             <a href="/docs/mcp">
@@ -484,12 +496,30 @@ bearer_token_env_var = "RAILOR_KEY"`,
           <div className="border-t border-[var(--color-line)] pt-3">
             <SectionLabel>Endpoints</SectionLabel>
             <ul className="mt-2 flex flex-col gap-1 font-mono text-[12px] text-[var(--color-ink-soft)]">
-              <li>POST /v1/corridors/search</li>
-              <li>GET /v1/providers</li>
-              <li>GET /v1/changes</li>
-              <li className="text-[var(--color-faint)]">POST /v1/eligibility — coming soon</li>
-              <li className="text-[var(--color-faint)]">POST /v1/watchlists — coming soon</li>
+              {[
+                "POST /v1/corridors/search",
+                "POST /v1/eligibility",
+                "GET /v1/providers",
+                "GET /v1/providers/{id}",
+                "POST /v1/compare",
+                "GET /v1/capabilities",
+                "GET /v1/changes",
+                "GET|POST /v1/watchlists",
+                "POST /v1/decisions",
+                "GET|POST /v1/policies",
+                "POST /v1/routes",
+                "POST /v1/prices",
+                "GET|POST /v1/payments",
+                "POST /v1/payments/{id}/submit",
+                "GET|POST /v1/beneficiaries",
+                "GET|POST /v1/webhook_endpoints",
+              ].map((endpoint) => (
+                <li key={endpoint}>{endpoint}</li>
+              ))}
             </ul>
+            <a href="/docs/api" className="mt-2 inline-block text-[12px] font-semibold text-[var(--color-orange-deep)] underline underline-offset-2">
+              Full API reference →
+            </a>
           </div>
         </Card>
       </div>

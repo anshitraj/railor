@@ -14,6 +14,7 @@ import {
 import { MonitorProviderButton } from "../../../../components/app/monitor-button";
 import { CurrencyLogo } from "../../../../components/marketing/currency-logo";
 import { NetworkLogo } from "../../../../components/marketing/network-logo";
+import { ProviderLogo } from "../../../../components/app/provider-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -102,9 +103,7 @@ export default async function ProviderProfile({
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <span className="grid size-14 place-items-center rounded-2xl bg-[var(--color-lavender)] text-[17px] font-semibold text-[var(--color-purple)]">
-            {provider.name.slice(0, 2).toUpperCase()}
-          </span>
+          <ProviderLogo slug={provider.slug} name={provider.name} size={56} />
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h1 className="text-[24px] font-semibold tracking-tight">{provider.name}</h1>
@@ -139,7 +138,7 @@ export default async function ProviderProfile({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3 p-5">
             <SectionLabel>Products</SectionLabel>

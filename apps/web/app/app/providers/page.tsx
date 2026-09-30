@@ -2,9 +2,11 @@ import { loadProviderSummaries } from "@railor/core";
 import { ProviderDirectory } from "../../../components/app/provider-directory";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Providers" };
 
 export default async function ProvidersPage() {
-  const providers = await loadProviderSummaries();
+  // Real companies only, like search and decisions: fictional demo providers stay out of the directory.
+  const providers = (await loadProviderSummaries()).filter((p) => !p.isDemo);
 
   return (
     <ProviderDirectory

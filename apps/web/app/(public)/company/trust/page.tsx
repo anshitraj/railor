@@ -1,19 +1,17 @@
-import { Card, SectionLabel } from "@railor/ui";
+import { Card } from "@railor/ui";
+import { PageHeader } from "../../../../components/marketing/page-header";
 
 export const metadata = { title: "Trust" };
+
+const H2 = "font-display text-[20px] font-semibold tracking-[-0.03em]";
 
 export default function TrustPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Trust</SectionLabel>
-        <h1 className="text-[34px] font-semibold leading-tight tracking-tight">
-          How Railor handles claims, sources and your data.
-        </h1>
-      </div>
+      <PageHeader eyebrow="Trust" title="How Railor handles claims, sources and your data." />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-[18px] font-semibold">Where claims come from</h2>
+        <h2 className={H2}>Where claims come from</h2>
         <p className="text-[14.5px] leading-relaxed text-[var(--color-muted)]">
           Railor reads published provider material — documentation, help centres, pricing pages,
           status pages, official announcements and public APIs — and normalizes it into a capability
@@ -24,7 +22,7 @@ export default function TrustPage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-[18px] font-semibold">What a claim carries</h2>
+        <h2 className={H2}>What a claim carries</h2>
         <p className="text-[14.5px] leading-relaxed text-[var(--color-muted)]">
           Every published capability points at an evidence record: source URL, source type, the time
           it was retrieved, the time it was last verified, an excerpt, and a confidence score.
@@ -34,7 +32,7 @@ export default function TrustPage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-[18px] font-semibold">What Railor will not do</h2>
+        <h2 className={H2}>What Railor will not do</h2>
         <ul className="flex flex-col gap-2 text-[14.5px] leading-relaxed text-[var(--color-muted)]">
           <li>• Infer a capability that no source states, or present a model&apos;s guess as verified.</li>
           <li>• Invent pricing, limits or coverage. Unpublished means “not published”, not zero.</li>
@@ -45,7 +43,7 @@ export default function TrustPage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-[18px] font-semibold">Your workspace</h2>
+        <h2 className={H2}>Your workspace</h2>
         <p className="text-[14.5px] leading-relaxed text-[var(--color-muted)]">
           Corridors, monitors, readiness answers and API keys belong to your organization, not to an
           individual account. Authorization is enforced server-side on every route. API keys are

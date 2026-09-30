@@ -2,12 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loadChangeFeed, loadPlatformCounts, searchCorridors } from "@railor/core";
 import { CorridorQuery } from "@railor/types";
-import { Card, EmptyState, Freshness, SectionLabel, Stat, VerdictPill } from "@railor/ui";
+import { Card, CountUp, EmptyState, Freshness, SectionLabel, VerdictPill } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { getKybProfile, getOrgAlerts, getSavedCorridors, getSatisfiedRequirements } from "../../lib/org";
 import { RoutePill } from "../../components/app/route-pill";
+import { Sparkline, dailyCounts } from "../../components/app/sparkline";
+import { KeepSuggestedCorridor } from "../../components/app/suggested-corridor";
+import { getReferenceOptions } from "../../lib/reference";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Overview" };
 
 function greeting() {
   const hour = new Date().getHours();
@@ -38,9 +42,31 @@ export default async function OverviewPage() {
   );
 
   const warnings = evaluated.filter((e) => e.result.counts.supported === 0).length;
-  const changesThisWeek = (await loadChangeFeed({ limit: 50 })).filter(
+  const recentChanges = await loadChangeFeed({ limit: 200, since: new Date(Date.now() - 14 * 86_400_000) });
+  const changesThisWeek = recentChanges.filter(
     (c) => Date.now() - c.change.detectedAt.getTime() < 7 * 86_400_000,
   ).length;
+  const changeSeries = dailyCounts(recentChanges.map((c) => c.change.detectedAt), 14);
+
+  // Law 2 — no empty dashboard: with no saved corridor, evaluate a suggested one
+  // from what Railor knows about the workspace, and let it be kept in one click.
+  let suggestion: { query: CorridorQuery; label: string; result: Awaited<ReturnType<typeof searchCorridors>> } | null = null;
+  if (!corridors.length) {
+    const reference = await getReferenceOptions();
+    const entity = org.entityCountry ?? "IN";
+    const destination = org.targetCountries?.find((c) => c !== entity) ?? (entity === "AE" ? "GB" : "AE");
+    const currency = org.settlementCurrencies?.[0] ?? reference.currencyByCountry[destination];
+    const query = CorridorQuery.parse({
+      entityCountry: entity,
+      customerType: "business",
+      sourceAsset: "USDC",
+      destinationCountry: destination,
+      destinationCurrency: currency,
+    });
+    const result = await searchCorridors(query, { satisfiedRequirements: satisfied });
+    const name = (code: string) => reference.countries.find((c) => c.value === code)?.label ?? code;
+    suggestion = { query, result, label: `${name(entity)} → USDC → ${name(destination)}${currency ? ` · ${currency}` : ""}` };
+  }
 
   const kybComplete = kyb.filter((k) => k.status === "have").length;
   const name = session.user.name ?? session.user.email.split("@")[0];
@@ -56,20 +82,31 @@ export default async function OverviewPage() {
         </p>
       </div>
 
-      <section className="grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-line)] md:grid-cols-4">
+      <section className="grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { value: counts.providers, label: "Providers tracked", hint: `${counts.capabilities.toLocaleString()} capability rows` },
-          { value: corridors.length, label: "Active corridors", hint: corridors.some((c) => c.suggested) ? "includes suggested" : "all yours", tone: "purple" as const },
-          { value: changesThisWeek, label: "Changes this week", hint: `${counts.sources} sources monitored` },
-          { value: warnings, label: "Coverage warnings", hint: warnings ? "corridor with no compatible provider" : "none right now", tone: warnings ? ("warn" as const) : undefined },
+          { value: counts.providers, label: "Providers tracked", hint: `${counts.capabilities.toLocaleString()} capability rows`, href: "/app/providers" },
+          { value: corridors.length, label: "Active corridors", hint: corridors.some((c) => c.suggested) ? "includes suggested" : corridors.length ? "all yours" : "one suggestion below", tone: "purple" as const, href: "/app/corridors" },
+          { value: changesThisWeek, label: "Changes this week", hint: `${counts.sources} sources monitored`, href: "/app/changes", series: changeSeries },
+          { value: warnings, label: "Coverage warnings", hint: warnings ? "corridor with no compatible provider" : "none right now", tone: warnings ? ("warn" as const) : undefined, href: "/app/monitoring" },
         ].map((panel) => (
-          <div key={panel.label} className="bg-white p-5">
-            <Stat value={panel.value} label={panel.label} hint={panel.hint} tone={panel.tone} />
-          </div>
+          <Link key={panel.label} href={panel.href} className="group flex items-end justify-between gap-3 bg-white p-5 transition-colors hover:bg-[var(--color-paper)]">
+            <span className="flex flex-col gap-1">
+              <span className={`tabular text-[28px] font-semibold leading-none ${panel.tone === "purple" ? "text-[var(--color-purple)]" : panel.tone === "warn" ? "text-[var(--color-warn)]" : ""}`}>
+                <CountUp value={panel.value} />
+              </span>
+              <span className="text-[13px] text-[var(--color-ink-soft)]">{panel.label}</span>
+              <span className="text-[11px] text-[var(--color-faint)]">{panel.hint}</span>
+            </span>
+            {"series" in panel && panel.series ? (
+              <Sparkline values={panel.series} label={`${panel.label}: daily changes over the last 14 days`} width={96} height={30} />
+            ) : (
+              <span aria-hidden className="text-[var(--color-faint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-orange-deep)]">→</span>
+            )}
+          </Link>
         ))}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <section className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <Card className="flex flex-col gap-4 p-5">
           <div className="flex items-center justify-between">
             <SectionLabel>Infrastructure map</SectionLabel>
@@ -93,8 +130,8 @@ export default async function OverviewPage() {
                       href={`/app/corridors?saved=${corridor.id}`}
                       className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-line)] p-4 transition hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-[14px] font-medium">{corridor.label}</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="min-w-0 text-[14px] font-medium">{corridor.label}</span>
                         {corridor.suggested ? (
                           <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
                             Suggested — edit this
@@ -106,7 +143,7 @@ export default async function OverviewPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {[
                           query.entityCountry,
                           query.sourceAsset,
@@ -141,6 +178,38 @@ export default async function OverviewPage() {
                 );
               })}
             </ul>
+          ) : suggestion ? (
+            <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--color-orange)]/50 bg-[var(--color-lavender)]/40 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[14px] font-medium">{suggestion.label}</span>
+                <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
+                  Suggested — edit this
+                </span>
+                <span className="flex-1" />
+                <span className="tabular text-[12px] text-[var(--color-muted)]">
+                  {suggestion.result.counts.supported} compatible / {suggestion.result.providersChecked} checked
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {[suggestion.query.entityCountry, suggestion.query.sourceAsset, suggestion.query.destinationCountry, suggestion.query.destinationCurrency]
+                  .filter(Boolean)
+                  .map((node, i, arr) => (
+                    <span key={`${node}-${i}`} className="flex items-center gap-2">
+                      <RoutePill value={String(node)} />
+                      {i < arr.length - 1 ? <span className="h-px w-8 bg-[var(--color-line-strong)]" /> : null}
+                    </span>
+                  ))}
+              </div>
+              <p className="text-[12.5px] leading-relaxed text-[var(--color-muted)]">
+                Built from your workspace profile so this page is never empty. Keep it and Railor watches it for coverage, requirement and pricing changes — or open the explorer to change any part of it.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <KeepSuggestedCorridor query={suggestion.query as Record<string, unknown>} label={suggestion.label} />
+                <Link href="/app/corridors" className="text-[12.5px] font-medium text-[var(--color-purple)]">
+                  Edit in explorer →
+                </Link>
+              </div>
+            </div>
           ) : (
             <EmptyState
               what="No corridors yet"
@@ -191,6 +260,9 @@ export default async function OverviewPage() {
               </span>{" "}
               <span className="text-[var(--color-muted)]">of {kyb.length} documents recorded</span>
             </p>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-sand)]" role="progressbar" aria-valuemin={0} aria-valuemax={kyb.length} aria-valuenow={kybComplete} aria-label="KYB profile completeness">
+              <div className="railor-grow h-full rounded-full bg-[var(--color-orange)]" style={{ width: `${kyb.length ? Math.round((kybComplete / kyb.length) * 100) : 0}%` }} />
+            </div>
             <p className="text-[12.5px] text-[var(--color-muted)]">
               Recording what you already hold turns “supported” into “supported for you”, and shows
               exactly what each provider still needs.

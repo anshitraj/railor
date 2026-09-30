@@ -1,6 +1,6 @@
 import { loadReferenceData } from "@railor/core";
 import { ensureMigrated } from "@railor/database";
-import type { PickerOption } from "@railor/ui";
+import { currencyFlagCode, type PickerOption } from "@railor/ui";
 
 export interface ReferenceOptions {
   countries: PickerOption[];
@@ -12,6 +12,8 @@ export interface ReferenceOptions {
   methods: PickerOption[];
   /** Specific named rails (UPI, CHAPS, SEPA_ICT_DE, ...) — independent of `methods`' generic buckets. */
   namedRails: PickerOption[];
+  /** ISO country → its local currency, for inferring a destination currency once a country is picked. */
+  currencyByCountry: Record<string, string>;
 }
 
 const PRODUCTS: PickerOption[] = [
@@ -48,12 +50,15 @@ export async function getReferenceOptions(): Promise<ReferenceOptions> {
       value: c.code,
       label: c.name,
       sublabel: c.region,
-      emoji: c.flag,
+      // A real flag image by country code — flag emoji render as bare letters on Windows.
+      flag: c.code,
       popularity: c.popularity,
     })),
     currencies: currencies.map((c) => ({
       value: c.code,
       label: `${c.code} — ${c.name}`,
+      // The issuing country's flag; the symbol stays as the fallback glyph.
+      flag: currencyFlagCode(c.code) ?? undefined,
       emoji: c.symbol ?? undefined,
       popularity: c.popularity,
     })),
@@ -78,6 +83,9 @@ export async function getReferenceOptions(): Promise<ReferenceOptions> {
       value: r.code,
       label: `${r.name} (${r.countryCode})`,
     })),
+    currencyByCountry: Object.fromEntries(
+      currencies.filter((c) => c.countryCode).map((c) => [c.countryCode!, c.code]),
+    ),
   };
 }
 
@@ -110,5 +118,17 @@ export function optionsByField(ref: ReferenceOptions): Record<string, PickerOpti
     paymentMethod: ref.methods,
     namedRail: ref.namedRails,
     sourceNamedRail: ref.namedRails,
+  };
+}
+
+/** The subset of reference data the payment-intent pickers need (serializable for client components). */
+export async function getIntentOptions() {
+  const ref = await getReferenceOptions();
+  return {
+    countries: ref.countries,
+    currencies: ref.currencies,
+    assets: ref.assets,
+    networks: ref.networks,
+    currencyByCountry: ref.currencyByCountry,
   };
 }

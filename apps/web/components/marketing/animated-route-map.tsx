@@ -13,7 +13,28 @@ const nodes = [
   { left: "92%", top: "58%", icon: "د.إ", label: "AED", hint: "Bank rail" },
 ];
 
-export function AnimatedRouteMap() {
+export interface RouteMapStats {
+  checked: number;
+  supported: number;
+  partial: number;
+  topConfidence: number | null;
+  evidenceCount: number;
+}
+
+/** Hero artwork. The path animates; every figure on it is the live result for this exact corridor. */
+export function AnimatedRouteMap({ stats }: { stats: RouteMapStats | null }) {
+  const verdict = !stats
+    ? "Unknown"
+    : stats.supported > 0
+      ? `${stats.supported} supported`
+      : stats.partial > 0
+        ? `${stats.partial} need KYB`
+        : "No verified route";
+  const cards: Array<[string, string]> = [
+    ["Eligibility", verdict],
+    ["Best confidence", stats?.topConfidence == null ? "Unknown" : stats.topConfidence.toFixed(2)],
+    ["Evidence", stats ? `${stats.evidenceCount} ${stats.evidenceCount === 1 ? "source" : "sources"}` : "Unknown"],
+  ];
   return (
     <div
       className="relative min-h-[500px] overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-sand)]"
@@ -24,11 +45,11 @@ export function AnimatedRouteMap() {
 
       <div className="relative flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-paper)]/85 px-5 py-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">Live route simulation</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">Live route check</p>
           <p className="mt-1 text-[13px] font-semibold text-[var(--color-ink)]">India → USDC → UAE → AED</p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--color-orange-deep)]">
-          <Radio size={13} /> Checking 15 providers
+          <Radio size={13} /> {stats ? `${stats.checked} ${stats.checked === 1 ? "provider" : "providers"} checked` : "Checking providers"}
         </span>
       </div>
 
@@ -87,18 +108,10 @@ export function AnimatedRouteMap() {
           </motion.div>
         ))}
 
-        <div className="absolute left-[47%] top-[82%] flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 shadow-[var(--shadow-soft)]">
-          <CurrencyLogo symbol="USDT" size={20} />
-          <span className="text-[10px] font-bold text-[var(--color-ink-soft)]">USDT route also indexed</span>
-        </div>
       </div>
 
       <div className="absolute inset-x-5 bottom-5 grid grid-cols-3 gap-2">
-        {[
-          ["Eligibility", "Supported"],
-          ["Confidence", "0.96 high"],
-          ["Evidence", "4 sources"],
-        ].map(([label, value], index) => (
+        {cards.map(([label, value], index) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 8 }}
@@ -108,7 +121,7 @@ export function AnimatedRouteMap() {
           >
             <p className="text-[9px] font-bold uppercase tracking-[0.11em] text-[var(--color-faint)]">{label}</p>
             <p className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-[var(--color-ink)]">
-              {index === 0 ? <Check size={13} className="text-[var(--color-ok)]" /> : null}
+              {index === 0 && stats && stats.supported > 0 ? <Check size={13} className="text-[var(--color-ok)]" /> : null}
               {value}
             </p>
           </motion.div>

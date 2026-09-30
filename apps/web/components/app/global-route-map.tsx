@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, Chip, SectionLabel } from "@railor/ui";
+import { Card, Chip, Flag, SectionLabel } from "@railor/ui";
 // Deliberately the `geo` subpath, not the `@railor/core` barrel: the barrel
 // reaches analytics → @railor/database → pg, which cannot be bundled for the
 // browser. geo.ts is dependency-free by design. The route type is imported
@@ -130,7 +130,7 @@ export function GlobalRouteMap({
           </Chip>
           {focus ? (
             <Chip active onClick={() => setFocus(null)} className="text-[13px]">
-              {byCode.get(focus)?.flag} {label(focus)} — clear
+              <Flag code={focus} size={13} /> {label(focus)} — clear
             </Chip>
           ) : null}
         </div>
@@ -254,15 +254,15 @@ export function GlobalRouteMap({
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[1fr_1fr]">
         <Card className="flex flex-col gap-2 p-5">
           <SectionLabel>Cheapest route {focus ? `touching ${label(focus)}` : "on the map"}</SectionLabel>
           {cheapestVisible?.cheapest ? (
             <>
               <p className="text-[15px] font-medium">
-                {byCode.get(cheapestVisible.entityCountry)?.flag}{" "}
+                <Flag code={cheapestVisible.entityCountry} size={15} className="mr-1 -translate-y-px" />
                 {label(cheapestVisible.entityCountry)} →{" "}
-                {byCode.get(cheapestVisible.destinationCountry)?.flag}{" "}
+                <Flag code={cheapestVisible.destinationCountry} size={15} className="mr-1 -translate-y-px" />
                 {label(cheapestVisible.destinationCountry)}
               </p>
               <p className="text-[13.5px] text-[var(--color-muted)]">

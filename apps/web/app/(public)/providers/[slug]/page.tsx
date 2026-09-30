@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { loadProviderBySlug } from "@railor/core";
 import { CHANGE_KIND_LABEL } from "@railor/types";
 import { Card, EvidencePopover, Freshness, SectionLabel, VerdictPill } from "@railor/ui";
+import { ProviderLogo } from "../../../../components/app/provider-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,10 @@ export default async function PublicProviderProfile({
           <Link href="/providers" className="text-[13px] text-[var(--color-muted)]">
             ← All providers
           </Link>
-          <h1 className="text-[30px] font-semibold tracking-tight">{provider.name}</h1>
+          <h1 className="flex items-center gap-3 text-[30px] font-semibold tracking-tight">
+            <ProviderLogo slug={provider.slug} name={provider.name} size={44} />
+            {provider.name}
+          </h1>
           <p className="max-w-2xl text-[15px] leading-relaxed text-[var(--color-muted)]">
             {provider.description}
           </p>
@@ -60,7 +64,7 @@ export default async function PublicProviderProfile({
         </Link>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[1.5fr_1fr]">
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3 p-5">
             <SectionLabel>Products</SectionLabel>

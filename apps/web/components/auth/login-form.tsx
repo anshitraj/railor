@@ -9,6 +9,7 @@ interface Props {
   oauth: { google: boolean; github: boolean };
   savedQuery?: string;
   initialError?: string;
+  initialEmail?: string;
 }
 
 const ERROR_MESSAGE: Record<string, string> = {
@@ -28,8 +29,8 @@ const ERROR_MESSAGE: Record<string, string> = {
  * has no client ID configured, the button says so rather than failing after
  * the click.
  */
-export function LoginForm({ returnTo, oauth, savedQuery, initialError }: Props) {
-  const [email, setEmail] = useState("");
+export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEmail }: Props) {
+  const [email, setEmail] = useState(initialEmail ?? "");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     initialError ? "error" : "idle",
   );
@@ -165,11 +166,11 @@ export function LoginForm({ returnTo, oauth, savedQuery, initialError }: Props) 
 
       <p className="text-[12px] leading-relaxed text-[var(--color-faint)]">
         By continuing, you agree to the{" "}
-        <Link href="/company/trust" className="underline">
+        <Link href="/legal/terms" className="underline">
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="/company/trust" className="underline">
+        <Link href="/legal/privacy" className="underline">
           Privacy Policy
         </Link>
         .

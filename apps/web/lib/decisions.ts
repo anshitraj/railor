@@ -1,10 +1,12 @@
 import "server-only";
-import { getAdapter, loadDecision, type QuoteFetcher } from "@railor/core";
+import { getAdapter, loadDecision, loadConnectorQuote, type QuoteFetcher } from "@railor/core";
 import { PaymentIntent } from "@railor/types";
 import { getConnectionCredentials } from "./connections";
 
 /** snake_case wire body -> PaymentIntent. Field renaming only, same discipline as api-auth.ts's camelQuery — never fills in a value the caller didn't send. */
 export function parsePaymentIntentBody(body: Record<string, unknown>) {
+  const normalized = Object.fromEntries(Object.entries(body).map(([key, value]) => [key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`), value]));
+  body = normalized;
   return PaymentIntent.safeParse({
     sourceEntityCountry: body.source_entity_country,
     sourceEntityType: body.source_entity_type,
@@ -30,8 +32,10 @@ export function parsePaymentIntentBody(body: Record<string, unknown>) {
  * decrypted-credentials closure — @railor/core never sees ciphertext or a
  * decryption key, only a resolved UnifiedQuote or null.
  */
-export function buildFetchQuote(organizationId: string): QuoteFetcher {
+export function buildFetchQuote(organizationId: string, connectorOnly = false): QuoteFetcher {
   return async (providerSlug, providerId, request) => {
+    const local = await loadConnectorQuote(organizationId, providerSlug, request);
+    if (local || connectorOnly) return local;
     const adapter = getAdapter(providerSlug);
     if (!adapter?.getQuote) return null;
     const credentials = await getConnectionCredentials(organizationId, providerId);
@@ -48,6 +52,9 @@ export async function serializeDecisionById(organizationId: string, decisionId: 
   return {
     object: "decision",
     id: decision.id,
+    mode: decision.mode,
+    proposed_executor: decision.proposedExecutor ? { provider: decision.proposedExecutor } : null,
+    created_by: decision.createdBy,
     organization_id: decision.organizationId,
     intent: decision.intentSnapshot,
     policy_id: decision.policyId,
@@ -80,6 +87,8 @@ export async function serializeDecisionById(organizationId: string, decisionId: 
       route_certainty: c.routeCertainty,
       entity_eligibility: c.entityEligibility,
       policy_result: c.policyResult,
+      policy_evaluation: c.policyEvaluation,
+      dependency_snapshot: c.dependencySnapshot,
       policy_reason_codes: c.policyReasonCodes,
       quote_snapshot: c.quoteSnapshot,
       quote_type: c.quoteType,
@@ -93,4 +102,22 @@ export async function serializeDecisionById(organizationId: string, decisionId: 
       evidence_ids: c.evidenceIds,
     })),
   };
+}
+
+/** Recent decisions as picker choices — so no workflow ever asks a person to paste a UUID. */
+export async function recentDecisionChoices(organizationId: string, limit = 12) {
+  const { listDecisions } = await import("@railor/core");
+  const rows = await listDecisions(organizationId, {});
+  return rows.slice(0, limit).map((d) => {
+    const intent = d.intentSnapshot as Record<string, unknown>;
+    const provider = d.proposedExecutor ?? d.recommendedProviderSlug ?? "no provider";
+    const from = String(intent.sourceCurrency ?? intent.sourceAsset ?? "");
+    const to = String(intent.destinationCurrency ?? intent.destinationCountry ?? "");
+    return {
+      id: d.id,
+      status: d.status,
+      label: `${provider} · ${String(intent.amount ?? "")} ${from} → ${to}`,
+      evaluatedAt: d.evaluatedAt.toISOString().slice(0, 16).replace("T", " "),
+    };
+  });
 }

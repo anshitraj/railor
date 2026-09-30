@@ -59,7 +59,7 @@ export function ReadinessBoard({
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[1.4fr_1fr]">
         <Card className="flex flex-col gap-4 p-5">
           <div className="flex items-center justify-between">
             <SectionLabel>Your documents</SectionLabel>

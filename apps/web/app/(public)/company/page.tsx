@@ -1,28 +1,25 @@
 import Link from "next/link";
-import { Card, SectionLabel } from "@railor/ui";
+import { Card } from "@railor/ui";
+import { PageHeader } from "../../../components/marketing/page-header";
 
 export const metadata = { title: "Company" };
 
 export default function CompanyPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Company</SectionLabel>
-        <h1 className="text-[34px] font-semibold leading-tight tracking-tight">
-          Railor exists because the answer is knowable — it just isn&apos;t written down anywhere.
-        </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
+      <PageHeader eyebrow="Company" title="Railor exists because the answer is knowable — it just isn't written down anywhere.">
+        <p>
           Every stablecoin and payments team runs the same loop: ask a community which provider
           works for a country, read a dozen docs sites, sit through sales calls, keep a spreadsheet,
           then discover the incompatibility during implementation. The information exists. It is
           published, fragmented, described differently by every provider, and silently out of date.
         </p>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
+        <p>
           Railor normalizes it into one capability graph, attaches a source and a verification time
           to every claim, watches those sources for change, and exposes the result through a web
           app, an API and an MCP server.
         </p>
-      </div>
+      </PageHeader>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
@@ -31,7 +28,7 @@ export default function CompanyPage() {
           ["Monitored", "Snapshots and diffs, with material changes held for human review."],
         ].map(([title, body]) => (
           <Card key={title} className="flex flex-col gap-1.5 p-5">
-            <p className="text-[15px] font-medium">{title}</p>
+            <p className="font-display text-[16px] font-semibold tracking-[-0.02em]">{title}</p>
             <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">{body}</p>
           </Card>
         ))}

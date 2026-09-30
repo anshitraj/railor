@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { interpretRules } from "@railor/core";
 import { getSession } from "../../lib/auth";
 import { getReferenceOptions } from "../../lib/reference";
+import { createOrganizationForUser } from "../../lib/org";
 import { OnboardingFlow } from "../../components/onboarding/onboarding-flow";
 import { RailorMark } from "../../components/marketing/nav";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Welcome" };
 
 /** ccTLD → country. A defensible guess, always shown as "Detected" and editable. */
 const TLD_COUNTRY: Record<string, string> = {
@@ -39,9 +41,15 @@ export default async function WelcomePage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (!session.organization) redirect("/login?error=no_org");
-
   const params = await searchParams;
+  if (!session.organization) {
+    // Signed in without a workspace (left their last one, or declined an invite): make one
+    // rather than bouncing between /login and /welcome.
+    await createOrganizationForUser(session.user.id, session.user.email);
+    const qs = new URLSearchParams(Object.entries(params).flatMap(([k, v]) => (typeof v === "string" ? [[k, v]] : [])));
+    redirect(`/welcome${qs.size ? `?${qs}` : ""}`);
+  }
+
   const query = typeof params.q === "string" ? params.q : undefined;
   const reference = await getReferenceOptions();
 

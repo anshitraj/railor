@@ -1,4 +1,6 @@
-import { Card, CodeSample, SectionLabel, StageBadge } from "@railor/ui";
+import { Card, CodeSample, StageBadge } from "@railor/ui";
+import { DocsHeader } from "../../../../components/docs/docs-header";
+import { InlineCode } from "../../../../components/docs/inline-code";
 import { getSession } from "../../../../lib/auth";
 import { getOrgTestKey } from "../../../../lib/org";
 
@@ -13,14 +15,17 @@ const ENDPOINTS: Array<{
 }> = [
   { method: "POST", path: "/v1/corridors/search", summary: "Evaluate every provider against a corridor.", stage: "beta" },
   { method: "GET", path: "/v1/providers", summary: "List mapped providers, filterable by product or country.", stage: "beta" },
+  { method: "GET", path: "/v1/providers/{id}", summary: "One provider by slug: products, coverage, requirements, verified limits and fees, sources and recent changes.", stage: "beta" },
   { method: "GET", path: "/v1/changes", summary: "Detected changes, newest first. Filter by provider, or since a duration (7d/24h) or ISO date.", stage: "beta" },
   { method: "POST", path: "/v1/eligibility", summary: "Readiness against your org's KYB profile: what is satisfied, what is outstanding, per provider.", stage: "beta" },
   { method: "GET", path: "/v1/watchlists", summary: "List monitors with unread alert counts.", stage: "beta" },
   { method: "POST", path: "/v1/watchlists", summary: "Arm a monitor on a provider, corridor, country, asset or product. Idempotent per target.", stage: "beta" },
   { method: "GET·PATCH·DELETE", path: "/v1/watchlists/{id}", summary: "Inspect, retune or disarm one monitor; GET includes recent alerts.", stage: "beta" },
   { method: "GET", path: "/v1/watchlists/{id}/alerts", summary: "What one monitor has raised, newest first.", stage: "beta" },
-  { method: "POST", path: "/v1/compare", summary: "Like-for-like comparison of 2–4 providers.", stage: "soon" },
-  { method: "GET", path: "/v1/capabilities", summary: "Raw capability rows with evidence.", stage: "soon" },
+  { method: "POST", path: "/v1/compare", summary: "Like-for-like comparison of 2–4 providers. `only_differences: true` drops dimensions where they agree.", stage: "beta" },
+  { method: "GET", path: "/v1/capabilities", summary: "Raw capability rows with evidence. Filter by provider, product, countries, currency, asset, network, availability; cursor-paginated with `starting_after`.", stage: "beta" },
+  { method: "POST", path: "/v1/decisions", summary: "Evaluate a payment intent against an active policy. Recorded, hashed and revalidatable.", stage: "beta" },
+  { method: "GET·POST", path: "/v1/policies", summary: "List or create policies; versions, simulation and activation live under /v1/policies/{id}.", stage: "beta" },
 ];
 
 export default async function ApiDocs() {
@@ -30,15 +35,11 @@ export default async function ApiDocs() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Reference</SectionLabel>
-        <h1 className="text-[32px] font-semibold tracking-tight">API</h1>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
-          Stripe-shaped: bearer authentication, snake_case fields, `object` discriminators and an
-          evidence envelope on every claim. Endpoints not yet built are listed as such rather than
-          documented as if they exist.
-        </p>
-      </div>
+      <DocsHeader eyebrow="Reference" title="API">
+        Stripe-shaped: bearer authentication, snake_case fields, <code>object</code> discriminators
+        and an evidence envelope on every claim. Endpoints not yet built are listed as such rather
+        than documented as if they exist.
+      </DocsHeader>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-[20px] font-semibold">Authentication</h2>
@@ -60,7 +61,7 @@ export default async function ApiDocs() {
         <h2 className="text-[20px] font-semibold">Endpoints</h2>
         <Card className="divide-y divide-[var(--color-line)] p-0">
           {ENDPOINTS.map((endpoint) => (
-            <div key={endpoint.path} className="flex flex-wrap items-center gap-3 p-4">
+            <div key={`${endpoint.method} ${endpoint.path}`} className="flex flex-wrap items-center gap-3 p-4">
               <span
                 className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                   endpoint.method === "GET"
@@ -73,7 +74,7 @@ export default async function ApiDocs() {
               <code className="text-[13px]">{endpoint.path}</code>
               <StageBadge stage={endpoint.stage} />
               <span className="w-full text-[13px] text-[var(--color-muted)] sm:w-auto sm:flex-1">
-                {endpoint.summary}
+                <InlineCode>{endpoint.summary}</InlineCode>
               </span>
             </div>
           ))}

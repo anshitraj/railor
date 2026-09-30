@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Chip, EmptyState, Freshness, SectionLabel, cn } from "@railor/ui";
 import type { CompareTable } from "../../lib/compare";
+import { ProviderLogo } from "./provider-logo";
 import { shareComparison } from "../../app/app/compare/actions";
 
 const TONE: Record<string, string> = {
@@ -115,6 +116,7 @@ export function CompareBoard({
                 {table.providers.map((p) => (
                   <th key={p.slug} className="p-4">
                     <div className="flex flex-col gap-0.5">
+                      <ProviderLogo slug={p.slug} name={p.name} size={30} className="mb-1.5" />
                       <span className="text-[14px] font-medium">{p.name}</span>
                       <span className="text-[11px] text-[var(--color-muted)]">{p.category}</span>
                       <Freshness date={p.verifiedAt} />

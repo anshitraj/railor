@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateReadCache } from "@railor/core";
 import { and, eq } from "drizzle-orm";
 import { auditLogs, changeEvents, getDb, providerCapabilities } from "@railor/database";
 import { isResearchableCountry, pruneApiUsage, researchCountry, rollupApiUsageDay } from "@railor/core";
@@ -64,6 +65,7 @@ export async function approveChange(id: string) {
     metadata: { field: change.field, current: change.currentValue, alertsRaised: alerted },
   });
 
+  invalidateReadCache(); // provider data changed: searches and pages must not serve the old graph
   revalidatePath("/admin");
   return { ok: true as const, applied };
 }
@@ -84,6 +86,7 @@ export async function rejectChange(id: string) {
     metadata: {},
   });
 
+  invalidateReadCache(); // provider data changed: searches and pages must not serve the old graph
   revalidatePath("/admin");
   return { ok: true as const };
 }
@@ -107,6 +110,7 @@ export async function runUsageMaintenance() {
     metadata: { rollup, pruned },
   });
 
+  invalidateReadCache(); // provider data changed: searches and pages must not serve the old graph
   revalidatePath("/admin");
   return { ok: true as const, rollup, pruned };
 }
@@ -131,6 +135,7 @@ export async function refreshCountryResearch(code: string, forceRefresh = false)
     metadata: { forceRefresh, runId: report.runId, status: report.status, sourcesUsed: report.sourcesUsed },
   });
 
+  invalidateReadCache(); // provider data changed: searches and pages must not serve the old graph
   revalidatePath("/admin");
   return report;
 }

@@ -39,15 +39,16 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
   Product: {
     items: [
       { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live", icon: Search },
+      { label: "Live prices", href: "/prices", hint: "What arrives through each provider, quoted live", stage: "beta", icon: Zap },
       { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live", icon: Route },
       { label: "Provider Intelligence", href: "/providers", hint: "Coverage, requirements, limits, sources", stage: "live", icon: Warehouse },
       { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live", icon: Radar },
       { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live", icon: GitCompare },
-      { label: "Connections", href: "/company/roadmap", hint: "Connect the providers you already use", stage: "soon", icon: Plug },
+      { label: "Payments & routing", href: "/docs/payments", hint: "Send through your own provider accounts, routed with fallback", stage: "beta", icon: Plug },
     ],
     panel: {
       title: "One question, one answer",
-      body: "“Indian company sending USDC to a UAE supplier who receives AED” resolves to 15 providers checked, each with a verdict, a reason and a source.",
+      body: "“Indian company sending USDC to a UAE supplier who receives AED” resolves to every mapped provider checked, each with a verdict, a reason and a source.",
       href: "/#search",
     },
   },
@@ -57,7 +58,7 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
       { label: "Documentation", href: "/docs", hint: "Runnable snippets, your own test key", stage: "live", icon: BookOpen },
       { label: "MCP", href: "/docs/mcp", hint: "Let coding agents query verified data", stage: "beta", icon: Zap },
       { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", stage: "beta", icon: Package },
-      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "soon", icon: Terminal },
+      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "beta", icon: Terminal },
       { label: "Changelog", href: "/docs/changelog", hint: "What shipped", stage: "live", icon: History },
     ],
     panel: {
@@ -71,7 +72,7 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
       { label: "Provider Directory", href: "/providers", hint: "Filter by market, product, rail", stage: "live", icon: Warehouse },
       { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live", icon: Globe },
       { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live", icon: Radio },
-      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "soon", icon: BookOpen },
+      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "live", icon: BookOpen },
     ],
     panel: {
       title: "Evidence, not vibes",

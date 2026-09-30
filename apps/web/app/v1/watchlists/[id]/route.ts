@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, watchlists } from "@railor/database";
+import { getEntitlement } from "../../../../lib/entitlements";
 import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../../lib/api-auth";
 import {
   getOwnedWatchlist,
@@ -64,6 +65,9 @@ export async function PATCH(request: Request, { params }: Params) {
       );
     }
 
+    if (parsed.data.channel_email && !(await getEntitlement(context.organizationId)).limits.emailAlerts) {
+      throw new ApiError(403, "founding_required", "Email alerts require active Founding access.");
+    }
     const db = await getDb();
     const [updated] = await db
       .update(watchlists)

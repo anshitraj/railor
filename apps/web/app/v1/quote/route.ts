@@ -4,6 +4,8 @@ import { RankingPreset } from "@railor/types";
 import { loadProviderInputs, routeQuote } from "@railor/core";
 import { ApiError, authenticate, recordUsage, snake, type ApiContext } from "../../../lib/api-auth";
 import { getConnectableProviders, getConnectionCredentials } from "../../../lib/connections";
+import { getEntitlement } from "../../../lib/entitlements";
+import { consumeLimit } from "../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +34,8 @@ export async function POST(request: Request) {
   let context: ApiContext | null = null;
   try {
     context = await authenticate(request);
+    if (!(await getEntitlement(context.organizationId)).limits.providerConnections) throw new ApiError(403, "founding_required", "Live quotes require active Founding access.");
+    if (!await consumeLimit("live-quotes", context.organizationId, 10, 60_000)) throw new ApiError(429, "rate_limited", "Please retry shortly.");
     const parsed = Body.safeParse(await request.json().catch(() => ({})));
     if (!parsed.success) {
       throw new ApiError(400, "invalid_request", parsed.error.issues.map((i) => i.message).join("; "));

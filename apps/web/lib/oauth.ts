@@ -34,6 +34,7 @@ async function googleExchange({
   clientSecret: string;
 }): Promise<string> {
   const response = await fetch("https://oauth2.googleapis.com/token", {
+    signal: AbortSignal.timeout(10_000),
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -52,11 +53,12 @@ async function googleExchange({
 
 async function googleProfile(accessToken: string): Promise<ProviderProfile> {
   const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    signal: AbortSignal.timeout(10_000),
     headers: { authorization: `Bearer ${accessToken}` },
   });
   if (!response.ok) throw new Error(`google userinfo failed: ${response.status}`);
   const json = (await response.json()) as { email?: string; email_verified?: boolean; name?: string };
-  if (!json.email || json.email_verified === false) {
+  if (!json.email || json.email_verified !== true) {
     throw new Error("google account has no verified email");
   }
   return { email: json.email.toLowerCase(), name: json.name ?? null };
@@ -74,6 +76,7 @@ async function githubExchange({
   clientSecret: string;
 }): Promise<string> {
   const response = await fetch("https://github.com/login/oauth/access_token", {
+    signal: AbortSignal.timeout(10_000),
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: new URLSearchParams({
@@ -97,15 +100,16 @@ const githubHeaders = (accessToken: string) => ({
 });
 
 async function githubProfile(accessToken: string): Promise<ProviderProfile> {
-  const response = await fetch("https://api.github.com/user", { headers: githubHeaders(accessToken) });
+  const response = await fetch("https://api.github.com/user", { headers: githubHeaders(accessToken), signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`github user fetch failed: ${response.status}`);
   const json = (await response.json()) as { email?: string | null; name?: string | null };
 
-  let email = json.email?.toLowerCase() ?? null;
-  if (!email) {
+  let email: string | null = null;
+  {
     // Private-email accounts don't return one on /user — the verified primary
     // address lives in the emails list instead.
     const emailsRes = await fetch("https://api.github.com/user/emails", {
+      signal: AbortSignal.timeout(10_000),
       headers: githubHeaders(accessToken),
     });
     if (emailsRes.ok) {

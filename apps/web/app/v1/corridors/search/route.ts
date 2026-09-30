@@ -10,9 +10,11 @@ import {
   type ApiContext,
 } from "../../../../lib/api-auth";
 import { getSatisfiedRequirements } from "../../../../lib/org";
+import { getCachedMarketDiscovery } from "../../../../lib/market-discovery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * POST /v1/corridors/search
@@ -35,6 +37,9 @@ export async function POST(request: Request) {
       satisfiedRequirements: satisfied,
       organizationId: context.organizationId,
     });
+    const marketDiscovery = body.fresh_discovery === true
+      ? await getCachedMarketDiscovery(query, context.organizationId)
+      : null;
 
     const payload = {
       object: "corridor_search",
@@ -62,6 +67,7 @@ export async function POST(request: Request) {
       })),
       has_more: false,
       generated_at: result.generatedAt.toISOString(),
+      market_discovery: marketDiscovery,
     };
 
     await recordUsage(context, "/v1/corridors/search", "POST", 200, Date.now() - started);

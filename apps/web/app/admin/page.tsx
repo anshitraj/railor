@@ -1,312 +1,171 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { desc, eq, inArray } from "drizzle-orm";
-import {
-  changeEvents,
-  countries as countriesTable,
-  countryProfiles,
-  evidence as evidenceTable,
-  getDb,
-  providers,
-  sourceDocuments,
-} from "@railor/database";
-import {
-  corridorLabel,
-  getAuditLog,
-  getPlatformUsageSummary,
-  loadLatestCountryResearchRuns,
-  loadTopCorridorDemand,
-  RESEARCHABLE_COUNTRIES,
-} from "@railor/core";
-import { Card, Freshness, SectionLabel } from "@railor/ui";
-import { getSession } from "../../lib/auth";
-import { ReviewQueue } from "../../components/admin/review-queue";
-import { RailorMark } from "../../components/marketing/nav";
-import { UsageMaintenance } from "../../components/admin/usage-maintenance";
-import { CountryResearchPanel } from "../../components/admin/country-research-panel";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { getPlatformPaymentFlags, getPlatformUsageSummary, liveMoneyMovementEnabled, listAllPayments, paymentStats } from "@railor/core";
+import { changeEvents, getDb, orgPaymentSettings, organizations, payments, sourceDocuments, users } from "@railor/database";
+import { AdminHeader } from "../../components/admin/admin-shell";
+import { Sparkline, dailyCounts } from "../../components/app/sparkline";
+import { ModeChip, PaymentStatusBadge, formatAmount } from "../../components/app/payments/payment-status";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Operations console" };
+export const metadata = { title: "Operations · Overview" };
 
-function relativeTime(date: Date): string {
-  const mins = Math.max(1, Math.round((Date.now() - date.getTime()) / 60000));
-  if (mins < 60) return `${mins}m ago`;
-  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
-  return `${Math.round(mins / 1440)}d ago`;
-}
-
-export default async function AdminPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (!session.user.isAdmin) {
-    return (
-      <main className="mx-auto flex w-[min(700px,calc(100%-2rem))] flex-col gap-3 py-24">
-        <h1 className="text-[24px] font-semibold">Operations console</h1>
-        <p className="text-[14px] text-[var(--color-muted)]">
-          This console is restricted to Railor operators. Your account ({session.user.email}) does
-          not have the operator flag.
-        </p>
-        <p className="text-[13px] text-[var(--color-faint)]">
-          Grant it in the database: <code>update users set is_admin = true where email = &apos;…&apos;;</code>
-        </p>
-        <Link href="/app" className="text-[13.5px] font-medium text-[var(--color-purple)]">
-          ← Back to the workspace
-        </Link>
-      </main>
-    );
-  }
-
+export default async function AdminOverview() {
   const db = await getDb();
-  const [pending, crawlers, recentEvidence, platformUsage, auditLog, researchedCountries, latestRuns, topDemand] = await Promise.all([
-    db
-      .select({
-        change: changeEvents,
-        providerName: providers.name,
-        evidenceUrl: evidenceTable.sourceUrl,
-        evidenceTitle: evidenceTable.sourceTitle,
-      })
-      .from(changeEvents)
-      .innerJoin(providers, eq(changeEvents.providerId, providers.id))
-      .leftJoin(evidenceTable, eq(changeEvents.evidenceId, evidenceTable.id))
-      .where(eq(changeEvents.reviewStatus, "pending"))
-      .orderBy(desc(changeEvents.detectedAt))
-      .limit(50),
-    db
-      .select({ source: sourceDocuments, providerName: providers.name })
-      .from(sourceDocuments)
-      .innerJoin(providers, eq(sourceDocuments.providerId, providers.id))
-      .orderBy(desc(sourceDocuments.lastCheckedAt))
-      .limit(20),
-    db.select().from(evidenceTable).orderBy(desc(evidenceTable.createdAt)).limit(8),
-    getPlatformUsageSummary(30),
-    getAuditLog(20),
-    db
-      .select({ iso2: countryProfiles.iso2, lastResearchedAt: countryProfiles.lastResearchedAt })
-      .from(countryProfiles)
-      .where(inArray(countryProfiles.iso2, [...RESEARCHABLE_COUNTRIES])),
-    loadLatestCountryResearchRuns([...RESEARCHABLE_COUNTRIES]),
-    loadTopCorridorDemand(15),
+  const since14 = new Date(Date.now() - 14 * 86_400_000);
+  const since7 = new Date(Date.now() - 7 * 86_400_000);
+  const since1 = new Date(Date.now() - 86_400_000);
+  const [[orgCount], [newOrgs], [userCount], [liveOrgs], [pendingReview], [crawlerFailures], [unknownPayments], [failed24], stats, flags, usage, recent, paymentDates, orgDates] = await Promise.all([
+    db.select({ n: sql<number>`count(*)::int` }).from(organizations),
+    db.select({ n: sql<number>`count(*)::int` }).from(organizations).where(gte(organizations.createdAt, since7)),
+    db.select({ n: sql<number>`count(*)::int` }).from(users),
+    db.select({ n: sql<number>`count(*)::int` }).from(orgPaymentSettings).where(eq(orgPaymentSettings.liveEnabled, true)),
+    db.select({ n: sql<number>`count(*)::int` }).from(changeEvents).where(eq(changeEvents.reviewStatus, "pending")),
+    db.select({ n: sql<number>`count(*)::int` }).from(sourceDocuments).where(sql`${sourceDocuments.failureCount} > 0`),
+    db.select({ n: sql<number>`count(*)::int` }).from(payments).where(eq(payments.status, "unknown")),
+    db.select({ n: sql<number>`count(*)::int` }).from(payments).where(and(eq(payments.status, "failed"), gte(payments.updatedAt, since1))),
+    paymentStats({ sinceDays: 30 }),
+    getPlatformPaymentFlags(),
+    getPlatformUsageSummary(30, 200),
+    listAllPayments({ limit: 8 }),
+    db.select({ at: payments.createdAt }).from(payments).where(gte(payments.createdAt, since14)),
+    db.select({ at: organizations.createdAt }).from(organizations).where(gte(organizations.createdAt, since14)),
   ]);
 
-  const failing = crawlers.filter((c) => c.source.failureCount > 0);
+  const byMode = (mode: string) => stats.filter((s) => s.mode === mode);
+  const volume = (mode: string) => {
+    const totals = new Map<string, number>();
+    for (const s of byMode(mode).filter((s) => s.status === "completed")) totals.set(s.currency, (totals.get(s.currency) ?? 0) + s.volume);
+    return totals.size ? [...totals].sort((a, b) => b[1] - a[1]).map(([currency, amount]) => formatAmount(amount, currency)).join(" · ") : "None";
+  };
+  const count = (mode: string) => byMode(mode).reduce((a, s) => a + s.count, 0);
+  const apiRequests = usage.reduce((a, r) => a + r.count, 0);
 
-  const countryNames = await db
-    .select({ code: countriesTable.code, name: countriesTable.name })
-    .from(countriesTable)
-    .where(inArray(countriesTable.code, [...RESEARCHABLE_COUNTRIES]));
-  const countryResearchRows = RESEARCHABLE_COUNTRIES.map((iso2) => {
-    const profile = researchedCountries.find((p) => p.iso2 === iso2);
-    const run = latestRuns.get(iso2);
-    return {
-      iso2,
-      name: countryNames.find((c) => c.code === iso2)?.name ?? iso2,
-      lastResearchedAt: profile?.lastResearchedAt?.toISOString() ?? null,
-      sourcesUsed: run?.sourcesUsed ?? null,
-      status: run?.status ?? null,
-    };
-  })
-    // Not-yet-researched first — the operator opening this panel almost
-    // always wants to know what still needs attention, not to scroll a
-    // ~60-row alphabetical list to find it. Researched countries follow, most
-    // recent first, since a stale/failed one is the next-most-actionable thing.
-    .sort((a, b) => {
-      if (!a.lastResearchedAt && !b.lastResearchedAt) return a.name.localeCompare(b.name);
-      if (!a.lastResearchedAt) return -1;
-      if (!b.lastResearchedAt) return 1;
-      return b.lastResearchedAt.localeCompare(a.lastResearchedAt);
-    });
+  const attention = [
+    flags.paused ? { tone: "bad", text: `Payments paused: ${flags.pausedReason ?? "no reason recorded"}`, href: "/admin/payments" } : null,
+    (unknownPayments?.n ?? 0) > 0 ? { tone: "bad", text: `${unknownPayments!.n} payment(s) with an unknown outcome`, href: "/admin/payments?status=unknown" } : null,
+    (failed24?.n ?? 0) > 0 ? { tone: "warn", text: `${failed24!.n} payment(s) failed in the last 24h`, href: "/admin/payments?status=failed" } : null,
+    (pendingReview?.n ?? 0) > 0 ? { tone: "warn", text: `${pendingReview!.n} detected change(s) awaiting review`, href: "/admin/review" } : null,
+    (crawlerFailures?.n ?? 0) > 0 ? { tone: "warn", text: `${crawlerFailures!.n} source(s) failing to crawl`, href: "/admin/review" } : null,
+    !liveMoneyMovementEnabled() ? { tone: "neutral", text: "Live money movement is off on this deployment (RAILOR_LIVE_PAYMENTS)", href: "/admin/payments" } : null,
+  ].filter((x): x is { tone: string; text: string; href: string } => Boolean(x));
+
+  const tiles = [
+    { label: "Workspaces", value: orgCount?.n ?? 0, hint: `+${newOrgs?.n ?? 0} this week`, series: dailyCounts(orgDates.map((r) => r.at), 14), href: "/admin/organizations" },
+    { label: "Users", value: userCount?.n ?? 0, hint: `${liveOrgs?.n ?? 0} workspaces live`, href: "/admin/organizations" },
+    { label: "API requests · 30d", value: apiRequests, hint: `${usage.length} active workspaces`, href: "/admin/usage" },
+    { label: "Payments · 30d", value: count("live") + count("test"), hint: `${count("live")} live · ${count("test")} test`, series: dailyCounts(paymentDates.map((r) => r.at), 14), href: "/admin/payments" },
+  ];
 
   return (
-    <main className="mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-col gap-6 py-10">
-      <header className="flex items-center gap-3">
-        <Link href="/app" className="flex items-center gap-2">
-          <RailorMark />
-          <span className="text-[15px] font-semibold">Railor</span>
-        </Link>
-        <span className="rounded-full bg-[var(--color-ink)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-white">
-          Operations
-        </span>
-        <span className="flex-1" />
-        <span className="text-[13px] text-[var(--color-muted)]">{session.user.email}</span>
-      </header>
+    <>
+      <AdminHeader title="Overview" description="Everything that needs an operator today, and how the platform is being used." />
 
-      <section className="grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-line)] md:grid-cols-4">
-        {[
-          ["Pending review", pending.length],
-          ["Sources tracked", crawlers.length],
-          ["Crawler failures", failing.length],
-          ["Evidence records (recent)", recentEvidence.length],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="bg-white p-5">
-            <p className="tabular text-[26px] font-semibold">{value as number}</p>
-            <p className="text-[13px] text-[var(--color-muted)]">{label as string}</p>
-          </div>
+      <section className="grid gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map((t) => (
+          <Link key={t.label} href={t.href} className="flex items-end justify-between gap-3 bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-paper)]">
+            <span className="flex flex-col gap-1">
+              <span className="font-display text-[30px] font-semibold leading-none tracking-[-0.04em] tabular">{t.value.toLocaleString("en-US")}</span>
+              <span className="text-[13px] text-[var(--color-ink-soft)]">{t.label}</span>
+              <span className="text-[11px] text-[var(--color-faint)]">{t.hint}</span>
+            </span>
+            {t.series ? <Sparkline values={t.series} label={`${t.label} per day, 14 days`} width={90} height={30} /> : null}
+          </Link>
         ))}
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div className="flex flex-col gap-3">
-          <SectionLabel>Change review</SectionLabel>
-          <ReviewQueue
-            items={pending.map((row) => ({
-              id: row.change.id,
-              provider: row.providerName,
-              kind: row.change.kind,
-              field: row.change.field,
-              previousValue: row.change.previousValue,
-              currentValue: row.change.currentValue,
-              summary: row.change.summary,
-              confidence: Number(row.change.confidence),
-              detectedAt: row.change.detectedAt.toISOString(),
-              sourceUrl: row.evidenceUrl,
-              sourceTitle: row.evidenceTitle,
-            }))}
-          />
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] [&>*]:min-w-0">
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
+          <h2 className="text-[15px] font-semibold">Needs attention</h2>
+          {attention.length ? (
+            <ul className="flex flex-col gap-2">
+              {attention.map((a) => (
+                <li key={a.text}>
+                  <Link href={a.href} className="flex items-center gap-3 rounded-xl border border-[var(--color-line)] px-3 py-2.5 text-[13px] transition hover:border-[var(--color-line-strong)]">
+                    <span className={`size-2 shrink-0 rounded-full ${a.tone === "bad" ? "bg-[var(--color-bad)]" : a.tone === "warn" ? "bg-[var(--color-warn)]" : "bg-[var(--color-unknown)]"}`} />
+                    <span className="flex-1">{a.text}</span>
+                    <span className="text-[var(--color-faint)]">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-[var(--color-muted)]">Nothing needs an operator right now.</p>
+          )}
+          <dl className="mt-2 grid grid-cols-2 gap-3 border-t border-[var(--color-line)] pt-3 text-[12.5px]">
+            <div>
+              <dt className="text-[var(--color-faint)]">Live volume settled · 30d</dt>
+              <dd className="font-semibold tabular">{volume("live")}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--color-faint)]">Test volume settled · 30d</dt>
+              <dd className="font-semibold tabular">{volume("test")}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--color-faint)]">Live providers</dt>
+              <dd className="font-semibold">{flags.liveProviders.join(", ") || "None approved"}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--color-faint)]">Deployment live switch</dt>
+              <dd className={`font-semibold ${liveMoneyMovementEnabled() ? "text-[var(--color-ok)]" : ""}`}>{liveMoneyMovementEnabled() ? "Enabled" : "Off"}</dd>
+            </div>
+          </dl>
         </div>
 
-        <Card className="flex flex-col gap-3 p-5">
-          <SectionLabel>Source registry</SectionLabel>
-          <ul className="flex flex-col gap-2">
-            {crawlers.map(({ source, providerName }) => (
-              <li key={source.id} className="flex flex-col gap-0.5 border-b border-[var(--color-line)] pb-2 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium">{providerName}</span>
-                  <span className="text-[11px] text-[var(--color-muted)]">
-                    {source.sourceType.replace(/_/g, " ")}
-                  </span>
-                  <span className="flex-1" />
-                  {source.failureCount > 0 ? (
-                    <span className="text-[11px] text-[var(--color-bad)]">
-                      {source.failureCount} failures
-                    </span>
-                  ) : null}
-                </div>
-                <a
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="truncate text-[12px] text-[var(--color-muted)] hover:text-[var(--color-purple)]"
-                >
-                  {source.url}
-                </a>
-                <div className="flex items-center gap-2">
-                  <Freshness date={source.lastCheckedAt} prefix="Checked" />
-                  <span className="text-[11px] text-[var(--color-faint)]">
-                    every {source.crawlFrequencyHours}h
-                    {source.requiresJs ? " · requires JS" : ""}
-                  </span>
-                </div>
-                {source.lastError ? (
-                  <span className="text-[11px] text-[var(--color-bad)]">{source.lastError}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
           <div className="flex items-center justify-between">
-            <SectionLabel>API usage — last 30 days, all orgs</SectionLabel>
-            <UsageMaintenance />
+            <h2 className="text-[15px] font-semibold">Latest payments, all workspaces</h2>
+            <Link href="/admin/payments" className="text-[12.5px] font-semibold text-[var(--color-orange-deep)]">
+              All →
+            </Link>
           </div>
-          {platformUsage.length ? (
-            <table className="w-full text-left text-[13px]">
-              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
-                <tr>
-                  <th className="pb-2">Organization</th>
-                  <th className="pb-2">Requests</th>
-                  <th className="pb-2">Errors</th>
-                  <th className="pb-2">Last request</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platformUsage.map((row) => (
-                  <tr key={row.organizationId} className="border-t border-[var(--color-line)]">
-                    <td className="py-2">{row.organizationName}</td>
-                    <td className="tabular py-2">{row.count}</td>
-                    <td className="tabular py-2">{row.errors}</td>
-                    <td className="tabular py-2 text-[var(--color-muted)]">
-                      {relativeTime(row.lastRequestAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-[13px] text-[var(--color-muted)]">
-              No API calls recorded across any workspace in the last 30 days.
-            </p>
-          )}
-        </Card>
-
-        <Card className="flex flex-col gap-3 p-5">
-          <SectionLabel>Audit log</SectionLabel>
-          <ul className="flex flex-col gap-2">
-            {auditLog.map((entry) => (
-              <li key={entry.id} className="flex flex-col border-b border-[var(--color-line)] pb-2 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium">{entry.action}</span>
-                  <span className="flex-1" />
-                  <span className="text-[11px] text-[var(--color-faint)]">
-                    {relativeTime(entry.createdAt)}
-                  </span>
-                </div>
-                <span className="text-[11px] text-[var(--color-muted)]">
-                  {entry.actorEmail ?? "unknown actor"}
-                  {entry.organizationName ? ` · ${entry.organizationName}` : ""}
-                  {entry.target ? ` · ${entry.target}` : ""}
-                </span>
-              </li>
-            ))}
-            {!auditLog.length ? (
-              <li className="text-[13px] text-[var(--color-muted)]">No admin actions recorded yet.</li>
-            ) : null}
-          </ul>
-        </Card>
-      </div>
-
-      <Card className="flex flex-col gap-3 p-5">
-        <SectionLabel>Demand telemetry</SectionLabel>
-        <p className="text-[12px] text-[var(--color-muted)]">
-          Real corridor search intent, aggregated across every real (non-demo) search — anonymous, no
-          per-user or per-org data. Ranked by real search count, not a guessed priority score.
-        </p>
-        {topDemand.length ? (
-          <table className="w-full text-left text-[13px]">
-            <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
-              <tr>
-                <th className="pb-2">Corridor</th>
-                <th className="pb-2">Searches</th>
-                <th className="pb-2">Avg. requested amount</th>
-                <th className="pb-2">Last searched</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topDemand.map((row) => (
-                <tr key={row.id} className="border-t border-[var(--color-line)]">
-                  <td className="py-2">{corridorLabel(row.query)}</td>
-                  <td className="tabular py-2">{row.searchCount}</td>
-                  <td className="tabular py-2 text-[var(--color-muted)]">
-                    {row.averageRequestedVolume !== null
-                      ? `${Math.round(row.averageRequestedVolume).toLocaleString()} (${row.volumeSearchCount} of ${row.searchCount} specified an amount)`
-                      : "No amount specified yet"}
-                  </td>
-                  <td className="tabular py-2 text-[var(--color-muted)]">{relativeTime(row.lastSearchedAt)}</td>
-                </tr>
+          {recent.length ? (
+            <ul className="flex flex-col divide-y divide-[var(--color-line)]">
+              {recent.map(({ payment, organizationName }) => (
+                <li key={payment.id} className="flex flex-wrap items-center gap-2 py-2 text-[12.5px]">
+                  <PaymentStatusBadge status={payment.status} />
+                  <ModeChip mode={payment.mode} />
+                  <span className="font-semibold tabular">{formatAmount(payment.amount, payment.sourceCurrency)}</span>
+                  <span className="text-[var(--color-muted)]">→ {payment.destinationCurrency}</span>
+                  <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">{organizationName}</span>
+                  <time className="font-mono text-[11px] text-[var(--color-faint)]">{payment.createdAt.toISOString().slice(5, 16).replace("T", " ")}</time>
+                </li>
               ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-[13px] text-[var(--color-muted)]">No real searches recorded yet.</p>
-        )}
-      </Card>
+            </ul>
+          ) : (
+            <p className="text-[13px] text-[var(--color-muted)]">No payments yet on this deployment.</p>
+          )}
+        </div>
+      </section>
 
-      <Card className="flex flex-col gap-3 p-5">
-        <SectionLabel>Country intelligence</SectionLabel>
-        <CountryResearchPanel rows={countryResearchRows} />
-      </Card>
-    </main>
+      <RecentSignups />
+    </>
+  );
+}
+
+async function RecentSignups() {
+  const db = await getDb();
+  const rows = await db.select().from(organizations).orderBy(desc(organizations.createdAt)).limit(6);
+  return (
+    <section className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[15px] font-semibold">Newest workspaces</h2>
+        <Link href="/admin/organizations" className="text-[12.5px] font-semibold text-[var(--color-orange-deep)]">
+          All →
+        </Link>
+      </div>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((o) => (
+          <li key={o.id} className="flex items-center gap-3 rounded-xl border border-[var(--color-line)] px-3 py-2.5">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold uppercase text-white">{o.name.charAt(0)}</span>
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-semibold">{o.name}</span>
+              <span className="block text-[11.5px] text-[var(--color-muted)]">
+                {o.entityCountry ?? "—"} · {o.createdAt.toISOString().slice(0, 10)}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

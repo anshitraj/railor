@@ -25,7 +25,7 @@ export async function sendMail(options: { to: string; subject: string; text: str
     await transport.sendMail({ from, ...options });
     return { sent: true as const };
   } catch (error) {
-    console.error("[mail]", error);
+    console.error(JSON.stringify({ event: "mail_failed", errorType: error instanceof Error ? error.name : "UnknownError" }));
     return { sent: false as const, error: "send_failed" as const };
   }
 }

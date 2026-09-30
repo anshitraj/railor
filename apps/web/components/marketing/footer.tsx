@@ -6,6 +6,7 @@ const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
     title: "Product",
     links: [
       ["Search", "/#search"],
+      ["Live prices", "/prices"],
       ["Corridor Explorer", "/app/corridors"],
       ["Provider Directory", "/providers"],
       ["Change feed", "/changes"],
@@ -20,6 +21,15 @@ const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
       ["MCP server", "/docs/mcp"],
       ["SDKs", "/docs/sdks"],
       ["Changelog", "/docs/changelog"],
+      ["CLI", "/docs/cli"],
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      ["Market coverage", "/coverage"],
+      ["Guides", "/docs/guides"],
+      ["Status", "/status"],
     ],
   },
   {
@@ -28,6 +38,8 @@ const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
       ["About", "/company"],
       ["Roadmap", "/company/roadmap"],
       ["Trust", "/company/trust"],
+      ["Terms", "/legal/terms"],
+      ["Privacy", "/legal/privacy"],
     ],
   },
 ];
@@ -73,7 +85,7 @@ export function MarketingFooter({
           </p>
         </div>
 
-        <div className="grid gap-8 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {GROUPS.map((group) => (
             <div key={group.title} className="flex flex-col gap-2">
               <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">
@@ -96,11 +108,14 @@ export function MarketingFooter({
       <div className="border-t border-white/10">
         <div className="mx-auto flex w-[min(1360px,calc(100%-2rem))] flex-wrap items-center gap-4 py-5 text-[12px] text-white/35">
           <span>© {new Date().getFullYear()} Railor</span>
-          <Link href="/company/trust" className="hover:text-white">
+          <Link href="/legal/terms" className="hover:text-white">
             Terms
           </Link>
-          <Link href="/company/trust" className="hover:text-white">
+          <Link href="/legal/privacy" className="hover:text-white">
             Privacy
+          </Link>
+          <Link href="/status" className="hover:text-white">
+            Status
           </Link>
           <span className="flex-1" />
           <span>Say unknown, not wrong.</span>

@@ -1,18 +1,21 @@
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
-import { apiKeys, getDb } from "@railor/database";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { apiKeys, getDb, rateLimitBuckets } from "@railor/database";
+import { getEntitlement } from "../../../lib/entitlements";
 import {
   getMonthlyUsageCount,
   getUsageByEndpoint,
   getUsageDailySeries,
   monthStart,
-  resolveMonthlyCap,
 } from "@railor/core";
 import { getSession } from "../../../lib/auth";
-import { getSavedCorridors } from "../../../lib/org";
+import { createApiKey, getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
+import { WebhookEndpoints } from "../../../components/app/webhook-endpoints";
+import { listWebhookDeliveries, listWebhookEndpoints } from "@railor/core";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Developers" };
 
 export default async function DevelopersPage() {
   const session = await getSession();
@@ -20,6 +23,18 @@ export default async function DevelopersPage() {
   const org = session.organization;
 
   const db = await getDb();
+  // Law 9: a test key exists before anyone asks for one. Workspaces created before
+  // keys were auto-provisioned (or whose key was revoked) get one on first visit.
+  const [anyTestKey] = await db
+    .select({ id: apiKeys.id })
+    .from(apiKeys)
+    .where(and(eq(apiKeys.organizationId, org.id), eq(apiKeys.mode, "test"), isNull(apiKeys.revokedAt)))
+    .limit(1);
+  if (!anyTestKey && session.role !== "viewer") await createApiKey(org.id, session.user.id, "Default test key", "test");
+
+  const entitlement = await getEntitlement(org.id);
+  const [workspaceUsage] = await db.select().from(rateLimitBuckets).where(and(eq(rateLimitBuckets.key, `api-month:${org.id}`), eq(rateLimitBuckets.windowStart, monthStart())));
+  const keyLimit = (key: { monthlyRequestCap: number | null }) => Math.min(key.monthlyRequestCap ?? entitlement.limits.apiRequests, entitlement.limits.apiRequests);
   const [keys, usage, dailySeries, corridors] = await Promise.all([
     db
       .select()
@@ -47,8 +62,8 @@ export default async function DevelopersPage() {
   const primaryKey = liveKey ?? testKey;
   const quota = primaryKey
     ? {
-        used: usageByKey.get(primaryKey.id) ?? 0,
-        cap: resolveMonthlyCap(primaryKey),
+        used: workspaceUsage?.count ?? 0,
+        cap: entitlement.limits.apiRequests,
         mode: primaryKey.mode,
       }
     : null;
@@ -63,7 +78,10 @@ export default async function DevelopersPage() {
     customer_type: "business",
   };
 
+  const [endpoints, deliveries] = await Promise.all([listWebhookEndpoints(org.id), listWebhookDeliveries(org.id, 30)]);
+
   return (
+    <div className="flex flex-col gap-5">
     <DeveloperPortal
       baseUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
       exampleQuery={exampleQuery}
@@ -77,11 +95,17 @@ export default async function DevelopersPage() {
         createdAt: k.createdAt.toISOString(),
         revoked: Boolean(k.revokedAt),
         monthlyUsed: k.revokedAt ? null : (usageByKey.get(k.id) ?? 0),
-        monthlyCap: k.revokedAt ? null : resolveMonthlyCap(k),
+        monthlyCap: k.revokedAt ? null : keyLimit(k),
       }))}
       usage={usage}
       dailySeries={dailySeries}
       quota={quota}
     />
+    <WebhookEndpoints
+      canManage={session.role === "owner" || session.role === "admin"}
+      endpoints={endpoints.map((e) => ({ id: e.id, url: e.url, description: e.description, mode: e.mode, events: e.events, enabled: e.enabled, secretHint: e.secretHint }))}
+      deliveries={deliveries.map(({ delivery, url }) => ({ id: delivery.id, eventType: delivery.eventType, status: delivery.status, attempts: delivery.attempts, lastStatusCode: delivery.lastStatusCode, lastError: delivery.lastError, createdAt: delivery.createdAt.toISOString(), url }))}
+    />
+    </div>
   );
 }

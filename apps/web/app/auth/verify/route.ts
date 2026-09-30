@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { consumeMagicLink, getSession } from "../../../lib/auth";
 import { createOrganizationForUser } from "../../../lib/org";
+import { appOrigin, safeReturnPath } from "../../../lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,10 @@ export async function GET(request: Request) {
   if (!result) return NextResponse.redirect(new URL("/login?error=expired", url));
 
   const session = await getSession();
-  if (session && !session.organization) {
+  const joiningByInvite = safeReturnPath(result.returnTo).startsWith("/invite/");
+  if (session && !session.organization && !joiningByInvite) {
     await createOrganizationForUser(result.user.id, result.user.email);
   }
 
-  const returnTo = result.returnTo && result.returnTo.startsWith("/") ? result.returnTo : "/welcome";
-  return NextResponse.redirect(new URL(returnTo, url));
+  return NextResponse.redirect(new URL(safeReturnPath(result.returnTo), appOrigin()));
 }

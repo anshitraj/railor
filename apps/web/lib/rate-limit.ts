@@ -1,25 +1,27 @@
 import "server-only";
+import { createHash } from "node:crypto";
+import { sql } from "drizzle-orm";
+import { ensureMigrated, getDb, rateLimitBuckets } from "@railor/database";
 
-/**
- * In-process burst limiter for the /v1 API, keyed by API key id.
- *
- * This is a single-instance limiter: state lives in the Node process's
- * memory, so it resets on deploy and does not coordinate across multiple
- * server instances. That's a real limitation, not an oversight — a
- * distributed limiter needs a shared store (Redis, already provisioned in
- * docker-compose but not yet wired into the web app) and wiring that up is
- * out of scope here. The monthly quota check in analytics.ts is
- * database-backed and does not have this limitation.
- */
-const WINDOW_MS = 10_000;
-const MAX_REQUESTS_PER_WINDOW = 30;
-
-const hits = new Map<string, number[]>();
-
-export function checkBurstLimit(key: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  recent.push(now);
-  hits.set(key, recent);
-  return recent.length <= MAX_REQUESTS_PER_WINDOW;
+/** Atomic across instances; raw IP and email addresses are never persisted. */
+export async function consumeLimit(scope: string, identity: string, limit: number, windowMs: number): Promise<boolean> {
+  await ensureMigrated();
+  const db = await getDb();
+  const key = `${scope}:${createHash("sha256").update(identity).digest("hex")}`;
+  const start = Math.floor(Date.now() / windowMs) * windowMs;
+  const [row] = await db.insert(rateLimitBuckets).values({
+    key, windowStart: new Date(start), count: 1, expiresAt: new Date(start + windowMs),
+  }).onConflictDoUpdate({
+    target: [rateLimitBuckets.key, rateLimitBuckets.windowStart],
+    set: { count: sql`${rateLimitBuckets.count} + 1` },
+    setWhere: sql`${rateLimitBuckets.count} < ${limit}`,
+  }).returning({ count: rateLimitBuckets.count });
+  return Boolean(row && row.count <= limit);
 }
+
+export function requestIdentity(request: Request): string {
+  // Vercel overwrites this header. Self-hosted deployments must do so at the proxy.
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+}
+
+export const checkBurstLimit = (key: string) => consumeLimit("api-burst", key, 30, 10_000);

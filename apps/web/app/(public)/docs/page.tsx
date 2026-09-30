@@ -1,10 +1,18 @@
 import Link from "next/link";
-import { CodeSample, SectionLabel } from "@railor/ui";
+import { ArrowRight, Code2, Package, Zap, type LucideIcon } from "lucide-react";
+import { CodeSample } from "@railor/ui";
+import { DocsHeader } from "../../../components/docs/docs-header";
 import { getSession } from "../../../lib/auth";
 import { getOrgTestKey } from "../../../lib/org";
 
 export const metadata = { title: "Documentation" };
 export const dynamic = "force-dynamic";
+
+const NEXT_STEPS: Array<{ href: string; title: string; blurb: string; icon: LucideIcon }> = [
+  { href: "/docs/api", title: "API reference", blurb: "Endpoints, authentication, errors.", icon: Code2 },
+  { href: "/docs/mcp", title: "MCP server", blurb: "Let an agent ask the same questions.", icon: Zap },
+  { href: "/docs/sdks", title: "SDKs", blurb: "TypeScript and Python shapes.", icon: Package },
+];
 
 export default async function DocsIndex() {
   const session = await getSession();
@@ -13,14 +21,10 @@ export default async function DocsIndex() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Getting started</SectionLabel>
-        <h1 className="text-[32px] font-semibold tracking-tight">60 seconds to a real answer</h1>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
-          Railor answers one question: which providers can serve this corridor, why, and what
-          supports that answer. Everything below returns the same data the app renders.
-        </p>
-      </div>
+      <DocsHeader eyebrow="Getting started" title="60 seconds to a real answer">
+        Railor answers one question: which providers can serve this corridor, why, and what
+        supports that answer. Everything below returns the same data the app renders.
+      </DocsHeader>
 
       <CodeSample
         apiKey={key ?? undefined}
@@ -129,27 +133,32 @@ print(res.json()["counts"])`,
         />
       </section>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-4">
         <h2 className="text-[20px] font-semibold">Next</h2>
-        <ul className="flex flex-col gap-1.5 text-[14.5px]">
-          <li>
-            <Link href="/docs/api" className="text-[var(--color-purple)]">
-              API reference
-            </Link>{" "}
-            — endpoints, authentication, errors.
-          </li>
-          <li>
-            <Link href="/docs/mcp" className="text-[var(--color-purple)]">
-              MCP server
-            </Link>{" "}
-            — let an agent ask the same questions.
-          </li>
-          <li>
-            <Link href="/docs/sdks" className="text-[var(--color-purple)]">
-              SDKs
-            </Link>{" "}
-            — TypeScript and Python shapes.
-          </li>
+        <ul className="grid gap-3 sm:grid-cols-3">
+          {NEXT_STEPS.map(({ href, title, blurb, icon: Icon }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                className="group flex h-full flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-lift)]"
+              >
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--color-sand)] text-[var(--color-orange-deep)] transition-colors group-hover:bg-[var(--color-orange)] group-hover:text-white">
+                  <Icon size={17} strokeWidth={2} aria-hidden />
+                </span>
+                <span className="flex flex-col gap-1">
+                  <span className="flex items-center gap-1.5 font-display text-[16px] font-semibold tracking-[-0.02em]">
+                    {title}
+                    <ArrowRight
+                      size={14}
+                      aria-hidden
+                      className="text-[var(--color-faint)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--color-orange-deep)]"
+                    />
+                  </span>
+                  <span className="text-[13px] leading-snug text-[var(--color-muted)]">{blurb}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
         </ul>
       </section>
     </>

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   alerts,
   apiKeys,
@@ -14,7 +14,8 @@ import {
   users,
   watchlists,
 } from "@railor/database";
-import { corridorLabel, DEFAULT_LIVE_MONTHLY_CAP, DEFAULT_TEST_MONTHLY_CAP } from "@railor/core";
+import { corridorLabel } from "@railor/core";
+import { withOrgLock } from "./entitlements";
 import type { CorridorQuery, OnboardingAnswers } from "@railor/types";
 import { randomBytes } from "node:crypto";
 import { hashApiKey, suggestedOrgName } from "./auth";
@@ -80,7 +81,7 @@ export async function createApiKey(
       keyHash: hashApiKey(secret),
       revealableSecret: mode === "test" ? secret : null,
       // Interim flat default until real billing/plan tiers exist — see @railor/core's analytics module.
-      monthlyRequestCap: mode === "test" ? DEFAULT_TEST_MONTHLY_CAP : DEFAULT_LIVE_MONTHLY_CAP,
+      monthlyRequestCap: null,
       createdBy: userId,
     })
     .returning();
@@ -221,7 +222,9 @@ export async function materializeWorkspace(
   userId: string,
   answers: OnboardingAnswers,
 ) {
-  const db = await getDb();
+  return withOrgLock(organizationId, async (db, entitlement) => {
+  const [existingUsage] = await db.select({ count: sql<number>`count(*)::int` }).from(savedCorridors).where(eq(savedCorridors.organizationId, organizationId));
+  const remaining = Math.max(0, entitlement.limits.savedCorridors - (existingUsage?.count ?? 0));
 
   const entityCountry = answers.entityCountry ?? "US";
   const targets = answers.targetCountries.length ? answers.targetCountries : ["AE"];
@@ -231,7 +234,7 @@ export async function materializeWorkspace(
   const asset = "USDC";
   const created: string[] = [];
 
-  for (const [index, country] of targets.slice(0, 3).entries()) {
+  for (const [index, country] of targets.slice(0, Math.min(3, remaining)).entries()) {
     const query: CorridorQuery = {
       entityCountry,
       customerType: "business",
@@ -255,7 +258,8 @@ export async function materializeWorkspace(
 
   // One monitor armed on the primary corridor, so the change feed is live.
   const primary = created[0];
-  if (primary) {
+  const [monitorUsage] = await db.select({ count: sql<number>`count(*)::int` }).from(watchlists).where(eq(watchlists.organizationId, organizationId));
+  if (primary && (monitorUsage?.count ?? 0) < entitlement.limits.monitors) {
     const [corridor] = await db
       .select()
       .from(savedCorridors)
@@ -267,13 +271,14 @@ export async function materializeWorkspace(
         .values({
           organizationId,
           targetType: "corridor",
+          channelEmail: entitlement.limits.emailAlerts,
           targetId: corridor.id,
           label: corridor.label,
           kinds: ["coverage_changed", "requirement_changed", "pricing_changed", "limit_changed"],
           createdBy: userId,
         })
         .returning();
-      if (watch) await backfillWatchlistAlerts(watch.id);
+      // Alerts are populated below in this same transaction.
     }
   }
 
@@ -303,6 +308,7 @@ export async function materializeWorkspace(
     .where(eq(organizations.id, organizationId));
 
   return created.length;
+  });
 }
 
 export async function getSavedCorridors(organizationId: string) {
@@ -413,4 +419,3 @@ export async function providersByIds(ids: string[]) {
   const db = await getDb();
   return db.select().from(providers).where(inArray(providers.id, ids));
 }
-

@@ -9,6 +9,7 @@ import { FIELD_LABELS, getReferenceOptions, optionsByField } from "../../../lib/
 import { CorridorExplorer } from "../../../components/app/corridor-explorer";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Corridors" };
 
 export default async function CorridorsPage({
   searchParams,

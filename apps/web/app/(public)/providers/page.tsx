@@ -5,7 +5,8 @@ export const metadata = { title: "Provider directory" };
 export const dynamic = "force-dynamic";
 
 export default async function PublicProvidersPage() {
-  const providers = await loadProviderSummaries();
+  // Real companies only, like search and decisions: fictional demo providers stay out of the directory.
+  const providers = (await loadProviderSummaries()).filter((p) => !p.isDemo);
 
   return (
     <ProviderDirectory

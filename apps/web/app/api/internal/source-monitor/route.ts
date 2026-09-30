@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkDueSources } from "@railor/core";
 import { ensureMigrated } from "@railor/database";
+import { cronGuard } from "../../../../lib/cron";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,14 +17,9 @@ export const dynamic = "force-dynamic";
  * extraction or touches a live capability/route row itself.
  */
 export async function POST(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "cron_not_configured" }, { status: 503 });
-  }
-  const presented = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  if (presented !== secret) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  // Constant-time Bearer CRON_SECRET check shared by every scheduler hook.
+  const denied = cronGuard(request);
+  if (denied) return denied;
 
   await ensureMigrated();
   const summary = await checkDueSources({ limit: 100, concurrency: 4 });

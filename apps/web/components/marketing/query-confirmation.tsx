@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { SmartPicker, cn, type PickerOption } from "@railor/ui";
+import { OptionMark, SmartPicker, cn, type PickerOption } from "@railor/ui";
 
 type Query = Record<string, string | number | undefined>;
 
@@ -161,7 +161,7 @@ function ValuePill({
             : "border-dashed border-[var(--color-line-strong)] text-[var(--color-faint)] hover:border-[var(--color-orange)] hover:text-[var(--color-orange-deep)]",
         )}
       >
-        {option?.emoji ? <span aria-hidden>{option.emoji}</span> : null}
+        <OptionMark option={option} />
         {isSet ? display : "Not specified"}
       </button>
 

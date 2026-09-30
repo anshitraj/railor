@@ -1,7 +1,8 @@
 import "server-only";
 import { randomBytes, createHash } from "node:crypto";
 import { cookies } from "next/headers";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
+import { appOrigin, safeReturnPath } from "./security";
 import {
   ensureMigrated,
   getDb,
@@ -13,6 +14,7 @@ import {
 } from "@railor/database";
 
 const SESSION_COOKIE = "railor_session";
+const ORG_COOKIE = "railor_org";
 const SESSION_DAYS = 30;
 const MAGIC_LINK_MINUTES = 20;
 
@@ -66,10 +68,10 @@ export async function createMagicLink(email: string, returnTo?: string) {
   await db.insert(magicLinks).values({
     token: value,
     email: email.trim().toLowerCase(),
-    returnTo: returnTo ?? null,
+    returnTo: safeReturnPath(returnTo),
     expiresAt: new Date(Date.now() + MAGIC_LINK_MINUTES * 60_000),
   });
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = appOrigin();
   return { token: value, url: `${base}/auth/verify?token=${value}` };
 }
 
@@ -81,13 +83,12 @@ export async function consumeMagicLink(value: string) {
   await ensureMigrated();
   const db = await getDb();
   const [link] = await db
-    .select()
-    .from(magicLinks)
-    .where(and(eq(magicLinks.token, value), gt(magicLinks.expiresAt, new Date())))
-    .limit(1);
+    .update(magicLinks)
+    .set({ consumedAt: new Date() })
+    .where(and(eq(magicLinks.token, value), gt(magicLinks.expiresAt, new Date()), isNull(magicLinks.consumedAt)))
+    .returning();
 
-  if (!link || link.consumedAt) return null;
-  await db.update(magicLinks).set({ consumedAt: new Date() }).where(eq(magicLinks.token, value));
+  if (!link) return null;
 
   const user = await findOrCreateUserByEmail(link.email);
   if (!user) return null;
@@ -103,17 +104,20 @@ export async function findOrCreateUserByEmail(email: string, name?: string | nul
   const normalized = email.trim().toLowerCase();
   let [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
   if (!user) {
-    [user] = await db.insert(users).values({ email: normalized, name: name ?? undefined }).returning();
+    await db.insert(users).values({ email: normalized, name: name ?? undefined }).onConflictDoNothing();
+    [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
   }
   return user ?? null;
 }
 
 export async function startSession(userId: string) {
   const db = await getDb();
+  const jar = await cookies();
+  const previous = jar.get(SESSION_COOKIE)?.value;
+  if (previous) await db.delete(sessions).where(eq(sessions.token, previous));
   const value = token();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86_400_000);
   await db.insert(sessions).values({ token: value, userId, expiresAt });
-  const jar = await cookies();
   jar.set(SESSION_COOKIE, value, {
     httpOnly: true,
     sameSite: "lax",
@@ -125,6 +129,18 @@ export async function startSession(userId: string) {
   return value;
 }
 
+/** Remembers which workspace to open. Membership is re-checked on every request, so a stale cookie grants nothing. */
+export async function setActiveOrganization(organizationId: string) {
+  const jar = await cookies();
+  jar.set(ORG_COOKIE, organizationId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_DAYS * 86_400,
+  });
+}
+
 export async function signOut() {
   const jar = await cookies();
   const value = jar.get(SESSION_COOKIE)?.value;
@@ -133,6 +149,7 @@ export async function signOut() {
     await db.delete(sessions).where(eq(sessions.token, value));
   }
   jar.delete(SESSION_COOKIE);
+  jar.delete(ORG_COOKIE);
 }
 
 /** Current user + their active organization, or null for anonymous visitors. */
@@ -152,13 +169,25 @@ export async function getSession(): Promise<SessionContext | null> {
 
   if (!row) return null;
 
-  const [membership] = await db
-    .select({ org: organizations, role: organizationMembers.role })
-    .from(organizationMembers)
-    .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
-    .where(eq(organizationMembers.userId, row.user.id))
-    .orderBy(desc(organizations.createdAt))
-    .limit(1);
+  // The chosen workspace wins when the user still belongs to it; otherwise the newest one.
+  const chosen = jar.get(ORG_COOKIE)?.value;
+  const [preferred] = chosen && /^[0-9a-f-]{36}$/i.test(chosen)
+    ? await db
+        .select({ org: organizations, role: organizationMembers.role })
+        .from(organizationMembers)
+        .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+        .where(and(eq(organizationMembers.userId, row.user.id), eq(organizationMembers.organizationId, chosen)))
+        .limit(1)
+    : [];
+  const [membership] = preferred
+    ? [preferred]
+    : await db
+        .select({ org: organizations, role: organizationMembers.role })
+        .from(organizationMembers)
+        .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+        .where(eq(organizationMembers.userId, row.user.id))
+        .orderBy(desc(organizations.createdAt))
+        .limit(1);
 
   return {
     user: {

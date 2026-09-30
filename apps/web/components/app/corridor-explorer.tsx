@@ -17,6 +17,7 @@ import {
   type Verdict,
 } from "@railor/ui";
 import { saveCorridor, monitorCorridor } from "../../app/app/corridors/actions";
+import { ProviderLogo } from "./provider-logo";
 
 type Query = Record<string, string | number | undefined>;
 
@@ -33,6 +34,7 @@ interface SearchPayload {
     query: Query;
   };
   providersChecked: number;
+  preset?: string;
   counts: Record<Verdict, number>;
   results: Array<{
     provider: { slug: string; name: string; category: string; isDemo?: boolean };
@@ -63,6 +65,7 @@ interface SearchPayload {
     confirmedDimensions: string[];
     unconfirmedDimensions: string[];
     rankingConfidence: number;
+    score: number;
     rankingInputsUsed: string[];
     rankingInputsMissing: string[];
   }>;
@@ -78,6 +81,32 @@ interface SearchPayload {
     amlRequirements: string[];
     crossBorderRestrictions: string[];
     lastResearchedAt: string | null;
+  } | null;
+  marketDiscovery?: {
+    status: "complete" | "partial" | "unavailable";
+    triggerReason: string;
+    generatedAt: string;
+    expiresAt: string;
+    recommendation: {
+      candidateName: string;
+      label: string;
+      rationale: string;
+      basis: "lowest_comparable_fee" | "best_evidenced";
+    } | null;
+    warnings: string[];
+    candidates: Array<{
+      name: string;
+      category: string;
+      routeSummary: string;
+      pricingSummary: string | null;
+      feePercent: number | null;
+      speedSummary: string | null;
+      whyConsider: string[];
+      limitations: string[];
+      confidence: number;
+      status: "research_required";
+      sources: Array<{ title: string; url: string; publishedAt: string | null; excerpt: string }>;
+    }>;
   } | null;
 }
 
@@ -211,7 +240,7 @@ export function CorridorExplorer({
       const response = await fetch("/api/search", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: naturalInput }),
+        body: JSON.stringify({ input: naturalInput, discover: true }),
       });
       const json: SearchPayload = await response.json();
       skipNextFetch.current = true;
@@ -352,6 +381,8 @@ export function CorridorExplorer({
         ) : null}
       </Card>
 
+      <CatalogRecommendation results={data.results} preset={data.preset ?? preset} />
+
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <Count value={data.providersChecked} label="providers checked" />
         <Count value={data.counts.supported} label="compatible" tone="ok" />
@@ -401,11 +432,14 @@ export function CorridorExplorer({
         </Card>
       ) : null}
 
+      {data.marketDiscovery ? <MarketDiscoveryPanel discovery={data.marketDiscovery} /> : null}
+
       {data.results.length ? (
         <div className="flex flex-col gap-2">
           {data.results.map((result) => (
             <ResultRow
               key={result.provider.slug}
+              mark={<ProviderLogo slug={result.provider.slug} name={result.provider.name} size={36} />}
               name={result.provider.name}
               category={result.provider.category}
               verdict={result.eligibility}
@@ -515,6 +549,119 @@ export function CorridorExplorer({
   );
 }
 
+function CatalogRecommendation({
+  results,
+  preset,
+}: {
+  results: SearchPayload["results"];
+  preset: string;
+}) {
+  const winner = results.find(
+    (result) => result.eligibility === "supported" || result.eligibility === "additional_requirements",
+  );
+  const lead = results.find((result) => result.routeConfirmation === "partially_confirmed");
+
+  if (!winner) {
+    return (
+      <Card className="flex flex-col gap-1 p-4">
+        <SectionLabel>No verified winner yet</SectionLabel>
+        <p className="text-[14px] font-medium">
+          {lead ? `${lead.provider.name} has the strongest partial catalog evidence, but the complete route is not confirmed.` : "The verified catalog cannot yet prove this complete route."}
+        </p>
+        <p className="text-[12px] text-[var(--color-muted)]">
+          Railor will show fresh source-backed leads below instead of presenting an unsupported provider as the best rail.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="flex flex-col gap-2 border-[var(--color-ok)]/25 p-4">
+      <SectionLabel>{winner.routeConfirmation === "confirmed" ? "Best verified match" : "Best eligible catalog match"}</SectionLabel>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-[18px] font-semibold">{winner.provider.name}</p>
+        <p className="text-[12px] text-[var(--color-muted)]">
+          {preset.replaceAll("_", " ")} score {winner.score}/100 · {Math.round(winner.rankingConfidence * 100)}% ranking coverage
+        </p>
+      </div>
+      <p className="text-[12.5px] text-[var(--color-muted)]">
+        {winner.reasons[0]?.message ?? "This provider ranks highest among the eligible, evidence-backed catalog results."}
+      </p>
+    </Card>
+  );
+}
+
+function MarketDiscoveryPanel({ discovery }: { discovery: NonNullable<SearchPayload["marketDiscovery"]> }) {
+  return (
+    <Card className="flex flex-col gap-4 border-[var(--color-purple)]/25 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <SectionLabel>Fresh market discovery</SectionLabel>
+          <h2 className="text-[18px] font-semibold">New rails and providers outside the verified catalog</h2>
+          <p className="max-w-3xl text-[12.5px] text-[var(--color-muted)]">{discovery.triggerReason}</p>
+        </div>
+        <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-1 text-[11px] font-medium text-[var(--color-purple-deep)]">
+          Refreshed {new Date(discovery.generatedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC"}
+        </span>
+      </div>
+
+      {discovery.recommendation ? (
+        <div className="rounded-[14px] bg-[var(--color-lavender)] p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-purple-deep)]">
+            {discovery.recommendation.label}
+          </p>
+          <p className="mt-1 text-[16px] font-semibold">{discovery.recommendation.candidateName}</p>
+          <p className="mt-1 text-[12.5px] text-[var(--color-muted)]">{discovery.recommendation.rationale}</p>
+        </div>
+      ) : null}
+
+      {discovery.candidates.length ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {discovery.candidates.map((candidate) => (
+            <article key={`${candidate.name}-${candidate.sources[0]?.url}`} className="flex flex-col gap-3 rounded-[16px] border border-[var(--color-line)] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">{candidate.name}</h3>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--color-faint)]">
+                    {candidate.category.replaceAll("_", " ")} · research required
+                  </p>
+                </div>
+                <span className="text-[12px] font-medium text-[var(--color-purple)]">
+                  {Math.round(candidate.confidence * 100)}% evidence confidence
+                </span>
+              </div>
+              <p className="text-[13px] text-[var(--color-muted)]">{candidate.routeSummary}</p>
+              <div className="grid gap-2 text-[12.5px] sm:grid-cols-2">
+                <p><span className="font-medium">Published pricing: </span>{candidate.pricingSummary ?? "Not found"}</p>
+                <p><span className="font-medium">Published speed: </span>{candidate.speedSummary ?? "Not found"}</p>
+              </div>
+              {candidate.whyConsider.length ? (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-faint)]">Why consider it</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-[12px] text-[var(--color-muted)]">
+                    {candidate.whyConsider.map((reason) => <li key={reason}>{reason}</li>)}
+                  </ul>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap gap-x-3 gap-y-1 border-t border-[var(--color-line)] pt-3">
+                {candidate.sources.map((source) => (
+                  <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-[12px] font-medium text-[var(--color-purple)]" title={source.excerpt}>
+                    {source.title} ↗
+                  </a>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[13px] text-[var(--color-muted)]">No current source passed Railor’s citation checks for this exact direction.</p>
+      )}
+
+      <p className="text-[11px] text-[var(--color-faint)]">{discovery.warnings.join(" ")}</p>
+    </Card>
+  );
+}
+
 function Count({
   value,
   label,
@@ -545,6 +692,7 @@ function toSnake(query: Query) {
     entityCountry: "entity_country",
     customerType: "customer_type",
     sourceCountry: "source_country",
+    sourceCurrency: "source_currency",
     destinationCountry: "destination_country",
     sourceAsset: "asset",
     sourceNetwork: "network",

@@ -1,4 +1,5 @@
-import { Card, CodeSample, SectionLabel } from "@railor/ui";
+import { Card, CodeSample } from "@railor/ui";
+import { DocsHeader } from "../../../../components/docs/docs-header";
 import { getSession } from "../../../../lib/auth";
 import { getOrgTestKey } from "../../../../lib/org";
 
@@ -24,15 +25,11 @@ export default async function McpDocs() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Reference</SectionLabel>
-        <h1 className="text-[32px] font-semibold tracking-tight">MCP server</h1>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
-          Read-only tools over the same capability graph. Every response carries `source`,
-          `verified_at` and `confidence`, so an agent can tell a sourced fact from a guess — and
-          Railor never returns the second.
-        </p>
-      </div>
+      <DocsHeader eyebrow="Reference" title="MCP server">
+        Read-only tools over the same capability graph. Every response carries <code>source</code>,{" "}
+        <code>verified_at</code> and <code>confidence</code>, so an agent can tell a sourced fact
+        from a guess — and Railor never returns the second.
+      </DocsHeader>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-[20px] font-semibold">Install</h2>
@@ -89,7 +86,7 @@ bearer_token_env_var = "RAILOR_KEY"`,
         <Card className="divide-y divide-[var(--color-line)] p-0">
           {TOOLS.map(([name, summary]) => (
             <div key={name} className="flex flex-col gap-0.5 p-4">
-              <code className="text-[13px] text-[var(--color-purple)]">{name}</code>
+              <code className="w-fit text-[13px] text-[var(--color-purple)]">{name}</code>
               <span className="text-[13px] text-[var(--color-muted)]">{summary}</span>
             </div>
           ))}
@@ -105,8 +102,8 @@ bearer_token_env_var = "RAILOR_KEY"`,
           </p>
         </Card>
         <p className="text-[13px] text-[var(--color-muted)]">
-          Tool calls require a key. `initialize` and `tools/list` are open so a client can discover
-          the server before authenticating.
+          Tool calls require a key. <code>initialize</code> and <code>tools/list</code> are open so a
+          client can discover the server before authenticating.
         </p>
       </section>
     </>

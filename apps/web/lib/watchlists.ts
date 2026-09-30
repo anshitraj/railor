@@ -9,10 +9,12 @@ import {
   savedCorridors,
   watchlists,
 } from "@railor/database";
+import type { RailorDb } from "@railor/database";
 import { COUNTRY_TERMS, PRODUCT_TERMS } from "@railor/core";
 import { ChangeKind, ProductType } from "@railor/types";
 import { ApiError } from "./api-auth";
 import { backfillWatchlistAlerts } from "./alerting";
+import { withOrgLock } from "./entitlements";
 
 export const WatchTarget = z.enum(["provider", "corridor", "country", "asset", "product"]);
 export type WatchTarget = z.infer<typeof WatchTarget>;
@@ -81,8 +83,14 @@ export async function resolveTarget(
   organizationId: string,
   targetType: WatchTarget,
   rawTargetId: string,
+  /**
+   * Pass the caller's transaction when there is one. Querying through the
+   * global handle inside `withOrgLock` deadlocks the embedded PGlite driver
+   * (one connection, held by the open transaction) and freezes every request.
+   */
+  executor?: RailorDb,
 ): Promise<{ targetId: string; label: string }> {
-  const db = await getDb();
+  const db = executor ?? (await getDb());
 
   switch (targetType) {
     case "provider": {
@@ -144,11 +152,12 @@ export async function createWatchlist(
   createdBy: string | null,
   input: z.infer<typeof WatchlistCreate>,
 ) {
-  const db = await getDb();
+  const result = await withOrgLock(organizationId, async (db, entitlement) => {
   const { targetId, label } = await resolveTarget(
     organizationId,
     input.target_type,
     input.target_id,
+    db,
   );
 
   // Idempotent on (org, target): re-POSTing the same watch returns the row
@@ -166,6 +175,10 @@ export async function createWatchlist(
     .limit(1);
   if (existing) return { row: existing, created: false as const };
 
+  const [usage] = await db.select({ count: sql<number>`count(*)::int` }).from(watchlists).where(eq(watchlists.organizationId, organizationId));
+  if ((usage?.count ?? 0) >= entitlement.limits.monitors) throw new ApiError(403, "monitor_limit", "Your plan's monitor limit has been reached. Upgrade to Founding for 25 monitors.");
+  if (input.channel_email && !entitlement.limits.emailAlerts) throw new ApiError(403, "founding_required", "Email alerts require Founding access.");
+
   const [row] = await db
     .insert(watchlists)
     .values({
@@ -174,14 +187,16 @@ export async function createWatchlist(
       targetId,
       label: input.label ?? label,
       kinds: input.kinds ?? DEFAULT_KINDS[input.target_type],
-      channelEmail: input.channel_email ?? true,
+      channelEmail: entitlement.limits.emailAlerts && (input.channel_email ?? true),
       digest: input.digest ?? "instant",
       createdBy,
     })
     .returning();
   if (!row) throw new Error("watchlist insert failed");
-  await backfillWatchlistAlerts(row.id);
   return { row, created: true as const };
+  });
+  if (result.created) await backfillWatchlistAlerts(result.row.id);
+  return result;
 }
 
 /** Fetch a watchlist owned by the org — 404, never 403, across the boundary. */

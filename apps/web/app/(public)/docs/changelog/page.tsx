@@ -1,4 +1,7 @@
-import { Card, SectionLabel } from "@railor/ui";
+import { Card } from "@railor/ui";
+import { Bullet, Bullets } from "../../../../components/docs/bullets";
+import { DocsHeader } from "../../../../components/docs/docs-header";
+import { InlineCode } from "../../../../components/docs/inline-code";
 
 export const metadata = { title: "Changelog" };
 
@@ -38,24 +41,29 @@ const ENTRIES: Array<{ version: string; date: string; items: string[] }> = [
 export default function ChangelogPage() {
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Product</SectionLabel>
-        <h1 className="text-[32px] font-semibold tracking-tight">Changelog</h1>
-      </div>
+      <DocsHeader eyebrow="Product" title="Changelog" />
 
-      {ENTRIES.map((entry) => (
-        <Card key={entry.version} className="flex flex-col gap-3 p-5">
-          <div className="flex items-baseline gap-3">
-            <span className="text-[18px] font-semibold">{entry.version}</span>
-            <span className="text-[13px] text-[var(--color-muted)]">{entry.date}</span>
+      {ENTRIES.map((entry, index) => (
+        <Card key={entry.version} className="flex flex-col gap-5 p-6 sm:p-7">
+          <div className="flex items-center gap-3">
+            <h2 id={`v${entry.version.replaceAll(".", "-")}`} className="text-[24px] font-semibold">
+              {entry.version}
+            </h2>
+            {index === 0 ? (
+              <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--color-orange-deep)]">
+                Latest
+              </span>
+            ) : null}
+            <span aria-hidden className="h-px flex-1 bg-[var(--color-line)]" />
+            <span className="font-mono text-[12px] text-[var(--color-muted)]">{entry.date}</span>
           </div>
-          <ul className="flex flex-col gap-1.5">
+          <Bullets className="text-[var(--color-ink-soft)]">
             {entry.items.map((item) => (
-              <li key={item} className="text-[14px] text-[var(--color-ink-soft)]">
-                • {item}
-              </li>
+              <Bullet key={item}>
+                <InlineCode>{item}</InlineCode>
+              </Bullet>
             ))}
-          </ul>
+          </Bullets>
         </Card>
       ))}
     </>

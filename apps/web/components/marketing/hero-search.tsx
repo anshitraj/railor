@@ -14,6 +14,7 @@ import {
   type Verdict,
 } from "@railor/ui";
 import { QueryConfirmation } from "./query-confirmation";
+import { ProviderLogo } from "../app/provider-logo";
 
 interface SearchResponse {
   interpretation: {
@@ -240,6 +241,7 @@ export function HeroSearch({
             {data.results.map((result) => (
               <ResultRow
                 key={result.provider.slug}
+                mark={<ProviderLogo slug={result.provider.slug} name={result.provider.name} size={36} />}
                 name={result.provider.name}
                 category={result.provider.category}
                 verdict={result.eligibility}

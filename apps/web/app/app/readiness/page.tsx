@@ -6,6 +6,7 @@ import { getKybProfile } from "../../../lib/org";
 import { ReadinessBoard } from "../../../components/app/readiness-board";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Readiness" };
 
 export default async function ReadinessPage() {
   const session = await getSession();

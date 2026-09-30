@@ -1,4 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/space-grotesk/latin-400.css";
+@import "@fontsource/space-grotesk/latin-600.css";
+@import "@fontsource/space-grotesk/latin-700.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
 @import "tailwindcss";
 @import "@railor/ui/styles.css";
 
@@ -39,6 +46,58 @@
   }
 }
 
+@layer components {
+  .product-page { max-width: 1320px; margin-inline: auto; padding-bottom: 3rem; }
+  .product-header { display: grid; gap: 1.5rem; align-items: end; padding: 0.4rem 0 1.5rem; border-bottom: 1px solid var(--color-line-strong); }
+  .product-header h1 { max-width: 18ch; overflow-wrap: anywhere; font-family: var(--font-display); font-size: clamp(2.2rem, 4.5vw, 4.25rem); font-weight: 600; line-height: .98; letter-spacing: -.055em; }
+  .product-header p { max-width: 64ch; margin-top: .85rem; color: var(--color-muted); font-size: .91rem; line-height: 1.65; }
+  .product-eyebrow { display: inline-flex; align-items: center; gap: .6rem; margin-bottom: 1rem; color: var(--color-orange-deep); font: 600 .68rem/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
+  .product-eyebrow::before { content: ""; width: 1.6rem; height: 2px; background: currentColor; }
+  .product-header-aside { display: grid; gap: .3rem; align-content: end; padding: 1rem 1.2rem; border-left: 1px solid var(--color-line-strong); }
+  .product-header-aside strong { font: 600 2.5rem/1 var(--font-display); letter-spacing: -.06em; }
+  .product-header-aside span { color: var(--color-muted); font: 500 .67rem/1.4 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; }
+  .product-panel { overflow: hidden; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-soft); }
+  .product-panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 1rem; padding: 1.35rem 1.5rem; border-bottom: 1px solid var(--color-line); background: var(--color-paper); }
+  .product-panel-head h2 { font: 600 1.2rem/1.25 var(--font-display); letter-spacing: -.035em; }
+  .product-panel-head p { margin-top: .35rem; color: var(--color-muted); font-size: .79rem; line-height: 1.5; }
+  .product-index { color: var(--color-orange-deep); font: 600 .72rem/1.4 var(--font-mono); letter-spacing: .08em; }
+  .product-field { width: 100%; min-height: 3rem; margin-top: .45rem; padding: .75rem .9rem; border: 1px solid var(--color-line-strong); border-radius: 10px; background: #fff; color: var(--color-ink); font-size: .86rem; transition: border-color .15s, box-shadow .15s; }
+  .product-field:hover { border-color: var(--color-faint); }
+  .product-field:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 1px; box-shadow: 0 0 0 4px rgb(233 86 42 / .1); }
+  .product-form label { color: var(--color-ink-soft); font-size: .75rem; font-weight: 700; line-height: 1.45; }
+  .product-form label input:not([type="checkbox"]), .product-form label select, .product-form label textarea { font-weight: 400; }
+  .product-check { display: flex; align-items: center; gap: .7rem; padding: .85rem 1rem; border: 1px solid var(--color-line); border-radius: 10px; background: var(--color-paper); }
+  .product-check input { accent-color: var(--color-orange); width: 1rem; height: 1rem; flex: none; }
+  .product-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: .9rem; min-width: 0; padding: 1rem 1.3rem; border-bottom: 1px solid var(--color-line); color: var(--color-ink); transition: background .15s; }
+  .product-row:last-child { border-bottom: 0; }
+  .product-row:hover { background: var(--color-paper); }
+  .product-row-primary { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .product-row-secondary { color: var(--color-muted); font-size: .75rem; overflow-wrap: anywhere; }
+  .product-mono { font-family: var(--font-mono); font-size: .73rem; font-variant-numeric: tabular-nums; }
+  .product-empty { display: grid; justify-items: start; gap: .7rem; padding: 2rem; border: 1px dashed var(--color-line-strong); border-radius: 16px; background: var(--color-paper); }
+  .product-empty-mark { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border: 1px solid var(--color-orange); border-radius: 50%; color: var(--color-orange-deep); font: 600 .9rem var(--font-mono); }
+  .product-empty h3 { font: 600 1.1rem var(--font-display); }
+  .product-empty p { max-width: 50ch; color: var(--color-muted); font-size: .82rem; line-height: 1.55; }
+  .product-badge { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; padding: .35rem .55rem; border: 1px solid currentColor; border-radius: 6px; font: 600 .63rem/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .product-badge::before { content: ""; width: .35rem; height: .35rem; border-radius: 50%; background: currentColor; }
+  .product-badge[data-tone="good"] { color: #20713d; background: #e9f6ed; }
+  .product-badge[data-tone="warn"] { color: #90611c; background: #fcf3dd; }
+  .product-badge[data-tone="bad"] { color: #a72e28; background: #fdecea; }
+  .product-badge[data-tone="neutral"] { color: #625e58; background: #f2eee7; }
+  .product-dark { position: relative; overflow: hidden; border-radius: 20px; background: #22211f; color: #faf4ea; }
+  .product-dark::after { content: ""; position: absolute; right: -4rem; top: -5rem; width: 19rem; height: 19rem; border: 1px solid rgb(255 255 255 / .09); border-radius: 50%; box-shadow: 0 0 0 4rem rgb(255 255 255 / .025), 0 0 0 8rem rgb(255 255 255 / .018); pointer-events: none; }
+  .product-dark .product-eyebrow { color: #ffad8c; }
+  .product-quiet-link { color: var(--color-orange-deep); font-size: .78rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .product-quiet-link:hover { color: var(--color-ink); }
+
+  /* Docs prose. Components layer on purpose: a page's own text-size / colour utilities still win. */
+  .docs-prose h2 { font-family: var(--font-display); letter-spacing: -.03em; scroll-margin-top: 7rem; }
+  .docs-prose :not(pre) > code { padding: .12em .4em; border-radius: 6px; background: var(--color-sand); color: var(--color-ink-soft); font-family: var(--font-mono); font-size: .86em; white-space: nowrap; }
+}
+
+@media (min-width: 880px) { .product-header { grid-template-columns: minmax(0, 1fr) minmax(180px, .23fr); } }
+@media (max-width: 720px) { .product-row { grid-template-columns: minmax(0, 1fr) auto; } .product-row > :nth-child(2), .product-row > :nth-child(3) { grid-column: 1 / -1; } .product-header-aside { border-left: 0; border-top: 1px solid var(--color-line-strong); padding-left: 0; } }
+
 @layer utilities {
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -70,12 +129,146 @@
     mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
   }
 
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-sand) 70%, var(--color-paper));
+  }
+
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+    animation: railor-shimmer 1.4s ease-in-out infinite;
+  }
+
   .section-kicker {
     color: var(--color-orange-deep);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.15em;
     text-transform: uppercase;
+  }
+}
+
+@keyframes railor-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes railor-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.railor-page-in {
+  animation: railor-page-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Live pricing: the FX ticker scrolls (pauses on hover), changed prices flash once. */
+@keyframes railor-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.railor-marquee {
+  animation: railor-marquee 70s linear infinite;
+}
+
+.railor-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes railor-flash-up {
+  0%,
+  35% {
+    color: #4ade80;
+  }
+}
+
+@keyframes railor-flash-down {
+  0%,
+  35% {
+    color: #f87171;
+  }
+}
+
+.railor-flash-up {
+  animation: railor-flash-up 1.4s ease-out;
+}
+
+.railor-flash-down {
+  animation: railor-flash-down 1.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railor-marquee,
+  .railor-flash-up,
+  .railor-flash-down {
+    animation: none;
+  }
+}
+
+@keyframes railor-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.railor-rise {
+  animation: railor-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes railor-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.railor-draw {
+  stroke-dasharray: 1;
+  animation: railor-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+@keyframes railor-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.railor-grow {
+  transform-origin: left;
+  animation: railor-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+@keyframes railor-route-dash {
+  to {
+    stroke-dashoffset: -24;
   }
 }
 

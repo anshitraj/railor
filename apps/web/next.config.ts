@@ -13,8 +13,17 @@ import type { NextConfig } from "next";
 dotenv.config({ path: path.resolve(__dirname, "..", "..", ".env"), override: false });
 
 const config: NextConfig = {
+  distDir: process.env.RAILOR_NEXT_DIST_DIR ?? ".next",
   reactStrictMode: true,
+  // The provider graph, reference data and platform counts are shared, slow to
+  // compute and rarely change: served from a per-process stale-while-revalidate
+  // cache (packages/core repository.ts). Inlined at build so serverless
+  // functions get it too; "0" disables. Tests never set it and read fresh.
+  env: { RAILOR_READ_CACHE_MS: process.env.RAILOR_READ_CACHE_MS ?? "120000" },
   transpilePackages: ["@railor/ui", "@railor/core", "@railor/database", "@railor/types"],
+  // Railor never uses next/image (logos are served by /api/logos), so the
+  // image-optimization endpoint is pure attack surface: keep it off.
+  images: { unoptimized: true },
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
   // ensureMigrated() reads packages/database/drizzle/*.sql off disk at
   // runtime (drizzle-orm's migrator does a plain fs.readdir, not an import),

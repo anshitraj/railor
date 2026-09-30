@@ -176,7 +176,7 @@ export function OnboardingFlow({
                 ...matchedCountries.map((c) => ({
                   field: "targetCountries",
                   value: c.value,
-                  label: `${c.emoji ?? ""} ${c.label}`.trim(),
+                  label: c.label,
                 })),
                 ...matchedCurrencies.map((c) => ({
                   field: "settlementCurrencies",

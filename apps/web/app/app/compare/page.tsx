@@ -3,6 +3,7 @@ import { buildComparison } from "../../../lib/compare";
 import { CompareBoard } from "../../../components/app/compare-table";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Compare" };
 
 export default async function ComparePage({
   searchParams,

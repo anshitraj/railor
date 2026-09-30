@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { findOrCreateUserByEmail, getSession, startSession } from "../../../../../../lib/auth";
 import { createOrganizationForUser } from "../../../../../../lib/org";
 import { completeOAuthExchange, isOAuthProvider } from "../../../../../../lib/oauth";
+import { appOrigin, safeReturnPath } from "../../../../../../lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,14 +43,17 @@ export async function GET(request: Request, context: { params: Promise<{ provide
     return clearState(new URL("/login?error=oauth_state", url));
   }
 
-  const [expectedState, encodedReturnTo] = stateCookie.split("|");
-  if (!expectedState || state !== expectedState) {
+  const [expectedProvider, expectedState, issuedAt, encodedReturnTo] = stateCookie.split("|");
+  const age = Date.now() - Number(issuedAt);
+  if (provider !== expectedProvider || !expectedState || !Number.isFinite(age) || age < 0 || age > 600_000 ||
+      Buffer.byteLength(state) !== Buffer.byteLength(expectedState) || !timingSafeEqual(Buffer.from(state), Buffer.from(expectedState))) {
     return clearState(new URL("/login?error=oauth_state", url));
   }
-  const returnToRaw = encodedReturnTo ? decodeURIComponent(encodedReturnTo) : "/welcome";
-  const returnTo = returnToRaw.startsWith("/") ? returnToRaw : "/welcome";
+  let returnTo = "/welcome";
+  try { returnTo = safeReturnPath(encodedReturnTo ? decodeURIComponent(encodedReturnTo) : null); } catch { /* invalid destination falls back */ }
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL ?? url.origin}/api/auth/oauth/${provider}/callback`;
+  const redirectUri = `${appOrigin()}/api/auth/oauth/${provider}/callback`;
+  (await cookies()).delete(STATE_COOKIE);
 
   try {
     const profile = await completeOAuthExchange(provider, code, redirectUri);
@@ -58,13 +63,13 @@ export async function GET(request: Request, context: { params: Promise<{ provide
     await startSession(user.id);
 
     const session = await getSession();
-    if (session && !session.organization) {
+    if (session && !session.organization && !returnTo.startsWith("/invite/")) {
       await createOrganizationForUser(user.id, user.email);
     }
 
-    return clearState(new URL(returnTo, url));
+    return clearState(new URL(returnTo, appOrigin()));
   } catch (error) {
-    console.error(`[oauth:${provider}]`, error);
+    console.error(JSON.stringify({ event: "oauth_failed", provider, errorType: error instanceof Error ? error.name : "UnknownError" }));
     return clearState(new URL("/login?error=oauth_failed", url));
   }
 }
