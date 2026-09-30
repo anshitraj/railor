@@ -19,6 +19,15 @@ export * from "./decision-engine.js";
 export * from "./decision-repository.js";
 export * from "./decision-revalidation.js";
 export * from "./policy-simulator.js";
+export * from "./market-discovery.js";
+export * from "./product-control.js";
+export * from "./discovery-review.js";
+export * from "./connectors.js";
+export * from "./connector-protocol.js";
+export * from "./agent.js";
+export * from "./decision-monitor.js";
+export * from "./secrets.js";
+export * from "./payments/index.js";
 export {
   researchCountry,
   CountryNotResearchableError,
@@ -29,3 +38,6 @@ export {
 } from "./country-research/ingest.js";
 export { RESEARCHABLE_COUNTRIES, isResearchableCountry, type ResearchableCountry } from "./country-research/config.js";
 export { PersistentParallelBudget, type ParallelLedgerReport } from "./country-research/parallel-ledger.js";
+export * from "./net-guard.js";
+export * from "./logos.js";
+export * from "./pricing.js";

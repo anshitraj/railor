@@ -60,8 +60,55 @@ const num = (v: string | number | null | undefined): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+/**
+ * Opt-in read cache for the shared, slow-changing reads every search, decision
+ * and page makes (the provider graph is 9 queries). Off unless a server turns
+ * it on (tests always read fresh); stale entries are served while one refresh
+ * runs. Writers that change provider data call invalidateReadCache().
+ */
+// One cache per process even when a bundler duplicates this module across routes.
+const cacheHome = globalThis as typeof globalThis & { __railorReadCache?: Map<string, { at: number; value: Promise<unknown>; refreshing?: boolean }>; __railorReadCacheTtl?: number };
+const readCache = (cacheHome.__railorReadCache ??= new Map());
+const ttlFromEnv = () => cacheHome.__railorReadCacheTtl ?? (Number(process.env.RAILOR_READ_CACHE_MS) || 0);
+
+export function configureReadCache(ttlMs: number) {
+  cacheHome.__railorReadCacheTtl = Math.max(0, ttlMs);
+  readCache.clear();
+}
+
+export function invalidateReadCache() {
+  readCache.clear();
+}
+
+function readThrough<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const ttl = ttlFromEnv();
+  if (ttl <= 0) return load();
+  const hit = readCache.get(key);
+  const now = Date.now();
+  if (hit && now - hit.at < ttl) return hit.value as Promise<T>;
+  if (hit && !hit.refreshing) {
+    // Stale: keep serving it; refresh once in the background.
+    hit.refreshing = true;
+    load()
+      .then((value) => readCache.set(key, { at: Date.now(), value: Promise.resolve(value) }))
+      .catch(() => {
+        hit.refreshing = false;
+      });
+    return hit.value as Promise<T>;
+  }
+  if (hit) return hit.value as Promise<T>;
+  const value = load();
+  readCache.set(key, { at: now, value });
+  value.catch(() => readCache.delete(key));
+  return value;
+}
+
 /** Loads every provider with the facets, costs and health the engine needs. */
-export async function loadProviderInputs(): Promise<ProviderInput[]> {
+export function loadProviderInputs(): Promise<ProviderInput[]> {
+  return readThrough("provider-inputs", loadProviderInputsFresh);
+}
+
+async function loadProviderInputsFresh(): Promise<ProviderInput[]> {
   const db = await getDb();
 
   const [providerRows, productRows, facetRows, exactRouteRows, endpointRows, reqRows, feeRows, limitRows, healthRows] =
@@ -408,14 +455,21 @@ export async function loadProviderInputs(): Promise<ProviderInput[]> {
 }
 
 /** Directory rows: enough to filter and compare without loading the graph. */
-export async function loadProviderSummaries(): Promise<ProviderSummary[]> {
+export function loadProviderSummaries(): Promise<ProviderSummary[]> {
+  return readThrough("provider-summaries", loadProviderSummariesFresh);
+}
+
+async function loadProviderSummariesFresh(): Promise<ProviderSummary[]> {
   const inputs = await loadProviderInputs();
   const db = await getDb();
   const rows = await db.select().from(providers);
 
   return rows.map((p) => {
     const input = inputs.find((i) => i.id === p.id);
-    const facets = input?.facets ?? [];
+    // Coverage counts only what a provider actually serves: an explicit
+    // "unsupported" row (e.g. MoonPay's API saying sell is blocked in a
+    // country) or an "unknown" one is evidence, not coverage.
+    const facets = (input?.facets ?? []).filter((f) => f.availability === "supported" || f.availability === "partial");
     return {
       id: p.id,
       slug: p.slug,
@@ -581,7 +635,11 @@ export async function loadChangeFeed(filter: ChangeFeedFilter = {}) {
   });
 }
 
-export async function loadReferenceData() {
+export function loadReferenceData() {
+  return readThrough("reference-data", loadReferenceDataFresh);
+}
+
+async function loadReferenceDataFresh() {
   const db = await getDb();
   const { countries, currencies, assets, blockchains, namedRails: namedRailsTable } = await import("@railor/database");
   const [countryRows, currencyRows, assetRows, chainRows, railRows] = await Promise.all([
@@ -600,7 +658,11 @@ export async function loadReferenceData() {
   };
 }
 
-export async function loadPlatformCounts() {
+export function loadPlatformCounts() {
+  return readThrough("platform-counts", loadPlatformCountsFresh);
+}
+
+async function loadPlatformCountsFresh() {
   const db = await getDb();
   const [[p], [c], [s], [ch]] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(providers),
@@ -710,3 +772,56 @@ export async function loadLatestCountryResearchRuns(iso2List: string[]) {
 }
 
 export { and, eq };
+
+export interface CapabilityFilter {
+  provider?: string;
+  product?: string;
+  entityCountry?: string;
+  destinationCountry?: string;
+  destinationCurrency?: string;
+  sourceAsset?: string;
+  sourceNetwork?: string;
+  availability?: string;
+  limit?: number;
+  /** Keyset cursor: the id of the last row on the previous page. */
+  startingAfter?: string;
+  /** Demonstration providers are excluded unless asked for, matching corridor search. */
+  includeDemo?: boolean;
+}
+
+/**
+ * Raw capability rows with their evidence, cursor-paginated by id. Demo rows
+ * are excluded by default — this is the machine-readable ground truth, so it
+ * returns fictional demonstration rows only when explicitly requested.
+ */
+export async function listCapabilities(filter: CapabilityFilter = {}) {
+  const db = await getDb();
+  const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
+  const conditions = filter.includeDemo ? [sql`true`] : [eq(providers.isDemo, false)];
+  if (filter.provider) conditions.push(eq(providers.slug, filter.provider));
+  if (filter.product) conditions.push(sql`${providerCapabilities.product} = ${filter.product}`);
+  if (filter.entityCountry) conditions.push(eq(providerCapabilities.entityCountry, filter.entityCountry));
+  if (filter.destinationCountry) conditions.push(eq(providerCapabilities.destinationCountry, filter.destinationCountry));
+  if (filter.destinationCurrency) conditions.push(eq(providerCapabilities.destinationCurrency, filter.destinationCurrency));
+  if (filter.sourceAsset) conditions.push(eq(providerCapabilities.sourceAsset, filter.sourceAsset));
+  if (filter.sourceNetwork) conditions.push(eq(providerCapabilities.sourceNetwork, filter.sourceNetwork));
+  if (filter.availability) conditions.push(sql`${providerCapabilities.availability} = ${filter.availability}`);
+  if (filter.startingAfter) conditions.push(sql`${providerCapabilities.id} > ${filter.startingAfter}`);
+
+  const rows = await db
+    .select({
+      capability: providerCapabilities,
+      providerSlug: providers.slug,
+      providerName: providers.name,
+      providerIsDemo: providers.isDemo,
+      evidence: evidenceTable,
+    })
+    .from(providerCapabilities)
+    .innerJoin(providers, eq(providerCapabilities.providerId, providers.id))
+    .leftJoin(evidenceTable, eq(providerCapabilities.evidenceId, evidenceTable.id))
+    .where(and(...conditions))
+    .orderBy(providerCapabilities.id)
+    .limit(limit + 1);
+
+  return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
+}

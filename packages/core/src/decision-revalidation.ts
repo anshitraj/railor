@@ -70,6 +70,9 @@ export async function revalidateDecision(
     now: options.now,
     fetchQuote: options.fetchQuote,
     previousDecisionId: decisionId,
+    mode: existing.decision.mode as "enforce" | "optimize",
+    proposedExecutor: existing.decision.proposedExecutor ? { provider: existing.decision.proposedExecutor } : undefined,
+    createdBy: existing.decision.createdBy ?? undefined,
   });
 
   const created = await persistDecision(newDecisionInput);

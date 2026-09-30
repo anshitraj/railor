@@ -19,6 +19,8 @@ export interface UnifiedConnectionStatus {
 }
 
 export interface QuoteRequest {
+  /** Exact PaymentIntent fingerprint when called by the decision engine. */
+  intentFingerprint?: string;
   sourceAsset: string;
   sourceNetwork?: string;
   destinationCurrency: string;
@@ -100,19 +102,4 @@ export interface RoutingResult {
   rankingInputsMissing: string[];
 }
 
-/**
- * The shape a real execute-transfer call would take. No adapter implements
- * this — see adapters.ts's executeTransfer, which always throws. Defined so
- * the type exists for whenever a human deliberately wires a real, tested,
- * compliance-reviewed execution path; Railor does not move money today.
- */
-export interface ExecutionRequest extends QuoteRequest {
-  destinationAccount: string;
-  idempotencyKey: string;
-}
-
-export interface ExecutionResult {
-  providerSlug: string;
-  status: "not_implemented";
-  detail: string;
-}
+/** Execution types live with the execution engine: see ./payments/types.ts (PayoutRequest, PayoutOutcome). */

@@ -8,7 +8,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./geo": "./src/geo.ts",
-    "./route-map": "./src/route-map.ts"
+    "./connector-protocol": "./src/connector-protocol.ts",
+    "./adapters": "./src/adapters.ts",
+    "./route-map": "./src/route-map.ts",
+    "./payments-view": "./src/payments/routing.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -22,7 +25,7 @@
     "@google/genai": "^1.9.0",
     "@railor/database": "workspace:*",
     "@railor/types": "workspace:*",
-    "drizzle-orm": "^0.44.0",
+    "drizzle-orm": "^0.45.3",
     "iso-3166-1": "^2.1.1",
     "zod": "^3.25.0"
   },

@@ -194,11 +194,10 @@ export function evaluatePolicy(
   }
 
   // allowPrefunding: Railor has no real schema field recording whether a
-  // provider requires prefunding - see PolicyRules.allowPrefunding in
-  // @railor/types. Always not_applicable until that data exists; never
-  // fabricated as a pass or a fail.
+  // provider requires prefunding. A configured prohibition must be unknown
+  // until that fact is evidenced, not skipped as if the restriction passed.
   if (!rules.allowPrefunding) {
-    results.push(rule("allowPrefunding", "not_applicable", "Railor has no evidenced data on whether this provider requires prefunding.", "prefunding_forbidden"));
+    results.push(rule("allowPrefunding", "unknown", "This policy forbids prefunding, but Railor has no evidence to prove whether this provider requires it.", "prefunding_forbidden"));
   }
 
   if (rules.maximumKnownCostBps !== undefined) {

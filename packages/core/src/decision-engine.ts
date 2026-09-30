@@ -40,7 +40,7 @@ import { loadProviderInputs } from "./repository.js";
 import { getAdapter } from "./adapters.js";
 import type { QuoteRequest, UnifiedQuote } from "./unified.js";
 
-export const DECISION_ENGINE_VERSION = "1.0.0";
+export const DECISION_ENGINE_VERSION = "1.1.0";
 
 export type QuoteFetcher = (
   providerSlug: string,
@@ -61,6 +61,9 @@ export interface DecisionEngineOptions {
   /** Injected because credential decryption lives outside @railor/core. Omit to skip live-quote fetching entirely (the engine still produces a full Decision from eligibility/policy/reliability data alone). */
   fetchQuote?: QuoteFetcher;
   previousDecisionId?: string | null;
+  mode?: "enforce" | "optimize";
+  proposedExecutor?: { provider: string };
+  createdBy?: string;
 }
 
 interface EnginedCandidate {
@@ -133,6 +136,9 @@ export async function runDecisionEngine(
   options: DecisionEngineOptions,
 ): Promise<DecisionInsert> {
   const now = options.now ?? new Date();
+  const mode = options.mode ?? (options.proposedExecutor ? "enforce" : "optimize");
+  if (mode === "enforce" && !options.proposedExecutor?.provider) throw new Error("proposed_executor_required");
+  if (mode === "optimize" && options.proposedExecutor) throw new Error("executor_requires_enforce_mode");
   const query = intentToCorridorQuery(intent);
 
   const [allInputs, connectionStatuses] = await Promise.all([
@@ -141,7 +147,9 @@ export async function runDecisionEngine(
   ]);
   // A Decision must never recommend one of Railor's own fabricated demo
   // companies - same rule searchCorridors already enforces by default.
-  const realInputs = allInputs.filter((p) => !p.isDemo);
+  const realInputs = allInputs.filter((p) => !p.isDemo &&
+    (mode !== "enforce" || p.slug === options.proposedExecutor!.provider));
+  if (mode === "enforce" && !realInputs.length) throw new Error("provider_not_found");
 
   const incidentSet = await loadProviderIdsWithActiveIncidents(realInputs.map((p) => p.id));
 
@@ -184,13 +192,15 @@ export async function runDecisionEngine(
   // is actually connected with quote support - fetching a quote nobody could
   // ever use would just spend a real network call for nothing.
   const quoteWorthy = enginedByProvider.filter(
-    (c) => isDecisionEligible(c.evaluation) && c.prePolicy.result !== "fail" && c.connected && c.hasQuoteAdapter,
+    (c) => isDecisionEligible(c.evaluation) && !c.prePolicy.ruleResults.some((r) =>
+      r.result === "fail" && !["requireLiveQuote", "maximumKnownCostBps", "maximumEtaMinutes"].includes(r.rule)) && c.connected && c.hasQuoteAdapter,
   );
 
   const warnings: string[] = [];
   if (options.fetchQuote && quoteWorthy.length) {
     const request: QuoteRequest = {
-      sourceAsset: intent.sourceAsset ?? "",
+      intentFingerprint: createHash("sha256").update(JSON.stringify(sortKeysDeep(intent))).digest("hex"),
+      sourceAsset: intent.sourceAsset ?? intent.sourceCurrency ?? "",
       sourceNetwork: intent.sourceNetwork,
       destinationCurrency: intent.destinationCurrency ?? "",
       destinationCountry: intent.destinationCountry,
@@ -200,9 +210,25 @@ export async function runDecisionEngine(
     await Promise.all(
       quoteWorthy.map(async (c) => {
         try {
-          c.quote = await options.fetchQuote!(c.provider.slug, c.provider.id, request);
+          const quote = await options.fetchQuote!(c.provider.slug, c.provider.id, request);
+          if (quote) {
+            const observed = Date.parse(quote.observedAt);
+            const expires = quote.expiresAt ? Date.parse(quote.expiresAt) : null;
+            if (quote.providerSlug !== c.provider.slug || quote.amount !== intent.amount ||
+              quote.sourceAsset !== request.sourceAsset || quote.destinationCurrency !== request.destinationCurrency ||
+              (quote.sourceNetwork ?? null) !== (request.sourceNetwork ?? null) ||
+              (quote.destinationCountry && quote.destinationCountry !== request.destinationCountry) ||
+              !Number.isFinite(observed) || observed > now.getTime() + 60_000 ||
+              (expires !== null && (!Number.isFinite(expires) || expires <= now.getTime())) ||
+              [quote.feeAmount, quote.recipientAmount].some((v) => v !== undefined && (!Number.isFinite(v) || v < 0))) {
+              throw new Error("quote_scope_or_expiry_invalid");
+            }
+            // Costs denominated in a different currency cannot be divided by
+            // the source amount and presented as a comparable percentage.
+            c.quote = { ...quote, costPartial: quote.costPartial || (quote.feeAmount !== undefined && quote.feeCurrency !== request.sourceAsset) };
+          }
         } catch (error) {
-          warnings.push(`Quote request to ${c.provider.slug} failed: ${error instanceof Error ? error.message : "unknown error"}.`);
+          warnings.push(`Quote request to ${c.provider.slug} failed or returned an invalid scope/expiry. Re-quote before relying on its price.`);
           c.quote = null;
         }
       }),
@@ -242,7 +268,8 @@ export async function runDecisionEngine(
   // Everyone else (unavailable base eligibility) is reported for
   // auditability but was never in the running for a recommendation
   // regardless of policy.
-  const eligible = enginedByProvider.filter((c) => isDecisionEligible(c.evaluation));
+  const eligible = enginedByProvider.filter((c) => isDecisionEligible(c.evaluation) &&
+    (mode !== "enforce" || c.evaluation.routeConfirmation === "confirmed"));
   const policyPassers = eligible.filter((c) => c.finalPolicy.result === "pass");
   const policyUnknowns = eligible.filter((c) => c.finalPolicy.result === "unknown");
 
@@ -252,7 +279,7 @@ export async function runDecisionEngine(
   let status: DecisionStatus;
   if (eligible.length === 0) {
     status = "no_verified_route";
-  } else if (policy.rules.humanApprovalAboveAmount !== undefined && intent.amount > policy.rules.humanApprovalAboveAmount) {
+  } else if (winner && policy.rules.humanApprovalAboveAmount !== undefined && intent.amount > policy.rules.humanApprovalAboveAmount) {
     status = "approval_required";
   } else if (winner) {
     status = "allow";
@@ -261,6 +288,9 @@ export async function runDecisionEngine(
   } else {
     status = "deny";
   }
+  // ENFORCE is a permission check. Unknown evidence fails closed with the
+  // detailed explanation retained; it never grants a different executor.
+  if (mode === "enforce" && (status === "no_verified_route" || status === "insufficient_data")) status = "deny";
 
   const quoteState: QuoteState = !winner?.quote ? "none" : winner.quote.quoteType;
   const connectionState: ConnectionState = winner
@@ -294,6 +324,14 @@ export async function runDecisionEngine(
       routeCertainty: c.evaluation.routeConfirmation,
       entityEligibility: c.evaluation.entityEligibility,
       policyEvaluation: c.finalPolicy,
+      dependencySnapshot: {
+        connected: c.connected, activeIncident: incidentSet.has(c.provider.id),
+        lastVerifiedAt: c.evaluation.lastVerifiedAt?.toISOString() ?? null,
+        feeCostBps: c.provider.feeCostBps ?? null, settlement: c.provider.advertisedSettlement ?? null,
+        evidence: [...c.evaluation.evidence].sort((a, b) => (a.id ?? a.sourceUrl).localeCompare(b.id ?? b.sourceUrl)),
+        confirmedDimensions: [...c.evaluation.confirmedDimensions].sort(),
+        unconfirmedDimensions: [...c.evaluation.unconfirmedDimensions].sort(),
+      },
       quoteSnapshot: c.quote ? toQuoteSnapshot(c.quote) : null,
       costCompleteness: costCompletenessOf(c.quote),
       reliabilitySnapshot: c.provider.healthOkRatio,
@@ -316,6 +354,9 @@ export async function runDecisionEngine(
 
   const decisionInputForHash: DecisionInsert = {
     organizationId: options.organizationId,
+    mode,
+    proposedExecutor: options.proposedExecutor?.provider ?? null,
+    createdBy: options.createdBy ?? null,
     intentSnapshot: intent as unknown as Record<string, unknown>,
     policyId: policy.policyId,
     policyVersionId: policy.policyVersionId,
@@ -416,18 +457,28 @@ export function hashDecisionInputs(input: Omit<DecisionInsert, "decisionHash">):
     .sort((a, b) => a.providerId.localeCompare(b.providerId));
 
   const canonical = {
+    organizationId: input.organizationId,
+    mode: input.mode ?? "optimize",
+    proposedExecutor: input.proposedExecutor ?? null,
     intent: sortKeysDeep(input.intentSnapshot),
     policyVersionId: input.policyVersionId,
     engineVersion: input.engineVersion,
     status: input.status,
     recommendedProviderId: input.recommendedProviderId,
     candidates: canonicalCandidates,
+    evaluations: [...input.candidates].sort((a, b) => a.providerId.localeCompare(b.providerId)).map((c) => ({
+      providerId: c.providerId, entityEligibility: c.entityEligibility,
+      rules: sortKeysDeep(c.policyEvaluation), quote: sortKeysDeep(c.quoteSnapshot),
+      dependencies: sortKeysDeep(c.dependencySnapshot ?? {}),
+      reliability: c.reliabilitySnapshot, costCompleteness: c.costCompleteness,
+    })),
   };
 
   return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
 }
 
 function sortKeysDeep(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) return value.map(sortKeysDeep);
   if (value && typeof value === "object") {
     return Object.fromEntries(

@@ -14,9 +14,9 @@
  * server-side, immediately before an adapter call — never returned to a
  * client, never logged.
  *
- * No adapter executes a transfer. That is not a gap to fill in — see
- * executeTransfer at the bottom of this file, which refuses unconditionally
- * regardless of provider or credentials.
+ * Nothing in this file executes a transfer. Execution lives in
+ * ./payments (PayoutAdapter per provider + the payments service), behind
+ * policy authorization, operator approval and live-mode gates.
  *
  * Circle, Bridge, MoonPay: testConnection is real, request-shape-verified
  * as above.
@@ -48,7 +48,9 @@
  * requires the caller to supply `paymentMethodType` and `entityCountry`
  * explicitly; this file never infers either from the destination currency.
  */
-import type { ExecutionRequest, ExecutionResult, QuoteRequest, UnifiedQuote } from "./unified.js";
+import { airwallexProviderAdapter } from "./payments/adapters/airwallex.js";
+import { wiseProviderAdapter } from "./payments/adapters/wise.js";
+import type { QuoteRequest, UnifiedQuote } from "./unified.js";
 
 export interface CredentialField {
   key: string;
@@ -111,7 +113,8 @@ async function bridgeTestConnection(credentials: Record<string, string>): Promis
   const apiKey = credentials.apiKey?.trim();
   if (!apiKey) return { ok: false, detail: "API key is required." };
   try {
-    const response = await fetch("https://api.bridge.xyz/v0/api_keys/whoami", {
+    const base = credentials.environment?.trim().toLowerCase() === "production" ? "https://api.bridge.xyz/v0" : "https://api.sandbox.bridge.xyz/v0";
+    const response = await fetch(`${base}/api_keys/whoami`, {
       headers: { "Api-Key": apiKey },
       signal: AbortSignal.timeout(10_000),
     });
@@ -150,7 +153,8 @@ async function bridgeGetQuote(credentials: Record<string, string>, request: Quot
     from: request.sourceAsset.toLowerCase(),
     to: request.destinationCurrency.toLowerCase(),
   });
-  const response = await fetch(`https://api.bridge.xyz/v0/exchange_rates?${params}`, {
+  const base = credentials.environment?.trim().toLowerCase() === "production" ? "https://api.bridge.xyz/v0" : "https://api.sandbox.bridge.xyz/v0";
+  const response = await fetch(`${base}/exchange_rates?${params}`, {
     headers: { "Api-Key": apiKey },
     signal: AbortSignal.timeout(10_000),
   });
@@ -169,8 +173,8 @@ async function bridgeGetQuote(credentials: Record<string, string>, request: Quot
     destinationCurrency: request.destinationCurrency,
     destinationCountry: request.destinationCountry,
     amount: request.amount,
-    feeAmount: Number.isFinite(rate) ? request.amount - request.amount * rate : undefined,
-    feeCurrency: request.destinationCurrency,
+    // An FX conversion difference is not a fee, especially across currencies.
+    // This endpoint supplies a reference rate, not itemized transfer costs.
     exchangeRate: Number.isFinite(rate) ? String(rate) : undefined,
     // This is a mid-market/buy rate reference, not a bound quote from a
     // payout-specific endpoint — see this file's header comment on why the
@@ -337,10 +341,8 @@ async function paxosTestConnection(credentials: Record<string, string>): Promise
 export const ADAPTERS: Record<string, ProviderAdapter> = {
   circle: {
     slug: "circle",
-    credentialFields: [
-      { key: "apiKey", label: "API key", secret: true },
-      { key: "environment", label: "Environment", placeholder: "sandbox or production" },
-    ],
+    // Sandbox vs production is chosen on the connection itself (provider_connections.environment).
+    credentialFields: [{ key: "apiKey", label: "API key", secret: true }],
     testConnection: circleTestConnection,
     // Tests the core Payments API; quotes against the separate CPN product —
     // see circleCpnGetQuote's own comment on why that distinction matters.
@@ -389,6 +391,9 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
     ],
     testConnection: paxosTestConnection,
   },
+  // Fiat payout networks: see payments/adapters/{wise,airwallex}.ts for what each call proves.
+  wise: wiseProviderAdapter,
+  airwallex: airwallexProviderAdapter,
 };
 
 export function getAdapter(slug: string): ProviderAdapter | null {
@@ -396,23 +401,7 @@ export function getAdapter(slug: string): ProviderAdapter | null {
 }
 
 /**
- * Execution — deliberately not implemented by any adapter, and not part of
- * the ProviderAdapter interface at all, so there is no per-provider surface
- * where a real transfer call could be added quietly. This is the one
- * function anything in Railor that wants to move money would have to call,
- * and it always refuses. Real execution needs money-transmission compliance
- * this codebase has no way to verify — that is a decision for a human to
- * make deliberately, not something to wire up as a side effect of a feature
- * request.
+ * Execution moved to ./payments: `submitPayment` in payments/service.ts is the
+ * only code path that sends money, through a per-provider PayoutAdapter and
+ * only after policy authorization plus the live-mode gates documented there.
  */
-export async function executeTransfer(
-  providerSlug: string,
-  _credentials: Record<string, string>,
-  _request: ExecutionRequest,
-): Promise<ExecutionResult> {
-  return {
-    providerSlug,
-    status: "not_implemented",
-    detail: "Railor does not execute transfers. This call was refused, not attempted.",
-  };
-}

@@ -11,6 +11,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   decisionCandidates,
+  decisionApprovals,
   decisionEvents,
   decisions,
   getDb,
@@ -97,16 +98,19 @@ export async function createPolicy(organizationId: string, name: string, rules: 
 
 /** Always creates a brand-new DRAFT version - an active/superseded version is never mutated in place. */
 export async function createPolicyVersion(organizationId: string, policyId: string, rules: PolicyRules) {
+  if (!isUuid(policyId)) return null;
   const db = await getDb();
-  const policy = await getPolicy(organizationId, policyId);
-  if (!policy) return null;
-  const existing = await listPolicyVersions(organizationId, policyId);
-  const nextVersionNumber = (existing[0]?.versionNumber ?? 0) + 1;
-  const [version] = await db
+  return db.transaction(async (tx) => {
+    const [policy] = await tx.select().from(policies).where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId))).for("update");
+    if (!policy) return null;
+    const [latest] = await tx.select().from(policyVersions).where(and(eq(policyVersions.policyId, policyId), eq(policyVersions.organizationId, organizationId))).orderBy(desc(policyVersions.versionNumber)).limit(1);
+    const nextVersionNumber = (latest?.versionNumber ?? 0) + 1;
+    const [version] = await tx
     .insert(policyVersions)
     .values({ policyId, organizationId, versionNumber: nextVersionNumber, status: "draft", rules })
     .returning();
   return version!;
+  });
 }
 
 /**
@@ -129,11 +133,14 @@ export async function activatePolicyVersion(organizationId: string, policyId: st
 
   const now = new Date();
   return db.transaction(async (tx) => {
-    if (policy.activeVersionId) {
+    const [current] = await tx.select().from(policies).where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId))).for("update");
+    const [target] = await tx.select().from(policyVersions).where(and(eq(policyVersions.id, versionId), eq(policyVersions.organizationId, organizationId))).limit(1);
+    if (!current || !target || target.status !== "draft") return { ok: false as const, error: "version_not_activatable" };
+    if (current.activeVersionId) {
       await tx
         .update(policyVersions)
         .set({ status: "superseded", supersededAt: now })
-        .where(and(eq(policyVersions.id, policy.activeVersionId), eq(policyVersions.organizationId, organizationId)));
+        .where(and(eq(policyVersions.id, current.activeVersionId), eq(policyVersions.organizationId, organizationId)));
     }
     const [activated] = await tx
       .update(policyVersions)
@@ -212,6 +219,7 @@ export interface DecisionCandidateInsert {
   routeCertainty: RouteConfirmation | null;
   entityEligibility: EntityEligibility | null;
   policyEvaluation: CandidatePolicyEvaluation;
+  dependencySnapshot?: Record<string, unknown>;
   quoteSnapshot: QuoteSnapshot | null;
   costCompleteness: CostCompleteness;
   reliabilitySnapshot: number | null;
@@ -222,6 +230,9 @@ export interface DecisionCandidateInsert {
 }
 
 export interface DecisionInsert {
+  mode?: "enforce" | "optimize";
+  proposedExecutor?: string | null;
+  createdBy?: string | null;
   organizationId: string;
   intentSnapshot: Record<string, unknown>;
   policyId: string;
@@ -253,6 +264,9 @@ export async function persistDecision(input: DecisionInsert) {
       .insert(decisions)
       .values({
         organizationId: input.organizationId,
+        mode: input.mode ?? "optimize",
+        proposedExecutor: input.proposedExecutor ?? null,
+        createdBy: input.createdBy ?? null,
         intentSnapshot: input.intentSnapshot,
         policyId: input.policyId,
         policyVersionId: input.policyVersionId,
@@ -288,6 +302,8 @@ export async function persistDecision(input: DecisionInsert) {
           routeCertainty: c.routeCertainty,
           entityEligibility: c.entityEligibility,
           policyResult: c.policyEvaluation.result,
+          policyEvaluation: c.policyEvaluation as unknown as Record<string, unknown>,
+          dependencySnapshot: c.dependencySnapshot ?? {},
           policyReasonCodes: c.policyEvaluation.ruleResults.filter((r) => r.code).map((r) => r.code!),
           quoteSnapshot: c.quoteSnapshot,
           quoteType: c.quoteSnapshot?.quoteType ?? null,
@@ -312,6 +328,14 @@ export async function persistDecision(input: DecisionInsert) {
         : "Decision created.",
       data: { status: input.status, recommendedProviderSlug: input.recommendedProviderSlug },
     });
+
+    if (input.status === "approval_required" && input.recommendedProviderId) {
+      await tx.insert(decisionApprovals).values({
+        organizationId: input.organizationId, decisionId: decision!.id,
+        decisionHash: input.decisionHash, requestedBy: input.createdBy ?? null,
+        expiresAt: new Date(Math.min(Date.now() + 24 * 60 * 60_000, input.validUntil?.getTime() ?? Infinity)),
+      });
+    }
 
     return decision!;
   });

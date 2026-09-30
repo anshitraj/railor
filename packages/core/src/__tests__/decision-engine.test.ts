@@ -187,6 +187,20 @@ describe("policy-denied candidate never wins", () => {
 });
 
 describe("live quotes where genuinely available", () => {
+  it("fetches the quote needed to satisfy requireLiveQuote instead of pre-rejecting it", async () => {
+    const policy = await permissivePolicy({ requireLiveQuote: true });
+    const input = await runDecisionEngine(testIntent(), policy, { organizationId, now, fetchQuote: fakeQuote });
+    expect(input.status).toBe("allow"); expect(input.quoteState).toBe("live");
+  });
+  it("rejects expired or wrong-amount quotes and does not equate fee currencies", async () => {
+    const policy = await permissivePolicy({ requireLiveQuote: true });
+    for (const overrides of [{ amount: 999 }, { expiresAt: now.toISOString() }, { providerSlug: "wrong" }]) {
+      const input = await runDecisionEngine(testIntent(), policy, { organizationId, now, fetchQuote: async () => ({ ...await fakeQuote(), ...overrides }) });
+      expect(input.status).toBe("deny"); expect(input.quoteState).toBe("none");
+    }
+    const input = await runDecisionEngine(testIntent(), policy, { organizationId, now, fetchQuote: fakeQuote });
+    expect(input.candidates.find((c) => c.selected)?.costCompleteness).toBe("partial");
+  });
   it("fetches a quote only for the connected, policy-surviving candidate and records it on the winner", async () => {
     const policy = await permissivePolicy();
     const input = await runDecisionEngine(testIntent(), policy, { organizationId, now, fetchQuote: fakeQuote });
@@ -215,11 +229,41 @@ describe("insufficient data", () => {
 });
 
 describe("approval threshold", () => {
+  it("cannot turn a policy denial into an approvable payment", async () => {
+    const policy = await permissivePolicy({ humanApprovalAboveAmount: 100, providerDenylist: ["circle"] });
+    const input = await runDecisionEngine(testIntent(), policy, { organizationId, now });
+    expect(input.status).toBe("deny");
+    expect(input.recommendedProviderId).toBeNull();
+  });
   it("flags approval_required while still computing a recommendation for the approver to see", async () => {
     const policy = await permissivePolicy({ humanApprovalAboveAmount: 100 });
     const input = await runDecisionEngine(testIntent({ amount: 100_000 }), policy, { organizationId, now });
     expect(input.status).toBe("approval_required");
     expect(input.warnings.some((w) => w.includes("human-approval threshold"))).toBe(true);
+  });
+});
+
+describe("enforce mode", () => {
+  it("evaluates and persists only the requested provider, including revalidation", async () => {
+    const policy = await permissivePolicy();
+    const input = await runDecisionEngine(testIntent(), policy, { organizationId, now, mode: "enforce", proposedExecutor: { provider: "circle" } });
+    expect(input.mode).toBe("enforce");
+    expect(input.candidates.map((c) => c.providerSlug)).toEqual(["circle"]);
+    const row = await persistDecision(input);
+    const again = await revalidateDecision(row.id, { organizationId, trigger: "manual", now });
+    expect(again.ok).toBe(true);
+    if (again.ok) {
+      const loaded = await loadDecision(organizationId, again.decisionId);
+      expect(loaded!.decision.proposedExecutor).toBe("circle");
+      expect(loaded!.candidates[0]!.policyEvaluation).toHaveProperty("ruleResults");
+    }
+  });
+  it("rejects missing or unknown executors and fails closed on an unverified route", async () => {
+    const policy = await permissivePolicy();
+    await expect(runDecisionEngine(testIntent(), policy, { organizationId, mode: "enforce" })).rejects.toThrow("proposed_executor_required");
+    await expect(runDecisionEngine(testIntent(), policy, { organizationId, mode: "enforce", proposedExecutor: { provider: "missing-provider" } })).rejects.toThrow("provider_not_found");
+    const denied = await runDecisionEngine(testIntent({ sourceCurrency: "INR", sourceAsset: undefined }), policy, { organizationId, now, mode: "enforce", proposedExecutor: { provider: "circle" } });
+    expect(denied.status).toBe("deny");
   });
 });
 

@@ -42,6 +42,34 @@ const REGION_BY_ALPHA2: Record<string, string> = {
   BJ: "Africa", BW: "Africa", CD: "Africa", GA: "Africa", ML: "Africa", MW: "Africa", MZ: "Africa",
   BR: "LATAM", MX: "LATAM", AR: "LATAM", CO: "LATAM", CL: "LATAM", PE: "LATAM", UY: "LATAM",
   EC: "LATAM", BO: "LATAM", PY: "LATAM", CR: "LATAM", PA: "LATAM", GT: "LATAM", DO: "LATAM",
+  // Extended from UN M49 placements, following the groupings above (Caribbean
+  // and Central America -> LATAM, Western Asia -> Middle East, Oceania ->
+  // APAC). Deliberately left unmapped because this vocabulary has no honest
+  // home for them: Central Asia and the Caucasus (AM, AZ, KG, KZ, TJ, TM, UZ),
+  // US territories (AS, GU, MP, PR, UM, VI), Bermuda and Greenland, and
+  // uninhabited territories - those stay reported as unknown, never guessed.
+  AD: "Europe", AL: "Europe", AX: "Europe", BA: "Europe", BY: "Europe", FO: "Europe", GG: "Europe",
+  GI: "Europe", IM: "Europe", JE: "Europe", LI: "Europe", MC: "Europe", MD: "Europe", ME: "Europe",
+  MK: "Europe", RS: "Europe", RU: "Europe", SM: "Europe", VA: "Europe",
+  AO: "Africa", BF: "Africa", BI: "Africa", CF: "Africa", CG: "Africa", CV: "Africa", DJ: "Africa",
+  DZ: "Africa", EH: "Africa", ER: "Africa", GM: "Africa", GN: "Africa", GQ: "Africa", GW: "Africa",
+  KM: "Africa", LR: "Africa", LS: "Africa", LY: "Africa", MG: "Africa", MR: "Africa", MU: "Africa",
+  NA: "Africa", NE: "Africa", RE: "Africa", SC: "Africa", SD: "Africa", SH: "Africa", SL: "Africa",
+  SO: "Africa", SS: "Africa", ST: "Africa", SZ: "Africa", TD: "Africa", TG: "Africa", TN: "Africa",
+  YT: "Africa", ZW: "Africa",
+  AG: "LATAM", AI: "LATAM", AW: "LATAM", BB: "LATAM", BL: "LATAM", BQ: "LATAM", BS: "LATAM",
+  BZ: "LATAM", CU: "LATAM", CW: "LATAM", DM: "LATAM", FK: "LATAM", GD: "LATAM", GF: "LATAM",
+  GP: "LATAM", GY: "LATAM", HN: "LATAM", HT: "LATAM", JM: "LATAM", KN: "LATAM", KY: "LATAM",
+  LC: "LATAM", MF: "LATAM", MQ: "LATAM", MS: "LATAM", NI: "LATAM", SR: "LATAM", SV: "LATAM",
+  SX: "LATAM", TC: "LATAM", TT: "LATAM", VC: "LATAM", VE: "LATAM", VG: "LATAM",
+  PM: "North America",
+  AF: "South Asia", BT: "South Asia", MV: "South Asia",
+  IQ: "Middle East", IR: "Middle East", LB: "Middle East", PS: "Middle East", SY: "Middle East",
+  YE: "Middle East",
+  BN: "APAC", CC: "APAC", CK: "APAC", CX: "APAC", FJ: "APAC", FM: "APAC", KI: "APAC", KP: "APAC",
+  LA: "APAC", MH: "APAC", MO: "APAC", NC: "APAC", NF: "APAC", NR: "APAC", NU: "APAC", PF: "APAC",
+  PG: "APAC", PN: "APAC", PW: "APAC", SB: "APAC", TK: "APAC", TL: "APAC", TO: "APAC", TV: "APAC",
+  VU: "APAC", WF: "APAC", WS: "APAC",
 };
 
 /**

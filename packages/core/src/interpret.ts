@@ -243,18 +243,49 @@ export function interpretRules(input: string): Interpretation {
     });
   }
 
-  const currency = matches.find((m) => m.kind === "currency" && m.value !== "USD") ??
-    matches.find((m) => m.kind === "currency");
-  if (currency) {
-    query.destinationCurrency = currency.value;
+  const currencyMatches = matches.filter((m) => m.kind === "currency");
+  // A currency pair is directional. Treating the first code in "INR to AED"
+  // as the destination silently reverses the corridor and can make a healthy
+  // catalog look irrelevant. With two distinct currencies, reading order is
+  // the transfer direction; a lone currency keeps the established
+  // destination-currency behaviour used by queries such as "payout in AED".
+  const distinctCurrencies = currencyMatches.filter(
+    (match, index, all) => all.findIndex((candidate) => candidate.value === match.value) === index,
+  );
+  if (distinctCurrencies.length >= 2) {
+    const sourceCurrency = distinctCurrencies[0]!;
+    const destinationCurrency = distinctCurrencies[distinctCurrencies.length - 1]!;
+    query.sourceCurrency = sourceCurrency.value;
+    query.destinationCurrency = destinationCurrency.value;
     tokens.push({
-      field: "destinationCurrency",
-      value: currency.value,
-      label: `Destination currency: ${currency.value}`,
-      confidence: 0.93,
-      matchedText: currency.text,
+      field: "sourceCurrency",
+      value: sourceCurrency.value,
+      label: `Source currency: ${sourceCurrency.value}`,
+      confidence: 0.96,
+      matchedText: sourceCurrency.text,
       derivation: "source",
     });
+    tokens.push({
+      field: "destinationCurrency",
+      value: destinationCurrency.value,
+      label: `Destination currency: ${destinationCurrency.value}`,
+      confidence: 0.96,
+      matchedText: destinationCurrency.text,
+      derivation: "source",
+    });
+  } else {
+    const currency = distinctCurrencies[0];
+    if (currency) {
+      query.destinationCurrency = currency.value;
+      tokens.push({
+        field: "destinationCurrency",
+        value: currency.value,
+        label: `Destination currency: ${currency.value}`,
+        confidence: 0.93,
+        matchedText: currency.text,
+        derivation: "source",
+      });
+    }
   }
 
   /* ---- product + method ------------------------------------------------ */

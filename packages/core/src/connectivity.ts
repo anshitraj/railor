@@ -10,9 +10,10 @@
  * connection live is its own separate, explicit action (GET /v1/connections),
  * not something a corridor search should trigger on every request.
  */
-import { eq } from "drizzle-orm";
-import { getDb, providerConnections } from "@railor/database";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { getDb, providerConnections, connectorJobs, connectorInstallations, providers } from "@railor/database";
 import { getAdapter } from "./adapters.js";
+import { getPayoutAdapter } from "./payments/adapters/index.js";
 import type { EligibilityVerdict, RouteConnectivityState } from "@railor/types";
 
 /** One DB read per search, not per provider — callers loop `connectivityFor` over every result. */
@@ -22,7 +23,17 @@ export async function loadConnectionStatuses(organizationId: string): Promise<Ma
     .select({ providerId: providerConnections.providerId, status: providerConnections.status })
     .from(providerConnections)
     .where(eq(providerConnections.organizationId, organizationId));
-  return new Map(rows.map((r) => [r.providerId, r.status]));
+  const statuses = new Map(rows.map((r) => [r.providerId, r.status]));
+  // A successful customer-side quote plus a recently polling runtime proves a
+  // local connection without ever uploading its provider credentials.
+  const local = await db.select({ providerId: providers.id }).from(connectorJobs)
+    .innerJoin(connectorInstallations, eq(connectorInstallations.id, connectorJobs.installationId))
+    .innerJoin(providers, sql`${providers.slug} = ${connectorJobs.payload}->>'provider'`)
+    .where(and(eq(connectorJobs.organizationId, organizationId), eq(connectorJobs.status, "succeeded"),
+      sql`${connectorJobs.result}->>'code' = 'quoted'`, isNull(connectorInstallations.revokedAt),
+      gt(connectorInstallations.lastSeenAt, new Date(Date.now() - 5 * 60_000))));
+  for (const row of local) statuses.set(row.providerId, "connected");
+  return statuses;
 }
 
 export function connectivityFor(
@@ -34,9 +45,9 @@ export function connectivityFor(
   const adapter = getAdapter(providerSlug);
   if (!adapter) return "compatible";
   if (connectionStatus !== "connected") return "compatible";
+  // "executable": Railor has a payout adapter for this provider and the org
+  // connected an account — submitPayment can actually send through it.
+  if (getPayoutAdapter(providerSlug)) return "executable";
   if (!adapter.getQuote) return "connected";
-  // "executable" is never reached here — adapters.ts's executeTransfer
-  // refuses unconditionally, so nothing in this codebase can honestly claim
-  // it today regardless of connection/quote state.
   return "live_quotable";
 }

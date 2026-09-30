@@ -31,6 +31,12 @@ export class ProviderExtractionError extends Error {}
 let client: GoogleGenAI | undefined;
 
 function getClient(): GoogleGenAI {
+  if (process.env.GOOGLE_GENAI_USE_VERTEXAI === "true") {
+    const project = process.env.GOOGLE_CLOUD_PROJECT?.trim();
+    if (!project) throw new ProviderExtractionError("GOOGLE_CLOUD_PROJECT is required for Vertex AI");
+    client ??= new GoogleGenAI({ vertexai: true, project, location: process.env.GOOGLE_CLOUD_LOCATION || "global", httpOptions: { timeout: COUNTRY_RESEARCH_CONFIG.extractionTimeoutMs } });
+    return client;
+  }
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new ProviderExtractionError("GEMINI_API_KEY is not set — provider research cannot extract without it.");
   client ??= new GoogleGenAI({ apiKey, httpOptions: { timeout: COUNTRY_RESEARCH_CONFIG.extractionTimeoutMs } });

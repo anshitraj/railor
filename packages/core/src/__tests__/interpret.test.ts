@@ -45,4 +45,12 @@ describe("interpretRules", () => {
     expect(missing).toContain("entityCountry");
     expect(missing).toContain("destinationCountry");
   });
+
+  it("keeps a bare currency pair in the direction the user typed", () => {
+    const { query, tokens } = interpretRules("INR to AED");
+    expect(query.sourceCurrency).toBe("INR");
+    expect(query.destinationCurrency).toBe("AED");
+    expect(query.destinationCountry).toBe("AE");
+    expect(tokens.some((token) => token.field === "sourceCurrency" && token.value === "INR")).toBe(true);
+  });
 });

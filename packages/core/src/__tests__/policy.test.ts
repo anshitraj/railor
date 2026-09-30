@@ -311,10 +311,11 @@ describe("approval threshold — humanApprovalAboveAmount is a decision-level fl
 });
 
 describe("not-yet-enforceable rules never fabricate a verdict", () => {
-  it("allowPrefunding: false reports not_applicable, never a fabricated pass or fail", () => {
+  it("allowPrefunding: false is unknown until the restriction can be verified", () => {
     const result = evaluatePolicy(intent(), rules({ allowPrefunding: false }), candidate(), now);
     const prefunding = result.ruleResults.find((r) => r.rule === "allowPrefunding");
-    expect(prefunding?.result).toBe("not_applicable");
+    expect(prefunding?.result).toBe("unknown");
+    expect(result.result).toBe("unknown");
   });
 
   it("allowAggregators: false reports unknown for a category that doesn't literally say aggregator — never fabricates a classification", () => {
