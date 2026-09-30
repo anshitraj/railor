@@ -258,6 +258,7 @@ export const QueryToken = z.object({
     "entityCountry",
     "customerType",
     "sourceCountry",
+    "sourceCurrency",
     "sourceEndpointType",
     "sourceNamedRail",
     "destinationCountry",
@@ -500,6 +501,55 @@ export const ProviderResult = z.object({
 });
 export type ProviderResult = z.infer<typeof ProviderResult>;
 
+/**
+ * A fresh web-discovery lead shown beside the durable provider catalog.
+ * These records are deliberately not ProviderResult: search snippets and
+ * newly discovered pages can identify a promising rail, but they do not
+ * become a verified capability or an executable quote until the normal
+ * evidence review / connector path proves them.
+ */
+export const MarketDiscoverySource = z.object({
+  title: z.string(),
+  url: z.string().url(),
+  publishedAt: z.string().nullable().default(null),
+  excerpt: z.string(),
+});
+export type MarketDiscoverySource = z.infer<typeof MarketDiscoverySource>;
+
+export const MarketDiscoveryCandidate = z.object({
+  name: z.string(),
+  category: z.enum(["provider", "payment_rail", "bank", "network", "platform"]),
+  routeSummary: z.string(),
+  pricingSummary: z.string().nullable(),
+  /** Comparable only when an evidence excerpt explicitly states a percentage fee/markup. */
+  feePercent: z.number().nonnegative().nullable(),
+  speedSummary: z.string().nullable(),
+  whyConsider: z.array(z.string()).default([]),
+  limitations: z.array(z.string()).default([]),
+  confidence: z.number().min(0).max(1),
+  status: z.literal("research_required").default("research_required"),
+  sources: z.array(MarketDiscoverySource).min(1),
+});
+export type MarketDiscoveryCandidate = z.infer<typeof MarketDiscoveryCandidate>;
+
+export const MarketDiscoveryResult = z.object({
+  status: z.enum(["complete", "partial", "unavailable"]),
+  triggerReason: z.string(),
+  generatedAt: z.string(),
+  expiresAt: z.string(),
+  candidates: z.array(MarketDiscoveryCandidate),
+  recommendation: z
+    .object({
+      candidateName: z.string(),
+      label: z.string(),
+      rationale: z.string(),
+      basis: z.enum(["lowest_comparable_fee", "best_evidenced"]),
+    })
+    .nullable(),
+  warnings: z.array(z.string()).default([]),
+});
+export type MarketDiscoveryResult = z.infer<typeof MarketDiscoveryResult>;
+
 /** Country-level regulatory context for the destination — never gates a verdict, only informs it. */
 export const CountryContext = z.object({
   iso2: z.string(),
@@ -674,7 +724,7 @@ export const PaymentIntent = z.object({
   paymentMethod: PaymentMethod.optional(),
   /** Which product family this intent describes. Left undefined lets the existing engine's candidateProducts() infer it exactly as CorridorQuery already does — never forced to a fabricated default here. */
   product: ProductType.optional(),
-  amount: z.number().positive(),
+  amount: z.number().finite().positive(),
   amountCurrency: CurrencyCode.optional(),
   /** Deterministic ranking preference — reuses RankingPreset verbatim. */
   preference: RankingPreset.default("balanced"),

@@ -164,6 +164,20 @@ export const requirementKindEnum = pgEnum("requirement_kind", ["kyc", "kyb", "te
 
 export const apiKeyModeEnum = pgEnum("api_key_mode", ["test", "live"]);
 
+export const entitlementPlanEnum = pgEnum("entitlement_plan", ["free", "founding"]);
+export const entitlementStatusEnum = pgEnum("entitlement_status", ["active", "expired", "revoked"]);
+export const providerResearchStatusEnum = pgEnum("provider_research_status", [
+  "pending",
+  "discovering",
+  "fetching",
+  "extracting",
+  "review",
+  "completed",
+  "partial",
+  "failed",
+  "budget_blocked",
+]);
+
 /* -------------------------------------------------------------------------- */
 /* Control plane: Policy -> Decision                                          */
 /* -------------------------------------------------------------------------- */
@@ -474,6 +488,10 @@ export const namedRails = pgTable("named_rails", {
     .references(() => countries.code),
   category: paymentMethodEnum("category").notNull(),
   description: text("description"),
+  /** Where the rail was verified (operator/central-bank page) and the sentence that names it — set by web discovery. */
+  sourceUrl: text("source_url"),
+  sourceQuote: text("source_quote"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
 });
 
 /* -------------------------------------------------------------------------- */
@@ -1044,6 +1062,27 @@ export const organizations = pgTable(
   (t) => ({ slugIdx: uniqueIndex("organizations_slug_idx").on(t.slug) }),
 );
 
+/** One current entitlement row per organization. Expired rows resolve to the free plan at read time. */
+export const organizationEntitlements = pgTable(
+  "organization_entitlements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    plan: entitlementPlanEnum("plan").default("free").notNull(),
+    status: entitlementStatusEnum("status").default("active").notNull(),
+    validFrom: timestamp("valid_from", { withTimezone: true }).defaultNow().notNull(),
+    validUntil: timestamp("valid_until", { withTimezone: true }),
+    activationReference: text("activation_reference"),
+    limits: jsonb("limits").$type<Record<string, number | boolean>>().default({}).notNull(),
+    activatedBy: uuid("activated_by").references(() => users.id),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ organizationIdx: uniqueIndex("organization_entitlements_org_idx").on(t.organizationId) }),
+);
+
 export const organizationMembers = pgTable(
   "organization_members",
   {
@@ -1239,9 +1278,239 @@ export const providerConnections = pgTable("provider_connections", {
   status: text("status").default("not_connected").notNull(),
   /** AES-256-GCM ciphertext (apps/web/lib/credentials.ts), written by connectProvider(). Requires CREDENTIALS_ENCRYPTION_KEY — connectProvider refuses to write if that's unset. */
   encryptedCredentials: text("encrypted_credentials"),
+  /** `sandbox` connections can only ever carry test-mode payments; `production` only live ones. */
+  environment: text("environment").$type<"sandbox" | "production">().default("sandbox").notNull(),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+  lastCheckDetail: text("last_check_detail"),
   connectedAt: timestamp("connected_at", { withTimezone: true }),
   createdAt: now(),
 });
+
+/* -------------------------------------------------------------------------- */
+/* Money movement — payments executed through the org's own provider accounts */
+/* -------------------------------------------------------------------------- */
+
+export type PaymentStatus =
+  | "requires_approval"
+  | "ready"
+  | "blocked"
+  | "submitting"
+  | "awaiting_funds"
+  | "processing"
+  | "completed"
+  | "failed"
+  | "returned"
+  | "cancelled"
+  | "unknown";
+
+export type PaymentAttemptStatus = "pending" | "accepted" | "rejected" | "unknown" | "completed" | "failed" | "returned" | "cancelled";
+
+export type BeneficiaryMethod = "bank_us" | "iban" | "gb" | "clabe" | "pix" | "in_bank" | "crypto_address";
+
+/** Who gets paid. Account details are AES-256-GCM encrypted; only a masked hint is stored in clear. */
+export const beneficiaries = pgTable(
+  "beneficiaries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    holderType: text("holder_type").$type<"business" | "individual">().notNull(),
+    holderName: text("holder_name").notNull(),
+    country: text("country").notNull(),
+    currency: text("currency").notNull(),
+    method: text("method").$type<BeneficiaryMethod>().notNull(),
+    network: text("network"),
+    displayHint: text("display_hint").notNull(),
+    encryptedDetails: text("encrypted_details").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => ({ orgIdx: index("beneficiaries_org_idx").on(t.organizationId) }),
+);
+
+/** A beneficiary registered with one provider account (Bridge external account, Circle recipient…). */
+export const beneficiaryProviderRefs = pgTable(
+  "beneficiary_provider_refs",
+  {
+    beneficiaryId: uuid("beneficiary_id")
+      .notNull()
+      .references(() => beneficiaries.id, { onDelete: "cascade" }),
+    providerSlug: text("provider_slug").notNull(),
+    connectionId: uuid("connection_id").notNull(),
+    providerRef: text("provider_ref").notNull(),
+    status: text("status").default("active").notNull(),
+    createdAt: now(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.beneficiaryId, t.connectionId] }) }),
+);
+
+export const payments = pgTable("payments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  mode: text("mode").$type<"test" | "live">().notNull(),
+  status: text("status").$type<PaymentStatus>().notNull(),
+  intent: jsonb("intent").$type<Record<string, unknown>>().notNull(),
+  amount: numeric("amount", { precision: 24, scale: 8 }).notNull(),
+  sourceCurrency: text("source_currency").notNull(),
+  destinationCurrency: text("destination_currency").notNull(),
+  destinationCountry: text("destination_country").notNull(),
+  beneficiaryId: uuid("beneficiary_id")
+    .notNull()
+    .references(() => beneficiaries.id),
+  decisionId: uuid("decision_id").references(() => decisions.id),
+  pinnedProvider: text("pinned_provider"),
+  routePlan: jsonb("route_plan").$type<Record<string, unknown>>().default({}).notNull(),
+  selectedProvider: text("selected_provider"),
+  providerReference: text("provider_reference"),
+  recipientAmount: numeric("recipient_amount", { precision: 24, scale: 8 }),
+  feeAmount: numeric("fee_amount", { precision: 24, scale: 8 }),
+  feeCurrency: text("fee_currency"),
+  depositInstructions: jsonb("deposit_instructions").$type<Record<string, unknown> | null>(),
+  failureCode: text("failure_code"),
+  failureMessage: text("failure_message"),
+  reference: text("reference"),
+  idempotencyKey: text("idempotency_key"),
+  requestHash: text("request_hash"),
+  createdBy: uuid("created_by").references(() => users.id),
+  submittedBy: uuid("submitted_by").references(() => users.id),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const paymentAttempts = pgTable("payment_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  paymentId: uuid("payment_id")
+    .notNull()
+    .references(() => payments.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  attemptNumber: integer("attempt_number").notNull(),
+  providerSlug: text("provider_slug").notNull(),
+  environment: text("environment").$type<"sandbox" | "production">().notNull(),
+  /** `provider` = the provider's own API via the org's connection; `railor_sandbox` = Railor's test-mode simulator. */
+  executor: text("executor").$type<"provider" | "railor_sandbox">().notNull(),
+  connectionId: uuid("connection_id"),
+  idempotencyKey: uuid("idempotency_key").notNull(),
+  status: text("status").$type<PaymentAttemptStatus>().notNull(),
+  providerReference: text("provider_reference"),
+  providerStatus: text("provider_status"),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  requestSnapshot: jsonb("request_snapshot").$type<Record<string, unknown>>().default({}).notNull(),
+  responseSnapshot: jsonb("response_snapshot").$type<Record<string, unknown> | null>(),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Append-only history of every payment state change and who/what caused it. */
+export const paymentEvents = pgTable("payment_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  paymentId: uuid("payment_id")
+    .notNull()
+    .references(() => payments.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  fromStatus: text("from_status"),
+  toStatus: text("to_status"),
+  source: text("source").$type<"user" | "api" | "provider_webhook" | "reconciler" | "system" | "admin">().notNull(),
+  actorId: uuid("actor_id").references(() => users.id),
+  detail: jsonb("detail").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt: now(),
+});
+
+export const orgPaymentSettings = pgTable("org_payment_settings", {
+  organizationId: uuid("organization_id")
+    .primaryKey()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  /** Set only by a Railor admin after reviewing the organization. Live payments are impossible while false. */
+  liveEnabled: boolean("live_enabled").default(false).notNull(),
+  liveEnabledBy: uuid("live_enabled_by").references(() => users.id),
+  liveEnabledAt: timestamp("live_enabled_at", { withTimezone: true }),
+  liveNote: text("live_note"),
+  maxPaymentAmount: numeric("max_payment_amount", { precision: 24, scale: 8 }),
+  dailyPaymentAmount: numeric("daily_payment_amount", { precision: 24, scale: 8 }),
+  routingPreset: text("routing_preset").default("balanced").notNull(),
+  preferredProviders: jsonb("preferred_providers").$type<string[]>().default([]).notNull(),
+  blockedProviders: jsonb("blocked_providers").$type<string[]>().default([]).notNull(),
+  fallbackEnabled: boolean("fallback_enabled").default(true).notNull(),
+  maxAttempts: integer("max_attempts").default(2).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Platform-wide operator switches (payments kill switch, providers approved for live payouts). */
+export const platformSettings = pgTable("platform_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").$type<unknown>().notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  description: text("description"),
+  mode: text("mode").$type<"test" | "live">().notNull(),
+  events: jsonb("events").$type<string[]>().default(["payment.*"]).notNull(),
+  encryptedSecret: text("encrypted_secret").notNull(),
+  secretHint: text("secret_hint").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+  disabledReason: text("disabled_reason"),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: now(),
+});
+
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    endpointId: uuid("endpoint_id")
+      .notNull()
+      .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    status: text("status").$type<"pending" | "delivered" | "failed">().default("pending").notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    lastStatusCode: integer("last_status_code"),
+    lastError: text("last_error"),
+    createdAt: now(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  },
+  (t) => ({ dueIdx: index("webhook_deliveries_due_idx").on(t.status, t.nextAttemptAt) }),
+);
+
+/** Inbound provider webhooks, deduplicated by (provider, connection, provider event id). */
+export const providerWebhookEvents = pgTable(
+  "provider_webhook_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerSlug: text("provider_slug").notNull(),
+    connectionId: uuid("connection_id").notNull(),
+    eventId: text("event_id").notNull(),
+    payloadHash: text("payload_hash").notNull(),
+    outcome: text("outcome").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ dedupe: uniqueIndex("provider_webhook_events_dedupe_idx").on(t.providerSlug, t.connectionId, t.eventId) }),
+);
 
 /* -------------------------------------------------------------------------- */
 /* Developer surface                                                           */
@@ -1291,6 +1560,18 @@ export const apiUsage = pgTable(
     orgIdx: index("api_usage_org_idx").on(t.organizationId, t.createdAt),
     keyIdx: index("api_usage_key_idx").on(t.apiKeyId, t.createdAt),
   }),
+);
+
+/** Cross-instance fixed-window limiter. Postgres is intentionally the only queue/cache dependency. */
+export const rateLimitBuckets = pgTable(
+  "rate_limit_buckets",
+  {
+    key: text("key").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").default(0).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.key, t.windowStart] }), expiresIdx: index("rate_limit_buckets_expires_idx").on(t.expiresAt) }),
 );
 
 /**
@@ -1343,6 +1624,20 @@ export const auditLogs = pgTable(
     createdAt: now(),
   },
   (t) => ({ orgIdx: index("audit_logs_org_idx").on(t.organizationId, t.createdAt) }),
+);
+
+/** "Notify me" on roadmap surfaces labelled Coming soon — one row per feature per address. */
+export const featureInterest = pgTable(
+  "feature_interest",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    feature: text("feature").notNull(),
+    email: text("email").notNull(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "set null" }),
+    createdAt: now(),
+  },
+  (t) => ({ featureEmailIdx: uniqueIndex("feature_interest_feature_email_idx").on(t.feature, t.email) }),
 );
 
 export const sharedComparisons = pgTable("shared_comparisons", {
@@ -1525,6 +1820,11 @@ export const researchSpendLedger = pgTable(
     status: text("status").notNull(),
     country: text("country"),
     provider: text("provider"),
+    campaign: text("campaign"),
+    accountLabel: text("account_label"),
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+    actualUsd: numeric("actual_usd", { precision: 12, scale: 4 }),
     summary: text("summary"),
     errorMessage: text("error_message"),
     createdAt: now(),
@@ -1534,6 +1834,53 @@ export const researchSpendLedger = pgTable(
     idempotencyIdx: uniqueIndex("research_spend_ledger_idempotency_idx").on(t.idempotencyKey),
     accountStatusIdx: index("research_spend_ledger_account_status_idx").on(t.accountId, t.status, t.createdAt),
   }),
+);
+
+/** A durable, resumable campaign for one launch provider. */
+export const providerResearchRuns = pgTable(
+  "provider_research_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaign: text("campaign").notNull(),
+    providerId: uuid("provider_id").notNull().references(() => providers.id, { onDelete: "cascade" }),
+    status: providerResearchStatusEnum("status").default("pending").notNull(),
+    accountLabel: text("account_label"),
+    dimensions: jsonb("dimensions").$type<string[]>().default([]).notNull(),
+    sourceCount: integer("source_count").default(0).notNull(),
+    claimCount: integer("claim_count").default(0).notNull(),
+    spendUsd: numeric("spend_usd", { precision: 12, scale: 4 }).default("0").notNull(),
+    failureCount: integer("failure_count").default(0).notNull(),
+    errorMessage: text("error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ campaignProviderIdx: uniqueIndex("provider_research_runs_campaign_provider_idx").on(t.campaign, t.providerId), statusIdx: index("provider_research_runs_status_idx").on(t.status) }),
+);
+
+/** Typed candidate facts. They never enter the live graph until an operator approves them. */
+export const providerResearchClaims = pgTable(
+  "provider_research_claims",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    runId: uuid("run_id").notNull().references(() => providerResearchRuns.id, { onDelete: "cascade" }),
+    providerId: uuid("provider_id").notNull().references(() => providers.id, { onDelete: "cascade" }),
+    claimKind: text("claim_kind").notNull(),
+    dedupeKey: text("dedupe_key").notNull(),
+    value: jsonb("value").$type<Record<string, unknown>>().notNull(),
+    quote: text("quote").notNull(),
+    sourceUrls: jsonb("source_urls").$type<string[]>().notNull(),
+    confidence: numeric("confidence", { precision: 3, scale: 2 }).default("0.85").notNull(),
+    reviewStatus: reviewStatusEnum("review_status").default("pending").notNull(),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    rejectionReason: text("rejection_reason"),
+    publishedEvidenceId: uuid("published_evidence_id").references(() => evidence.id),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ runDedupeIdx: uniqueIndex("provider_research_claims_run_dedupe_idx").on(t.runId, t.dedupeKey), reviewIdx: index("provider_research_claims_review_idx").on(t.reviewStatus, t.createdAt) }),
 );
 
 /* -------------------------------------------------------------------------- */
@@ -1571,6 +1918,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   corridors: many(savedCorridors),
   watchlists: many(watchlists),
   keys: many(apiKeys),
+  entitlements: many(organizationEntitlements),
 }));
 
 export const countryProfilesRelations = relations(countryProfiles, ({ many }) => ({
@@ -1658,6 +2006,9 @@ export const decisions = pgTable(
   "decisions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    mode: text("mode").default("optimize").notNull(),
+    proposedExecutor: text("proposed_executor"),
+    createdBy: uuid("created_by").references(() => users.id),
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
@@ -1720,6 +2071,8 @@ export const decisionCandidates = pgTable(
     /** Independent from routeCertainty — reuses the same tier vocabulary (this type never stores "unconfirmed") because both express "how well is this fact established," just about two different, orthogonal questions. See EntityEligibility in @railor/types. */
     entityEligibility: routeConfirmationEnum("entity_eligibility"),
     policyResult: policyEvalResultEnum("policy_result").notNull(),
+    policyEvaluation: jsonb("policy_evaluation").$type<Record<string, unknown>>().default({}).notNull(),
+    dependencySnapshot: jsonb("dependency_snapshot").$type<Record<string, unknown>>().default({}).notNull(),
     policyReasonCodes: jsonb("policy_reason_codes").$type<string[]>().default([]).notNull(),
     quoteSnapshot: jsonb("quote_snapshot").$type<Record<string, unknown> | null>(),
     quoteType: text("quote_type"),
@@ -1785,5 +2138,125 @@ export const decisionCandidatesRelations = relations(decisionCandidates, ({ one 
 export const decisionEventsRelations = relations(decisionEvents, ({ one }) => ({
   decision: one(decisions, { fields: [decisionEvents.decisionId], references: [decisions.id] }),
 }));
+
+export const decisionApprovals = pgTable("decision_approvals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  decisionId: uuid("decision_id").notNull().references(() => decisions.id),
+  decisionHash: text("decision_hash").notNull(),
+  status: text("status").default("pending").notNull(),
+  requestedBy: uuid("requested_by").references(() => users.id),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  comment: text("comment").default("").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: now(),
+}, (t) => ({ decisionIdx: uniqueIndex("decision_approvals_decision_idx").on(t.decisionId), orgIdx: index("decision_approvals_org_idx").on(t.organizationId, t.status) }));
+
+export const productEvents = pgTable("product_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").references(() => users.id),
+  kind: text("kind").notNull(),
+  targetId: text("target_id").notNull(),
+  data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt: now(),
+}, (t) => ({ orgIdx: index("product_events_org_idx").on(t.organizationId, t.createdAt) }));
+
+/**
+ * Web discovery (apps/worker, Google Search grounding): operators queue a job,
+ * the worker runs it. Verified claims land in change_events for review; unknown
+ * companies land in provider_candidates. Nothing here is published data.
+ */
+export const discoveryJobs = pgTable("discovery_jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: text("kind").$type<"corridor" | "provider" | "company">().notNull(),
+  query: jsonb("query").$type<Record<string, unknown>>().notNull(),
+  status: text("status").$type<"queued" | "running" | "done" | "failed">().default("queued").notNull(),
+  requestedBy: uuid("requested_by").references(() => users.id, { onDelete: "set null" }),
+  summary: jsonb("summary").$type<Record<string, unknown>>().default({}).notNull(),
+  error: text("error"),
+  createdAt: now(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+}, (t) => ({ statusIdx: index("discovery_jobs_status_idx").on(t.status, t.createdAt) }));
+
+export interface CandidateEvidence {
+  url: string;
+  title: string;
+  quote: string;
+  statement: string;
+  kind: string;
+  official: boolean;
+  hash: string;
+}
+
+export const providerCandidates = pgTable("provider_candidates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  domain: text("domain").notNull(),
+  websiteUrl: text("website_url").notNull(),
+  evidence: jsonb("evidence").$type<CandidateEvidence[]>().default([]).notNull(),
+  corridor: jsonb("corridor").$type<Record<string, unknown>>().default({}).notNull(),
+  jobId: uuid("job_id").references(() => discoveryJobs.id, { onDelete: "set null" }),
+  status: text("status").$type<"pending" | "approved" | "rejected">().default("pending").notNull(),
+  providerId: uuid("provider_id").references(() => providers.id, { onDelete: "set null" }),
+  reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewNote: text("review_note"),
+  createdAt: now(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  domainIdx: uniqueIndex("provider_candidates_domain_idx").on(t.domain),
+  statusIdx: index("provider_candidates_status_idx").on(t.status, t.lastSeenAt),
+}));
+
+/** Saved market leads are tenant-private research, never executable route facts. */
+export const discoveryReviews = pgTable("discovery_reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  fingerprint: text("fingerprint").notNull(),
+  query: jsonb("query").$type<Record<string, unknown>>().notNull(),
+  candidate: jsonb("candidate").$type<Record<string, unknown>>().notNull(),
+  status: text("status").default("pending").notNull(),
+  comment: text("comment").default("").notNull(),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  discoveredAt: timestamp("discovered_at", { withTimezone: true }).notNull(),
+  createdAt: now(),
+}, (t) => ({ dedupeIdx: uniqueIndex("discovery_reviews_dedupe_idx").on(t.organizationId, t.fingerprint) }));
+
+export const connectorInstallations = pgTable("connector_installations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  createdAt: now(),
+}, (t) => ({ tokenIdx: uniqueIndex("connector_installations_token_idx").on(t.tokenHash) }));
+
+export const connectorJobs = pgTable("connector_jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  installationId: uuid("installation_id").notNull().references(() => connectorInstallations.id),
+  decisionId: uuid("decision_id").notNull().references(() => decisions.id),
+  decisionHash: text("decision_hash").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  requestHash: text("request_hash").notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  status: text("status").default("pending").notNull(),
+  result: jsonb("result").$type<Record<string, unknown>>(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: now(),
+}, (t) => ({ keyIdx: uniqueIndex("connector_jobs_key_idx").on(t.organizationId, t.idempotencyKey), decisionIdx: uniqueIndex("connector_jobs_decision_idx").on(t.decisionId), queueIdx: index("connector_jobs_queue_idx").on(t.installationId, t.status), recentIdx: index("connector_jobs_org_recent_idx").on(t.organizationId, t.completedAt) }));
+
+export const decisionMonitorChecks = pgTable("decision_monitor_checks", {
+  decisionId: uuid("decision_id").primaryKey().references(() => decisions.id, { onDelete: "cascade" }),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
+  leaseUntil: timestamp("lease_until", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const schemaVersion = sql`3`;

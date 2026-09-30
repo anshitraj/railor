@@ -99,6 +99,62 @@
       "when": 1788433716717,
       "tag": "0013_entity_eligibility",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788566400000,
+      "tag": "0014_commercial_mvp",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790114400000,
+      "tag": "0015_product_control",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790114500000,
+      "tag": "0016_workflows",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790114600000,
+      "tag": "0017_feature_interest",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790200000000,
+      "tag": "0018_money_movement",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790300000000,
+      "tag": "0019_india_bank_beneficiaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790400000000,
+      "tag": "0020_web_discovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790500000000,
+      "tag": "0021_discovery_companies_and_rail_sources",
+      "breakpoints": true
     }
   ]
 }

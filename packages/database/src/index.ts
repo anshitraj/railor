@@ -5,6 +5,9 @@ export {
   getDbHandle,
   ensureMigrated,
   embeddedDataDir,
+  pendingMigrations,
+  isLocalDatabaseUrl,
+  databaseTargetLabel,
   type DbHandle,
   type RailorDb,
 } from "./client.js";
