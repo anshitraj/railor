@@ -28,6 +28,11 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Show the shortcut people actually press on their platform.
+  const [shortcut, setShortcut] = useState("⌘K");
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && !/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) setShortcut("Ctrl K");
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -78,11 +83,13 @@ export function CommandPalette({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-w-[240px] items-center gap-2.5 rounded-full border border-[var(--color-line)] bg-white px-4 py-2.5 text-[14.5px] text-[var(--color-muted)] shadow-[var(--shadow-soft)] transition hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-panel)]"
+        aria-label="Open search"
+        className="flex min-w-0 items-center gap-2.5 rounded-full border border-[var(--color-line)] bg-white px-3.5 py-2 text-[14px] text-[var(--color-muted)] shadow-[var(--shadow-soft)] transition hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-panel)] sm:min-w-[240px] sm:px-4 sm:py-2.5 sm:text-[14.5px]"
       >
         <Search size={17} className="shrink-0 opacity-70" aria-hidden />
-        <span className="flex-1 text-left">{placeholder.replace(/…$/, "")}</span>
-        <kbd className="shrink-0 rounded-md border border-[var(--color-line)] px-1.5 py-0.5 text-[11px] font-medium">⌘K</kbd>
+        <span className="flex-1 truncate text-left sm:hidden">Search</span>
+        <span className="hidden flex-1 truncate text-left sm:inline">{placeholder.replace(/…$/, "")}</span>
+        <kbd className="hidden shrink-0 rounded-md border border-[var(--color-line)] px-1.5 py-0.5 text-[11px] font-medium sm:inline">{shortcut}</kbd>
       </button>
 
       <AnimatePresence>

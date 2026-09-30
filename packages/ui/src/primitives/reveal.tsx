@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate, motion, useInView, useReducedMotion, type Variants } from "motion/react";
 import { cn } from "../cn.js";
 
@@ -25,6 +25,30 @@ const OFFSET: Record<RevealDirection, { x?: number; y?: number }> = {
   none: {},
 };
 
+/**
+ * Decides whether an element gets a scroll-reveal at all.
+ *
+ * Server HTML always renders content visible — no reader, crawler or slow
+ * device ever sees a blank section. After hydration, only elements that start
+ * below the fold are "armed" (hidden instantly, off-screen, so nothing
+ * flickers) and then revealed as they scroll in. Anything already on screen
+ * simply stays put.
+ */
+function useScrollReveal(amount: number) {
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, amount });
+  const [armed, setArmed] = useState(false);
+  useLayoutEffectSafe(() => {
+    const el = ref.current;
+    if (el && el.getBoundingClientRect().top > window.innerHeight * 0.9) setArmed(true);
+  }, []);
+  return { ref, state: armed && !inView ? "hidden" : "shown" } as const;
+}
+
+const useLayoutEffectSafe = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+type RevealTag = "div" | "section" | "li" | "span" | "article";
+
 export function Reveal({
   children,
   direction = "up",
@@ -39,19 +63,23 @@ export function Reveal({
   delay?: number;
   duration?: number;
   className?: string;
-  as?: "div" | "section" | "li" | "span";
+  as?: RevealTag;
   amount?: number;
 }) {
   const reduced = useReducedMotion();
-  const Component = motion[as];
+  const Component = motion[as] as typeof motion.div;
   const from = reduced ? {} : OFFSET[direction];
+  const { ref, state } = useScrollReveal(amount);
 
   return (
     <Component
-      initial={{ opacity: 0, ...from }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, amount }}
-      transition={{ duration, delay, ease: EASE }}
+      ref={ref as React.Ref<HTMLDivElement>}
+      initial={false}
+      animate={state}
+      variants={{
+        hidden: { opacity: 0, ...from, transition: { duration: 0 } },
+        shown: { opacity: 1, x: 0, y: 0, transition: { duration, delay, ease: EASE } },
+      }}
       className={className}
     >
       {children}
@@ -79,23 +107,18 @@ export function Stagger({
   as?: "div" | "ul" | "section";
 }) {
   const reduced = useReducedMotion();
-  const Component = motion[as];
+  const Component = motion[as] as typeof motion.div;
+  const { ref, state } = useScrollReveal(amount);
 
   const variants: Variants = {
-    hidden: {},
+    hidden: { transition: { duration: 0 } },
     shown: {
       transition: { staggerChildren: reduced ? 0 : step, delayChildren: delay },
     },
   };
 
   return (
-    <Component
-      variants={variants}
-      initial="hidden"
-      whileInView="shown"
-      viewport={{ once: true, amount }}
-      className={className}
-    >
+    <Component ref={ref as React.Ref<HTMLDivElement>} variants={variants} initial={false} animate={state} className={className}>
       {children}
     </Component>
   );
@@ -113,13 +136,13 @@ export function StaggerItem({
   as?: "div" | "li" | "span";
 }) {
   const reduced = useReducedMotion();
-  const Component = motion[as];
+  const Component = motion[as] as typeof motion.div;
   const from = reduced ? {} : OFFSET[direction];
 
   return (
     <Component
       variants={{
-        hidden: { opacity: 0, ...from },
+        hidden: { opacity: 0, ...from, transition: { duration: 0 } },
         shown: { opacity: 1, x: 0, y: 0, transition: { duration: 0.5, ease: EASE } },
       }}
       className={className}
@@ -146,11 +169,13 @@ export function CountUp({
   const reduced = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
-  const [shown, setShown] = useState(0);
+  // Server HTML and first paint carry the real figure — a count-up must never
+  // show a false "0" to someone whose JavaScript is slow or disabled.
+  const [shown, setShown] = useState(value);
 
   useEffect(() => {
     if (!inView) return;
-    if (reduced) {
+    if (reduced || value === 0) {
       setShown(value);
       return;
     }
@@ -166,7 +191,7 @@ export function CountUp({
 
   return (
     <span ref={ref} className={cn("tabular", className)}>
-      {(inView ? shown : 0).toLocaleString()}
+      {shown.toLocaleString("en-US")}
     </span>
   );
 }

@@ -27,6 +27,7 @@ export function ResultRow({
   blurred = false,
   onUnlock,
   isDemo = false,
+  mark,
 }: {
   name: string;
   category: string;
@@ -43,6 +44,8 @@ export function ResultRow({
   onUnlock?: () => void;
   /** Railor's own seeded sample company, never a real business — labelled, never hidden, never silently blended in. */
   isDemo?: boolean;
+  /** The provider's logo; falls back to initials. */
+  mark?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -64,14 +67,20 @@ export function ResultRow({
           aria-expanded={open}
           className="flex min-w-[200px] flex-1 items-center gap-3 text-left"
         >
-          <span
-            className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-lavender)] text-[13px] font-semibold text-[var(--color-purple)] transition-transform duration-200 ease-[var(--ease-out-quint)] group-hover/row:scale-[1.06]",
-            )}
-            aria-hidden
-          >
-            {name.slice(0, 2).toUpperCase()}
-          </span>
+          {mark ? (
+            <span className="shrink-0 transition-transform duration-200 ease-[var(--ease-out-quint)] group-hover/row:scale-[1.06]" aria-hidden>
+              {mark}
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-lavender)] text-[13px] font-semibold text-[var(--color-purple)] transition-transform duration-200 ease-[var(--ease-out-quint)] group-hover/row:scale-[1.06]",
+              )}
+              aria-hidden
+            >
+              {name.slice(0, 2).toUpperCase()}
+            </span>
+          )}
           <span className="flex flex-col">
             <span className="flex items-center gap-1.5">
               <span className="text-[15px] font-medium text-[var(--color-ink)]">{name}</span>

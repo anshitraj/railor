@@ -8,6 +8,9 @@ import { registerCorridorCommands } from "./commands/corridors.js";
 import { registerEligibilityCommands } from "./commands/eligibility.js";
 import { registerProviderCommands } from "./commands/providers.js";
 import { registerWatchCommands } from "./commands/watch.js";
+import { registerCompareCommands } from "./commands/compare.js";
+import { registerCapabilityCommands } from "./commands/capabilities.js";
+import { registerPaymentCommands } from "./commands/payments.js";
 
 const program = new Command();
 
@@ -32,6 +35,9 @@ registerProviderCommands(program, getClient);
 registerChangeCommands(program, getClient);
 registerWatchCommands(program, getClient);
 registerEligibilityCommands(program, getClient);
+registerCompareCommands(program, getClient);
+registerCapabilityCommands(program, getClient);
+registerPaymentCommands(program, getClient);
 
 program.parseAsync(process.argv).catch((error: unknown) => {
   console.error((error as Error).message);

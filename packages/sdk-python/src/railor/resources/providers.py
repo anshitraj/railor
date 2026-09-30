@@ -12,3 +12,8 @@ class Providers:
     def list(self, *, product: str | None = None, country: str | None = None) -> dict[str, Any]:
         """GET /v1/providers — mapped providers, optionally filtered by product or HQ country."""
         return self._transport.get("/v1/providers", query={"product": product, "country": country})
+
+    def retrieve(self, id: str) -> dict[str, Any]:
+        """GET /v1/providers/{id} — one provider's products, coverage, requirements,
+        verified limits and fees, sources and recent changes."""
+        return self._transport.get(f"/v1/providers/{id}")

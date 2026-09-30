@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from ._http import Transport
+from .resources.capabilities import Capabilities
 from .resources.changes import Changes
+from .resources.payments import Beneficiaries, Payments, Prices, Routes
 from .resources.corridors import Corridors
 from .resources.eligibility import Eligibility
 from .resources.providers import Providers
@@ -41,6 +44,17 @@ class Railor:
         self.eligibility = Eligibility(self._transport)
         self.changes = Changes(self._transport)
         self.watchlists = Watchlists(self._transport)
+        self.capabilities = Capabilities(self._transport)
+        self.beneficiaries = Beneficiaries(self._transport)
+        self.routes = Routes(self._transport)
+        self.prices = Prices(self._transport)
+        self.payments = Payments(self._transport)
+
+    def compare(self, providers: list[str], *, only_differences: bool = False) -> dict[str, Any]:
+        """POST /v1/compare — 2–4 providers on the same dimensions."""
+        return self._transport.post(
+            "/v1/compare", body={"providers": providers, "only_differences": only_differences}
+        )
 
     def close(self) -> None:
         self._transport.close()

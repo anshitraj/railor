@@ -2,6 +2,7 @@ export { cn } from "./cn.js";
 export * from "./primitives/badges.js";
 export * from "./primitives/base.js";
 export * from "./primitives/choice-grid.js";
+export * from "./primitives/flag.js";
 export * from "./primitives/smart-picker.js";
 export * from "./primitives/interpretation-bar.js";
 export * from "./primitives/paste-to-structure.js";

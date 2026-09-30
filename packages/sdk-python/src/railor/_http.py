@@ -28,10 +28,11 @@ class Transport:
         *,
         query: dict[str, Any] | None = None,
         body: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> Any:
         params = {k: v for k, v in (query or {}).items() if v is not None}
         try:
-            response = self._client.request(method, path, params=params, json=body)
+            response = self._client.request(method, path, params=params, json=body, headers=headers)
         except httpx.RequestError as exc:
             raise RailorConnectionError(
                 f"Could not reach {self._client.base_url}. Is the app running? ({exc})"

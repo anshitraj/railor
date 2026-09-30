@@ -170,6 +170,9 @@ export function Freshness({ date, prefix = "Verified" }: { date: Date | string |
         stale ? "text-[var(--color-warn)]" : "text-[var(--color-muted)]",
       )}
       title={d.toISOString()}
+      // Relative time is computed on server and client a moment apart; a minute
+      // boundary between them is expected, not a bug.
+      suppressHydrationWarning
     >
       {prefix} {label}
     </span>
