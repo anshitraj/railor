@@ -2,7 +2,7 @@
   "name": "railor",
   "private": true,
   "version": "0.1.0",
-  "description": "Railor — financial infrastructure, mapped.",
+  "description": "Railor \u2014 financial infrastructure, mapped.",
   "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "pnpm --filter @railor/web dev",
@@ -22,5 +22,11 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.6.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.23",
+      "sharp": "^0.35.4"
+    }
   }
 }

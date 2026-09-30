@@ -1,5 +1,8 @@
 node_modules
 .next
+.next-*
+.next-e2e
+.railor-connector-journal/
 out
 dist
 .turbo
@@ -7,7 +10,11 @@ dist
 .env
 .env.local
 .DS_Store
-coverage
+# Test-coverage output only. Anchored on purpose: a bare `coverage` also matched
+# the /coverage route directory (apps/web/app/(public)/coverage) and kept it out of git.
+/coverage
+/apps/*/coverage
+/packages/*/coverage
 .pnpm-store
 apps/worker/.venv
 apps/worker/__pycache__
