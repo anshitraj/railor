@@ -17,7 +17,9 @@ dependencies = [
 browser = ["playwright>=1.45"]
 # Scrapy is used for multi-page documentation crawls.
 crawl = ["scrapy>=2.11"]
-queue = ["redis>=5.0", "celery>=5.4"]
+gcs = ["google-cloud-storage>=2.18"]
+# Web discovery: Gemini with Google Search grounding (railor_worker/discovery).
+discovery = ["google-genai>=1.30"]
 dev = ["pytest>=8.2", "ruff>=0.5"]
 
 [project.scripts]

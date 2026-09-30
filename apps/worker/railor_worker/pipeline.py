@@ -20,6 +20,7 @@ from .config import get_settings
 from .diff import diff_claims
 from .extract import RuleExtractor, to_text
 from .fetch import fetch
+from .storage import store_snapshot
 
 log = logging.getLogger("railor.worker")
 
@@ -47,11 +48,7 @@ class SourceOutcome:
 
 def _store_snapshot(provider_slug: str, content_hash: str, body: str) -> str:
     """Raw bodies live in object storage; Postgres keeps the pointer and the text."""
-    directory = Path(get_settings().snapshot_dir) / provider_slug
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / f"{content_hash[:16]}.html"
-    path.write_text(body, encoding="utf-8")
-    return str(path)
+    return store_snapshot(provider_slug, content_hash, body, Path(get_settings().snapshot_dir))
 
 
 def process_source(source: dict[str, Any]) -> SourceOutcome:

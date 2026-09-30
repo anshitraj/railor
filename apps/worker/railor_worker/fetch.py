@@ -15,10 +15,10 @@ from dataclasses import dataclass
 from functools import lru_cache
 from urllib.parse import urlparse
 
-import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_exponential
 
 from .config import get_settings
+from .netguard import BlockedURL, GuardedResponse, guarded_get
 
 _last_request_at: dict[str, float] = {}
 MIN_INTERVAL_SECONDS = 2.0
@@ -65,15 +65,15 @@ def _throttle(host: str) -> None:
     _last_request_at[host] = time.monotonic()
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=20))
-def _get(url: str, headers: dict[str, str]) -> httpx.Response:
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=20),
+    retry=retry_if_not_exception_type(BlockedURL),
+)
+def _get(url: str, headers: dict[str, str]) -> GuardedResponse:
+    # Every hop, redirects included, must resolve to a public address (see netguard.py).
     settings = get_settings()
-    return httpx.get(
-        url,
-        headers={"user-agent": settings.user_agent, **headers},
-        timeout=settings.request_timeout,
-        follow_redirects=True,
-    )
+    return guarded_get(url, headers={"user-agent": settings.user_agent, **headers}, timeout=settings.request_timeout)
 
 
 def fetch(url: str, *, etag: str | None = None, last_modified: str | None = None) -> FetchResult:
@@ -94,17 +94,15 @@ def fetch(url: str, *, etag: str | None = None, last_modified: str | None = None
     except Exception as exc:  # network, DNS, TLS, timeout
         return FetchResult(None, None, None, None, None, False, error=f"{type(exc).__name__}: {exc}")
 
-    if response.status_code == 304:
+    if response.status == 304:
         return FetchResult(304, None, None, etag, last_modified, True)
 
-    if response.status_code >= 400:
-        return FetchResult(
-            response.status_code, None, None, None, None, False, error=f"http_{response.status_code}"
-        )
+    if response.status >= 400:
+        return FetchResult(response.status, None, None, None, None, False, error=f"http_{response.status}")
 
     body = response.text
     return FetchResult(
-        status=response.status_code,
+        status=response.status,
         body=body,
         content_hash=content_hash(body),
         etag=response.headers.get("etag"),

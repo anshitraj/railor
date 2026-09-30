@@ -71,3 +71,40 @@ what to do — it is not worked around.
 ```bash
 pytest
 ```
+
+## Web discovery (Google Search grounding)
+
+```bash
+pip install -e ".[discovery]"          # google-genai
+python -m railor_worker.cli discover --entity IN --to AE --currency AED --asset USD --dry-run
+python -m railor_worker.cli discover --provider wise            # deepen a listed provider
+python -m railor_worker.cli discover-targets --only adyen.com   # research an unlisted company
+python -m railor_worker.cli discover-rails --dry-run            # verify missing named rails
+python -m railor_worker.cli discover-queue                      # run jobs queued in /admin/discovery
+```
+
+How a fact gets in — and why none can be invented:
+
+1. **Search.** Gemini (`RAILOR_DISCOVERY_MODEL`, default `gemini-2.5-flash`) answers with Google
+   Search grounding. Only its *citations* are kept; an answer without grounding metadata is
+   rejected outright.
+2. **Fetch.** Every cited page is resolved (Google's redirect links) and fetched by the worker
+   itself — robots.txt obeyed, per-host throttling, every hop checked against private
+   addresses (`netguard.py`), bodies size-capped. Social/user-generated pages are not evidence.
+3. **Extract.** A second, ungrounded pass structures claims from that page text; each must
+   carry one sentence copied verbatim from a source.
+4. **Verify.** A claim survives only if its quote is on the fetched page (normalized for case,
+   quote style and whitespace; edited quotes never pass) *and* the quote actually states the
+   claim (numbers and most content words must appear in it).
+5. **Record.** Verified claims about listed providers become evidence + **pending** change
+   events in the review queue. Unknown companies become **provider candidates** in
+   `/admin/discovery`; an operator approves one (it must have at least one quote from the
+   company's own site) and its official pages join the regular crawl. Nothing is published
+   by the worker.
+
+`discover-rails` records a rail only when a fetched page (preferably the operator's or central
+bank's) contains a whole sentence naming it and saying what it is; that sentence and its URL
+are stored on the rail (`named_rails.source_url`, `source_quote`, `verified_at`).
+
+The worker reads the repo-root `.env`. **Its `DATABASE_URL` is whatever that file says** — point
+it at the database you mean to write to, and use `--dry-run` to see results without writing.
