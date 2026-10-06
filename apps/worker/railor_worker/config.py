@@ -14,7 +14,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+def _load_development_env(module_file: Path) -> None:
+    # The source checkout and the Docker image have different directory depths.
+    # Railway injects variables directly; only load a file when one exists.
+    for parent in module_file.resolve().parents:
+        env_file = parent / ".env"
+        if env_file.is_file():
+            load_dotenv(env_file, override=False)
+            break
+
+
+_load_development_env(Path(__file__))
 
 
 @dataclass(frozen=True)
