@@ -1,6 +1,6 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
-import { PAYOUT_ADAPTERS, comparePrices, getAdapter, type PriceCheckInput } from "@railor/core";
+import { PAYOUT_ADAPTERS, comparePrices, getAdapter, CustomerContext, type PriceCheckInput } from "@railor/core";
 import { getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
@@ -23,7 +23,7 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   const rows = await db.select({ id: providers.id, slug: providers.slug, name: providers.name }).from(providers).where(inArray(providers.slug, ACCOUNT_PRICED.map((p) => p.slug)));
   const connected = new Map<string, Record<string, string>>();
   const sandboxOnly = new Set<string>();
-  if (organizationId) {
+  if (organizationId && input.context?.direction !== "receive") {
     for (const row of rows) {
       const credentials = await getConnectionCredentials(organizationId, row.id);
       if (!credentials) continue;
@@ -98,17 +98,20 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   // optional because Wise's consumer estimates are context, not executable
   // business quotes.
   const market = params.market === undefined ? true : params.market === "1";
+  const context = readCustomerContext((key) => params[key], {
+    profile: "business", country: entity || "IN", direction: (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: "services",
+  });
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;
   if (from === to) error = "Pick two different currencies.";
   else {
     try {
-      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, amount, includeMarket: market });
+      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, amount, includeMarket: market, context });
     } catch (e) {
       error = e instanceof Error ? e.message : "Price check failed.";
     }
   }
-  return { currencies, initial: { from, to, amount, market }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
+  return { currencies, initial: { from, to, amount, market, context }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
 }
 
 /** Query string → price-check input, clamped; null when unusable. */
@@ -118,5 +121,13 @@ export function parsePriceQuery(params: URLSearchParams | Record<string, string 
   const to = get("to")?.trim().toUpperCase();
   const amount = Number(get("amount"));
   if (!from || !to || !/^[A-Z]{3}$/.test(from) || !/^[A-Z]{3}$/.test(to) || from === to || !(amount > 0)) return null;
-  return { sourceCurrency: from, destinationCurrency: to, amount: Math.min(10_000_000, amount), includeMarket: get("market") === "1" };
+  const hasContext = ["profile", "country", "direction", "purpose"].some((key) => get(key) !== undefined);
+  const parsed = CustomerContext.safeParse({ profile: get("profile"), country: get("country"), direction: get("direction"), purpose: get("purpose") });
+  if (hasContext && !parsed.success) return null;
+  return { sourceCurrency: from, destinationCurrency: to, amount: Math.min(10_000_000, amount), includeMarket: get("market") === "1", ...(hasContext && parsed.success ? { context: parsed.data } : {}) };
+}
+
+function readCustomerContext(get: (key: string) => string | undefined, fallback: CustomerContext): CustomerContext {
+  const parsed = CustomerContext.safeParse({ profile: get("profile") ?? fallback.profile, country: get("country")?.toUpperCase() ?? fallback.country, direction: get("direction") ?? fallback.direction, purpose: get("purpose") ?? fallback.purpose });
+  return parsed.success ? parsed.data : fallback;
 }

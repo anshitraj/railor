@@ -6,6 +6,7 @@ import {
   apiKeys,
   changeEvents,
   getDb,
+  freelancerInvoices,
   orgKybItems,
   organizationMembers,
   organizations,
@@ -143,6 +144,7 @@ export async function getPrimaryOrgForUser(userId: string) {
  */
 export async function resetOrgWorkspace(organizationId: string) {
   const db = await getDb();
+  await db.delete(freelancerInvoices).where(eq(freelancerInvoices.organizationId, organizationId));
   await db.delete(alerts).where(eq(alerts.organizationId, organizationId));
   await db.delete(watchlists).where(eq(watchlists.organizationId, organizationId));
   await db.delete(savedCorridors).where(eq(savedCorridors.organizationId, organizationId));

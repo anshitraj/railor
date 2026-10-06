@@ -9,14 +9,15 @@ import { useModalFocus } from "@railor/ui";
 import { ProviderLogo } from "./provider-logo";
 
 export function AccessRequestButton({ provider, providerName = provider, feature = "execution", supportsCredentials = false,
-  defaultEmail = "", label, className = "comparison-secondary-action" }: {
+  defaultEmail = "", label, initiallyRequested = false, className = "comparison-secondary-action" }: {
   provider: string; providerName?: string; feature?: "provider_connection" | "execution";
   supportsCredentials?: boolean; defaultEmail?: string; label?: string; className?: string;
+  initiallyRequested?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState(defaultEmail);
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initiallyRequested);
   const [busy, setBusy] = useState(false);
   const titleId = useId();
   const descriptionId = useId();
@@ -47,14 +48,14 @@ export function AccessRequestButton({ provider, providerName = provider, feature
         <button className="access-close" type="button" aria-label="Close access request" onClick={() => setOpen(false)}><X size={18} /></button>
         <div className="access-provider"><ProviderLogo slug={provider} name={providerName} size={36} /><span>{providerName}</span></div>
         <p className="product-eyebrow mt-7">{saved ? "Request received" : connection ? "Provider connection" : "Execution / private beta"}</p>
-        <h2 id={titleId} className="mt-2 font-display text-3xl font-semibold tracking-tight">{saved ? "You’re on the list." : connection ? supportsCredentials ? "Bring your provider account." : "Connect when access opens." : "Decide now. Execute when available."}</h2>
-        <p id={descriptionId} className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">{saved ? `We saved your ${connection ? "connection" : "execution"} access request for ${providerName}. We’ll follow up at ${email}.`
+        <h2 id={titleId} className="mt-2 font-display text-3xl font-semibold tracking-tight">{saved ? "You’re on the list." : connection ? supportsCredentials ? "Bring your provider account." : "Request a provider integration." : "Decide now. Execute when available."}</h2>
+        <p id={descriptionId} className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">{saved ? `Your workspace has requested ${connection ? "connection" : "execution"} access for ${providerName}.`
           : connection ? supportsCredentials ? "Use your existing API credentials in Connections to request account pricing. Guided provider connections are being rolled out; request help below."
-            : `${providerName} connection is coming soon. Request early access and we’ll contact you when an account connection is available.`
+            : `${providerName} account connection is not available in Railor yet. Register interest to help us prioritize provider access and integration work. An official partnership is not confirmed by this request.`
           : "Direct execution is in private beta. An allowed policy decision is separate from a transfer. Transfers through connected providers are being rolled out; this request does not initiate one."}</p>
         {saved ? <div className="access-success"><Check size={18} /><span>Access requested · no transfer initiated</span></div> : <>
           {connection && supportsCredentials ? <Link href="/app/settings/connections" onClick={() => setOpen(false)} className="access-credentials">Use API credentials <ArrowUpRight size={16} /></Link> : null}
-          <form onSubmit={submit} className="mt-6 space-y-3"><label className="block text-xs font-semibold text-[var(--color-ink-soft)]" htmlFor={`${titleId}-email`}>Work email</label>
+          <form onSubmit={submit} className="mt-6 space-y-3"><label className="block text-xs font-semibold text-[var(--color-ink-soft)]" htmlFor={`${titleId}-email`}>{connection ? "Contact email" : "Work email"}</label>
             <div className="access-email"><Mail size={16} aria-hidden /><input id={`${titleId}-email`} type="email" autoComplete="email" required maxLength={320} value={email} aria-invalid={Boolean(error)} aria-describedby={error ? `${titleId}-error` : undefined} onChange={(event) => { setEmail(event.target.value); setError(""); }} placeholder="you@company.com" /></div>
             {error ? <p id={`${titleId}-error`} role="alert" className="text-xs text-[var(--color-bad)]">{error}</p> : null}
             <button className="comparison-primary-action w-full justify-center" type="submit" disabled={busy}>{busy ? "Saving request…" : connection ? "Request connection access" : "Request execution access"}<ArrowUpRight size={15} /></button>

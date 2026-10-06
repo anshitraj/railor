@@ -47,7 +47,7 @@ export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: 
 
 const LABELS = [
   { tag: "Your account", tone: "bg-emerald-100 text-emerald-800", text: "Quote from your own connected account. Check fee completeness and validity before acting." },
-  { tag: "Public reference", tone: "bg-sky-100 text-sky-800", text: "Public API observation, refreshed every 20 seconds. Not a customer-specific executable quote." },
+  { tag: "Public reference", tone: "bg-sky-100 text-sky-800", text: "Panel checked every 20 seconds; source observations may be cached. See each price's collection time. Not a customer-specific executable quote." },
   { tag: "Railor account", tone: "bg-orange-100 text-orange-800", text: "Backend-managed FX observation, displayed separately. Sandbox means test data; payout fees are excluded." },
   { tag: "Published", tone: "bg-amber-100 text-amber-800", text: "The provider's published fee schedule (PayZoll, Skydo) applied at the mid-market rate." },
   { tag: "Estimate", tone: "bg-[var(--color-canvas)] text-[var(--color-muted)]", text: "Dated consumer prices Wise collects from banks and remittance apps. Context only." },

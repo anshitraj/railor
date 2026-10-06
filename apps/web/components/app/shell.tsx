@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   Code2,
   FileCheck2,
+  FileText,
   GitCompare,
   Globe2,
   LayoutDashboard,
@@ -51,6 +52,7 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
   { title: null, items: [
     { href: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/app/prices", label: "Price check", icon: Calculator },
+    { href: "/app/freelancer", label: "Freelancer", icon: FileText, stage: "beta" },
     { href: "/app/search", label: "Search & compare", icon: ScanSearch },
     { href: "/app/corridors", label: "Corridors", icon: Route },
     { href: "/app/payments", label: "Payments", icon: Banknote, stage: "beta" },

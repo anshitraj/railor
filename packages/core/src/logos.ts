@@ -21,6 +21,7 @@ export const KNOWN_PROVIDER_SITES: Record<string, string> = {
   airwallex: "https://www.airwallex.com",
   payzoll: "https://payzoll.finance",
   skydo: "https://www.skydo.com",
+  revolut: "https://www.revolut.com",
   circle: "https://www.circle.com",
   bridge: "https://www.bridge.xyz",
   nium: "https://www.nium.com",

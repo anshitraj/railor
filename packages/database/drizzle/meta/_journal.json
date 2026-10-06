@@ -162,6 +162,20 @@
       "when": 1790600000000,
       "tag": "0022_feature_access_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791302400000,
+      "tag": "0023_workspace_access_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791327600000,
+      "tag": "0024_freelancer_invoices",
+      "breakpoints": true
     }
   ]
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, RefreshCw, Search, Tag } from "lucide-react";
-import type { PriceBasis, PriceCheckResult, PriceRow } from "@railor/core";
+import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
+import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from "../../lib/connection-navigation";
 
 /**
  * A swap-style live quote: pick what you send and what they receive, and
@@ -199,7 +200,7 @@ export interface SwapQuoteProps {
   mode: "app" | "public";
   basePath: string;
   currencies: PickerOption[];
-  initial: { from: string; to: string; amount: number; market: boolean };
+  initial: { from: string; to: string; amount: number; market: boolean; context: CustomerContext };
   initialResult: PriceCheckResult | null;
   initialError?: string;
   /** Providers Railor can execute payouts through. */
@@ -213,6 +214,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const [to, setTo] = useState(initial.to);
   const [amountText, setAmountText] = useState(String(initial.amount));
   const [market, setMarket] = useState(initial.market);
+  const [context, setContext] = useState(initial.context);
   const [result, setResult] = useState(initialResult);
   const [error, setError] = useState(initialError ?? "");
   const [loading, setLoading] = useState(false);
@@ -236,7 +238,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     const ctl = new AbortController();
     controller.current = ctl;
     setLoading(true);
-    const q = new URLSearchParams({ from, to, amount: String(amount), ...(market ? { market: "1" } : {}) });
+    const q = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", ...context });
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
       const body = (await res.json()) as PriceCheckResult & { error?: string };
@@ -262,7 +264,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     } finally {
       if (controller.current === ctl) setLoading(false);
     }
-  }, [valid, from, to, amount, market, basePath]);
+  }, [valid, from, to, amount, market, context, basePath]);
 
   // Re-quote on any input change (typing waits a beat); a new pair resets the flash baseline.
   useEffect(() => {
@@ -276,7 +278,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     const t = window.setTimeout(load, 380);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [from, to, amountText, market]);
+  }, [from, to, amountText, market, context]);
 
   // The clock: re-quote every REFRESH_SECONDS while the tab is visible.
   useEffect(() => {
@@ -293,11 +295,14 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return () => window.clearTimeout(t);
   }, [flashes]);
 
-  const quotes = useMemo(() => result?.rows.filter((r) => r.basis !== "market_estimate") ?? [], [result]);
+  const contextCurrent = result?.input.context && JSON.stringify(result.input.context) === JSON.stringify(context);
+  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported";
+  const quotes = result?.rows.filter((r) => r.basis !== "market_estimate" && visible(r)) ?? [];
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
-  const estimates = useMemo(() => result?.rows.filter((r) => r.basis === "market_estimate") ?? [], [result]);
+  const estimates = result?.rows.filter((r) => r.basis === "market_estimate" && visible(r)) ?? [];
+  const excluded = result?.rows.filter((r) => r.profileAssessment?.status === "not_supported") ?? [];
   const best = quotes.find((r) => r.shortfall === 0) ?? null;
-  const selected = result?.rows.find((r) => r.providerSlug === picked) ?? best ?? quotes[0] ?? null;
+  const selected = result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
   const receive = useTween(selected?.recipientAmount ?? null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
@@ -312,25 +317,29 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const cta = (() => {
     if (!valid) return { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true as const };
     if (!selected) return { label: loading ? "Fetching quotes…" : "No quote for this pair", disabled: true as const };
+    if (!contextCurrent || context.direction === "receive" || selected.profileAssessment?.status !== "documented" || !selected.profileAssessment.priceApplicable) {
+      return { label: `Account options for ${selected.providerName}`, href: providerConnectionPath(selected.providerSlug, mode) };
+    }
     if (mode === "public") {
       return { label: "Compare provider features", href: "#provider-features" };
     }
-    if (selected.basis === "market_estimate") return { label: "Estimate only — pick a live quote to send", disabled: true as const };
+    if (selected.basis === "market_estimate") return { label: `Connection options for ${selected.providerName}`, href: providerConnectionPath(selected.providerSlug) };
     const sendWith = (row: PriceRow, extra?: { secondary: { label: string; href: string; external?: boolean } }) => {
       const params = new URLSearchParams({ from, to, amount: String(amount), provider: row.providerSlug });
       return connected.includes(row.providerSlug)
         ? { label: `Send with ${row.providerName}`, href: `/app/payments/new?${params}`, ...extra }
-        : { label: `Connect ${row.providerName} to send`, href: "/app/settings/connections", secondary: extra?.secondary ?? { label: "or simulate it in test mode", href: `/app/payments/new?${params}` } };
+        : { label: `Connect ${row.providerName} to send`, href: providerConnectionPath(row.providerSlug), secondary: extra?.secondary ?? { label: "or simulate it in test mode", href: `/app/payments/new?${params}` } };
     };
     if (executable.includes(selected.providerSlug)) return sendWith(selected);
     // The best price may sit with a provider that has no API: say so, and offer the best one Railor can send through.
     const alternative = quotes.find((r) => executable.includes(r.providerSlug));
-    const openIt = selected.source.url ? { label: `or view ${selected.providerName}'s published pricing ↗`, href: selected.source.url, external: true } : undefined;
+    const sourceKind = selected.basis === "live_public" ? "public pricing" : "published pricing";
+    const openIt = selected.source.url ? { label: `or view ${selected.providerName}'s ${sourceKind} ↗`, href: selected.source.url, external: true } : undefined;
     if (alternative) {
       const primary = sendWith(alternative, openIt ? { secondary: openIt } : undefined);
       return { ...primary, label: `${primary.label} · ${money(alternative.recipientAmount)} ${to}` };
     }
-    return openIt ? { label: `View ${selected.providerName}'s published pricing`, href: openIt.href, external: true } : { label: `${selected.providerName} isn't integrated for execution yet`, disabled: true as const };
+    return openIt ? { label: `View ${selected.providerName}'s ${sourceKind}`, href: openIt.href, external: true } : { label: `${selected.providerName} isn't integrated for execution yet`, disabled: true as const };
   })();
 
   return (
@@ -358,11 +367,26 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </div>
           </div>
 
+          <div role="group" aria-label="Account type" className="flex flex-wrap items-center justify-between gap-2 px-1 py-1">
+            <span className="text-[12px] font-medium text-white/60">I’m {context.direction === "receive" ? "receiving" : "sending"} as</span>
+            <div className="inline-flex rounded-full border border-white/15 bg-white/[0.03] p-1">
+              {([{ value: "business", label: "Business" }, { value: "freelancer", label: "Freelancer" }] as const).map((option) => {
+                const active = option.value === "business" ? context.profile === "business" : context.profile !== "business";
+                return <button key={option.value} type="button" aria-pressed={active}
+                  onClick={() => setContext((c) => ({ ...c, profile: option.value }))}
+                  className={cn("rounded-full px-3 py-1.5 text-[12px] font-semibold transition", active ? "bg-[#ffad8c]/15 text-[#ffad8c]" : "text-white/60 hover:text-white")}>
+                  {option.label}
+                </button>;
+              })}
+            </div>
+            {!contextCurrent ? <span role="status" className="sr-only">Checking this profile…</span> : null}
+          </div>
+
           <div className="relative flex flex-col gap-1.5">
             <div className="rounded-2xl border border-[#f5c451]/45 bg-white/[0.04] p-4 transition focus-within:border-[#f5c451]/80 focus-within:bg-white/[0.06]">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="swap-amount" className="text-[12.5px] font-medium text-white/60">
-                  You send
+                  {context.direction === "receive" ? "Your client sends" : "You send"}
                 </label>
                 <div className="flex gap-1">
                   {PRESETS.map((p) => (
@@ -404,7 +428,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[12.5px] font-medium text-white/60">They receive</span>
+                <span className="text-[12.5px] font-medium text-white/60">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
                 {selected ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-white/55">
                     via <ProviderLogo slug={selected.providerSlug} name={selected.providerName} src={selected.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected.providerName}</span>
@@ -433,7 +457,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                       ≈ <span className={cn("font-semibold", selected.totalCostPct <= 0.5 ? "text-emerald-300" : selected.totalCostPct <= 1.5 ? "text-white/75" : "text-red-300")}>{selected.totalCostPct.toFixed(2)}%</span> all-in vs mid-market
                     </>
                   ) : selected?.partial ? (
-                    "Transfer fee not included in this quote"
+                    "Product-specific fees or eligibility not confirmed"
                   ) : (
                     " "
                   )}
@@ -487,12 +511,12 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <Tag size={15} className="text-[#ffad8c]" /> Provider prices
               <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/70">{quotes.length + estimates.length}</span>
             </h2>
-            <span className="text-[11.5px] text-white/45">updated {ago(now - fetchedAt)}</span>
+            <span className="text-[11.5px] text-white/45">checked {ago(now - fetchedAt)}</span>
           </div>
 
           <ol className="flex flex-col gap-1 rounded-2xl border border-white/10 p-1.5">
             {quotes.length ? (
-              quotes.map((row) => <QuoteRow key={row.providerSlug} row={row} best={row === best} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} />)
+              quotes.map((row) => <QuoteRow key={row.providerSlug} row={row} best={row === best} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} mode={mode} connected={connected.includes(connectionProviderSlug(row.providerSlug))} />)
             ) : (
               <li className="px-3 py-4 text-[12.5px] text-white/50">{loading ? "Fetching quotes…" : "No provider returned a price for this pair."}</li>
             )}
@@ -506,7 +530,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </summary>
               <ol className="flex flex-col gap-1 pb-1">
                 {estimates.map((row) => (
-                  <QuoteRow key={row.providerSlug} row={row} best={false} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} />
+                  <QuoteRow key={row.providerSlug} row={row} best={false} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} mode={mode} connected={connected.includes(connectionProviderSlug(row.providerSlug))} />
                 ))}
               </ol>
             </details>
@@ -523,7 +547,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <p className="px-2 pb-2 text-[11px] leading-snug text-white/45">
                 Coverage records only — not quotes or proof that this exact {from} → {to} route is available. Open a provider to confirm eligibility and pricing.
               </p>
-              <ul className="grid grid-cols-1 gap-1 pb-1 sm:grid-cols-2">
+              <ul className="grid grid-cols-1 gap-1 pb-1">
                 {result.marketCoverage.providers.map((provider) => (
                   <li key={provider.providerSlug} className="flex min-w-0 items-center gap-2 rounded-xl px-2 py-2 hover:bg-white/[0.04]">
                     <ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={24} />
@@ -539,6 +563,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                         <ArrowUpRight size={13} />
                       </a>
                     ) : null}
+                    <ConnectionLink slug={provider.providerSlug} name={provider.providerName} mode={mode} connected={connected.includes(provider.providerSlug)} />
                   </li>
                 ))}
               </ul>
@@ -557,14 +582,21 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                     <span className="text-[13px] font-semibold text-white">{u.providerName}</span>
                     <span className="text-[11.5px] text-white/50">{u.reason}</span>
                   </span>
-                  {u.connectable ? (
-                    <Link href={mode === "app" ? "/app/settings/connections" : "/login?intent=start"} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#22211f] transition hover:bg-[#ffad8c]">
-                      {mode === "app" ? "Connect" : "Sign in"}
-                    </Link>
-                  ) : null}
+                  <ConnectionLink slug={u.providerSlug} name={u.providerName} mode={mode} connected={connected.includes(u.providerSlug)} />
                 </li>
               ))}
             </ul>
+          ) : null}
+          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p><ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /></li>)}</ul></details> : null}
+          {selected?.profileAssessment ? <section aria-label="Selected provider profile requirements" className="rounded-xl border border-white/15 p-3 text-[12px] text-white/70"><h3 className="font-semibold text-white">{selected.providerName} · {selected.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</h3><p className="mt-2">{selected.profileAssessment.reasons.join(" ")}</p><dl className="mt-3 space-y-3">{[{ label: "KYC / KYB", value: selected.profileAssessment.verification.join(" ") }, { label: "Expected fees", value: selected.profileAssessment.fees }, { label: "Transfer limits", value: selected.profileAssessment.limits }, { label: "Available corridors", value: selected.profileAssessment.corridors }, { label: "Settlement methods", value: selected.profileAssessment.settlement.join(" ") }, { label: "Documents", value: selected.profileAssessment.documents.join(" ") }, { label: "Payment purpose", value: selected.profileAssessment.purpose }].map((item) => <div key={item.label}><dt className="font-semibold text-white/90">{item.label}</dt><dd className="mt-0.5 leading-relaxed">{item.value}</dd></div>)}</dl>{selected.profileAssessment.sources.length ? <div className="mt-3 flex flex-wrap gap-2">{selected.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}<p className="w-full text-[10px] text-white/45">Rules reviewed {selected.profileAssessment.reviewedAt}</p></div> : null}</section> : null}
+          {selected ? (
+            <details className="rounded-xl border border-white/10 px-3 py-2 text-[11.5px] text-white/55">
+              <summary className="cursor-pointer">{selected.providerName} · {priceSourceTime(selected.observedAt, selected.basis)}</summary>
+              <div className="mt-2 flex flex-col gap-2">
+                {selected.source.url ? <a href={selected.source.url} target="_blank" rel="noreferrer noopener" className="w-fit text-[#ffad8c] underline underline-offset-2">{selected.source.label} ↗</a> : <span>{selected.source.label}</span>}
+                {selected.notes.map((note, index) => <p key={index}>{note}</p>)}
+              </div>
+            </details>
           ) : null}
         </div>
       </section>
@@ -576,34 +608,41 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   );
 }
 
-function QuoteRow({ row, best, selected, flash, onPick }: { row: PriceRow; best: boolean; selected: boolean; flash?: "up" | "down"; onPick: () => void }) {
+function ConnectionLink({ slug, name, mode, connected }: { slug: string; name: string; mode: "app" | "public"; connected: boolean }) {
+  return <Link href={providerConnectionPath(slug, mode)} prefetch={false} aria-label={`${connected ? "Manage" : "Connect"} ${name}`}
+    title={`Open ${name}'s account connection options`}
+    className="mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]">
+    {connected ? "Manage" : "Connect"}
+  </Link>;
+}
+
+function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row: PriceRow; best: boolean; selected: boolean; flash?: "up" | "down"; onPick: () => void; mode: "app" | "public"; connected: boolean }) {
   const tag = BASIS[row.basis];
   return (
-    <li>
+    <li className={cn("flex items-center rounded-xl border transition", selected ? "border-[#f5c451]/60 bg-[#f5c451]/[0.07]" : "border-transparent hover:bg-white/[0.05]")}>
       <button
         type="button"
         onClick={onPick}
         aria-pressed={selected}
-        className={cn(
-          "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
-          selected ? "border-[#f5c451]/60 bg-[#f5c451]/[0.07]" : "border-transparent hover:bg-white/[0.05]",
-        )}
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2.5 text-left"
       >
         <ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} size={28} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="text-[13.5px] font-semibold text-white">{row.providerName}</span>
-            {best ? <span className="rounded-md bg-[#f5c451] px-1.5 py-px text-[10.5px] font-bold text-[#2a2410]">Best price</span> : null}
+            {best ? <span className="rounded-md bg-[#f5c451] px-1.5 py-px text-[10.5px] font-bold text-[#2a2410]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
             <span title={tag.hint} className={cn("rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide", tag.cls)}>
               {tag.label}
             </span>
-            {row.partial ? <span className="rounded-md bg-red-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-red-200">fee not incl.</span> : null}
+            {row.partial ? <span className="rounded-md bg-red-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-red-200">partial reference</span> : null}
           </span>
           <span className="truncate text-[11.5px] text-white/45">
             fee {row.feeAmount === null ? "—" : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`}
             {row.delivery ? ` · ${row.delivery}` : ""}
             {row.totalCostPct !== null ? ` · ${row.totalCostPct.toFixed(2)}% all-in` : ""}
           </span>
+          {row.profileAssessment ? <span className={cn("text-[10px]", row.profileAssessment.status === "documented" ? "text-emerald-300" : "text-amber-200/70")}>{row.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</span> : null}
+          <span className="truncate text-[10px] text-white/35" title={priceSourceTime(row.observedAt, row.basis)}>{priceSourceTime(row.observedAt, row.basis)}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end">
           <span className={cn("text-[14px] font-semibold tabular text-white", flash === "up" && "railor-flash-up", flash === "down" && "railor-flash-down")}>{money(row.recipientAmount)}</span>
@@ -615,6 +654,7 @@ function QuoteRow({ row, best, selected, flash, onPick }: { row: PriceRow; best:
           ) : null}
         </span>
       </button>
+      <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected} />
     </li>
   );
 }

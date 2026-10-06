@@ -25,4 +25,18 @@ describe("execution and provider-access waitlist", () => {
     expect((await POST(request({ feature: "execution", providerRequested: "wise", email: "person@gmail.com" }))).status).toBe(400);
     expect(mocks.values).not.toHaveBeenCalled();
   });
+  it("takes workspace identity from the session instead of submitted fields", async () => {
+    expect((await POST(request({ feature: "provider_connection", providerRequested: "instarem", organizationId: "other-workspace", userId: "other-user" }))).status).toBe(200);
+    expect(mocks.values).toHaveBeenCalledWith(expect.objectContaining({ providerRequested: "instarem", organizationId: "org-1", userId: "user-1" }));
+  });
+  it("allows a signed-in freelancer to request a connection using a personal email", async () => {
+    expect((await POST(request({ feature: "provider_connection", providerRequested: "instarem", email: "freelancer@gmail.com" }))).status).toBe(200);
+    expect(mocks.values).toHaveBeenCalledWith(expect.objectContaining({ email: "freelancer@gmail.com", organizationId: "org-1" }));
+  });
+  it("does not save malformed provider names or rate-limited requests", async () => {
+    expect((await POST(request({ feature: "provider_connection", providerRequested: "../../credentials" }))).status).toBe(400);
+    mocks.limit.mockResolvedValueOnce(false);
+    expect((await POST(request({ feature: "provider_connection", providerRequested: "instarem" }))).status).toBe(429);
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
 });

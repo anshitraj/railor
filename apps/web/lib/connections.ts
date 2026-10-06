@@ -1,9 +1,11 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
-import { getDb, providerConnections, providers } from "@railor/database";
+import { featureInterest, getDb, providerConnections, providers } from "@railor/database";
 import { getAdapter, getPayoutAdapter } from "@railor/core";
 import { credentialsConfigured, decryptCredentials, encryptCredentials } from "./credentials";
 import { getEntitlement } from "./entitlements";
+import { buildConnectionCatalog } from "./connection-catalog";
+import { connectionProviderSlug } from "./connection-navigation";
 
 export type ConnectionEnvironment = "sandbox" | "production";
 
@@ -33,6 +35,25 @@ export async function getConnectableProviders(organizationId: string) {
       };
     })
     .sort((a, b) => Number(Boolean(b.payout)) - Number(Boolean(a.payout)) || Number(Boolean(b.adapter)) - Number(Boolean(a.adapter)) || a.provider.name.localeCompare(b.provider.name));
+}
+
+/** The UI additionally lists public-feed providers; the executable API registry stays unchanged. */
+export async function getConnectionDirectory(organizationId: string) {
+  const db = await getDb();
+  const [registered, requests] = await Promise.all([
+    getConnectableProviders(organizationId),
+    db.select({ provider: featureInterest.providerRequested }).from(featureInterest)
+      .where(and(eq(featureInterest.organizationId, organizationId), eq(featureInterest.feature, "provider_connection"))),
+  ]);
+  const requested = new Set(requests.flatMap((row) => row.provider ? [connectionProviderSlug(row.provider)] : []));
+  const bySlug = new Map(registered.map((row) => [row.provider.slug, row]));
+  return buildConnectionCatalog(registered.map((row) => row.provider)).map((provider) => ({
+    provider,
+    adapter: bySlug.get(provider.slug)?.adapter ?? null,
+    payout: bySlug.get(provider.slug)?.payout ?? null,
+    connections: bySlug.get(provider.slug)?.connections ?? [],
+    requested: requested.has(provider.slug),
+  })).sort((a, b) => Number(Boolean(b.adapter)) - Number(Boolean(a.adapter)) || a.provider.name.localeCompare(b.provider.name));
 }
 
 export async function connectProvider(

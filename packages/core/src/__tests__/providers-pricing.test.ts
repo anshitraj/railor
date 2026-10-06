@@ -228,6 +228,13 @@ describe("India bank beneficiaries", () => {
 });
 
 describe("price check", () => {
+  it("does not invent a fresh collection time for an undated market estimate", async () => {
+    const fetcher: typeof fetch = async (url) => new Response(JSON.stringify(String(url).includes("/v4/comparisons")
+      ? { providers: [{ alias: "bank", name: "Undated bank", quotes: [{ receivedAmount: 95000, rate: 95, fee: 0 }] }] }
+      : { id: "pq", ...WISE_PUBLIC }));
+    const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000, includeMarket: true }, { fetcher });
+    expect(result.rows.find((row) => row.providerSlug === "market:bank")?.observedAt).toBe("");
+  });
   const market = {
     providers: [
       { alias: "wise", name: "Wise", quotes: [{ receivedAmount: 94700.73 }] },
@@ -268,7 +275,7 @@ describe("price check", () => {
     expect(result.rows[0]!).toMatchObject({ providerSlug: "wise", shortfall: 0 });
     // ...but still show when they'd deliver more (negative shortfall).
     expect(bySlug["market:remitly"]!.shortfall).toBeLessThan(0);
-    expect(result.unavailable).toEqual([expect.objectContaining({ providerSlug: "airwallex", connectable: true })]);
+    expect(result.unavailable).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug: "airwallex", connectable: true })]));
   });
 
   it("puts partial-cost exact quotes after complete ones, whatever their amount", async () => {

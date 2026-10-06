@@ -34,6 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { id: "action:new-corridor", label: "New corridor search", group: "Action", href: "/app/corridors", keywords: "route search find" },
     { id: "action:pay", label: "Send a payment", group: "Action", href: "/app/payments/new", keywords: "payout transfer send money pay" },
     { id: "action:prices", label: "Compare prices (fees & FX)", group: "Action", href: "/app/prices", keywords: "price fee fx rate cheapest wise airwallex skydo payzoll compare cost" },
+    { id: "action:invoice", label: "Upload an invoice · Freelancer", group: "Action", href: "/app/freelancer", keywords: "freelancer invoice get paid receive reconciliation receipt client" },
     { id: "action:beneficiary", label: "Add a beneficiary", group: "Action", href: "/app/beneficiaries", keywords: "recipient payee bank account iban wallet" },
     { id: "action:connect", label: "Connect a provider account", group: "Action", href: "/app/settings/connections", keywords: "credentials api key sandbox production circle bridge" },
     { id: "action:routing", label: "Routing settings", group: "Action", href: "/app/routing", keywords: "fallback preset preferred providers" },

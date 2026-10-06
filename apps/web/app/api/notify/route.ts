@@ -41,7 +41,8 @@ export async function POST(request: Request) {
   }
   const email = (isAccessRequest ? parsed.data.email ?? session?.user.email : session?.user.email ?? parsed.data.email)?.toLowerCase();
   if (!email) return NextResponse.json({ error: "email_required" }, { status: 400 });
-  if (isAccessRequest && !companyDomain(email)) return NextResponse.json({ error: "work_email_required" }, { status: 400 });
+  // A signed-in freelancer may use a personal-domain contact for a connection request.
+  if (parsed.data.feature === "execution" && !companyDomain(email)) return NextResponse.json({ error: "work_email_required" }, { status: 400 });
 
   const db = await getDb();
   await db

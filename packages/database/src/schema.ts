@@ -10,6 +10,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -1638,7 +1639,7 @@ export const featureInterest = pgTable(
     organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "set null" }),
     createdAt: now(),
   },
-  (t) => ({ featureEmailIdx: uniqueIndex("feature_interest_feature_email_provider_idx").on(t.feature, t.email, sql`coalesce(${t.providerRequested}, '')`) }),
+  (t) => ({ featureEmailIdx: uniqueIndex("feature_interest_feature_email_provider_idx").on(t.feature, t.email, sql`coalesce(${t.providerRequested}, '')`, sql`coalesce(${t.organizationId}, '00000000-0000-0000-0000-000000000000'::uuid)`) }),
 );
 
 export const sharedComparisons = pgTable("shared_comparisons", {
@@ -2259,5 +2260,49 @@ export const decisionMonitorChecks = pgTable("decision_monitor_checks", {
   checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   leaseUntil: timestamp("lease_until", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Reviewed freelancer invoices. Uploaded originals are never retained here. */
+export const freelancerInvoices = pgTable("freelancer_invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  invoiceNumber: text("invoice_number").notNull(),
+  clientName: text("client_name").notNull(),
+  clientCountry: text("client_country").notNull(),
+  accountCountry: text("account_country").notNull(),
+  currency: text("currency").notNull(),
+  amount: numeric("amount", { precision: 20, scale: 4 }).notNull(),
+  settlementCurrency: text("settlement_currency").notNull(),
+  dueDate: text("due_date"),
+  profile: text("profile").$type<"freelancer" | "sole_proprietor">().notNull(),
+  purpose: text("purpose").$type<"services" | "goods">().notNull(),
+  createdAt: now(),
+}, (t) => ({
+  numberIdx: uniqueIndex("freelancer_invoices_number_idx").on(t.organizationId, t.invoiceNumber),
+  ownerIdx: uniqueIndex("freelancer_invoices_owner_idx").on(t.organizationId, t.id),
+  recentIdx: index("freelancer_invoices_recent_idx").on(t.organizationId, t.createdAt),
+}));
+
+/** User-confirmed allocations, distinct from provider-confirmed payment events. */
+export const freelancerReceipts = pgTable("freelancer_receipts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  invoiceId: uuid("invoice_id").notNull(),
+  recordedBy: uuid("recorded_by").references(() => users.id, { onDelete: "set null" }),
+  reference: text("reference").notNull(),
+  providerName: text("provider_name").notNull(),
+  sourceAmount: numeric("source_amount", { precision: 20, scale: 4 }).notNull(),
+  sourceCurrency: text("source_currency").notNull(),
+  settlementAmount: numeric("settlement_amount", { precision: 20, scale: 4 }).notNull(),
+  settlementCurrency: text("settlement_currency").notNull(),
+  receivedDate: text("received_date").notNull(),
+  requestId: uuid("request_id").notNull(),
+  createdAt: now(),
+}, (t) => ({
+  invoiceFk: foreignKey({ columns: [t.organizationId, t.invoiceId], foreignColumns: [freelancerInvoices.organizationId, freelancerInvoices.id] }).onDelete("cascade"),
+  referenceIdx: uniqueIndex("freelancer_receipts_reference_idx").on(t.organizationId, t.reference),
+  retryIdx: uniqueIndex("freelancer_receipts_retry_idx").on(t.organizationId, t.requestId),
+  invoiceIdx: index("freelancer_receipts_invoice_idx").on(t.organizationId, t.invoiceId),
+}));
 
 export const schemaVersion = sql`3`;

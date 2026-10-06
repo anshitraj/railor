@@ -7,6 +7,7 @@ import { Button, Card, StageBadge, cn } from "@railor/ui";
 import { connectProviderAction, disconnectProviderAction, retestConnectionAction } from "../../app/app/settings/connections/actions";
 import { Segmented } from "./form-kit";
 import { ProviderLogo } from "./provider-logo";
+import { AccessRequestButton } from "./access-request";
 
 export interface ConnectionSlot {
   id: string;
@@ -17,8 +18,8 @@ export interface ConnectionSlot {
   webhookUrl: string | null;
 }
 
-interface Props {
-  providerId: string;
+export interface ConnectionCardProps {
+  providerId: string | null;
   slug: string;
   name: string;
   category: string;
@@ -31,6 +32,10 @@ interface Props {
   liveApproved: boolean;
   credentialFields: CredentialField[];
   connections: ConnectionSlot[];
+  pricingSourceUrl?: string;
+  requested?: boolean;
+  defaultEmail?: string;
+  initialOpen?: boolean;
 }
 
 const STATUS_TONE: Record<string, string> = {
@@ -85,8 +90,12 @@ export function ConnectionCard({
   liveApproved,
   credentialFields,
   connections,
-}: Props) {
-  const [open, setOpen] = useState(false);
+  pricingSourceUrl,
+  requested = false,
+  defaultEmail = "",
+  initialOpen = false,
+}: ConnectionCardProps) {
+  const [open, setOpen] = useState(initialOpen);
   const [environment, setEnvironment] = useState<"sandbox" | "production">(connections.some((c) => c.environment === "sandbox") ? "production" : "sandbox");
   const [values, setValues] = useState<Record<string, string>>({});
   const [detail, setDetail] = useState<{ ok: boolean; text: string } | null>(null);
@@ -95,6 +104,7 @@ export function ConnectionCard({
   const connected = connections.filter((c) => c.status === "connected");
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!providerId) return;
     startTransition(async () => {
       const result = await connectProviderAction(providerId, values, environment);
       setDetail({ ok: result.ok, text: result.detail ?? "" });
@@ -164,6 +174,7 @@ export function ConnectionCard({
                       disabled={pending}
                       onClick={() => {
                         if (window.confirm(`Disconnect ${name} ${c.environment}? Payments routed through it will stop.`)) {
+                          if (!providerId) return;
                           startTransition(async () => {
                             await disconnectProviderAction(providerId, c.environment);
                           });
@@ -187,7 +198,9 @@ export function ConnectionCard({
         </ul>
       ) : null}
 
-      {hasAdapter && canManage ? (
+      {pricingSourceUrl ? <a href={pricingSourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-[12px] text-[var(--color-muted)] hover:text-[var(--color-ink)]">Pricing source <ExternalLink size={12} /></a> : null}
+
+      {hasAdapter && canManage && providerId ? (
         open ? (
           <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border border-[var(--color-line)] p-4">
             <Segmented
@@ -243,7 +256,11 @@ export function ConnectionCard({
           </div>
         )
       ) : !hasAdapter ? (
-        <p className="text-[12px] text-[var(--color-muted)]">Railor has no integration for {name} yet — it stays research-only.</p>
+        <div className="flex flex-col gap-2">
+          <p className="text-[12px] text-[var(--color-muted)]">Account connection is not available yet. You can request an integration while we arrange provider access and build support.</p>
+          <AccessRequestButton provider={slug} providerName={name} feature="provider_connection" defaultEmail={defaultEmail}
+            initiallyRequested={requested} label="Request connection" />
+        </div>
       ) : null}
 
       {detail ? (

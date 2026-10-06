@@ -1,0 +1,1714 @@
+{
+  "checkedOn": "2026-10-07",
+  "providerEntryCount": 39,
+  "includesRegionalBrandEntries": true,
+  "sampleAmount": 10000,
+  "scope": "Source inventory, not an eligibility or executable-route catalog. Provider entries include regional branches of the same group.",
+  "providers": [
+    {
+      "slug": "revolut",
+      "name": "Revolut · UK Standard",
+      "type": "public_fx_reference",
+      "method": "direct_public_quote",
+      "basis": "live_public",
+      "partial": true,
+      "sourceUrl": "https://www.revolut.com/currency-converter/",
+      "samplePairs": [
+        "USD/INR",
+        "GBP/INR"
+      ],
+      "notes": "Anonymous UK Standard personal-plan FX reference. Bank-transfer fees and India business account eligibility are not established."
+    },
+    {
+      "slug": "abn-amro-bank",
+      "name": "ABN AMRO Bank",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "NL",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:50:08.458418Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "NL",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T19:50:08.480056Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "anz",
+      "name": "ANZ",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:00:15.782255Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:00:15.782482Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "AUD/INR",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "barclays",
+      "name": "Barclays",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T10:33:10Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T10:35:29Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "bbva",
+      "name": "BBVA",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "ES",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-02T20:47:28Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000",
+      "samplePairs": [
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "bnp",
+      "name": "BNP Paribas",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "FR",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:10:11.592013Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "FR",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:10:11.592060Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "chase",
+      "name": "Chase (US)",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-02T22:35:37Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "DE",
+          "collectedAt": "2026-10-02T22:32:01Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "USD/INR",
+        "USD/EUR"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "commerzbank",
+      "name": "Commerzbank",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "DE",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:10:09.140917Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000",
+      "samplePairs": [
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "commonwealth-bank-of-australia",
+      "name": "Commonwealth Bank of Australia",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:10:12.515840Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:10:12.513779Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "AUD/INR",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "deutsche-bank",
+      "name": "Deutsche Bank",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "DE",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:10:23.043978Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "DE",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:10:23.043879Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "halifax",
+      "name": "Halifax",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T02:21:31Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T02:32:07Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "hsbc",
+      "name": "HSBC",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T17:02:04Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T17:03:00Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "hsbc-australia",
+      "name": "HSBC Australia",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-05T22:35:24Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-05T22:40:31Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "AUD/INR",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "hsbc-sg",
+      "name": "HSBC Singapore",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "SGD",
+          "targetCurrency": "INR",
+          "sourceCountry": "SG",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T11:44:09Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=SGD&targetCurrency=INR&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=SGD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "SGD/INR"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "instarem",
+      "name": "Instarem",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:21:37.376877Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "LV",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:35:43.407567Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "IE",
+          "collectedAt": "2026-10-06T20:21:44.094060Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:45:35.968366Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T20:27:14.075525Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "SGD",
+          "targetCurrency": "INR",
+          "sourceCountry": "SG",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:42:48.103670Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=SGD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "AT",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T19:50:22.611633Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": "US",
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T20:22:42.433522Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T19:46:48.580256Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "SGD/INR",
+        "EUR/GBP",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "lacaixa",
+      "name": "LaCaixa",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "ES",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:12.604254Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "ES",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:12.604212Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "lloyds",
+      "name": "Lloyds",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T11:31:00Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T11:33:06Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "monese",
+      "name": "Monese",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:17.673396Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:17.673060Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:17.673601Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:17.672997Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "EUR/INR",
+        "GBP/USD",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "moneygram",
+      "name": "Moneygram",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T12:37:55.022803Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000",
+      "samplePairs": [
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "nationwide",
+      "name": "Nationwide",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:08.169680Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:20:08.169775Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "natwest",
+      "name": "NatWest",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:08.258817Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:08.258834Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "ofx",
+      "name": "OFX",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:26:59.155646Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:06:29.269740Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:42:54.141326Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:05:12.453204Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:12:41.037816Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:12.974933Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "SGD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:58:20.985499Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=SGD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:19:36.830805Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:42:04.557473Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:23:26.111636Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:08:33.385263Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:16:07.420055Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "SGD/INR",
+        "CAD/INR",
+        "EUR/GBP",
+        "CAD/USD",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "paypal",
+      "name": "PayPal",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:30:08.850859Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "DE",
+          "collectedAt": "2026-10-06T20:32:02.022211Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T19:40:57.296857Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "IT",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T19:33:46.576205Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": "CA",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T20:35:55.327154Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": "US",
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T20:32:51.061116Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T19:42:17.223494Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/EUR",
+        "GBP/USD",
+        "EUR/GBP",
+        "CAD/USD",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "rabobank",
+      "name": "Rabobank",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "NL",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:17.833246Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "NL",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:17.833492Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "rbs",
+      "name": "RBS",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:07.889984Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:07.890Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "remitly",
+      "name": "Remitly",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:40:09.930734Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:44:26.190421Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "ES",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:45:29.292911Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "DE",
+          "collectedAt": "2026-10-06T19:44:22.438008Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:40:23.582050Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T19:40:16.591482Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "DE",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T19:41:50.593125Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": "US",
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T19:44:31.174259Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T19:40:29.408083Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "EUR/GBP",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "rbc",
+      "name": "Royal Bank of Canada",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": "CA",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:30:08.291739Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000",
+      "samplePairs": [
+        "CAD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "sabadell",
+      "name": "Sabadell",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "ES",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:40:06.553774Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000",
+      "samplePairs": [
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "skrill",
+      "name": "Skrill",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:30:12.999104Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "DE",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:32:00.515024Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T20:31:05.206019Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "DE",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T20:32:41.699314Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "EUR/INR",
+        "GBP/USD",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "state-bank-of-india",
+      "name": "State Bank of India",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "IN",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:50:08.104746Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "IN",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:50:08.109195Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "IN",
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T19:50:08.109122Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "unicredit",
+      "name": "UniCredit",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "IT",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T07:17:51Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "IT",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T07:26:37Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "EUR/INR",
+        "EUR/GBP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "wells-fargo",
+      "name": "Wells Fargo",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T16:45:41Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "DE",
+          "collectedAt": "2026-10-06T16:42:34Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": "US",
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T16:47:56Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "USD/INR",
+        "USD/EUR",
+        "USD/PHP"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "western-union",
+      "name": "Western Union",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": "GB",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:21:09.625725Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T19:13:10.856117Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": "IT",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-05T09:36:14.156210Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": "US",
+          "targetCountry": "IS",
+          "collectedAt": "2026-10-06T19:13:08.812939Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:25:37.901598Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "CR",
+          "collectedAt": "2026-10-06T20:20:30.325261Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "INR",
+          "sourceCountry": "CA",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T20:31:20.336678Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": "DE",
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T19:10:38.406017Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": "CA",
+          "targetCountry": "PE",
+          "collectedAt": "2026-10-06T20:32:31.985671Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": "US",
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T19:13:30.942004Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "AS",
+          "collectedAt": "2026-10-06T20:22:31.037537Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "CAD/INR",
+        "EUR/GBP",
+        "CAD/USD",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "westpac",
+      "name": "Westpac",
+      "type": "bank",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": "AU",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T16:29:56Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": "AU",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T16:35:24Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "AUD/INR",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "wise",
+      "name": "Wise",
+      "type": "moneyTransferProvider",
+      "method": "direct_public_quote",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:11Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:11Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:12Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:35:32Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:12Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:12Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "SGD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=SGD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": null,
+          "collectedAt": "2026-10-06T20:36:13Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "live_public",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "SGD/INR",
+        "CAD/INR",
+        "EUR/GBP",
+        "CAD/USD",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Railor uses the direct Wise public quote; listed sample pairs also appeared in the comparison feed."
+    },
+    {
+      "slug": "world-remit",
+      "name": "WorldRemit",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": "US",
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-02T21:26:55Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": "GB",
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T16:49:28Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "USD/INR",
+        "GBP/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "xoom",
+      "name": "Xoom",
+      "type": "moneyTransferProvider",
+      "method": "wise_comparison_feed",
+      "samples": [
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T11:31:45.970566Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T12:16:11.230144Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T11:04:17.372589Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "EUR",
+          "sourceCountry": null,
+          "targetCountry": "SI",
+          "collectedAt": "2026-10-06T12:36:21.471459Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=EUR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T09:20:12.530975Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "GBP",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T11:47:49.596481Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "INR",
+          "sourceCountry": null,
+          "targetCountry": "IN",
+          "collectedAt": "2026-10-06T10:37:22.208552Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=INR&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "EUR",
+          "targetCurrency": "GBP",
+          "sourceCountry": null,
+          "targetCountry": "GB",
+          "collectedAt": "2026-10-06T11:11:52.130579Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=EUR&targetCurrency=GBP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "CAD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T10:52:21.061776Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=CAD&targetCurrency=USD&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "USD",
+          "targetCurrency": "PHP",
+          "sourceCountry": null,
+          "targetCountry": "PH",
+          "collectedAt": "2026-10-06T12:31:20.178102Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=USD&targetCurrency=PHP&sendAmount=10000"
+        },
+        {
+          "sourceCurrency": "AUD",
+          "targetCurrency": "USD",
+          "sourceCountry": null,
+          "targetCountry": "US",
+          "collectedAt": "2026-10-06T10:21:36.591527Z",
+          "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=AUD&targetCurrency=USD&sendAmount=10000"
+        }
+      ],
+      "basis": "market_estimate",
+      "partial": false,
+      "sourceUrl": "https://api.wise.com/v4/comparisons/?sourceCurrency=GBP&targetCurrency=INR&sendAmount=10000",
+      "samplePairs": [
+        "GBP/INR",
+        "USD/INR",
+        "EUR/INR",
+        "USD/EUR",
+        "AUD/INR",
+        "GBP/USD",
+        "CAD/INR",
+        "EUR/GBP",
+        "CAD/USD",
+        "USD/PHP",
+        "AUD/USD"
+      ],
+      "notes": "Dated consumer prices supplied by Wise, not an authenticated business quote. Availability varies by corridor, amount and customer location."
+    },
+    {
+      "slug": "skydo",
+      "name": "Skydo",
+      "type": "published_schedule",
+      "method": "published_schedule",
+      "basis": "published",
+      "partial": false,
+      "sourceUrl": "https://www.skydo.com/",
+      "samplePairs": [
+        "Foreign currency/INR"
+      ],
+      "notes": "Published India inbound fee schedule applied to a reference exchange rate; not a live Skydo quote."
+    },
+    {
+      "slug": "payzoll",
+      "name": "PayZoll",
+      "type": "published_schedule",
+      "method": "published_schedule",
+      "basis": "published",
+      "partial": true,
+      "sourceUrl": "https://payzoll.finance/payzoll-vs-skydo",
+      "samplePairs": [
+        "Foreign currency/INR"
+      ],
+      "notes": "Published fee schedule applied to a reference exchange rate; additional banking or partner charges may apply."
+    }
+  ]
+}

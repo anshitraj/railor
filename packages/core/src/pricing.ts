@@ -1,12 +1,14 @@
 import { wisePublicQuote } from "./payments/adapters/wise.js";
+import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
+import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment } from "./customer-profiles.js";
 
 /**
  * Price check: "send X of A, how much B arrives, through whom?" Every number
  * carries where it came from, because they are not equally strong:
  *
  *   exact            a live quote from the customer's own connected account
- *   live_public      a live quote anyone gets (Wise's public quote API)
+ *   live_public      an anonymous provider quote or FX reference (fee completeness labelled)
  *   published        the provider's published price schedule, applied here
  *                    at a reference rate (read from the source URL on `observedAt`)
  *   market_estimate  prices Wise collects from other providers' public sites
@@ -25,6 +27,7 @@ export interface PriceCheckInput {
   destinationCountry?: string;
   amount: number;
   includeMarket?: boolean;
+  context?: CustomerContext;
 }
 
 export interface PriceRow {
@@ -42,6 +45,7 @@ export interface PriceRow {
   /** Complete rows can be ranked; partial ones are missing a cost component. */
   partial: boolean;
   delivery: string | null;
+  /** Source timestamp; empty when a comparison feed supplies no collection time. */
   observedAt: string;
   expiresAt?: string;
   source: { label: string; url?: string };
@@ -52,6 +56,7 @@ export interface PriceRow {
    * for a market estimate that beats it.
    */
   shortfall?: number | null;
+  profileAssessment?: ProviderProfileAssessment;
 }
 
 export interface PriceUnavailable {
@@ -210,7 +215,7 @@ async function marketEstimates(input: PriceCheckInput, fetcher: typeof fetch): P
         totalCostPct: null,
         partial: false,
         delivery: null,
-        observedAt: q.dateCollected ?? new Date().toISOString(),
+        observedAt: q.dateCollected ?? "",
         source: { label: "Wise comparison feed", url: "https://wise.com/gb/compare/" },
         notes: [
           `Collected by Wise from ${p.name ?? p.alias}'s public pricing${q.dateCollected ? ` on ${q.dateCollected.slice(0, 10)}` : ""}.`,
@@ -257,6 +262,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     throw new Error("Pick two currencies and an amount above zero.");
   }
   const fetcher = deps.fetcher ?? fetch;
+  if (input.context) input.context = CustomerContext.parse(input.context);
   const now = deps.now ?? new Date();
   const rows: PriceRow[] = [];
   const unavailable: PriceUnavailable[] = [];
@@ -265,8 +271,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}`;
-  const [connected, wisePublic, market, usdRate, platformQuotes] = await Promise.all([
-    deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic] = await Promise.all([
+    deps.connectedQuotes && input.context?.direction !== "receive" ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
     input.sourceCurrency === "USD"
@@ -275,6 +281,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
           .then((q) => Number(q.exchangeRate))
           .catch(() => null),
     deps.platformQuotes ? deps.platformQuotes(input).catch(() => []) : Promise.resolve([]),
+    cache(`revolut:GB:${pair}`, 60_000, () => revolutPublicReference(input, fetcher, now)).catch(() => null),
   ]);
 
   for (const c of connected) {
@@ -282,6 +289,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote).map((c) => c.providerSlug));
+  if (revolutPublic && !connectedSlugs.has("revolut")) rows.push({ ...revolutPublic, notes: [...revolutPublic.notes] });
+  else if (!revolutPublic && !connectedSlugs.has("revolut")) unavailable.push({ providerSlug: "revolut", providerName: "Revolut", reason: "No public UK FX reference for this request. Public pricing does not confirm business eligibility or total transfer cost." });
 
   let reference: PriceCheckResult["reference"] = null;
   if (!(wisePublic instanceof Error)) {
@@ -332,7 +341,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     });
   }
 
-  rows.push(...market);
+  // Cached public observations must not acquire another customer's profile or ranking.
+  rows.push(...market.map((row) => ({ ...row, notes: [...row.notes] })));
 
   for (const provider of deps.connectable ?? []) {
     if (provider.connected || rows.some((r) => r.providerSlug === provider.slug)) continue;
@@ -349,14 +359,19 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // complete rows by what arrives, then partial rows, then rows with no amount.
   const expected = reference ? input.amount * reference.rate : null;
   for (const row of rows) {
+    if (input.context) {
+      row.profileAssessment = assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null });
+      if (!row.profileAssessment.priceApplicable) { row.partial = true; row.totalCostPct = null; }
+    }
     if (!row.partial && row.recipientAmount !== null && expected) row.totalCostPct = round((1 - row.recipientAmount / expected) * 100, 2);
   }
   const tier = (r: PriceRow) => (r.recipientAmount === null ? 2 : r.partial ? 1 : 0);
   const group = (r: PriceRow) => (r.basis === "market_estimate" ? 1 : 0);
   rows.sort((a, b) => group(a) - group(b) || tier(a) - tier(b) || (b.recipientAmount ?? 0) - (a.recipientAmount ?? 0) || basisOrder(a.basis) - basisOrder(b.basis));
   // Dated consumer estimates are context, never "the best price".
-  const best = rows.find((r) => tier(r) === 0 && group(r) === 0) ?? rows.find((r) => tier(r) === 0);
-  for (const row of rows) row.shortfall = best && tier(row) === 0 ? round(best.recipientAmount! - row.recipientAmount!) : null;
+  const fits = (r: PriceRow) => !input.context || r.profileAssessment?.status === "documented";
+  const best = rows.find((r) => tier(r) === 0 && group(r) === 0 && fits(r));
+  for (const row of rows) row.shortfall = best && tier(row) === 0 && fits(row) ? round(best.recipientAmount! - row.recipientAmount!) : null;
 
   return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes };
 }

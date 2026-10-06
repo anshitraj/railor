@@ -42,3 +42,6 @@ export { PersistentParallelBudget, type ParallelLedgerReport } from "./country-r
 export * from "./net-guard.js";
 export * from "./logos.js";
 export * from "./pricing.js";
+export * from "./customer-profiles.js";
+export * from "./freelancer.js";
+export * from "./invoice-extraction.js";

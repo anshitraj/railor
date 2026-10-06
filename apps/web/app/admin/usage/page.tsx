@@ -1,4 +1,4 @@
-import { count, desc, max } from "drizzle-orm";
+import { count, desc, eq, max, sql } from "drizzle-orm";
 import { corridorLabel, getPlatformUsageSummary, loadTopCorridorDemand } from "@railor/core";
 import { featureInterest, getDb } from "@railor/database";
 import { Card, SectionLabel } from "@railor/ui";
@@ -17,14 +17,27 @@ function relativeTime(date: Date): string {
 
 export default async function UsagePage() {
   const db = await getDb();
-  const [platformUsage, topDemand, roadmapDemand] = await Promise.all([
+  const [platformUsage, topDemand, roadmapDemand, providerDemand] = await Promise.all([
     getPlatformUsageSummary(30, 50),
     loadTopCorridorDemand(25),
     db.select({ feature: featureInterest.feature, requests: count(), latest: max(featureInterest.createdAt) }).from(featureInterest).groupBy(featureInterest.feature).orderBy(desc(count())),
+    db.select({ provider: featureInterest.providerRequested, requests: count(), workspaces: sql<number>`count(distinct ${featureInterest.organizationId})::int`, latest: max(featureInterest.createdAt) })
+      .from(featureInterest).where(eq(featureInterest.feature, "provider_connection"))
+      .groupBy(featureInterest.providerRequested).orderBy(desc(count())).limit(50),
   ]);
   return (
     <>
       <AdminHeader title="Usage & demand" description="Who uses the API, which corridors people search for, and which roadmap features they asked to hear about." />
+      <Card className="flex flex-col gap-3 p-5">
+        <SectionLabel>Provider connection requests</SectionLabel>
+        <p className="text-[12px] text-[var(--color-muted)]">Use this demand to prioritize provider access and integration work. A request does not confirm a partnership.</p>
+        {providerDemand.length ? <div className="overflow-x-auto"><table className="w-full text-left text-[13px]">
+          <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]"><tr><th className="pb-2">Provider</th><th className="pb-2">Requests</th><th className="pb-2">Workspaces</th><th className="pb-2">Latest</th></tr></thead>
+          <tbody>{providerDemand.map((row) => <tr key={row.provider ?? "unknown"} className="border-t border-[var(--color-line)]">
+            <td className="py-2">{row.provider ?? "Unspecified"}</td><td className="tabular py-2">{row.requests}</td><td className="tabular py-2">{row.workspaces}</td><td className="py-2 text-[var(--color-muted)]">{row.latest ? relativeTime(row.latest) : "—"}</td>
+          </tr>)}</tbody>
+        </table></div> : <p className="text-[13px] text-[var(--color-muted)]">No provider connections requested yet.</p>}
+      </Card>
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between">
           <SectionLabel>API usage — last 30 days, all workspaces</SectionLabel>
