@@ -59,6 +59,7 @@ export default async function LoginPage({
           savedQuery={query}
           initialEmail={prefillEmail}
           initialError={error}
+          demoAvailable={process.env.NODE_ENV !== "production"}
           oauth={{
             google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
             github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),

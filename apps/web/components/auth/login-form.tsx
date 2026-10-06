@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 interface Props {
   returnTo: string;
   oauth: { google: boolean; github: boolean };
+  demoAvailable: boolean;
   savedQuery?: string;
   initialError?: string;
   initialEmail?: string;
@@ -23,12 +24,16 @@ const ERROR_MESSAGE: Record<string, string> = {
   oauth_state: "That sign-in attempt couldn't be verified. Please try again.",
   oauth_failed: "Sign-in with that provider failed. Try again, or use email below.",
   demo_failed: "Couldn't load the demo workspace just now. Try again in a moment.",
+  demo_unavailable: "The demo workspace is available in development. Sign in below to use Railor.",
+  email_unavailable: "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator.",
+  mail_transport_not_configured: "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator.",
+  send_failed: "Couldn't send that email. Please try again shortly.",
 };
 
 /**
  * Sign-in is one field. Only available OAuth methods are shown.
  */
-export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEmail }: Props) {
+export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialError, initialEmail }: Props) {
   const [email, setEmail] = useState(initialEmail ?? "");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     initialError ? "error" : "idle",
@@ -57,11 +62,7 @@ export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEm
         setState("error");
         setMessage(
           response.status === 429 ? "Too many attempts. Please wait a moment and try again."
-            : json.error === "mail_transport_not_configured"
-              ? "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator."
-              : json.error === "send_failed"
-                ? "Couldn't send that email. Please try again shortly."
-                : "That email address didn't look right.",
+            : (ERROR_MESSAGE[json.error] ?? "That email address didn't look right."),
         );
       }
     } catch {
@@ -145,10 +146,10 @@ export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEm
         </form>
       )}
 
-      <a href="/api/auth/demo" className="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 text-left transition-colors hover:border-[var(--color-line-strong)]">
+      {demoAvailable && <a href="/api/auth/demo" className="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 text-left transition-colors hover:border-[var(--color-line-strong)]">
         <span><span className="block text-[13.5px] font-semibold">Just want to look around?</span><span className="mt-1 block text-[12px] text-[var(--color-muted)]">Explore the demo. No email needed.</span></span>
         <span className="shrink-0 text-[13px] font-semibold text-[var(--color-orange-deep)] transition-transform group-hover:translate-x-0.5">View demo →</span>
-      </a>
+      </a>}
 
       <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
         By continuing, you agree to the{" "}

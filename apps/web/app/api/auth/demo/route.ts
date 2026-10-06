@@ -10,8 +10,10 @@ export const dynamic = "force-dynamic";
  * than handing out a fresh empty one.
  */
 export async function GET(request: Request) {
-  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "not_found" }, { status: 404 });
   const url = new URL(request.url);
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.redirect(new URL("/login?error=demo_unavailable", url));
+  }
   try {
     await provisionDemoSession();
   } catch (error) {
