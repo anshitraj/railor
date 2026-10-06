@@ -1,4 +1,4 @@
-"""Private source snapshots; use ADC for GCS and local storage for development."""
+"""Private source snapshots in GCS, a Railway volume, or development storage."""
 import os
 import re
 from pathlib import Path
@@ -21,7 +21,9 @@ def store_snapshot(provider_slug: str, content_hash: str, body: str, directory: 
             pass  # Content-addressed object already exists; never overwrite it.
         return f"gs://{bucket_name}/{name}"
     if os.getenv("RAILOR_ENV") == "production":
-        raise RuntimeError("GCS_SNAPSHOT_BUCKET is required in production")
+        mount = os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "").strip()
+        if not mount or not Path(mount).is_dir() or not directory.resolve().is_relative_to(Path(mount).resolve()):
+            raise RuntimeError("Production snapshots require GCS_SNAPSHOT_BUCKET or storage inside a mounted Railway volume")
     path = directory / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(body, encoding="utf-8")

@@ -21,6 +21,9 @@ apps/worker/__pycache__
 **/__pycache__
 storage/snapshots
 .railor/
+.railway/*
+!.railway/railway.ts
+!.railway/README.md
 *.tsbuildinfo
 .vscode/*
 !.vscode/extensions.json
