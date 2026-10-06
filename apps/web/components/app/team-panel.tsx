@@ -175,7 +175,7 @@ export function TeamPanel({
               placeholder="name@company.com"
               className="min-w-[220px] flex-1 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-[14px] outline-none focus:border-[var(--color-orange)]"
             />
-            <Button type="submit" size="sm" disabled={invite.pending || !email.trim()}>
+            <Button type="submit" size="sm" disabled={invite.pending || !email.trim()} title={email.trim() ? undefined : "Enter an email address to invite"}>
               <Mail size={14} /> {invite.pending ? "Inviting…" : "Send invite"}
             </Button>
           </div>

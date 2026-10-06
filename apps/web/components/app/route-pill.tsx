@@ -1,4 +1,7 @@
+"use client";
+
 import { CurrencyLogo } from "../marketing/currency-logo";
+import { Flag } from "@railor/ui";
 
 /** Every fiat currency the demo dataset knows, mapped to the country whose flag represents it. */
 const CURRENCY_COUNTRY: Record<string, string> = {
@@ -11,17 +14,6 @@ const CURRENCY_COUNTRY: Record<string, string> = {
   SGD: "SG",
   BRL: "BR",
 };
-
-/**
- * Unicode regional-indicator flags work for any ISO alpha-2 code with no
- * per-country artwork to maintain — unlike a hand-drawn SVG set, a country
- * this dataset adds tomorrow renders correctly today.
- */
-function flagEmoji(code: string): string {
-  if (code === "EU") return "🇪🇺";
-  if (!/^[A-Za-z]{2}$/.test(code)) return "🌐";
-  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)));
-}
 
 /**
  * A route token — country, asset or currency — with its identifying badge on
@@ -43,12 +35,7 @@ export function RoutePill({ value }: { value: string }) {
       {isAsset ? (
         <CurrencyLogo symbol={value} size={16} />
       ) : flagCountry ? (
-        <span
-          aria-hidden
-          className="grid size-4 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--color-canvas)] text-[11px] leading-none"
-        >
-          {flagEmoji(flagCountry)}
-        </span>
+        <Flag code={flagCountry} size={16} />
       ) : null}
       {value}
     </span>

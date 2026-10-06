@@ -11,6 +11,15 @@ describe("authentication return paths", () => {
     expect(() => appOrigin()).toThrow();
     vi.stubEnv("APP_ORIGIN", "https://example.com"); expect(appOrigin()).toBe("https://example.com");
   });
+  it("falls back to the origin Vercel injects, never to anything a request controls", () => {
+    vi.stubEnv("NODE_ENV", "production"); vi.stubEnv("APP_ORIGIN", ""); vi.stubEnv("VERCEL_ENV", "production"); vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "www.example.com");
+    expect(appOrigin()).toBe("https://www.example.com");
+    vi.stubEnv("VERCEL_ENV", "preview"); vi.stubEnv("VERCEL_URL", "example-abc123.vercel.app");
+    expect(appOrigin()).toBe("https://example-abc123.vercel.app");
+    vi.stubEnv("VERCEL_URL", "evil.com/path"); expect(() => appOrigin()).toThrow();
+    vi.stubEnv("VERCEL_URL", ""); expect(() => appOrigin()).toThrow();
+    vi.stubEnv("APP_ORIGIN", "https://configured.example"); expect(appOrigin()).toBe("https://configured.example");
+  });
 });
 describe("hosted payment redirect", () => {
   it.each(["https://buy.stripe.com.evil.com/x", "http://buy.stripe.com/x", "https://evil.com@buy.stripe.com/x", "https://buy.stripe.com:8443/x"])("rejects %s", (url) => {

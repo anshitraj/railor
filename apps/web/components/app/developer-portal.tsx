@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, Copy, Trash2 } from "lucide-react";
-import { Button, Card, CodeSample, Freshness, SectionLabel, StageBadge } from "@railor/ui";
+import { Button, Card, CodeSample, Freshness, SectionLabel, StageBadge, TechnologyLogo } from "@railor/ui";
 import { createKey, revokeKey } from "../../app/app/developers/actions";
 
 export interface KeyRow {
@@ -93,8 +93,9 @@ export function DeveloperPortal({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-tight">Developers</h1>
+      <div className="workspace-heading flex flex-col gap-1">
+        <span className="product-eyebrow">Build with Railor</span>
+        <h1 className="font-semibold tracking-tight">Developers</h1>
         <p className="max-w-2xl text-[14px] text-[var(--color-muted)]">
           The screens in this app are thin clients over these endpoints. Your test key is already
           live and every snippet below is rendered with it.
@@ -359,6 +360,7 @@ print(response.json()["providers_checked"])`,
       <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
         <Card className="flex flex-col gap-3 p-5">
           <div className="flex items-center gap-2">
+            <TechnologyLogo name="MCP" size={24} />
             <SectionLabel>MCP server</SectionLabel>
             <StageBadge stage="beta" />
           </div>
@@ -367,21 +369,13 @@ print(response.json()["providers_checked"])`,
             source, verified_at and confidence.
           </p>
           <div className="flex flex-wrap gap-2">
-            <a href={cursorDeeplink}>
-              <Button size="sm" variant="secondary">
-                Add to Cursor
-              </Button>
-            </a>
-            <a href={vscodeDeeplink}>
-              <Button size="sm" variant="secondary">
-                Add to VS Code
-              </Button>
-            </a>
-            <a href="/docs/mcp">
-              <Button size="sm" variant="secondary">
-                Claude Code instructions
-              </Button>
-            </a>
+            {[
+              { name: "Cursor", label: "Add to Cursor", href: cursorDeeplink },
+              { name: "VS Code", label: "Add to VS Code", href: vscodeDeeplink },
+              { name: "Claude Code", label: "Claude Code instructions", href: "/docs/mcp" },
+            ].map((client) => <a key={client.name} href={client.href} className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--color-paper)]">
+              <TechnologyLogo name={client.name} size={20} /> {client.label}
+            </a>)}
           </div>
           <CodeSample
             apiKey={testKey}

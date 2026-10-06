@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ConnectionTestResult, ProviderAdapter } from "../../adapters.js";
 import type { QuoteRequest, UnifiedQuote } from "../../unified.js";
-import { providerRequest } from "../http.js";
+import { currencyScale, providerRequest, toDecimalString } from "../http.js";
 import type { ConnectionEnvironment, NormalizedTransferStatus, PayoutAdapter, PayoutBeneficiary, PayoutOutcome } from "../types.js";
 
 /**
@@ -136,7 +136,9 @@ async function airwallexGetQuote(credentials: Record<string, string>, request: Q
   const buy = fiat(request.destinationCurrency);
   if (sell === buy) {
     const now = new Date().toISOString();
-    return { providerSlug: "airwallex", sourceAsset: request.sourceAsset, destinationCurrency: buy, destinationCountry: request.destinationCountry, amount: request.amount, recipientAmount: request.amount, exchangeRate: "1", costPartial: true, quoteType: "live", accountContext: "customer_connected", verificationType: "provider_reported", observedAt: now, quotedAt: now };
+    // No FX endpoint was called, and a payout may still carry a transfer fee.
+    // This is only a same-currency reference, never a live recipient payout.
+    return { providerSlug: "airwallex", sourceAsset: request.sourceAsset, destinationCurrency: buy, destinationCountry: request.destinationCountry, amount: request.amount, costPartial: true, quoteType: "indicative", accountContext: "customer_connected", verificationType: "railor_observed", observedAt: now, quotedAt: now };
   }
   const auth = await accessToken(credentials, environment);
   if (!auth.ok) throw new Error(auth.outcome.message);
@@ -222,10 +224,13 @@ export const airwallexPayoutAdapter: PayoutAdapter = {
   async createPayout(credentials, request) {
     let sourceCurrency: string;
     let transferCurrency: string;
+    let sourceAmount: number;
     let beneficiary: ReturnType<typeof airwallexBeneficiary>;
     try {
       sourceCurrency = fiat(request.sourceCurrency);
       transferCurrency = fiat(request.destinationCurrency);
+      // A JSON number at the currency's own precision, as the reference documents (not "1000.00000000").
+      sourceAmount = Number(toDecimalString(request.amount, currencyScale(sourceCurrency)));
       beneficiary = airwallexBeneficiary(request.beneficiary);
     } catch (error) {
       return { kind: "rejected", code: "unsupported_route", message: (error as Error).message, retryableElsewhere: true };
@@ -239,7 +244,7 @@ export const airwallexPayoutAdapter: PayoutAdapter = {
         request_id: request.idempotencyKey,
         beneficiary,
         source_currency: sourceCurrency,
-        source_amount: request.amount,
+        source_amount: sourceAmount,
         transfer_currency: transferCurrency,
         transfer_method: "LOCAL",
         reason: credentials.transferReason?.trim() || "professional_business_services",

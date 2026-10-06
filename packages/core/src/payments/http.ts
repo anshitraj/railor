@@ -48,6 +48,24 @@ function providerMessage(body: Record<string, unknown>): string | undefined {
   return typeof found === "string" ? found.replace(/\s+/g, " ").slice(0, 240) : undefined;
 }
 
+/**
+ * The amount as it goes to a provider. Payments store 8 fraction digits ("1000.00000000"); providers
+ * expect the amount as a person would write it: trailing zeros dropped, never fewer than two digits.
+ */
+export function wireAmount(stored: string): string {
+  const [whole = "0", fraction = ""] = stored.trim().split(".");
+  return `${whole}.${fraction.replace(/0+$/, "").padEnd(2, "0")}`;
+}
+
+/** Fraction digits a currency uses (2 for USD, 0 for JPY, 3 for KWD). */
+export function currencyScale(currency: string): number {
+  try {
+    return new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  } catch {
+    return 2;
+  }
+}
+
 /** Decimal string with at most `scale` fraction digits — providers reject floats and over-precise amounts. */
 export function toDecimalString(amount: string | number, scale = 2): string {
   const n = typeof amount === "number" ? amount : Number(amount);

@@ -18,6 +18,7 @@ import {
 } from "@railor/ui";
 import { saveCorridor, monitorCorridor } from "../../app/app/corridors/actions";
 import { ProviderLogo } from "./provider-logo";
+import { postSearch } from "../../lib/search-client";
 
 type Query = Record<string, string | number | undefined>;
 
@@ -195,6 +196,7 @@ export function CorridorExplorer({
   const [first, setFirst] = useState(true);
   const [naturalInput, setNaturalInput] = useState("");
   const [parsing, setParsing] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const skipNextFetch = useRef(false);
 
   useEffect(() => {
@@ -208,14 +210,13 @@ export function CorridorExplorer({
     }
     let cancelled = false;
     setLoading(true);
-    fetch("/api/search", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query, preset }),
-    })
-      .then((r) => r.json())
-      .then((json) => {
-        if (!cancelled) setData(json);
+    postSearch<SearchPayload>({ query, preset })
+      .then((result) => {
+        if (cancelled) return;
+        if (result.ok) {
+          setSearchError("");
+          setData(result.data);
+        } else setSearchError(result.message);
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -237,12 +238,13 @@ export function CorridorExplorer({
     if (!naturalInput.trim() || parsing) return;
     setParsing(true);
     try {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: naturalInput, discover: true }),
-      });
-      const json: SearchPayload = await response.json();
+      const result = await postSearch<SearchPayload>({ input: naturalInput, discover: true });
+      if (!result.ok) {
+        setSearchError(result.message);
+        return;
+      }
+      setSearchError("");
+      const json = result.data;
       skipNextFetch.current = true;
       setData(json);
       setQuery(json.interpretation.query);
@@ -283,9 +285,10 @@ export function CorridorExplorer({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="workspace-heading flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">Corridor Explorer</h1>
+          <span className="product-eyebrow">Route intelligence</span>
+          <h1 className="font-semibold tracking-tight">Corridor Explorer</h1>
           <p className="text-[14px] text-[var(--color-muted)]">
             Every mapped provider, evaluated against this route — with the reason attached.
           </p>
@@ -316,6 +319,12 @@ export function CorridorExplorer({
           {parsing ? "Reading…" : "Search"}
         </Button>
       </form>
+
+      {searchError ? (
+        <p role="alert" className="text-[13px] font-medium text-[var(--color-bad)]">
+          {searchError}
+        </p>
+      ) : null}
 
       <Card className="flex flex-col gap-4 p-5">
         <div className="flex flex-col gap-2">

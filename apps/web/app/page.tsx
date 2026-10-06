@@ -36,9 +36,11 @@ async function loadSignals(): Promise<LandingSignal[]> {
             entityCountry: signal.sourceCode,
             customerType: "business",
             sourceAsset: signal.asset,
+            sourceNetwork: signal.sourceNetwork,
             destinationCountry: signal.destinationCode,
             destinationCurrency: signal.fiat,
           }),
+          { recordTelemetry: false },
         );
         const eligible = result.results.filter((r) => r.eligibility === "supported" || r.eligibility === "additional_requirements");
         const confident = eligible.map((r) => r.confidence);
@@ -117,7 +119,9 @@ async function loadShowcaseEvidence(): Promise<LandingEvidence | null> {
       sourceType: SOURCE_TYPE_LABEL[e.sourceType] ?? e.sourceType,
       sourceTitle: e.sourceTitle,
       sourceHost: host,
+      sourceUrl: e.sourceUrl,
       confidence,
+      bandKey: confidenceBand(confidence, verifiedAt),
       band: CONFIDENCE_BAND_LABEL[confidenceBand(confidence, verifiedAt)],
       retrievedAt: fmtDate(e.retrievedAt),
       verifiedAt: fmtDate(verifiedAt),

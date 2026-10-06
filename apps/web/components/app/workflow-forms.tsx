@@ -232,6 +232,7 @@ export function ConnectorSimulation({
         </FieldBlock>
         <Button
           disabled={c.pending || !installationId || !decisionId || key.length < 8}
+          title={!installationId ? "Choose a connector installation first" : !decisionId ? "Choose a decision first" : key.length < 8 ? "The idempotency key needs at least 8 characters" : undefined}
           onClick={() => c.run({ action: "simulate_connector", installationId, decisionId, idempotencyKey: key, operation }, setResult)}
         >
           {c.pending ? "Queueing…" : "Queue job"}
@@ -370,7 +371,7 @@ export function AgentWorkbench({
             </>
           )}
 
-          <Button disabled={c.pending || !text.trim()} onClick={generate}>
+          <Button disabled={c.pending || !text.trim()} onClick={generate} title={text.trim() ? undefined : "Write or pick a request first"}>
             {c.pending ? "Working…" : kind === "explain" ? "Explain this decision" : "Generate reviewable output"}
           </Button>
 

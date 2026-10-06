@@ -51,6 +51,8 @@ export interface SearchOptions {
   includeDemoProviders?: boolean;
   /** When provided, `connectivity` reflects this org's real provider_connections rows instead of capping at "compatible". */
   organizationId?: string;
+  /** Passive dashboard evaluations are not new customer search demand. */
+  recordTelemetry?: boolean;
 }
 
 export async function searchCorridors(
@@ -138,7 +140,7 @@ export async function searchCorridors(
 
   // Real customer intent only — a demo-tour search isn't real demand, and
   // recording it would pollute the one signal this exists to keep honest.
-  if (!options.includeDemoProviders) {
+  if (!options.includeDemoProviders && options.recordTelemetry !== false) {
     await recordSearchTelemetry(query, corridorKey(query), results);
   }
 

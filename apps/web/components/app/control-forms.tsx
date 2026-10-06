@@ -496,7 +496,7 @@ export function ApprovalReview({ id, status }: { id: string; status: string }) {
       </div>
       <div className="flex gap-2">
         {actions.map((review) => (
-          <Button key={review} disabled={c.pending || !comment.trim()} onClick={() => c.run({ action: "approval", id, review, comment })}>
+          <Button key={review} disabled={c.pending || !comment.trim()} title={comment.trim() ? undefined : "Add a short review comment first (pick one above or write your own)"} onClick={() => c.run({ action: "approval", id, review, comment })}>
             {review}
           </Button>
         ))}

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { AnimatedRouteMap } from "./animated-route-map";
+import { EvidenceFolio } from "./evidence-folio";
 import { CurrencyLogo, type CurrencySymbol } from "./currency-logo";
 import { CountryFlag, type CountryCode } from "./country-flag";
 import { HeroSearch } from "./hero-search";
@@ -16,6 +17,7 @@ import type { LandingChange, LandingEvidence, LandingSignal } from "./landing-da
 import { RailsStrip } from "./rails-strip";
 import {
   CodeSample,
+  TechnologyLogo,
   CommandBlock,
   CountUp,
   Reveal,
@@ -91,7 +93,7 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels, signals,
               </div>
             </div>
 
-            <Stagger className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-4" step={0.07}>
+            <Stagger className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-4" step={0.07}>
               {[
                 [counts.providers, "providers mapped"],
                 [counts.countries, "markets indexed"],
@@ -194,57 +196,18 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels, signals,
         </section>
 
         {evidence ? (
-          <section className="border-t border-[var(--color-line)] bg-[var(--color-paper)] py-20 sm:py-28">
-            <div className="mx-auto grid w-[min(1360px,calc(100%-2rem))] gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <section id="evidence" aria-labelledby="evidence-heading" className="border-t border-[var(--color-line)] bg-[var(--color-paper)] py-16 sm:py-24">
+            <div className="mx-auto grid w-[min(1360px,calc(100%-2rem))] gap-9 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16">
               <Reveal duration={0.65}>
                 <p className="section-kicker">Evidence, not vibes</p>
-                <h2 className="mt-4 max-w-xl font-display text-[clamp(2.75rem,5vw,5.3rem)] font-medium leading-[0.91] tracking-[-0.065em]">Every answer should be verifiable.</h2>
-                <p className="mt-6 max-w-md text-[16px] leading-[1.6] text-[var(--color-muted)]">
-                  This is a real record from the dataset, not an illustration. Every capability Railor shows resolves to a source, a retrieval time, a verification time and a confidence that decays with age.
+                <h2 id="evidence-heading" className="mt-5 max-w-[14ch] font-display text-[clamp(2.4rem,4vw,4rem)] font-medium leading-[1.02] tracking-[-0.055em]">Every answer,<br />backed by a source.</h2>
+                <p className="mt-6 max-w-[35ch] text-[15px] leading-[1.75] text-[var(--color-muted)]">
+                  A real capability from Railor&apos;s index. See the source, when it was checked, and how much confidence the evidence deserves.
                 </p>
+                <p className="mt-6 flex items-start gap-3 text-[12px] leading-relaxed text-[var(--color-muted)]"><span aria-hidden className="mt-2 h-px w-6 shrink-0 bg-[var(--color-orange)]" />Confidence decays with age. The source stays inspectable.</p>
+                <Link href="/company/trust" className="group mt-7 inline-flex items-center gap-2 text-[12px] font-semibold text-[var(--color-ink)]">Inside the evidence model <ArrowUpRight size={14} aria-hidden className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></Link>
               </Reveal>
-              <Reveal duration={0.65} delay={0.08} direction="left">
-                <article className="relative overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-surface)] shadow-[var(--shadow-panel)]">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] px-6 py-4">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">Capability record</span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ok-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-ok)]">
-                      <ShieldCheck size={13} /> {evidence.band}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-5 px-6 py-6">
-                    <div>
-                      <p className="font-display text-[26px] font-medium leading-tight tracking-[-0.04em]">{evidence.provider}</p>
-                      <p className="mt-1 text-[14px] text-[var(--color-ink-soft)]">{evidence.claim}</p>
-                    </div>
-                    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-[13px]">
-                      <div>
-                        <dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">Source type</dt>
-                        <dd className="mt-1">{evidence.sourceType}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">Confidence</dt>
-                        <dd className="mt-1 tabular">{evidence.confidence.toFixed(2)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">Retrieved</dt>
-                        <dd className="mt-1 tabular">{evidence.retrievedAt}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">Last verified</dt>
-                        <dd className="mt-1 tabular">{evidence.verifiedAt}</dd>
-                      </div>
-                    </dl>
-                    <div className="rounded-2xl bg-[var(--color-paper)] px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">Source</p>
-                      <p className="mt-1 truncate text-[13.5px] font-medium">{evidence.sourceTitle}</p>
-                      <p className="truncate font-mono text-[11.5px] text-[var(--color-muted)]">{evidence.sourceHost}</p>
-                    </div>
-                  </div>
-                  <Link href={`/providers/${evidence.providerSlug}`} className="flex items-center justify-between border-t border-[var(--color-line)] px-6 py-4 text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--color-orange-deep)] transition hover:bg-[var(--color-lavender)]">
-                    View evidence <ArrowUpRight size={15} />
-                  </Link>
-                </article>
-              </Reveal>
+              <EvidenceFolio evidence={evidence} />
             </div>
           </section>
         ) : null}
@@ -298,6 +261,7 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels, signals,
                     key={item.label}
                     className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-1.5 text-[13px]"
                   >
+                    <TechnologyLogo name={item.label} size={21} />
                     {item.label}
                     <StageBadge stage={item.stage} />
                   </span>

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes, createHash } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { appOrigin, safeReturnPath } from "./security";
 import {
@@ -153,7 +154,8 @@ export async function signOut() {
 }
 
 /** Current user + their active organization, or null for anonymous visitors. */
-export async function getSession(): Promise<SessionContext | null> {
+// Share authentication between server layouts and pages within one request only.
+export const getSession = cache(async (): Promise<SessionContext | null> => {
   const jar = await cookies();
   const value = jar.get(SESSION_COOKIE)?.value;
   if (!value) return null;
@@ -199,7 +201,7 @@ export async function getSession(): Promise<SessionContext | null> {
     organization: membership?.org ?? null,
     role: membership?.role ?? null,
   };
-}
+});
 
 export async function requireSession(): Promise<SessionContext> {
   const session = await getSession();

@@ -48,19 +48,18 @@ const auth = (credentials: Record<string, string>) => ({
 
 const data = (body: Record<string, unknown>) => (body.data ?? body) as Record<string, unknown>;
 
+/** US wire only: Circle pays wires in USD, and Railor does not send any other currency through this rail. */
 function wireBankBody(b: PayoutBeneficiary, idempotencyKey: string) {
   const d = b.details;
   const billingDetails = { name: b.holderName, city: d.city, country: b.country, line1: d.addressLine1, district: d.state, postalCode: d.postalCode };
   const bankAddress = { bankName: d.bankName, city: d.city, country: b.country };
-  return b.method === "iban"
-    ? { idempotencyKey, iban: d.iban, billingDetails, bankAddress }
-    : { idempotencyKey, accountNumber: d.accountNumber, routingNumber: d.routingNumber, billingDetails, bankAddress };
+  return { idempotencyKey, accountNumber: d.accountNumber, routingNumber: d.routingNumber, billingDetails, bankAddress };
 }
 
 export const circlePayoutAdapter: PayoutAdapter = {
   slug: "circle",
   verification: "docs_verified",
-  supportedMethods: ["crypto_address", "bank_us", "iban"],
+  supportedMethods: ["crypto_address", "bank_us"],
   payoutCredentialFields: [{ key: "walletId", label: "Source wallet id (optional — defaults to your master wallet)" }],
 
   async ensureBeneficiary(credentials, beneficiary, { environment, idempotencyKey }) {
@@ -80,6 +79,8 @@ export const circlePayoutAdapter: PayoutAdapter = {
       if (!result.ok) throw new Error(`Circle did not register the recipient: ${result.outcome.message}`);
       return { providerRef: `recipient:${String(data(result.body).id)}` };
     }
+    // Anything but a US bank account would be registered with blank routing fields: refuse instead.
+    if (beneficiary.method !== "bank_us") throw new Error(`Circle payouts from Railor don't support ${beneficiary.method} beneficiaries.`);
     const result = await providerRequest(`${BASE[environment]}/v1/businessAccount/banks/wires`, {
       method: "POST",
       headers: auth(credentials),
@@ -100,6 +101,12 @@ export const circlePayoutAdapter: PayoutAdapter = {
     const amount = { amount: toDecimalString(request.amount, 2), currency };
     const isWire = kind === "wire";
     if (isWire && currency !== "USD") return { kind: "rejected", code: "unsupported_route", message: "Circle wire payouts are USD only.", retryableElsewhere: true };
+    // Circle pays in the currency of the funding balance. Delivering a different currency than the payment
+    // promised (USDC wired to a euro account, USDC sent as EURC) would be a silent wrong payment: refuse.
+    const promised = AMOUNT_CURRENCY[request.destinationCurrency.toUpperCase()];
+    if (promised !== currency) {
+      return { kind: "rejected", code: "unsupported_route", message: `Circle pays out in the currency it is funded in (${currency}); it cannot deliver ${request.destinationCurrency}.`, retryableElsewhere: true };
+    }
     const result = await providerRequest(`${BASE[request.environment]}${isWire ? "/v1/businessAccount/payouts" : "/v1/payouts"}`, {
       method: "POST",
       headers: auth(credentials),

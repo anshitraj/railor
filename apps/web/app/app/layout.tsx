@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { loadProviderSummaries } from "@railor/core";
+import { loadProviderNavigation } from "@railor/core";
 import { getSession } from "../../lib/auth";
 import { DEMO_EMAIL } from "../../lib/demo";
 import { getSavedCorridors } from "../../lib/org";
@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session.organization) redirect("/welcome");
 
   const [providers, corridors] = await Promise.all([
-    loadProviderSummaries(),
+    loadProviderNavigation(),
     getSavedCorridors(session.organization.id),
   ]);
 

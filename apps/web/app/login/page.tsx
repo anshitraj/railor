@@ -4,7 +4,7 @@ import { getSession } from "../../lib/auth";
 import { safeReturnPath } from "../../lib/security";
 import { LoginForm } from "../../components/auth/login-form";
 import { RailArtwork } from "../../components/marketing/rail-artwork";
-import { RailorMark } from "../../components/marketing/nav";
+import { RailorBrand } from "../../components/brand";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sign in" };
@@ -28,31 +28,32 @@ export default async function LoginPage({
   const prefillEmail = typeof params.email === "string" ? params.email : undefined;
 
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-[var(--color-lavender)] p-10 lg:flex">
+    <main id="main" className="grid min-h-screen lg:grid-cols-2">
+      <section className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-paper)] p-12 lg:flex">
         <div className="rail-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
         <Link href="/" className="relative flex items-center gap-2">
-          <RailorMark />
-          <span className="text-[15px] font-semibold">Railor</span>
+          <RailorBrand size={32} />
         </Link>
         <div className="relative flex flex-col gap-6">
-          <RailArtwork />
           <div className="max-w-md">
-            <p className="text-[20px] font-medium leading-snug text-[var(--color-purple-deep)]">
-              Every capability. Every requirement. Every source.
+            <span className="product-eyebrow">Financial infrastructure, mapped</span>
+            <p className="font-display text-[clamp(2.5rem,4vw,4rem)] font-semibold leading-[1.06] tracking-[-0.05em]">
+              Your next move.<br /><span className="text-[var(--color-orange-deep)]">Backed by evidence.</span>
             </p>
-            <p className="mt-2 text-[13.5px] text-[var(--color-ink-soft)]">
+            <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-[var(--color-muted)]">
               Railor checks each mapped provider against your corridor and tells you why the answer
               is what it is.
             </p>
           </div>
+          <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-lavender)] px-4 py-6"><RailArtwork /></div>
         </div>
         <p className="relative text-[12px] text-[var(--color-muted)]">
           Demonstration dataset — providers shown are fictional.
         </p>
       </section>
 
-      <section className="flex items-center justify-center px-6 py-16">
+      <section className="flex flex-col items-center justify-center gap-12 px-6 py-10 sm:py-16">
+        <Link href="/" className="self-start lg:hidden" aria-label="Railor home"><RailorBrand size={30} /></Link>
         <LoginForm
           returnTo={returnTo}
           savedQuery={query}

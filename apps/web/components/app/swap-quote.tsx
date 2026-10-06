@@ -7,6 +7,7 @@ import type { PriceBasis, PriceCheckResult, PriceRow } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
+import { PlatformQuotePanel } from "./platform-quote-panel";
 
 /**
  * A swap-style live quote: pick what you send and what they receive, and
@@ -26,7 +27,7 @@ const PRESETS = [
 
 const BASIS: Record<PriceBasis, { label: string; cls: string; hint: string }> = {
   exact: { label: "Your account", cls: "bg-emerald-400/15 text-emerald-300", hint: "A live quote from your own connected account — the price you'd pay." },
-  live_public: { label: "Live", cls: "bg-sky-400/15 text-sky-300", hint: "A live public quote from the provider's API. Your account's price can differ." },
+  live_public: { label: "Public reference", cls: "bg-sky-400/15 text-sky-300", hint: "A public API observation, not your business's executable quote. Your account's price can differ." },
   published: { label: "Published", cls: "bg-amber-300/15 text-amber-200", hint: "The provider's published fee schedule at the mid-market rate — not a quote." },
   market_estimate: { label: "Estimate", cls: "bg-white/10 text-white/60", hint: "Consumer pricing collected by Wise from the provider's site, dated." },
 };
@@ -293,6 +294,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   }, [flashes]);
 
   const quotes = useMemo(() => result?.rows.filter((r) => r.basis !== "market_estimate") ?? [], [result]);
+  const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
   const estimates = useMemo(() => result?.rows.filter((r) => r.basis === "market_estimate") ?? [], [result]);
   const best = quotes.find((r) => r.shortfall === 0) ?? null;
   const selected = result?.rows.find((r) => r.providerSlug === picked) ?? best ?? quotes[0] ?? null;
@@ -311,9 +313,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     if (!valid) return { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true as const };
     if (!selected) return { label: loading ? "Fetching quotes…" : "No quote for this pair", disabled: true as const };
     if (mode === "public") {
-      const via = executable.includes(selected.providerSlug) ? selected : quotes.find((r) => executable.includes(r.providerSlug));
-      const back = new URLSearchParams({ from, to, amount: String(amount) });
-      return { label: via ? `Sign in to send with ${via.providerName}` : "Sign in to connect your accounts", href: `/login?next=${encodeURIComponent(`/app/prices?${back}`)}` };
+      return { label: "Compare provider features", href: "#provider-features" };
     }
     if (selected.basis === "market_estimate") return { label: "Estimate only — pick a live quote to send", disabled: true as const };
     const sendWith = (row: PriceRow, extra?: { secondary: { label: string; href: string; external?: boolean } }) => {
@@ -325,25 +325,24 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     if (executable.includes(selected.providerSlug)) return sendWith(selected);
     // The best price may sit with a provider that has no API: say so, and offer the best one Railor can send through.
     const alternative = quotes.find((r) => executable.includes(r.providerSlug));
-    const openIt = selected.source.url ? { label: `or open ${selected.providerName} (no API) ↗`, href: selected.source.url, external: true } : undefined;
+    const openIt = selected.source.url ? { label: `or view ${selected.providerName}'s published pricing ↗`, href: selected.source.url, external: true } : undefined;
     if (alternative) {
       const primary = sendWith(alternative, openIt ? { secondary: openIt } : undefined);
       return { ...primary, label: `${primary.label} · ${money(alternative.recipientAmount)} ${to}` };
     }
-    return openIt ? { label: `${selected.providerName} has no API — open ${selected.providerName}`, href: openIt.href, external: true } : { label: `${selected.providerName} can't be sent through Railor yet`, disabled: true as const };
+    return openIt ? { label: `View ${selected.providerName}'s published pricing`, href: openIt.href, external: true } : { label: `${selected.providerName} isn't integrated for execution yet`, disabled: true as const };
   })();
 
   return (
     <div className="flex flex-col gap-3">
-      <section className="product-dark p-3 sm:p-4" aria-label="Live quote">
+      <section className="product-dark p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1 text-[12px] font-semibold text-[#ffad8c]">
               <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+                <span className="relative inline-flex size-2 rounded-full bg-[#ffad8c]" />
               </span>
-              Live quotes
+              Price observations
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -353,7 +352,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 title="Add consumer prices collected by Wise's comparison feed"
                 className={cn("rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition", market ? "border-[#ffad8c]/50 bg-[#ffad8c]/10 text-[#ffad8c]" : "border-white/10 text-white/60 hover:text-white")}
               >
-                + Market estimates
+                {market ? "Market estimates on" : "+ Market estimates"}
               </button>
               <RefreshRing elapsed={elapsed} loading={loading} onClick={() => void load()} />
             </div>
@@ -485,8 +484,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
           <div className="mt-2 flex items-center justify-between gap-2 px-1">
             <h2 className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">
-              <Tag size={15} className="text-[#ffad8c]" /> Quotes
-              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/70">{quotes.length}</span>
+              <Tag size={15} className="text-[#ffad8c]" /> Provider prices
+              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/70">{quotes.length + estimates.length}</span>
             </h2>
             <span className="text-[11.5px] text-white/45">updated {ago(now - fetchedAt)}</span>
           </div>
@@ -513,9 +512,45 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </details>
           ) : null}
 
-          {result?.unavailable.length ? (
+          {result?.marketCoverage?.matched ? (
+            <details open className="group rounded-2xl border border-white/10 px-1.5 py-1">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
+                <span>Broader market coverage · {result.marketCoverage.matched}</span>
+                <span className="text-right text-[11px] font-normal text-white/40">
+                  {result.marketCoverage.matched} of {result.marketCoverage.totalTracked} tracked payment providers list {to}
+                </span>
+              </summary>
+              <p className="px-2 pb-2 text-[11px] leading-snug text-white/45">
+                Coverage records only — not quotes or proof that this exact {from} → {to} route is available. Open a provider to confirm eligibility and pricing.
+              </p>
+              <ul className="grid grid-cols-1 gap-1 pb-1 sm:grid-cols-2">
+                {result.marketCoverage.providers.map((provider) => (
+                  <li key={provider.providerSlug} className="flex min-w-0 items-center gap-2 rounded-xl px-2 py-2 hover:bg-white/[0.04]">
+                    <ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={24} />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[12.5px] font-semibold text-white">{provider.providerName}</span>
+                      <span className="truncate text-[10.5px] text-white/45">{provider.category}</span>
+                    </span>
+                    <span className={cn("shrink-0 rounded-md px-1.5 py-px text-[9.5px] font-bold uppercase tracking-wide", provider.currencyMatch === "both" ? "bg-emerald-400/15 text-emerald-300" : "bg-white/[0.08] text-white/55")}>
+                      {provider.currencyMatch === "both" ? `${from} + ${to}` : to}
+                    </span>
+                    {provider.websiteUrl ? (
+                      <a href={provider.websiteUrl} target="_blank" rel="noreferrer noopener" aria-label={`Open ${provider.providerName}`} className="grid size-7 shrink-0 place-items-center rounded-full text-white/40 transition hover:bg-white/[0.08] hover:text-white">
+                        <ArrowUpRight size={13} />
+                      </a>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <Link href={mode === "app" ? "/app/providers" : "/providers"} className="mx-2 mb-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#ffad8c] hover:text-white">
+                Browse the full {result.marketCoverage.totalTracked}-provider payment market <ArrowUpRight size={12} />
+              </Link>
+            </details>
+          ) : null}
+
+          {unavailable.length ? (
             <ul className="flex flex-col gap-1">
-              {result.unavailable.map((u) => (
+              {unavailable.map((u) => (
                 <li key={u.providerSlug} className="flex items-center gap-3 rounded-2xl border border-dashed border-white/15 px-3 py-2.5">
                   <ProviderLogo slug={u.providerSlug} name={u.providerName} size={26} />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -533,8 +568,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           ) : null}
         </div>
       </section>
+      <PlatformQuotePanel checks={result?.platformQuotes ?? []} now={now} />
       <p className="px-1 text-[11.5px] leading-relaxed text-[var(--color-muted)]">
-        Prices come straight from each provider — Railor adds nothing on top. Mid-market reference: {result?.reference?.source ?? "Wise's public rate"}. Published schedules show the date they were read; tap a quote for its source.
+        Sources and price basis are labelled separately. Mid-market reference: {result?.reference?.source ?? "not available"}. Published schedules are estimates, not guaranteed payout amounts. Additional banking or corridor fees may apply.
       </p>
     </div>
   );

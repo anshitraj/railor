@@ -946,6 +946,7 @@ export const QuoteSnapshot = z.object({
   exchangeRate: z.string().optional(),
   estimatedArrivalMinutes: z.number().optional(),
   quoteType: z.enum(["live", "indicative", "historical"]),
+  accountContext: z.enum(["customer_connected", "railor_network", "public_published"]).optional(),
   observedAt: z.string(),
   expiresAt: z.string().optional(),
 });

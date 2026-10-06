@@ -1,7 +1,8 @@
 import "server-only";
-import { getAdapter, loadDecision, loadConnectorQuote, type QuoteFetcher } from "@railor/core";
+import { getAdapter, loadDecision, loadConnectorQuote, wisePublicQuote, type QuoteFetcher } from "@railor/core";
 import { PaymentIntent } from "@railor/types";
 import { getConnectionCredentials } from "./connections";
+import { fetchPlatformReferenceQuote } from "./platform-pricing";
 
 /** snake_case wire body -> PaymentIntent. Field renaming only, same discipline as api-auth.ts's camelQuery — never fills in a value the caller didn't send. */
 export function parsePaymentIntentBody(body: Record<string, unknown>) {
@@ -32,14 +33,20 @@ export function parsePaymentIntentBody(body: Record<string, unknown>) {
  * decrypted-credentials closure — @railor/core never sees ciphertext or a
  * decryption key, only a resolved UnifiedQuote or null.
  */
-export function buildFetchQuote(organizationId: string, connectorOnly = false): QuoteFetcher {
+export function buildFetchQuote(organizationId: string, connectorOnly = false, allowPlatformReference = false): QuoteFetcher {
   return async (providerSlug, providerId, request) => {
     const local = await loadConnectorQuote(organizationId, providerSlug, request);
     if (local || connectorOnly) return local;
     const adapter = getAdapter(providerSlug);
     if (!adapter?.getQuote) return null;
     const credentials = await getConnectionCredentials(organizationId, providerId);
-    if (!credentials) return null;
+    if (!credentials) {
+      if (allowPlatformReference) {
+        const reference = await fetchPlatformReferenceQuote(providerSlug, request);
+        if (reference) return reference;
+      }
+      return providerSlug === "wise" ? wisePublicQuote(request) : null;
+    }
     return adapter.getQuote(credentials, request);
   };
 }

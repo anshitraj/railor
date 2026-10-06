@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureMigrated, featureInterest, getDb } from "@railor/database";
-import { getSession } from "../../../lib/auth";
+import { companyDomain, getSession } from "../../../lib/auth";
 import { consumeLimit, requestIdentity } from "../../../lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -15,11 +15,14 @@ const NOTIFY_FEATURES = [
   "orchestration",
   "alerts-slack",
   "alerts-webhook",
+  "provider_connection",
+  "execution",
 ] as const;
 
 const Body = z.object({
   feature: z.enum(NOTIFY_FEATURES),
   email: z.string().trim().email().max(320).optional(),
+  providerRequested: z.string().trim().toLowerCase().regex(/^[a-z0-9-]{1,100}$/).optional(),
 });
 
 /** "Notify me" for surfaces labelled Coming soon. Signed-in users need no input at all. */
@@ -32,8 +35,13 @@ export async function POST(request: Request) {
 
   await ensureMigrated();
   const session = await getSession();
-  const email = (session?.user.email ?? parsed.data.email)?.toLowerCase();
+  const isAccessRequest = parsed.data.feature === "provider_connection" || parsed.data.feature === "execution";
+  if (isAccessRequest && (!session?.organization || !parsed.data.providerRequested)) {
+    return NextResponse.json({ error: "workspace_and_provider_required" }, { status: 400 });
+  }
+  const email = (isAccessRequest ? parsed.data.email ?? session?.user.email : session?.user.email ?? parsed.data.email)?.toLowerCase();
   if (!email) return NextResponse.json({ error: "email_required" }, { status: 400 });
+  if (isAccessRequest && !companyDomain(email)) return NextResponse.json({ error: "work_email_required" }, { status: 400 });
 
   const db = await getDb();
   await db
@@ -43,6 +51,7 @@ export async function POST(request: Request) {
       email,
       userId: session?.user.id ?? null,
       organizationId: session?.organization?.id ?? null,
+      providerRequested: isAccessRequest ? parsed.data.providerRequested : null,
     })
     .onConflictDoNothing();
   return NextResponse.json({ ok: true });

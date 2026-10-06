@@ -1,6 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { appOrigin } from "./lib/security";
 
+/**
+ * A cookie-authenticated API call must come from this site: the canonical origin, or the origin the request
+ * itself was made to (a browser on another site can only ever send its own origin). A misconfigured or
+ * missing APP_ORIGIN therefore degrades to the same-origin check instead of failing every request.
+ */
+function originAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  if (origin === request.nextUrl.origin) return true;
+  // The address the browser actually used (a cross-site page cannot set the Host header of its request).
+  const host = request.headers.get("host");
+  const proto = (request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "")).split(",")[0]?.trim();
+  if (host && proto && origin === `${proto}://${host}`) return true;
+  try {
+    return origin === appOrigin();
+  } catch {
+    return false;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const mutating = !["GET", "HEAD", "OPTIONS"].includes(request.method);
@@ -12,7 +32,7 @@ export function middleware(request: NextRequest) {
     }
     // /v1 uses bearer authentication exclusively. Cookie BFF routes require the canonical origin.
     const serviceRoute = path.startsWith("/api/internal/") || path.startsWith("/api/webhooks/") || path === "/api/mcp" || path === "/api/connector/poll";
-    if (path.startsWith("/api/") && !serviceRoute && request.headers.get("origin") !== appOrigin()) {
+    if (path.startsWith("/api/") && !serviceRoute && !originAllowed(request)) {
       return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
     }
   }

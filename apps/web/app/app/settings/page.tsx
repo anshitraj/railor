@@ -24,9 +24,10 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-tight">Settings</h1>
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className="workspace-heading flex flex-col gap-1 lg:col-span-2">
+        <span className="product-eyebrow">Your workspace</span>
+        <h1 className="font-semibold tracking-tight">Settings</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
           Workspace identity, your team and who has access.
         </p>
@@ -52,7 +53,7 @@ export default async function SettingsPage() {
         </p>
       </Card>
 
-      <Card id="team" className="flex scroll-mt-24 flex-col gap-3 p-5">
+      <Card id="team" className="flex scroll-mt-24 flex-col gap-3 p-5 lg:col-span-2">
         <div className="flex items-baseline justify-between gap-3">
           <SectionLabel>Team</SectionLabel>
           <span className="text-[12px] text-[var(--color-muted)]">{members.length} {members.length === 1 ? "member" : "members"}</span>
@@ -72,8 +73,8 @@ export default async function SettingsPage() {
         </Card>
       ) : null}
 
-      <Card className="flex flex-col gap-2 p-5">
-        <SectionLabel>Elsewhere</SectionLabel>
+      <Card className="flex flex-col gap-3 p-5">
+        <SectionLabel>Workspace tools</SectionLabel>
         <Link href="/app/settings/connections" className="text-[13px] font-medium text-[var(--color-purple)]">
           Provider connections →
         </Link>

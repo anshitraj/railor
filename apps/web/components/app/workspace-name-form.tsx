@@ -30,6 +30,7 @@ export function WorkspaceNameForm({ initialName }: { initialName: string }) {
       <button
         type="submit"
         disabled={pending || !name.trim() || name.trim() === initialName}
+        title={!name.trim() ? "Enter a workspace name" : name.trim() === initialName ? "Change the name to save" : undefined}
         className="rounded-full bg-[var(--color-purple)] px-3.5 py-2 text-[13px] font-medium text-white transition hover:bg-[var(--color-purple-deep)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Saving…" : saved ? "Saved ✓" : "Save"}

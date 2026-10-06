@@ -27,8 +27,10 @@ const {
   providerConnections,
   evidence,
   organizations,
+  decisions,
 } = await import("@railor/database");
 const { runDecisionEngine, DECISION_ENGINE_VERSION, hashDecisionInputs } = await import("../decision-engine.js");
+const { searchPreview } = await import("../search-preview.js");
 const { persistDecision, loadDecision, createPolicy, activatePolicyVersion } = await import("../decision-repository.js");
 const { revalidateDecision } = await import("../decision-revalidation.js");
 const { PaymentIntent, PolicyRules } = await import("@railor/types");
@@ -140,6 +142,30 @@ const fakeQuote = async () => ({
 });
 
 describe("runDecisionEngine — base pipeline", () => {
+  it("searches with the same engine without persisting a financial decision", async () => {
+    const policy = await permissivePolicy();
+    const db = await getDb();
+    const before = (await db.select({ id: decisions.id }).from(decisions)).length;
+    const preview = await searchPreview(testIntent(), policy, { organizationId, now });
+    const after = (await db.select({ id: decisions.id }).from(decisions)).length;
+    expect(after).toBe(before);
+    expect(preview.executionState).toBe("NOT_INITIATED");
+    expect(preview.candidates.every((c) => c.providerSlug !== "decision-test-demo")).toBe(true);
+  });
+  it("does not call a provider cheapest when no complete comparable cost exists", async () => {
+    const policy = await permissivePolicy();
+    const result = await runDecisionEngine(testIntent({ preference: "cheapest" }), policy, { organizationId, now });
+    expect(result.status).toBe("insufficient_data");
+    expect(result.recommendedProviderSlug).toBeNull();
+  });
+
+  it("enforce remains a permission check even when the selected ranking metric is unavailable", async () => {
+    const policy = await permissivePolicy();
+    const result = await runDecisionEngine(testIntent({ preference: "cheapest" }), policy, { organizationId, now,
+      mode: "enforce", proposedExecutor: { provider: "circle" } });
+    expect(result.status).toBe("allow");
+    expect(result.candidates.filter((c) => c.selected)).toHaveLength(1);
+  });
   it("recommends the real, evidence-backed provider with status allow", async () => {
     const policy = await permissivePolicy();
     const input = await runDecisionEngine(testIntent(), policy, { organizationId, now });

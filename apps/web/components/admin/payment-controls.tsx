@@ -148,10 +148,10 @@ export function UnknownPaymentResolver({ paymentId }: { paymentId: string }) {
       </div>
       <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="What the provider dashboard shows (required to resolve)" className="rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-[12px]" />
       <div className="flex gap-1.5">
-        <Button size="sm" disabled={a.pending || note.trim().length < 10} onClick={() => a.run(() => resolveUnknownAction(paymentId, "completed", note), "Marked completed.")}>
+        <Button size="sm" disabled={a.pending || note.trim().length < 10} title={note.trim().length < 10 ? "Describe what the provider dashboard shows first (10+ characters)" : undefined} onClick={() => a.run(() => resolveUnknownAction(paymentId, "completed", note), "Marked completed.")}>
           Mark completed
         </Button>
-        <Button size="sm" variant="danger" disabled={a.pending || note.trim().length < 10} onClick={() => a.run(() => resolveUnknownAction(paymentId, "failed", note), "Marked failed.")}>
+        <Button size="sm" variant="danger" disabled={a.pending || note.trim().length < 10} title={note.trim().length < 10 ? "Describe what the provider dashboard shows first (10+ characters)" : undefined} onClick={() => a.run(() => resolveUnknownAction(paymentId, "failed", note), "Marked failed.")}>
           Mark failed
         </Button>
       </div>

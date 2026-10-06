@@ -1,5 +1,14 @@
 @import "./tokens.css";
 
+@keyframes railor-step-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+.railor-step-in {
+  animation: railor-step-in .24s cubic-bezier(.22, 1, .36, 1) both;
+}
+
 /* Dropdown entrance for pickers: short, from the anchor, never blocks input. */
 @keyframes railor-pop {
   from {
@@ -18,7 +27,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .railor-pop {
+  .railor-pop, .railor-step-in {
     animation: none;
   }
 }

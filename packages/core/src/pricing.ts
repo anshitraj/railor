@@ -68,9 +68,44 @@ export interface PriceCheckResult {
   rows: PriceRow[];
   unavailable: PriceUnavailable[];
   generatedAt: string;
+  /** Railor account observations are separate from customer prices and every price ranking. */
+  platformQuotes?: PlatformQuoteCheck[];
+  /**
+   * The broader provider market tracked by Railor. These are coverage records,
+   * not prices: a provider is never promoted into `rows` until there is enough
+   * evidence to calculate or fetch a price for this request.
+   */
+  marketCoverage?: MarketCoverage;
+}
+
+export interface MarketCoverageProvider {
+  providerSlug: string;
+  providerName: string;
+  websiteUrl: string | null;
+  category: string;
+  currencyMatch: "both" | "destination";
+  lastVerified: string | null;
+}
+
+export interface MarketCoverage {
+  /** Money-movement providers in the full maintained provider universe. */
+  totalTracked: number;
+  /** Providers whose catalogued currencies include the selected destination. */
+  matched: number;
+  providers: MarketCoverageProvider[];
+}
+
+export interface PlatformQuoteCheck {
+  providerSlug: string;
+  providerName: string;
+  environment: "sandbox" | "production";
+  status: "quoted" | "unavailable";
+  quote: UnifiedQuote | null;
+  error: string | null;
 }
 
 export interface PriceCheckDeps {
+  platformQuotes?: (input: PriceCheckInput) => Promise<PlatformQuoteCheck[]>;
   /** Live quotes from the organization's connected accounts (credentials stay in the web app). */
   connectedQuotes?: (input: PriceCheckInput) => Promise<Array<{ providerSlug: string; providerName: string; quote?: UnifiedQuote; error?: string }>>;
   /** Providers the customer could connect for an exact price, with whether they're connected already. */
@@ -89,6 +124,8 @@ interface PublishedSchedule {
   /** Fee in USD or in the source currency, as the provider publishes it. */
   fee(input: PriceCheckInput, amountUsd: number | null): { amount: number; currency: string; parts: string[] } | null;
   notes: string[];
+  /** Some published pages explicitly exclude partner/banking charges. */
+  partial?: boolean;
 }
 
 const intoIndia = (input: PriceCheckInput) =>
@@ -101,17 +138,18 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
   {
     slug: "payzoll",
     name: "PayZoll",
-    sourceUrl: "https://payzoll.finance/",
-    observedAt: "2026-09-27",
+    sourceUrl: "https://payzoll.finance/payzoll-vs-skydo",
+    observedAt: "2026-10-07",
     appliesTo: intoIndia,
-    fee: (input) => ({ amount: round(input.amount * 0.01), currency: input.sourceCurrency.toUpperCase(), parts: ["1% per transfer"] }),
-    notes: ["Publishes “1% per transfer, no hidden FX markups”.", "No public API yet — sign up on PayZoll to use it."],
+    fee: (_input, amountUsd) => amountUsd === null ? null : ({ amount: amountUsd < 1000 ? 10 : round(amountUsd * 0.01), currency: "USD", parts: [amountUsd < 1000 ? "$10 below USD 1,000" : "1% from USD 1,000"] }),
+    partial: true,
+    notes: ["Advertises 0% FX markup. Applicable banking, partner, conversion or corridor-specific charges may apply.", "Published schedule only — Railor has no PayZoll quote integration yet."],
   },
   {
     slug: "skydo",
     name: "Skydo",
     sourceUrl: "https://www.skydo.com/",
-    observedAt: "2026-09-27",
+    observedAt: "2026-10-07",
     appliesTo: intoIndia,
     fee: (_input, amountUsd) => {
       if (amountUsd === null) return null;
@@ -215,7 +253,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     destinationCurrency: rawInput.destinationCurrency.trim().toUpperCase(),
     destinationCountry: rawInput.destinationCountry?.trim().toUpperCase() || undefined,
   };
-  if (!(input.amount > 0) || !/^[A-Z]{3}$/.test(input.sourceCurrency) || !/^[A-Z]{3}$/.test(input.destinationCurrency)) {
+  if (!Number.isFinite(input.amount) || !(input.amount > 0) || input.amount > 10_000_000 || !/^[A-Z]{3}$/.test(input.sourceCurrency) || !/^[A-Z]{3}$/.test(input.destinationCurrency)) {
     throw new Error("Pick two currencies and an amount above zero.");
   }
   const fetcher = deps.fetcher ?? fetch;
@@ -227,7 +265,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}`;
-  const [connected, wisePublic, market, usdRate] = await Promise.all([
+  const [connected, wisePublic, market, usdRate, platformQuotes] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
@@ -236,6 +274,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       : cache(`usd:${input.sourceCurrency}`, 60_000, () => wisePublicQuote({ sourceAsset: input.sourceCurrency, destinationCurrency: "USD", amount: input.amount }, fetcher))
           .then((q) => Number(q.exchangeRate))
           .catch(() => null),
+    deps.platformQuotes ? deps.platformQuotes(input).catch(() => []) : Promise.resolve([]),
   ]);
 
   for (const c of connected) {
@@ -271,6 +310,10 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       continue;
     }
     const feeInSource = fee.currency === input.sourceCurrency ? fee.amount : usdRate ? fee.amount / usdRate : null;
+    if (feeInSource !== null && feeInSource >= input.amount) {
+      unavailable.push({ providerSlug: schedule.slug, providerName: schedule.name, reason: "The published fee meets or exceeds this amount. Confirm the provider's minimum transaction size." });
+      continue;
+    }
     const recipient = reference && feeInSource !== null ? round((input.amount - feeInSource) * reference.rate) : null;
     rows.push({
       providerSlug: schedule.slug,
@@ -281,7 +324,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       feeCurrency: fee.currency,
       rate: reference?.rate ?? null,
       totalCostPct: null,
-      partial: false,
+      partial: schedule.partial ?? false,
       delivery: null,
       observedAt: new Date(`${schedule.observedAt}T00:00:00Z`).toISOString(),
       source: { label: `${schedule.name} pricing page`, url: schedule.sourceUrl },
@@ -306,7 +349,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // complete rows by what arrives, then partial rows, then rows with no amount.
   const expected = reference ? input.amount * reference.rate : null;
   for (const row of rows) {
-    if (row.recipientAmount !== null && expected) row.totalCostPct = round((1 - row.recipientAmount / expected) * 100, 2);
+    if (!row.partial && row.recipientAmount !== null && expected) row.totalCostPct = round((1 - row.recipientAmount / expected) * 100, 2);
   }
   const tier = (r: PriceRow) => (r.recipientAmount === null ? 2 : r.partial ? 1 : 0);
   const group = (r: PriceRow) => (r.basis === "market_estimate" ? 1 : 0);
@@ -315,7 +358,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const best = rows.find((r) => tier(r) === 0 && group(r) === 0) ?? rows.find((r) => tier(r) === 0);
   for (const row of rows) row.shortfall = best && tier(row) === 0 ? round(best.recipientAmount! - row.recipientAmount!) : null;
 
-  return { input, reference, rows, unavailable, generatedAt: now.toISOString() };
+  return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes };
 }
 
 function basisOrder(b: PriceBasis) {

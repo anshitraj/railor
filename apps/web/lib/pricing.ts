@@ -4,6 +4,8 @@ import { PAYOUT_ADAPTERS, comparePrices, getAdapter, type PriceCheckInput } from
 import { getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
+import { getPlatformQuoteCheck } from "./platform-pricing";
+import { providerMarketCoverage } from "./provider-market";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -32,6 +34,10 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   const nameOf = (slug: string) => rows.find((r) => r.slug === slug)?.name ?? ACCOUNT_PRICED.find((p) => p.slug === slug)?.name ?? slug;
 
   const result = await comparePrices(input, {
+    platformQuotes: async (req) => {
+      const check = await getPlatformQuoteCheck({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount });
+      return check ? [check] : [];
+    },
     connectable: ACCOUNT_PRICED.map((p) => ({ slug: p.slug, name: nameOf(p.slug), connected: connected.has(p.slug) })),
     connectedQuotes: async (req) =>
       Promise.all(
@@ -41,7 +47,7 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
             const quote = await adapter!.getQuote!(credentials, { sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount });
             return { providerSlug: slug, providerName: nameOf(slug), quote };
           } catch (error) {
-            return { providerSlug: slug, providerName: nameOf(slug), error: error instanceof Error ? error.message.slice(0, 200) : "Quote failed." };
+            return { providerSlug: slug, providerName: nameOf(slug), error: "The connected account could not return a quote. Check its currency access and permissions." };
           }
         }),
       ),
@@ -52,6 +58,11 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
       if (entry) entry.reason = "Only a sandbox connection — sandbox prices aren't real. Connect production to see your price.";
     }
   }
+  for (const check of result.platformQuotes ?? []) {
+    const entry = result.unavailable.find(u => u.providerSlug === check.providerSlug);
+    if (entry && check.status === "quoted") entry.reason = "Railor's backend FX observation is shown separately below. Connecting your own account is optional, for account-specific pricing.";
+  }
+  result.marketCoverage = providerMarketCoverage(input);
   return result;
 }
 
@@ -83,7 +94,10 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   const from = pick(params.from, "USD");
   const to = pick(params.to, !entity || entity === "IN" ? "INR" : home && home !== "USD" ? home : "EUR");
   const amount = Math.min(10_000_000, Math.max(1, Number(params.amount) || 1_000));
-  const market = params.market === undefined ? organizationId === null : params.market === "1";
+  // Show the broad comparison set on first load for every visitor. It remains
+  // optional because Wise's consumer estimates are context, not executable
+  // business quotes.
+  const market = params.market === undefined ? true : params.market === "1";
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;
   if (from === to) error = "Pick two different currencies.";

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { reconcileOpenPayments } from "@railor/core";
+import { reconcileOpenPayments, watchCompletedForReturns } from "@railor/core";
 import { ensureMigrated } from "@railor/database";
 import { cronGuard } from "../../../../lib/cron";
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const denied = cronGuard(request);
   if (denied) return denied;
   await ensureMigrated();
-  const results = await reconcileOpenPayments({ limit: 100 });
+  const results = [...(await reconcileOpenPayments({ limit: 100 })), ...(await watchCompletedForReturns({ limit: 50 }))];
   const tally = results.reduce<Record<string, number>>((acc, r) => ({ ...acc, [r.outcome]: (acc[r.outcome] ?? 0) + 1 }), {});
   return NextResponse.json({ checked: results.length, outcomes: tally });
 }

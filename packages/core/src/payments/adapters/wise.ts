@@ -118,7 +118,7 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
     costPartial: option.fee?.total === undefined,
     exchangeRate: body.rate !== undefined ? String(body.rate) : undefined,
     estimatedArrivalMinutes: Number.isFinite(eta) ? eta : undefined,
-    quoteType: "live",
+    quoteType: accountContext === "public_published" ? "indicative" : "live",
     accountContext,
     verificationType: "provider_reported",
     observedAt: now.toISOString(),

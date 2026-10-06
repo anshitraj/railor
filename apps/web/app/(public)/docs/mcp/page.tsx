@@ -1,4 +1,4 @@
-import { Card, CodeSample } from "@railor/ui";
+import { Card, CodeSample, TechnologyLogo } from "@railor/ui";
 import { DocsHeader } from "../../../../components/docs/docs-header";
 import { getSession } from "../../../../lib/auth";
 import { getOrgTestKey } from "../../../../lib/org";
@@ -25,7 +25,7 @@ export default async function McpDocs() {
 
   return (
     <>
-      <DocsHeader eyebrow="Reference" title="MCP server">
+      <DocsHeader eyebrow="Reference" title={<><TechnologyLogo name="MCP" size={34} /> MCP server</>}>
         Read-only tools over the same capability graph. Every response carries <code>source</code>,{" "}
         <code>verified_at</code> and <code>confidence</code>, so an agent can tell a sourced fact
         from a guess — and Railor never returns the second.

@@ -54,32 +54,32 @@ export function MarketingFooter({
       <div className="mx-auto grid w-[min(1360px,calc(100%-2rem))] gap-10 py-16 lg:grid-cols-[1.4fr_2fr]">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <RailorMark />
+            <RailorMark size={30} />
             <span className="font-display text-[21px] font-bold tracking-[-0.055em]">Railor</span>
           </div>
-          <p className="max-w-sm text-[13.5px] leading-relaxed text-white/55">
+          <p className="max-w-sm text-[13.5px] leading-relaxed text-white/70">
             Financial infrastructure, mapped. Discover, compare and monitor the rails powering
             global money movement.
           </p>
           <dl className="grid grid-cols-2 gap-3 pt-2 text-[13px] text-white">
             <div>
-              <dt className="text-white/40">Providers mapped</dt>
+              <dt className="text-white/65">Providers mapped</dt>
               <dd className="tabular font-medium">{counts.providers}</dd>
             </div>
             <div>
-              <dt className="text-white/40">Countries indexed</dt>
+              <dt className="text-white/65">Countries indexed</dt>
               <dd className="tabular font-medium">{counts.countries}</dd>
             </div>
             <div>
-              <dt className="text-white/40">Sources monitored</dt>
+              <dt className="text-white/65">Sources monitored</dt>
               <dd className="tabular font-medium">{counts.sources}</dd>
             </div>
             <div>
-              <dt className="text-white/40">Capabilities tracked</dt>
+              <dt className="text-white/65">Capabilities tracked</dt>
               <dd className="tabular font-medium">{counts.capabilities}</dd>
             </div>
           </dl>
-          <p className="max-w-sm text-[11.5px] leading-relaxed text-white/35">
+          <p className="max-w-sm text-[11.5px] leading-relaxed text-white/65">
             This deployment runs on a clearly-labelled demonstration dataset. Providers shown are
             fictional and exist to exercise the product, not to describe real companies.
           </p>
@@ -88,14 +88,14 @@ export function MarketingFooter({
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {GROUPS.map((group) => (
             <div key={group.title} className="flex flex-col gap-2">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+              <p className="mb-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-white/65">
                 {group.title}
               </p>
               {group.links.map(([label, href]) => (
                 <Link
                   key={label}
                   href={href}
-                  className="text-[13.5px] text-white/65 hover:text-[var(--color-orange)]"
+                  className="py-0.5 text-[13.5px] text-white/80 transition-colors hover:text-[var(--color-accent-light)]"
                 >
                   {label}
                 </Link>
@@ -106,7 +106,7 @@ export function MarketingFooter({
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex w-[min(1360px,calc(100%-2rem))] flex-wrap items-center gap-4 py-5 text-[12px] text-white/35">
+        <div className="mx-auto flex w-[min(1360px,calc(100%-2rem))] flex-wrap items-center gap-4 py-5 text-[12px] text-white/65">
           <span>© {new Date().getFullYear()} Railor</span>
           <Link href="/legal/terms" className="hover:text-white">
             Terms

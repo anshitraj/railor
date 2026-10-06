@@ -20,7 +20,14 @@ export default async function ConnectionsPage() {
   const canManage = session.role === "owner" || session.role === "admin";
   const integrated = rows.filter((r) => r.adapter);
   const others = rows.filter((r) => !r.adapter);
-  const origin = appOrigin();
+  // A webhook URL needs the deployment's public origin. If it is misconfigured the page must still work; the
+  // URL is simply unavailable (the readiness check reports the misconfiguration).
+  let origin: string | null = null;
+  try {
+    origin = appOrigin();
+  } catch {
+    origin = null;
+  }
 
   const card = ({ provider, adapter, payout, connections }: (typeof rows)[number]) => (
     <ConnectionCard
@@ -43,18 +50,18 @@ export default async function ConnectionsPage() {
         status: c.status,
         lastCheckedAt: c.lastCheckedAt?.toISOString() ?? null,
         lastCheckDetail: c.lastCheckDetail,
-        webhookUrl: payout?.verifyWebhook ? `${origin}/api/webhooks/providers/${provider.slug}/${c.id}` : null,
+        webhookUrl: origin && payout?.verifyWebhook ? `${origin}/api/webhooks/providers/${provider.slug}/${c.id}` : null,
       }))}
     />
   );
 
   return (
-    <div className="flex max-w-[860px] flex-col gap-6">
-      <div className="flex flex-col gap-1">
+    <div className="flex max-w-[1100px] flex-col gap-6">
+      <div className="workspace-heading flex flex-col gap-1">
         <Link href="/app/settings" className="text-[12.5px] font-medium text-[var(--color-purple)]">
           ← Settings
         </Link>
-        <h1 className="text-[24px] font-semibold tracking-tight">Connections</h1>
+        <h1 className="font-semibold tracking-tight">Connections</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
           Connect the provider accounts you already hold. Sandbox connections carry test-mode payments; production connections carry live ones. Money always moves inside your own provider account — never through Railor.
         </p>

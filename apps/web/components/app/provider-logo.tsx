@@ -24,16 +24,20 @@ export function ProviderLogo({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
   const img = useRef<HTMLImageElement>(null);
+  // A cached logo can finish while streamed HTML is still hydrating. Keep the
+  // first render deterministic, then attach image-load handlers after mounting.
+  useEffect(() => setReady(true), []);
   // An image that settled before hydration never fires onLoad/onError; check it once mounted.
   useEffect(() => {
     const el = img.current;
     if (el?.complete && el.naturalWidth < 2) setFailed(true);
-  }, []);
+  }, [ready, slug, src]);
   const key = slug.replace(/^market:/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 64) || "provider";
   const url = `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
   const box = { width: size, height: size };
-  if (failed) {
+  if (!ready || failed) {
     return (
       <span
         aria-hidden

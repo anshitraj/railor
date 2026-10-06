@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   BookOpen,
@@ -25,7 +25,9 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { StageBadge, cn, type Stage } from "@railor/ui";
+import { StageBadge, TechnologyLogo, TechnologyLogoStack, cn, type Stage } from "@railor/ui";
+import { RailorMark } from "../brand";
+export { RailorMark } from "../brand";
 
 interface MenuItem {
   label: string;
@@ -97,11 +99,32 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
 export function MarketingNav() {
   const [open, setOpen] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const header = useRef<HTMLElement>(null);
+  const mobileTrigger = useRef<HTMLButtonElement>(null);
+
+  // Hover opens a menu, so a click must never toggle it shut (a tap is a hover plus a click). It closes on
+  // Escape, on leaving the header, or on a press anywhere outside it.
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (header.current && !header.current.contains(event.target as Node)) setOpen(null);
+    };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [open]);
 
   return (
     <header
+      ref={header}
       className="sticky top-0 z-50 mx-auto w-full border-b border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-paper)_88%,transparent)] backdrop-blur-xl"
       onMouseLeave={() => setOpen(null)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setOpen(null);
+          setMobileOpen(false);
+          if (mobileOpen) mobileTrigger.current?.focus();
+        }
+      }}
     >
       <nav className="mx-auto flex w-[min(1360px,calc(100%-2rem))] items-center gap-1 py-3">
         <Link href="/" className="flex items-center gap-2.5 pr-5 py-1">
@@ -116,7 +139,7 @@ export function MarketingNav() {
               type="button"
               onMouseEnter={() => setOpen(key)}
               onFocus={() => setOpen(key)}
-              onClick={() => setOpen(open === key ? null : key)}
+              onClick={() => setOpen(key)}
               aria-expanded={open === key}
               className={cn(
                 "rounded-full px-3 py-1.5 text-[13px] font-semibold transition",
@@ -155,6 +178,7 @@ export function MarketingNav() {
           onClick={() => setMobileOpen((v) => !v)}
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          ref={mobileTrigger}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-sand)] md:hidden"
         >
           {mobileOpen ? <X size={19} /> : <Menu size={19} />}
@@ -181,7 +205,7 @@ export function MarketingNav() {
                       onClick={() => setOpen(null)}
                     >
                       <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--color-sand)] text-[var(--color-orange-deep)]">
-                        <item.icon size={16} strokeWidth={2} />
+                        {item.href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={23} /> : item.href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={14} /> : <item.icon size={16} strokeWidth={2} />}
                       </span>
                       <span className="flex flex-col gap-0.5">
                         <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-ink)]">
@@ -247,7 +271,7 @@ export function MarketingNav() {
                           onClick={() => setMobileOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
                         >
-                          <item.icon size={16} strokeWidth={2} className="text-[var(--color-orange-deep)]" />
+                          {item.href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={21} /> : item.href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={17} /> : <item.icon size={16} strokeWidth={2} className="text-[var(--color-orange-deep)]" />}
                           {item.label}
                           {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
                         </Link>
@@ -261,16 +285,5 @@ export function MarketingNav() {
         ) : null}
       </AnimatePresence>
     </header>
-  );
-}
-
-export function RailorMark({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-      <path d="M5 6h19.2C35 6 42 12.8 42 22.2c0 6.05-3.35 10.6-8.8 13.05L43 43H27.6l-11-9.7H15v9.7H5V6Zm10 9.3v9.05h9.15c4.7 0 7.6-1.52 7.6-4.62 0-2.95-2.75-4.4-7.6-4.4H15Z" fill="var(--color-orange)" />
-      <rect x="16.4" y="16.1" width="13.1" height="7" rx="3.5" fill="var(--color-paper)" />
-      <circle cx="20.2" cy="19.6" r="1.55" fill="var(--color-ink)" />
-      <circle cx="25.7" cy="19.6" r="1.55" fill="var(--color-ink)" />
-    </svg>
   );
 }

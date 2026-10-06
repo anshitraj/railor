@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { postSearch } from "../../lib/search-client";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Search } from "lucide-react";
@@ -79,6 +80,8 @@ export function HeroSearch({
   const [stage, setStage] = useState(-1);
   const [data, setData] = useState<SearchResponse | null>(null);
   const [pending, setPending] = useState(false);
+  const [needsInput, setNeedsInput] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const runIdRef = useRef(0);
 
@@ -101,14 +104,14 @@ export function HeroSearch({
       setStage((s) => (s < PIPELINE.length - 1 ? s + 1 : s));
     }, 160);
     try {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: text, query: overrides }),
-      });
-      const json: SearchResponse = await response.json();
+      const result = await postSearch<SearchResponse>({ input: text, query: overrides });
       if (runIdRef.current !== runId) return;
-      setData(json);
+      if (result.ok) {
+        setSearchError("");
+        setData(result.data);
+      } else {
+        setSearchError(result.message);
+      }
       setStage(-1);
     } finally {
       window.clearInterval(ticker);
@@ -134,6 +137,12 @@ export function HeroSearch({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (!input.trim()) {
+            // An empty question is never a silent no-op: say what to do and put the cursor there.
+            setNeedsInput(true);
+            inputRef.current?.focus();
+            return;
+          }
           void run(input);
         }}
         className="relative"
@@ -144,7 +153,12 @@ export function HeroSearch({
             <input
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setNeedsInput(false);
+              }}
+              aria-invalid={needsInput || undefined}
+              aria-describedby={needsInput ? "hero-search-hint" : undefined}
               placeholder={PLACEHOLDER}
               className="w-full bg-transparent px-2 py-2.5 text-[14px] outline-none placeholder:text-[var(--color-faint)] sm:px-0 sm:text-[15px]"
               aria-label="What are you trying to build or move?"
@@ -155,6 +169,18 @@ export function HeroSearch({
           </Button>
         </div>
       </form>
+
+      {searchError ? (
+        <p role="alert" className="text-[13px] font-medium text-[var(--color-bad)]">
+          {searchError}
+        </p>
+      ) : null}
+
+      {needsInput ? (
+        <p id="hero-search-hint" role="status" className="text-[13px] font-medium text-[var(--color-orange-deep)]">
+          Describe what you need to move, or pick an example below.
+        </p>
+      ) : null}
 
       {!data ? (
         <div className="flex flex-wrap items-center gap-2">

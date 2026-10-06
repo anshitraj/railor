@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { CodeSample, StageBadge } from "@railor/ui";
+import { CodeSample, StageBadge, TechnologyLogo, TechnologyLogoStack } from "@railor/ui";
 import { DocsHeader } from "../../../../components/docs/docs-header";
 import { getSession } from "../../../../lib/auth";
 import { getOrgTestKey } from "../../../../lib/org";
@@ -41,7 +41,7 @@ export default async function SdkDocs() {
 
   return (
     <>
-      <DocsHeader eyebrow="Reference" title="SDKs" badge={<StageBadge stage="beta" />}>
+      <DocsHeader eyebrow="Reference" title={<><TechnologyLogoStack names={["TypeScript", "Python"]} size={30} /> SDKs</>} badge={<StageBadge stage="beta" />}>
         The SDK surface mirrors the REST tree, so a method name is a path and nothing has to be
         learned twice. Inputs are idiomatic (camelCase in TypeScript, snake_case in Python);
         responses come back exactly as the API sent them, evidence and confidence included.
@@ -134,8 +134,8 @@ for row in railor.capabilities.list_all(destination_country="AE"):
           <table className="w-full min-w-[560px] text-left text-[13px]">
             <thead className="border-b border-[var(--color-line)] text-[11px] uppercase tracking-[0.1em] text-[var(--color-muted)]">
               <tr>
-                <th className="px-4 py-2.5 font-medium">TypeScript</th>
-                <th className="px-4 py-2.5 font-medium">Python</th>
+                <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-2"><TechnologyLogo name="TypeScript" size={20} /> TypeScript</span></th>
+                <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-2"><TechnologyLogo name="Python" size={20} /> Python</span></th>
                 <th className="px-4 py-2.5 font-medium">Endpoint</th>
               </tr>
             </thead>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "../cn.js";
+import { TechnologyLogo } from "./technology-logo.js";
 
 export interface CodeVariant {
   language: string;
@@ -69,14 +70,16 @@ export function CodeSample({
             <button
               key={`${i}-${v.label}`}
               type="button"
+              aria-pressed={i === active}
               onClick={() => setActive(i)}
               className={cn(
-                "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition",
+                "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] transition-colors",
                 v === current
                   ? "bg-white/10 text-white"
-                  : "text-white/50 hover:text-white/80",
+                  : "text-white/65 hover:text-white/90",
               )}
             >
+              <TechnologyLogo name={v.label} fallbackName={v.language} size={19} />
               {v.label}
             </button>
           ))}

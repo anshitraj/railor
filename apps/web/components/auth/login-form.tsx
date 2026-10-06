@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@railor/ui";
+import { Button, TechnologyLogo } from "@railor/ui";
+import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 interface Props {
   returnTo: string;
@@ -25,9 +26,7 @@ const ERROR_MESSAGE: Record<string, string> = {
 };
 
 /**
- * Sign-in is one field. OAuth buttons are shown honestly: if the deployment
- * has no client ID configured, the button says so rather than failing after
- * the click.
+ * Sign-in is one field. Only available OAuth methods are shown.
  */
 export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEmail }: Props) {
   const [email, setEmail] = useState(initialEmail ?? "");
@@ -41,94 +40,69 @@ export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEm
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (state === "sending") return;
+    setMessage(null);
     setState("sending");
-    const response = await fetch("/api/auth/magic", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, returnTo }),
-    });
-    const json = await response.json();
-    if (json.sent) {
-      setState("sent");
-      setDevLink(json.devLink ?? null);
-    } else {
+    try {
+      const response = await fetch("/api/auth/magic", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, returnTo }),
+      });
+      const json = await response.json();
+      if (response.ok && json.sent) {
+        setState("sent");
+        setDevLink(json.devLink ?? null);
+      } else {
+        setState("error");
+        setMessage(
+          response.status === 429 ? "Too many attempts. Please wait a moment and try again."
+            : json.error === "mail_transport_not_configured"
+              ? "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator."
+              : json.error === "send_failed"
+                ? "Couldn't send that email. Please try again shortly."
+                : "That email address didn't look right.",
+        );
+      }
+    } catch {
       setState("error");
-      setMessage(
-        json.error === "mail_transport_not_configured"
-          ? "No mail transport is configured on this deployment. Set SMTP_URL, or use AUTH_EMAIL_TRANSPORT=console in development."
-          : json.error === "send_failed"
-            ? "Couldn't send that email — check SMTP_URL is correct, or try again shortly."
-            : "That email address didn't look right.",
-      );
+      setMessage("Couldn't connect. Check your connection and try again.");
     }
   };
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-6">
+    <div className="railor-rise flex w-full max-w-[420px] flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-[26px] font-semibold tracking-tight">Welcome to Railor</h1>
+        <span className="product-eyebrow mb-2">Welcome to Railor</span>
+        <h1 className="font-display text-[36px] font-semibold leading-tight tracking-[-0.045em]">Your rails. One workspace.</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
           {savedQuery
             ? `We'll pick up where you left off: “${savedQuery}”`
-            : "Sign in to see full comparisons, evidence and monitoring."}
+            : "Search infrastructure, compare permitted routes and decide before money moves."}
         </p>
       </div>
 
-      <a
-        href="/api/auth/demo"
-        className="group flex items-center justify-between gap-3 rounded-full border border-dashed border-[var(--color-orange)]/50 bg-[var(--color-lavender)]/60 px-4 py-2.5 text-left transition hover:border-[var(--color-orange)] hover:bg-[var(--color-lavender)]"
-      >
-        <span className="flex flex-col">
-          <span className="text-[13.5px] font-medium text-[var(--color-ink)]">
-            Just want to look around?
-          </span>
-          <span className="text-[12px] text-[var(--color-muted)]">
-            No email needed — see a fully populated workspace.
-          </span>
-        </span>
-        <span className="shrink-0 text-[13px] font-semibold text-[var(--color-orange-deep)] transition group-hover:translate-x-0.5">
-          View demo →
-        </span>
-      </a>
-
-      <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
-        <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">or sign in</span>
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {(["google", "github"] as const).map((provider) => {
-          const enabled = oauth[provider];
+      {(oauth.google || oauth.github) && <div className="flex flex-col gap-2">
+        {(["google", "github"] as const).filter((provider) => oauth[provider]).map((provider) => {
           const label = provider === "google" ? "Continue with Google" : "Continue with GitHub";
-          return enabled ? (
-            <a key={provider} href={`/api/auth/oauth/${provider}?returnTo=${encodeURIComponent(returnTo)}`}>
-              <Button variant="secondary" className="w-full justify-center">
+          return (
+            <a key={provider} href={`/api/auth/oauth/${provider}?returnTo=${encodeURIComponent(returnTo)}`} className="inline-flex min-h-11 items-center justify-center gap-3 rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[14px] font-semibold hover:bg-[var(--color-paper)]">
+                <TechnologyLogo name={provider} size={20} />
                 {label}
-              </Button>
             </a>
-          ) : (
-            <button
-              key={provider}
-              type="button"
-              disabled
-              title={`Set ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET to enable`}
-              className="w-full cursor-not-allowed rounded-full border border-dashed border-[var(--color-line-strong)] px-4 py-2.5 text-[14px] text-[var(--color-faint)]"
-            >
-              {label} — not configured
-            </button>
           );
         })}
-      </div>
+      </div>}
 
-      <div className="flex items-center gap-3">
+      {(oauth.google || oauth.github) && <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-[var(--color-line)]" />
         <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">or</span>
         <span className="h-px flex-1 bg-[var(--color-line)]" />
-      </div>
+      </div>}
 
       {state === "sent" ? (
-        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4">
+        <div role="status" className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-ok)]/25 bg-[var(--color-ok-bg)] p-5">
+          <CheckCircle2 size={24} aria-hidden className="text-[var(--color-ok)]" />
           <p className="text-[14px] font-medium">Check your inbox</p>
           <p className="text-[13px] text-[var(--color-muted)]">
             We sent a sign-in link to {email}. It expires in 20 minutes.
@@ -143,28 +117,40 @@ export function LoginForm({ returnTo, oauth, savedQuery, initialError, initialEm
               </a>
             </div>
           ) : null}
+          <button type="button" onClick={() => { setState("idle"); setDevLink(null); }} className="w-fit text-[12px] font-semibold underline underline-offset-4">Use a different email</button>
         </div>
       ) : (
-        <form onSubmit={submit} className="flex flex-col gap-3">
+        <form onSubmit={submit} className="flex flex-col gap-3" aria-busy={state === "sending"}>
+          <label htmlFor="sign-in-email" className="text-[12px] font-semibold">Work email</label>
           <input
+            id="sign-in-email"
+            name="email"
+            autoComplete="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2.5 text-[14px] outline-none focus:border-[var(--color-violet)]"
+            className="rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 py-3 text-[14px] focus:border-[var(--color-action)]"
             aria-label="Work email"
           />
           <Button type="submit" disabled={state === "sending"} className="justify-center">
             {state === "sending" ? "Sending…" : "Continue with email"}
+            <ArrowRight size={16} aria-hidden />
           </Button>
           {state === "error" && message ? (
-            <p className="text-[12.5px] text-[var(--color-bad)]">{message}</p>
+            <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">{message}</p>
           ) : null}
+          <p className="flex items-center justify-center gap-1.5 text-[11px] text-[var(--color-muted)]"><ShieldCheck size={13} aria-hidden /> A secure sign-in link. No password needed.</p>
         </form>
       )}
 
-      <p className="text-[12px] leading-relaxed text-[var(--color-faint)]">
+      <a href="/api/auth/demo" className="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 text-left transition-colors hover:border-[var(--color-line-strong)]">
+        <span><span className="block text-[13.5px] font-semibold">Just want to look around?</span><span className="mt-1 block text-[12px] text-[var(--color-muted)]">Explore the demo. No email needed.</span></span>
+        <span className="shrink-0 text-[13px] font-semibold text-[var(--color-orange-deep)] transition-transform group-hover:translate-x-0.5">View demo →</span>
+      </a>
+
+      <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
         By continuing, you agree to the{" "}
         <Link href="/legal/terms" className="underline">
           Terms

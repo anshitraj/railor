@@ -18,17 +18,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cn(
         // duration/ease are explicit so every button shares one motion feel
         // with the rest of the system rather than Tailwind's default 150ms.
-        "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 ease-[var(--ease-out-quint)] active:translate-y-px active:duration-75 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none",
-        size === "sm" && "px-3.5 py-1.5 text-[13px]",
-        size === "md" && "px-4.5 py-2.5 text-sm",
-        size === "lg" && "px-6 py-3.5 text-[15px]",
+        "railor-button inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out-quint)] active:translate-y-px active:duration-75 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none",
+        size === "sm" && "min-h-9 px-3.5 py-1.5 text-[13px]",
+        size === "md" && "min-h-11 px-4.5 py-2.5 text-sm",
+        size === "lg" && "min-h-12 px-6 py-3.5 text-[15px]",
         // The glow is derived from the live accent token — it used to be a
         // hard-coded purple left over from the pre-rebrand palette, which
         // rendered a blue-violet halo under an orange button.
         variant === "primary" &&
-          "bg-[var(--color-orange)] text-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--color-orange)_85%,transparent)] hover:-translate-y-px hover:bg-[var(--color-orange-deep)] hover:shadow-[0_14px_30px_-12px_color-mix(in_srgb,var(--color-orange)_75%,transparent)]",
+          "bg-[var(--color-action)] text-white shadow-[var(--shadow-soft)] hover:bg-[var(--color-orange-deep)] hover:shadow-[var(--shadow-lift)]",
         variant === "secondary" &&
-          "border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:-translate-y-px hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]",
+          "border border-[var(--color-line-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:border-[var(--color-muted)] hover:shadow-[var(--shadow-soft)]",
         variant === "ghost" && "text-[var(--color-ink-soft)] hover:bg-[var(--color-lavender)]",
         variant === "danger" && "bg-[var(--color-bad)] text-white hover:brightness-95",
         className,
@@ -47,9 +47,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)]",
+        "railor-card min-w-0 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)]",
         interactive &&
-          "transition duration-200 hover:-translate-y-[3px] hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-lift)]",
+          "transition duration-200 hover:-translate-y-px hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-lift)]",
         className,
       )}
       {...props}
@@ -63,7 +63,7 @@ export function SectionLabel({ children, className }: { children: React.ReactNod
   return (
     <p
       className={cn(
-        "text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-muted)]",
+        "font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]",
         className,
       )}
     >
@@ -87,7 +87,7 @@ export function Stat({
     <div className="flex flex-col gap-1">
       <span
         className={cn(
-          "tabular text-[28px] leading-none font-semibold",
+          "tabular font-display text-[32px] leading-none font-semibold tracking-tight",
           tone === "purple" && "text-[var(--color-purple)]",
           tone === "warn" && "text-[var(--color-warn)]",
         )}

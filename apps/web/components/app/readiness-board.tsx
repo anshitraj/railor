@@ -51,8 +51,9 @@ export function ReadinessBoard({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-tight">KYB readiness</h1>
+      <div className="workspace-heading flex flex-col gap-1">
+        <span className="product-eyebrow">Organization profile</span>
+        <h1 className="font-semibold tracking-tight">KYB readiness</h1>
         <p className="max-w-2xl text-[14px] text-[var(--color-muted)]">
           Record what your organization already holds once. Railor normalizes provider requirements
           onto the same vocabulary and shows exactly what each one still needs.

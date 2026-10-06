@@ -27,7 +27,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--color-line-strong)] bg-white p-6",
+        "flex flex-col items-start gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-paper)] p-6",
         className,
       )}
     >
@@ -36,11 +36,11 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <h3 className="text-[15px] font-semibold text-[var(--color-ink)]">{what}</h3>
+      <h3 className="font-display text-[17px] font-semibold text-[var(--color-ink)]">{what}</h3>
       <p className="max-w-lg text-[13px] leading-relaxed text-[var(--color-muted)]">{why}</p>
       {href ? (
-        <a href={href}>
-          <Button size="sm">{actionLabel}</Button>
+        <a href={href} className="inline-flex min-h-9 items-center justify-center rounded-xl bg-[var(--color-action)] px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--color-orange-deep)]">
+          {actionLabel} <span aria-hidden className="ml-2">→</span>
         </a>
       ) : (
         <Button size="sm" onClick={onAction}>

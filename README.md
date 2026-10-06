@@ -156,7 +156,16 @@ Funds only ever move inside the provider accounts a workspace connects; Railor n
 3. **Submit** — providers are tried in route order. Each attempt row is stored with its idempotency key before the provider call. A definitive, retryable rejection falls back to the next provider; an ambiguous outcome (timeout, 5xx) becomes `unknown` and is never sent elsewhere.
 4. **Settle** — provider webhooks (signature-verified) and `POST /api/internal/payments-reconcile` move payments to `completed` / `failed` / `returned`; `unknown` is resolved by asking the provider, replaying the same idempotency key.
 
-Payout adapters: **Wise** (quote → recipient → transfer with `customerTransactionId` → fund from balance; sandbox `api.wise-sandbox.com`), **Airwallex** (token login, inline-beneficiary transfer with `request_id`, lookup by `request_id`), **Bridge**, **Circle**. All are `docs_verified` — request shapes from each provider's API reference (Wise's endpoints probed live), not yet exercised with a real account. Beneficiaries support US (ABA), IBAN, UK sort code, CLABE, Pix, Indian bank (IFSC, migration `0019`) and wallet addresses.
+Payout adapters: **Wise** (quote → recipient → transfer with `customerTransactionId` → fund from balance; sandbox `api.wise-sandbox.com`), **Airwallex** (token login, inline-beneficiary transfer with `request_id`, lookup by `request_id`), **Bridge**, **Circle**. All are `docs_verified` — request shapes from each provider's API reference (every host/path probed to answer a clean `401` without credentials, except Airwallex, whose edge blocks anonymous probes), not yet exercised with a real account.
+
+| Rail | Beneficiary methods Railor will route to it |
+| --- | --- |
+| Wise | US bank (ABA), IBAN, UK sort code, CLABE, Indian bank (IFSC) |
+| Airwallex | US bank (ABA), IBAN, UK sort code, Indian bank (IFSC) |
+| Bridge | US bank (ACH), IBAN (SEPA), UK (Faster Payments), CLABE (SPEI), Pix, wallet address |
+| Circle | US bank (wire, USD), wallet address |
+
+A rail is never offered for a beneficiary whose method it cannot pay, and Circle refuses to deliver a currency other than the one it is funded in. Wallet-address beneficiaries can be saved, but paying one through the policy engine is **coming soon** (a payment intent names a fiat destination currency). Reconciliation also re-checks payments completed in the last three days, because a bank can still return a settled payment, and closes out a payment stranded in `submitting` by an interrupted request.
 
 Test mode uses a provider's sandbox when connected, else Railor's simulator, whose outcome is chosen by the amount's cents (`.13` insufficient funds → fallback, `.66` compliance rejection, `.55` awaiting funds, `.77` returned, `.99` unknown then resolved). Live mode needs `RAILOR_LIVE_PAYMENTS=enabled`, a workspace approved with limits, a provider approved for live, a production connection and an owner/admin — and the platform kill switch off. See `/docs/payments`.
 
@@ -167,6 +176,7 @@ Test mode uses a provider's sandbox when connected, else Railor's simulator, who
 ```bash
 pnpm test                           # every package: engine, payments (routing, lifecycle, fallback, live gates, webhooks), web, SDK
 python apps/web/e2e/product_workflows.py   # browser flows on a disposable database, incl. an approved test payment settling
+python apps/web/e2e/ui_audit.py     # whole-app audit: clicks every control as visitor/owner/reviewer/operator on a disposable database
 cd apps/worker && pytest            # normalization + diff rules
 ```
 
@@ -174,7 +184,31 @@ The engine tests assert the properties that matter: a verdict never ships withou
 
 ---
 
+## Railor Agent beta
+
+`/app/agent` is a conversational entry point to the existing, read-only `searchPreview` service used by `/v1/search`. It uses deterministic extraction, not a general-purpose LLM or an autonomous payment agent. For example:
+
+> Send $100k USDC on Base from our Singapore company to a Mexican supplier receiving MXN through SPEI. Reliability matters more than price.
+
+The Agent shows the interpreted request, compares it against the selected active company policy, and explains provider results using the returned reason codes. Missing amount, funding, network or country fields remain reviewable; inferred receiving values require confirmation. Short follow-ups can supply missing fields or change the ranking preference. Without observed provider health, reliability ranking produces no supported winner rather than treating route evidence as uptime.
+
+Search and explanation do not persist financial decisions or create payments. **Record decision** is an explicit, role-checked action that re-evaluates current policy/evidence through the existing Decision Engine. Provider-connection and execution-beta modals store scoped work-email access requests through `/api/notify`; they do not connect accounts or execute transfers.
+
+Browser acceptance: `python apps/web/e2e/agent_acceptance.py`. It builds a private production server behind local HTTPS, uses a disposable PGlite database with clearly synthetic route fixtures and a local SMTP inbox, tests a brand-new signup through policy activation and decision recording, and asserts zero payments. `--no-build` reuses the isolated `.next-polish` build. Screenshots and the browser report are written under `.railor/agent-acceptance`. No live provider credentials or external messages are used.
+
+Before deploying this beta, apply `0022_feature_access_requests` to the confirmed production database after a backup, set a canonical HTTPS `APP_ORIGIN`, and configure real SMTP/OAuth for sign-in. Console email transport is deliberately unavailable in production. Provider partner/OAuth access and customer-specific live quote verification remain separate integration work; execution stays private beta.
+
+---
+
 ## Environment
+
+### Railor-managed price intelligence
+
+`/prices` and `/app/prices` compare provider-owned published features without asking visitors for API keys. Claims have source links and a review date; missing evidence is marked **Not confirmed**, not unsupported. The PayZoll fee estimate uses its published USD slabs ($10 below $1,000; 1% from $1,000) and is partial because its page excludes possible partner/banking charges.
+
+Airwallex credentials remain server-only. Set `AIRWALLEX_SANDBOX_CLIENT_ID` / `AIRWALLEX_SANDBOX_API_KEY` (the existing lowercase `airwallex_sandbox_client_id` / `airwallex_sandbox_scoped_api` aliases also work). The default environment is sandbox. Price checks show a separate **Sandbox · test data** FX observation; it is never ranked, selectable or executable. Production deployments hide sandbox observations unless explicitly enabled for a private demo with `RAILOR_SHOW_SANDBOX_QUOTES=true`. Identical requests share a short-lived cache, and an atomic database budget caps uncached calls at 60 per minute per provider/environment across instances, including server-rendered pages.
+
+For production reference FX quotes, explicitly set `AIRWALLEX_PLATFORM_ENVIRONMENT=production` and separate `AIRWALLEX_PLATFORM_CLIENT_ID` / `AIRWALLEX_PLATFORM_API_KEY` credentials after confirming provider approval for your platform use case. These are labelled indicative, Railor-account observations with incomplete payout costs, not customer-specific quotes. Search may request them for evidence-supported, policy-eligible fiat routes; they cannot satisfy customer-connected/live-quote rules or win complete-cost rankings. Execution and decision recording retain their existing customer-scoped authority checks. Customer connections remain optional for negotiated account pricing and separately approved execution. No credential is exposed in a browser environment variable.
 
 Copy `.env.example` to `.env`. Every variable has a working local default; the file documents what each one unlocks (`DATABASE_URL`, `AUTH_SECRET`, SMTP, OAuth client IDs, `CREDENTIALS_ENCRYPTION_KEY` for connections/beneficiaries/webhooks, `CRON_SECRET` for the scheduler hooks, `RAILOR_LIVE_PAYMENTS`, `RAILOR_AUTO_MIGRATE`, `ANTHROPIC_API_KEY` for the optional model-assisted interpreter, `SNAPSHOT_DIR`).
 

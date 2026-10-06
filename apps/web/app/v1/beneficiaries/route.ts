@@ -26,7 +26,7 @@ export const GET = v1Route("/v1/beneficiaries", "GET", async (context) => {
 
 /**
  * POST /v1/beneficiaries — { holder_type, holder_name, country, currency,
- * method: bank_us|iban|gb|clabe|pix|in_bank|crypto_address, network?, details: {...} }.
+ * method: bank_us|iban|gb|clabe|pix|in_bank, network?, details: {...} }. (crypto_address is reserved: stablecoin wallet payouts are coming soon.)
  * Validated (IBAN checksum, ABA routing, address format), encrypted at rest,
  * deduplicated: re-posting the same account returns the existing beneficiary.
  */

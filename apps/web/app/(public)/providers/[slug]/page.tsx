@@ -5,6 +5,8 @@ import { CHANGE_KIND_LABEL } from "@railor/types";
 import { Card, EvidencePopover, Freshness, SectionLabel, VerdictPill } from "@railor/ui";
 import { ProviderLogo } from "../../../../components/app/provider-logo";
 
+import { hideDemoProvider } from "../../../../lib/demo-providers";
+
 export const dynamic = "force-dynamic";
 
 const PRODUCT_LABELS: Record<string, string> = {
@@ -28,7 +30,7 @@ export default async function PublicProviderProfile({
 }) {
   const { slug } = await params;
   const data = await loadProviderBySlug(slug);
-  if (!data) notFound();
+  if (!data || hideDemoProvider(data.provider.isDemo)) notFound();
   const { provider, products, facets, requirements, fees, limits, changes } = data;
 
   const entity = new Map<string, string>();

@@ -21,7 +21,7 @@ export type NetworkSlug =
 /**
  * One brand mark per blockchains.slug (see packages/database/src/schema.ts).
  * Every colour below is verified against the network's own brand/press page
- * or a reputable brand-colour reference — not guessed. Marks are inline SVG,
+ * or a reputable brand-colour reference — not guessed. Marks are local or inline SVG,
  * same rationale as CurrencyLogo/RailsStrip: no image host to allowlist,
  * nothing that can 404 into a broken tile.
  *
@@ -45,10 +45,10 @@ export function NetworkLogo({ slug, size = 22 }: { slug: NetworkSlug; size?: num
   switch (slug) {
     case "base":
       return (
-        <svg {...s()}>
-          <circle cx="16" cy="16" r="16" fill="#0052FF" />
-          <path d="M16 25.5c5.2 0 9.5-4.3 9.5-9.5S21.2 6.5 16 6.5c-4.9 0-9 3.8-9.5 8.6h12.6v1.8H6.5c.5 4.8 4.6 8.6 9.5 8.6Z" fill="white" />
-        </svg>
+        <span role="img" aria-label="Base" style={{ width: size, height: size }} className="inline-flex shrink-0 items-center justify-center bg-white">
+          {/* eslint-disable-next-line @next/next/no-img-element -- original bundled Base artwork */}
+          <img src="/brand/networks/base.svg" alt="" width={size} height={size} className="h-[60%] w-[60%] object-contain" />
+        </span>
       );
 
     case "ethereum":

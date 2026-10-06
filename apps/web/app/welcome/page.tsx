@@ -5,7 +5,7 @@ import { getSession } from "../../lib/auth";
 import { getReferenceOptions } from "../../lib/reference";
 import { createOrganizationForUser } from "../../lib/org";
 import { OnboardingFlow } from "../../components/onboarding/onboarding-flow";
-import { RailorMark } from "../../components/marketing/nav";
+import { RailorBrand } from "../../components/brand";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Welcome" };
@@ -62,26 +62,27 @@ export default async function WelcomePage({
   const org = session.organization;
 
   return (
-    <main className="min-h-screen">
-      <header className="mx-auto flex w-[min(900px,calc(100%-2rem))] items-center gap-3 py-8">
+    <main id="main" className="min-h-screen">
+      <header className="mx-auto flex w-[min(760px,calc(100%-2rem))] flex-wrap items-center gap-3 py-6">
         <Link href="/" className="flex items-center gap-2">
-          <RailorMark />
-          <span className="text-[15px] font-semibold">Railor</span>
+          <RailorBrand />
         </Link>
-        <span className="text-[13px] text-[var(--color-muted)]">
-          Setting up {org.name}
+        <span className="order-3 w-full text-[13px] text-[var(--color-muted)] sm:order-none sm:w-auto">
+          {org.name}
         </span>
         <span className="flex-1" />
         <Link href="/app" className="text-[13px] text-[var(--color-muted)] hover:text-[var(--color-ink)]">
-          Skip to dashboard
+          Do this later
         </Link>
       </header>
 
-      <div className="mx-auto w-[min(900px,calc(100%-2rem))] pb-24">
+      <div className="mx-auto w-[min(760px,calc(100%-2rem))] pb-24">
         <OnboardingFlow
           countries={reference.countries}
           currencies={reference.currencies}
           seed={{
+            initialStep: org.onboardingCompletedAt ? 0 : org.onboardingStep,
+            assumptions: org.assumptions ?? [],
             building: org.building ?? undefined,
             entityCountry: org.entityCountry ?? interpretation?.query.entityCountry,
             detectedCountry,

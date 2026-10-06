@@ -80,7 +80,7 @@ function findTerms(
       if (idx === -1) break;
       const before = idx === 0 ? " " : haystack[idx - 1]!;
       const after = idx + term.length >= haystack.length ? " " : haystack[idx + term.length]!;
-      const boundary = /[^a-z0-9]/.test(before) && /[^a-z0-9]/.test(after);
+      const boundary = /[^a-z0-9]/i.test(before) && /[^a-z0-9]/i.test(after);
       if (boundary) out.push({ kind, value, index: idx, text: term, length: term.length });
       from = idx + term.length;
     }
@@ -140,11 +140,11 @@ function hintRole(text: string, index: number, length: number): "entity" | "dest
 
 function parseAmount(text: string): { amount: number; currency?: string; matched: string } | null {
   const m = text.match(
-    /(?:([$€£₹₦])\s?)?(\d[\d,.]*)\s?(k|m|thousand|million)?\s?(usd|eur|gbp|aed|inr|ngn|sgd|brl)?/i,
+    /(?<![\w.-])(?:([$€£₹₦])\s?)?(\d[\d,.]*)\s?(k|m|thousand|million)?\b\s?(usd|eur|gbp|aed|inr|ngn|sgd|brl|mxn|jpy|cad|aud|chf|zar|try|myr|idr)?\b/i,
   );
   if (!m || !m[2]) return null;
   const raw = Number(m[2].replace(/,/g, ""));
-  if (!Number.isFinite(raw) || raw < 10) return null;
+  if (!Number.isFinite(raw) || raw <= 0) return null;
   const scale = m[3]?.toLowerCase();
   const amount = scale === "k" || scale === "thousand" ? raw * 1_000 : scale === "m" || scale === "million" ? raw * 1_000_000 : raw;
   const symbolCurrency: Record<string, string> = { $: "USD", "€": "EUR", "£": "GBP", "₹": "INR", "₦": "NGN" };
@@ -159,10 +159,18 @@ const countryName = (code: string) => COUNTRY_TERMS.find((c) => c.code === code)
  * a provider, a capability or a fact — it only structures what was typed.
  */
 export function interpretRules(input: string): Interpretation {
-  const text = ` ${input.toLowerCase().replace(/\s+/g, " ").trim()} `;
+  const casedText = ` ${input.replace(/\s+/g, " ").trim()} `;
+  const text = casedText.toLowerCase();
   const raw: Match[] = [];
 
-  for (const c of COUNTRY_TERMS) raw.push(...findTerms(text, c.terms, "country", c.code));
+  for (const c of COUNTRY_TERMS) {
+    // "us" in "show us" is a pronoun. The country code remains available
+    // through the uppercase ISO path below and unambiguous country names.
+    raw.push(...findTerms(text, c.terms.filter((term) => term !== "us"), "country", c.code));
+    // ISO codes are accepted only when written in uppercase, so ordinary
+    // words such as "in", "us" and "no" do not become jurisdictions.
+    raw.push(...findTerms(casedText, [c.code], "country", c.code));
+  }
   for (const r of REGION_TERMS)
     for (const code of r.countries.slice(0, 1))
       raw.push(...findTerms(text, r.terms, "country", code));
@@ -276,15 +284,24 @@ export function interpretRules(input: string): Interpretation {
   } else {
     const currency = distinctCurrencies[0];
     if (currency) {
-      query.destinationCurrency = currency.value;
-      tokens.push({
-        field: "destinationCurrency",
-        value: currency.value,
-        label: `Destination currency: ${currency.value}`,
-        confidence: 0.93,
-        matchedText: currency.text,
-        derivation: "source",
-      });
+      const sourceMention = !asset && currencyMatches.find((match) => /\b(?:send|sending|move|transfer|fund|pay)\s+(?:[$€£₹₦]\s*)?[\d,.]+(?:\s*(?:k|m|thousand|million))?\s*$/i.test(text.slice(0, match.index)));
+      if (sourceMention) {
+        query.sourceCurrency = sourceMention.value;
+        tokens.push({ field: "sourceCurrency", value: sourceMention.value, label: `Source currency: ${sourceMention.value}`, confidence: 0.96, matchedText: sourceMention.text, derivation: "source" });
+      }
+      // A funding amount must not silently become the receiving currency.
+      const destinationMention = sourceMention ? currencyMatches.find((match) => match.index !== sourceMention.index) : currency;
+      if (destinationMention) {
+        query.destinationCurrency = destinationMention.value;
+        tokens.push({
+          field: "destinationCurrency",
+          value: destinationMention.value,
+          label: `Destination currency: ${destinationMention.value}`,
+          confidence: 0.93,
+          matchedText: destinationMention.text,
+          derivation: "source",
+        });
+      }
     }
   }
 

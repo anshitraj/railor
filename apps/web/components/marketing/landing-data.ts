@@ -1,5 +1,6 @@
 import type { CountryCode } from "./country-flag";
 import type { CurrencySymbol } from "./currency-logo";
+import type { ConfidenceBand } from "@railor/types";
 
 export interface LandingChange {
   id: string;
@@ -13,6 +14,7 @@ export interface LandingSignal {
   sourceCode: CountryCode;
   source: string;
   asset: CurrencySymbol;
+  sourceNetwork?: string;
   destinationCode: CountryCode;
   destination: string;
   fiat: string;
@@ -25,8 +27,8 @@ export interface LandingSignal {
 }
 
 /** The corridors the landing page evaluates live on every request. Shared by the server page and the client view. */
-export const LANDING_SIGNALS: Array<Pick<LandingSignal, "sourceCode" | "source" | "asset" | "destinationCode" | "destination" | "fiat">> = [
-  { sourceCode: "IN", source: "India", asset: "USDC", destinationCode: "AE", destination: "UAE", fiat: "AED" },
+export const LANDING_SIGNALS: Array<Pick<LandingSignal, "sourceCode" | "source" | "asset" | "sourceNetwork" | "destinationCode" | "destination" | "fiat">> = [
+  { sourceCode: "IN", source: "India", asset: "USDC", sourceNetwork: "base", destinationCode: "AE", destination: "UAE", fiat: "AED" },
   { sourceCode: "GB", source: "United Kingdom", asset: "USDT", destinationCode: "NG", destination: "Nigeria", fiat: "NGN" },
   { sourceCode: "SG", source: "Singapore", asset: "USDC", destinationCode: "IN", destination: "India", fiat: "INR" },
 ];
@@ -39,7 +41,9 @@ export interface LandingEvidence {
   sourceType: string;
   sourceTitle: string;
   sourceHost: string;
+  sourceUrl: string;
   confidence: number;
+  bandKey: ConfidenceBand;
   band: string;
   retrievedAt: string;
   verifiedAt: string;

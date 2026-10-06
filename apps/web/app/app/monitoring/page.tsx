@@ -28,10 +28,11 @@ export default async function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-semibold tracking-tight">Monitoring</h1>
+      <div className="workspace-heading flex flex-col gap-1">
+        <span className="product-eyebrow">Stay informed</span>
+        <h1 className="font-semibold tracking-tight">Monitoring</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
-          Railor snapshots provider sources, diffs the normalized values and raises an event with
+          Watch your providers and corridors for coverage, requirement and pricing changes, with
           the evidence attached.
         </p>
       </div>

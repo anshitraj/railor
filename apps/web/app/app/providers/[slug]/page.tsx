@@ -16,6 +16,8 @@ import { CurrencyLogo } from "../../../../components/marketing/currency-logo";
 import { NetworkLogo } from "../../../../components/marketing/network-logo";
 import { ProviderLogo } from "../../../../components/app/provider-logo";
 
+import { hideDemoProvider } from "../../../../lib/demo-providers";
+
 export const dynamic = "force-dynamic";
 
 const PRODUCT_LABELS: Record<string, string> = {
@@ -38,7 +40,7 @@ export default async function ProviderProfile({
 }) {
   const { slug } = await params;
   const data = await loadProviderBySlug(slug);
-  if (!data) notFound();
+  if (!data || hideDemoProvider(data.provider.isDemo)) notFound();
 
   const {
     provider,

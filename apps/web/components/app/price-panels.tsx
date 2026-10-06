@@ -4,14 +4,14 @@ import { cn } from "@railor/ui";
 
 const TOOLS = {
   app: [
-    { href: "/app/prices", label: "Live quotes", icon: Zap },
+    { href: "/app/prices", label: "Price check", icon: Zap },
     { href: "/app/payments/new", label: "Send", icon: Banknote },
     { href: "/app/settings/connections", label: "Your accounts", icon: Link2 },
     { href: "/app/routing", label: "Routing", icon: Shuffle },
     { href: "/docs/payments", label: "API", icon: BookOpen },
   ],
   public: [
-    { href: "/prices", label: "Live quotes", icon: Zap },
+    { href: "/prices", label: "Price check", icon: Zap },
     { href: "/providers", label: "Providers", icon: Link2 },
     { href: "/docs/payments", label: "API", icon: BookOpen },
   ],
@@ -21,6 +21,7 @@ const TOOLS = {
 export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: string }) {
   return (
     <nav aria-label="Price tools" className="flex flex-col gap-3">
+      <span className="product-eyebrow mb-1">Price intelligence</span>
       <h1 className="font-display text-[26px] font-semibold leading-none tracking-[-0.04em]">{title}</h1>
       <ul className="flex gap-1 overflow-x-auto lg:flex-col">
         {TOOLS[mode].map((t, i) => (
@@ -45,10 +46,12 @@ export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: 
 }
 
 const LABELS = [
-  { tag: "Your account", tone: "bg-emerald-100 text-emerald-800", text: "Live quote from your own connected Wise or Airwallex account — what you'd actually pay." },
-  { tag: "Live", tone: "bg-sky-100 text-sky-800", text: "Live public quote from the provider's API, refreshed every 20 seconds." },
+  { tag: "Your account", tone: "bg-emerald-100 text-emerald-800", text: "Quote from your own connected account. Check fee completeness and validity before acting." },
+  { tag: "Public reference", tone: "bg-sky-100 text-sky-800", text: "Public API observation, refreshed every 20 seconds. Not a customer-specific executable quote." },
+  { tag: "Railor account", tone: "bg-orange-100 text-orange-800", text: "Backend-managed FX observation, displayed separately. Sandbox means test data; payout fees are excluded." },
   { tag: "Published", tone: "bg-amber-100 text-amber-800", text: "The provider's published fee schedule (PayZoll, Skydo) applied at the mid-market rate." },
   { tag: "Estimate", tone: "bg-[var(--color-canvas)] text-[var(--color-muted)]", text: "Dated consumer prices Wise collects from banks and remittance apps. Context only." },
+  { tag: "Market coverage", tone: "bg-violet-100 text-violet-800", text: "Providers in Railor's wider market catalog that list the destination currency. Coverage is not a quote or route guarantee." },
 ];
 
 /** The right rail: what each label means, and the one step that makes prices exact. */
@@ -69,9 +72,9 @@ export function PriceLabelsCard({ mode, connectedAny }: { mode: "app" | "public"
       {!connectedAny ? (
         <div className="product-dark p-4">
           <div className="relative z-10 flex flex-col gap-2">
-            <p className="font-display text-[18px] font-semibold leading-tight">Your exact price, not the public one</p>
+            <p className="font-display text-[18px] font-semibold leading-tight">Explore first. Connect only if needed.</p>
             <p className="text-[12.5px] leading-snug text-white/65">
-              Business accounts are often priced below the public quote. {mode === "app" ? "Connect Wise or Airwallex and your own live quote joins the list." : "Sign in and connect Wise or Airwallex to see your own live quote — and send at it."}
+              Railor handles platform integrations on the backend. No credentials are needed to compare published features. An optional account connection is only for your own negotiated pricing and approved execution.
             </p>
             <Link href={mode === "app" ? "/app/settings/connections" : "/login?intent=start"} className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[12.5px] font-bold text-[#22211f] transition hover:bg-[#ffad8c]">
               {mode === "app" ? "Connect an account" : "Start free"} <ArrowRight size={13} />

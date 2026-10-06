@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   alerts,
@@ -108,8 +109,8 @@ export async function saveOnboarding(
   await db
     .update(organizations)
     .set({
-      building: answers.building ?? undefined,
-      entityCountry: answers.entityCountry ?? undefined,
+      building: "building" in answers ? answers.building ?? null : undefined,
+      entityCountry: "entityCountry" in answers ? answers.entityCountry ?? null : undefined,
       targetCountries: answers.targetCountries ?? undefined,
       settlementCurrencies: answers.settlementCurrencies ?? undefined,
       interests: answers.interests ?? undefined,
@@ -304,21 +305,21 @@ export async function materializeWorkspace(
 
   await db
     .update(organizations)
-    .set({ onboardingCompletedAt: new Date(), onboardingStep: 3 })
+    .set({ onboardingCompletedAt: new Date(), onboardingStep: 5 })
     .where(eq(organizations.id, organizationId));
 
   return created.length;
   });
 }
 
-export async function getSavedCorridors(organizationId: string) {
+export const getSavedCorridors = cache(async (organizationId: string) => {
   const db = await getDb();
   return db
     .select()
     .from(savedCorridors)
     .where(eq(savedCorridors.organizationId, organizationId))
     .orderBy(desc(savedCorridors.createdAt));
-}
+});
 
 export async function getWatchlists(organizationId: string) {
   const db = await getDb();
@@ -399,11 +400,10 @@ export async function setKybItem(
 
 export async function getKybProfile(organizationId: string) {
   const db = await getDb();
-  const all = await db.select().from(requirements);
-  const items = await db
-    .select()
-    .from(orgKybItems)
-    .where(eq(orgKybItems.organizationId, organizationId));
+  const [all, items] = await Promise.all([
+    db.select().from(requirements),
+    db.select().from(orgKybItems).where(eq(orgKybItems.organizationId, organizationId)),
+  ]);
   const byId = new Map(items.map((i) => [i.requirementId, i.status]));
   return all.map((r) => ({
     key: r.key,

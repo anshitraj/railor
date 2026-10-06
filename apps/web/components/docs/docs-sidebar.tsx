@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { cn } from "@railor/ui";
+import { cn, TechnologyLogo, TechnologyLogoStack } from "@railor/ui";
 import { DOCS_NAV } from "./docs-nav";
 
 /**
@@ -53,21 +53,21 @@ export function DocsSidebar({ children }: { children?: React.ReactNode }) {
                     "group flex items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-150",
                     "lg:gap-2.5 lg:rounded-xl lg:px-2.5 lg:py-1.5 lg:text-[13.5px]",
                     active
-                      ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-white lg:border-[var(--color-line)] lg:bg-white lg:text-[var(--color-ink)] lg:shadow-[var(--shadow-soft)]"
+                      ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-white lg:shadow-[var(--shadow-soft)]"
                       : "border-[var(--color-line)] bg-white text-[var(--color-ink-soft)] hover:border-[var(--color-line-strong)] lg:border-transparent lg:bg-transparent lg:hover:border-transparent lg:hover:bg-[var(--color-sand)] lg:hover:text-[var(--color-ink)]",
                   )}
                 >
-                  <link.icon
+                  {link.href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={19} /> : link.href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={17} /> : <link.icon
                     size={15}
                     strokeWidth={2}
                     aria-hidden
                     className={cn(
                       "shrink-0 transition-colors duration-150",
                       active
-                        ? "text-[var(--color-orange)]"
+                        ? "text-[var(--color-accent-light)]"
                         : "text-[var(--color-faint)] group-hover:text-[var(--color-orange-deep)]",
                     )}
-                  />
+                  />}
                   {link.label}
                   {leavesDocs ? (
                     <ArrowUpRight

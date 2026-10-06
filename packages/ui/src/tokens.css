@@ -5,33 +5,37 @@
  * next action without drowning the operational data in decorative colour.
  */
 @theme {
-  --color-canvas: #f6f1e9;
+  --color-canvas: #f5f3ee;
   --color-surface: #fffdfa;
-  --color-paper: #fffaf3;
-  --color-sand: #eee7dc;
+  --color-paper: #fcfaf5;
+  --color-sand: #eae5db;
   --color-lavender: #fff0e9;
   --color-lavender-deep: #ffe0d0;
 
   --color-orange: #e9562a;
+  --color-action: #c84420;
+  --color-brand: #5a0124;
+  --color-on-dark: #faf4ea;
+  --color-accent-light: #ffad8c;
   --color-orange-deep: #b83d1c;
-  --color-purple: #e9562a;
+  --color-purple: #c84420;
   --color-purple-deep: #b83d1c;
   --color-violet: #c96a4e;
   --color-lime: #b98a37;
 
   --color-ink: #1c1b19;
   --color-ink-soft: #45413c;
-  --color-muted: #726c63;
-  --color-faint: #9b9388;
+  --color-muted: #68635b;
+  --color-faint: #777168;
 
-  --color-line: rgb(28 27 25 / 0.12);
+  --color-line: rgb(28 27 25 / 0.10);
   --color-line-strong: rgb(28 27 25 / 0.22);
 
-  --color-ok: #2f9e44;
+  --color-ok: #20713d;
   --color-ok-bg: #eefbf1;
-  --color-warn: #b7791f;
+  --color-warn: #90611c;
   --color-warn-bg: #fdf6e6;
-  --color-bad: #d64545;
+  --color-bad: #b32e2e;
   --color-bad-bg: #fdeeee;
   --color-unknown: #6b7280;
   --color-unknown-bg: #f3f4f6;

@@ -46,7 +46,7 @@ beforeAll(async () => {
     { organizationId: org, userId: owner, role: "owner" },
     { organizationId: org, userId: reviewer, role: "admin" },
   ]);
-  for (const slug of ["bridge", "circle"]) {
+  for (const slug of ["bridge", "wise"]) {
     const [provider] = await db.insert(providers).values({ slug, name: `${slug} fixture`, category: "Direct provider", description: "Payments test fixture", isDemo: false }).returning();
     await db.insert(providerProducts).values({ providerId: provider!.id, product: "payout", name: "Payouts" });
     const [source] = await db

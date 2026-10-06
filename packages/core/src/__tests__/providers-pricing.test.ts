@@ -82,12 +82,14 @@ describe("Wise quotes", () => {
     expect(q.exchangeRate).toBe("95.7792");
     expect(q.costPartial).toBe(false);
     expect(q.accountContext).toBe("public_published");
+    expect(q.quoteType).toBe("indicative");
     expect(q.estimatedArrivalMinutes).toBeGreaterThan(24 * 60);
   });
 
   it("prefers the Wise balance when it is enabled", () => {
     const enabled = { ...WISE_PUBLIC, paymentOptions: WISE_PUBLIC.paymentOptions.map((o) => ({ ...o, disabled: false })) };
     expect(wiseQuoteToUnified(enabled, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "customer_connected").feeAmount).toBe(4.75);
+    expect(wiseQuoteToUnified(enabled, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "customer_connected").quoteType).toBe("live");
   });
 
   it("shows a balance-only pair publicly (AED→USD), labelled, but never for an account quote", async () => {
@@ -253,7 +255,7 @@ describe("price check", () => {
     expect(bySlug.wise!.basis).toBe("live_public");
     expect(bySlug.wise!.recipientAmount).toBe(94700.73);
     // PayZoll: 1% of 1000 = 10 USD, 990 × 95.7792
-    expect(bySlug.payzoll).toMatchObject({ basis: "published", feeAmount: 10, recipientAmount: 94821.41 });
+    expect(bySlug.payzoll).toMatchObject({ basis: "published", feeAmount: 10, recipientAmount: 94821.41, partial: true, shortfall: null, totalCostPct: null });
     // Skydo: $19 slab + 18% GST = 22.42 USD
     expect(bySlug.skydo).toMatchObject({ basis: "published", feeAmount: 22.42, feeCurrency: "USD" });
     expect(bySlug["market:remitly"]).toMatchObject({ basis: "market_estimate", recipientAmount: 95530 });
@@ -263,7 +265,7 @@ describe("price check", () => {
     expect(amounts).toEqual([...amounts].sort((a, b) => b - a));
     // Market estimates come after every actionable price and never take "best"...
     expect(result.rows.findIndex((r) => r.basis === "market_estimate")).toBe(actionable.length);
-    expect(result.rows[0]!).toMatchObject({ providerSlug: "payzoll", shortfall: 0 });
+    expect(result.rows[0]!).toMatchObject({ providerSlug: "wise", shortfall: 0 });
     // ...but still show when they'd deliver more (negative shortfall).
     expect(bySlug["market:remitly"]!.shortfall).toBeLessThan(0);
     expect(result.unavailable).toEqual([expect.objectContaining({ providerSlug: "airwallex", connectable: true })]);
@@ -290,6 +292,31 @@ describe("price check", () => {
     expect(skydo.appliesTo({ sourceCurrency: "USD", destinationCurrency: "EUR", amount: 10 })).toMatch(/India/);
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 5000 }, 5000)).toMatchObject({ amount: 34.22 });
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 20000 }, 20000)).toMatchObject({ amount: 70.8 });
+  });
+  it("uses PayZoll's USD minimum and threshold, without claiming partner fees are included", () => {
+    const p = PUBLISHED_PRICING.find(p => p.slug === "payzoll")!;
+    const input = { sourceCurrency: "EUR", destinationCurrency: "INR", amount: 500 };
+    expect(p.fee(input, 550)).toMatchObject({ amount: 10, currency: "USD" });
+    expect(p.fee(input, 1000)).toMatchObject({ amount: 10 });
+    expect(p.fee(input, 1001)).toMatchObject({ amount: 10.01 });
+    expect(p.fee(input, null)).toBeNull();
+    expect(p.partial).toBe(true);
+  });
+  it("does not display negative receiving amounts when published fees exceed the transfer", async () => {
+    const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 5 }, { fetcher });
+    expect(result.rows.some(r => r.providerSlug === "payzoll" || r.providerSlug === "skydo")).toBe(false);
+    expect(result.unavailable.find(p => p.providerSlug === "payzoll")?.reason).toContain("minimum transaction size");
+  });
+  it("keeps sandbox and Railor-account observations completely outside selectable/ranked prices", async () => {
+    const quote = { providerSlug: "airwallex", sourceAsset: "USD", destinationCurrency: "INR", amount: 1000, recipientAmount: 999999, costPartial: true, quoteType: "indicative" as const, accountContext: "railor_network" as const, verificationType: "provider_reported" as const, observedAt: new Date().toISOString(), quotedAt: new Date().toISOString() };
+    for (const environment of ["sandbox", "production"] as const) {
+      const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 }, { fetcher,
+        platformQuotes: async () => [{ providerSlug: "airwallex", providerName: "Airwallex", environment, status: "quoted", quote, error: null }],
+      });
+      expect(result.platformQuotes).toHaveLength(1);
+      expect(result.rows.some(r => r.providerSlug === "airwallex")).toBe(false);
+      expect(result.rows[0]?.providerSlug).toBe("wise");
+    }
   });
 });
 

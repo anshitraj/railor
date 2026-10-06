@@ -12,6 +12,8 @@ export * from "./primitives/why-panel.js";
 export * from "./primitives/result-row.js";
 export * from "./primitives/empty-state.js";
 export * from "./primitives/code-sample.js";
+export * from "./primitives/technology-logo.js";
 export * from "./primitives/command-block.js";
 export * from "./primitives/command-palette.js";
+export * from "./primitives/use-modal-focus.js";
 export * from "./primitives/reveal.js";

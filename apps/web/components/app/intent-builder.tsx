@@ -23,6 +23,8 @@ export interface IntentDraft {
   sourceNetwork: string;
   destinationCountry: string;
   destinationCurrency: string;
+  endpointType: string;
+  namedRail: string;
   amount: number | undefined;
 }
 
@@ -37,13 +39,15 @@ export function defaultIntentDraft(entityCountry = "IN"): IntentDraft {
     sourceNetwork: "base",
     destinationCountry: "AE",
     destinationCurrency: "AED",
+    endpointType: "",
+    namedRail: "",
     amount: 1000,
   };
 }
 
 /** Accepts a partial agent/API draft and fills only the gaps the builder needs to render. */
-export function draftFromPartial(partial: Record<string, unknown>, entityCountry = "IN"): IntentDraft {
-  const base = defaultIntentDraft(entityCountry);
+export function draftFromPartial(partial: Record<string, unknown>, entityCountry?: string): IntentDraft {
+  const base = defaultIntentDraft(entityCountry ?? "");
   const str = (key: string) => (typeof partial[key] === "string" ? (partial[key] as string) : undefined);
   const asset = str("sourceAsset");
   return {
@@ -52,11 +56,13 @@ export function draftFromPartial(partial: Record<string, unknown>, entityCountry
     sourceEntityCountry: str("sourceEntityCountry") ?? base.sourceEntityCountry,
     sourceEntityType: str("sourceEntityType") === "individual" ? "individual" : "business",
     beneficiaryType: str("beneficiaryType") === "individual" ? "individual" : "business",
-    sourceCurrency: str("sourceCurrency") ?? base.sourceCurrency,
-    sourceAsset: asset ?? base.sourceAsset,
-    sourceNetwork: str("sourceNetwork") ?? base.sourceNetwork,
+    sourceCurrency: str("sourceCurrency") ?? "",
+    sourceAsset: asset ?? "",
+    sourceNetwork: str("sourceNetwork") ?? "",
     destinationCountry: str("destinationCountry") ?? "",
     destinationCurrency: str("destinationCurrency") ?? "",
+    endpointType: str("endpointType") ?? base.endpointType,
+    namedRail: str("namedRail") ?? "",
     amount: typeof partial.amount === "number" ? partial.amount : undefined,
   };
 }
@@ -69,6 +75,8 @@ export function intentFromDraft(draft: IntentDraft): Record<string, unknown> {
     beneficiaryType: draft.beneficiaryType,
     destinationCountry: draft.destinationCountry,
     destinationCurrency: draft.destinationCurrency || undefined,
+    endpointType: draft.endpointType || undefined,
+    namedRail: draft.namedRail || undefined,
     amount: draft.amount,
   };
   return draft.sourceKind === "fiat"
@@ -218,6 +226,19 @@ export function IntentBuilder({
             detected={inferredCurrency}
             suggestionCount={5}
           />
+          <label className="block text-[12px] font-medium text-[var(--color-muted)]">Receiving endpoint
+            <select className="product-field mt-1 w-full" value={value.endpointType} onChange={(event) => set("endpointType", event.target.value)}>
+              <option value="">Any / not specified</option>
+              <option value="bank_account">Bank account</option><option value="mobile_money">Mobile money</option>
+              <option value="card">Card</option><option value="stablecoin_wallet">Stablecoin wallet</option>
+              <option value="virtual_account">Virtual account</option><option value="merchant_checkout">Merchant checkout</option>
+              <option value="payment_link">Payment link</option><option value="local_instant_rail">Local instant rail</option>
+              <option value="cash_pickup">Cash pickup</option>
+            </select>
+          </label>
+          <label className="block text-[12px] font-medium text-[var(--color-muted)]">Named rail <span className="font-normal">(optional)</span>
+            <input className="product-field mt-1 w-full" value={value.namedRail} onChange={(event) => set("namedRail", event.target.value)} placeholder="e.g. SEPA_INSTANT" maxLength={80} />
+          </label>
         </div>
       </div>
 

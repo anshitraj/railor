@@ -4,7 +4,7 @@ import { requireSession } from "../../../lib/auth";
 import { recentDecisionChoices } from "../../../lib/decisions";
 import { getIntentOptions } from "../../../lib/reference";
 import { AgentWorkbench } from "../../../components/app/workflow-forms";
-import { ProductHeader } from "../../../components/app/product-ui";
+import { AgentConversation } from "../../../components/app/agent-conversation";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Agent" };
@@ -22,16 +22,16 @@ export default async function AgentPage() {
   const providers = providerInputs.filter((p) => !p.isDemo).map((p) => ({ slug: p.slug, name: p.name }));
   return (
     <div className="product-page space-y-7">
-      <ProductHeader
-        eyebrow="Assisted workflow / 04"
-        title="Railor Agent"
-        description="Turn plain-language instructions into a reviewable payment or policy draft. It identifies missing facts; you stay in control of evaluation and activation."
-        value="03"
-        valueLabel="drafting tools"
+      <AgentConversation
+        policies={policies.filter((p) => p.activeVersionId && p.status === "active").map((p) => ({ id: p.id, name: p.name }))}
+        options={options}
+        entityCountry={org.entityCountry ?? undefined}
+        defaultEmail={session.user.email}
+        canDecide={session.role !== "viewer"}
       />
-      {session.role === "viewer" ? (
-        <p>A member or administrator can generate and save drafts.</p>
-      ) : (
+      {session.role !== "viewer" ? <details className="agent-advanced">
+        <summary>Advanced tools · policy drafts and stored decisions</summary>
+        <div className="p-5 sm:p-7">
         <AgentWorkbench
           policies={policies.filter((p) => p.activeVersionId).map((p) => ({ id: p.id, name: p.name }))}
           decisions={decisions}
@@ -40,7 +40,8 @@ export default async function AgentPage() {
           entityCountry={org.entityCountry ?? undefined}
           canEditPolicies={["owner", "admin"].includes(session.role ?? "")}
         />
-      )}
+        </div>
+      </details> : null}
     </div>
   );
 }

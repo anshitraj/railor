@@ -5,9 +5,10 @@ import { z } from "zod";
 import { PaymentIntent, PolicyRules } from "@railor/types";
 import { createPolicy, createPolicyVersion, activatePolicyVersion, getActivePolicyVersion, runDecisionEngine,
   persistDecision, requireProductRole, reviewApproval, revalidateDecision, simulatePolicy, loadDecision,
-  reviewDiscovery, registerConnector, revokeConnector, queueConnectorSimulation, draftPaymentIntent, draftPolicy, explainDecision, loadProviderInputs, monitorDecisions } from "@railor/core";
+  reviewDiscovery, registerConnector, revokeConnector, queueConnectorSimulation, draftPaymentIntent, draftPolicy, explainDecision, loadProviderInputs, monitorDecisions, searchPreview, getDefaultActivePolicy } from "@railor/core";
 import { requireSession } from "../../lib/auth";
 import { buildFetchQuote } from "../../lib/decisions";
+import { platformQuoteProviders } from "../../lib/platform-pricing";
 
 const Command = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create_policy"), name: z.string().trim().min(1).max(120), rules: PolicyRules }),
@@ -15,6 +16,7 @@ const Command = z.discriminatedUnion("action", [
   z.object({ action: z.literal("activate_policy"), policyId: z.string().uuid(), versionId: z.string().uuid() }),
   z.object({ action: z.literal("simulate"), intent: PaymentIntent, rules: PolicyRules, baseline: PolicyRules }),
   z.object({ action: z.literal("decision"), intent: PaymentIntent, policyId: z.string().uuid(), mode: z.enum(["enforce", "optimize"]), provider: z.string().max(100).optional() }),
+  z.object({ action: z.literal("search_preview"), intent: PaymentIntent, policyId: z.string().uuid() }),
   z.object({ action: z.literal("approval"), id: z.string().uuid(), review: z.enum(["approve", "reject", "revoke"]), comment: z.string().min(1).max(2000) }),
   z.object({ action: z.literal("revalidate"), id: z.string().uuid() }),
   z.object({ action: z.literal("review_discovery"), id: z.string().uuid(), status: z.enum(["investigate", "dismissed"]), comment: z.string().trim().min(1).max(2000) }),
@@ -22,6 +24,7 @@ const Command = z.discriminatedUnion("action", [
   z.object({ action: z.literal("revoke_connector"), id: z.string().uuid() }),
   z.object({ action: z.literal("simulate_connector"), installationId: z.string().uuid(), decisionId: z.string().uuid(), idempotencyKey: z.string().min(8).max(128), operation: z.enum(["simulate_transfer", "get_quote"]).default("simulate_transfer") }),
   z.object({ action: z.literal("agent_draft"), kind: z.enum(["payment", "policy", "explain"]), text: z.string().trim().min(1).max(2000) }),
+  z.object({ action: z.literal("agent_search"), text: z.string().trim().min(1).max(2000), policyId: z.string().uuid().optional() }),
   z.object({ action: z.literal("monitor_decisions") }),
 ]);
 
@@ -31,10 +34,23 @@ export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error
     const session = await requireSession();
     const org = session.organization?.id;
     if (!org) throw new Error("organization_required");
-    await requireProductRole(org, session.user.id, ["create_policy", "version_policy", "activate_policy", "approval", "review_discovery", "register_connector", "revoke_connector", "monitor_decisions"].includes(input.action));
+    if (!["agent_search", "agent_draft", "search_preview"].includes(input.action)) {
+      await requireProductRole(org, session.user.id, ["create_policy", "version_policy", "activate_policy", "approval", "review_discovery", "register_connector", "revoke_connector", "monitor_decisions"].includes(input.action));
+    }
     let data: unknown;
     let href: string | undefined;
     switch (input.action) {
+      case "agent_search": {
+        const draft = draftPaymentIntent(input.text, session.organization?.entityCountry ?? undefined);
+        const policy = input.policyId ? await getActivePolicyVersion(org, input.policyId) : await getDefaultActivePolicy(org);
+        const state = !draft.valid ? "needs_input" : draft.needsReview ? "needs_confirmation" : !policy ? "needs_policy" : "ready";
+        const preview = state === "ready" && policy ? await searchPreview(PaymentIntent.parse(draft.draft), {
+          policyId: policy.policy.id, policyVersionId: policy.version.id,
+          policyVersionNumber: policy.version.versionNumber, rules: PolicyRules.parse(policy.version.rules),
+        }, { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() }) : null;
+        data = { kind: "agent_search", state, draft, preview };
+        break;
+      }
       case "review_discovery": data = await reviewDiscovery(org, session.user.id, { id: input.id, status: input.status, comment: input.comment }); break;
       case "register_connector": data = await registerConnector(org, session.user.id, input.name); break;
       case "revoke_connector": await revokeConnector(org, session.user.id, input.id); break;
@@ -63,6 +79,14 @@ export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error
         break;
       }
       case "simulate": data = await simulatePolicy(input.intent, input.baseline, input.rules, { organizationId: org }); break;
+      case "search_preview": {
+        const policy = await getActivePolicyVersion(org, input.policyId);
+        if (!policy) throw new Error("active_policy_required");
+        data = await searchPreview(input.intent, { policyId: policy.policy.id,
+          policyVersionId: policy.version.id, policyVersionNumber: policy.version.versionNumber, rules: PolicyRules.parse(policy.version.rules),
+        }, { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() });
+        break;
+      }
       case "decision": {
         const policy = await getActivePolicyVersion(org, input.policyId);
         if (!policy) throw new Error("active_policy_required");
@@ -87,7 +111,7 @@ export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error
         break;
       }
     }
-    revalidatePath("/app", "layout");
+    if (!["agent_search", "agent_draft", "search_preview"].includes(input.action)) revalidatePath("/app", "layout");
     return { ok: true, data: data ? JSON.parse(JSON.stringify(data)) : undefined, href };
   } catch (error) {
     return { ok: false, error: error instanceof z.ZodError ? error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") : error instanceof Error && /^[a-z_]+$/.test(error.message) ? error.message.replaceAll("_", " ") : "Unable to complete this action. Please retry." };

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Activity, Banknote, Building2, ClipboardCheck, FileClock, Globe2, KeyRound, LayoutDashboard, Menu, Plug, Radar, ScrollText, X, type LucideIcon } from "lucide-react";
-import { cn } from "@railor/ui";
+import { cn, useModalFocus } from "@railor/ui";
 import { RailorMark } from "../marketing/nav";
 
 const NAV: Array<{ href: string; label: string; icon: LucideIcon; exact?: boolean }> = [
@@ -23,20 +23,33 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon; exact?: boolea
 export function AdminShell({ email, alerts, children }: { email: string; alerts: { unknownPayments: number; pendingReview: number; paused: boolean }; children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const drawerRef = useModalFocus<HTMLElement>(open, () => setOpen(false));
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
   const badge: Record<string, number> = { "/admin/payments": alerts.unknownPayments, "/admin/review": alerts.pendingReview };
   return (
-    <div className="flex min-h-screen bg-[var(--color-canvas)]">
+    <div className="admin-frame flex min-h-screen bg-[var(--color-canvas)]">
       {open ? <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" /> : null}
       <aside
+        ref={drawerRef}
+        role={open ? "dialog" : undefined}
+        aria-modal={open || undefined}
+        aria-label="Operations menu"
+        tabIndex={-1}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[236px] flex-col gap-1 bg-[var(--color-ink)] px-3 py-4 text-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full",
+          "workspace-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[244px] flex-col gap-1 bg-[var(--color-ink)] px-3 py-5 text-white transition-[transform,visibility] md:sticky md:top-0 md:visible md:translate-x-0",
+          open ? "visible translate-x-0" : "invisible -translate-x-full",
         )}
       >
         <div className="mb-4 flex items-center gap-2 px-2">
-          <RailorMark />
-          <span className="font-display text-[17px] font-bold tracking-[-0.05em]">Railor</span>
-          <span className="rounded-full bg-[var(--color-orange)] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide">Ops</span>
+          <Link href="/admin" aria-label="Railor operations overview" className="flex items-center gap-2.5"><RailorMark size={28} />
+          <span className="font-display text-[21px] font-bold tracking-[-0.05em]">Railor</span></Link>
+          <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-[var(--color-accent-light)]">Ops</span>
           <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="ml-auto md:hidden">
             <X size={17} />
           </button>
@@ -44,7 +57,7 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
         {alerts.paused ? (
           <div className="mb-3 rounded-lg bg-[var(--color-bad)] px-3 py-2 text-[11.5px] font-semibold">Payments paused platform-wide</div>
         ) : null}
-        <nav aria-label="Operations" className="flex flex-1 flex-col gap-0.5">
+        <nav aria-label="Operations" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
           {NAV.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
@@ -53,16 +66,16 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
                 href={item.href}
                 onClick={() => setOpen(false)}
                 aria-current={active ? "page" : undefined}
-                className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition-colors", active ? "bg-white/12 font-semibold text-white" : "text-white/65 hover:bg-white/8 hover:text-white")}
+                className={cn("flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-colors", active ? "bg-white/12 font-semibold text-white" : "text-white/70 hover:bg-white/8 hover:text-white")}
               >
-                <item.icon size={16} aria-hidden />
+                <item.icon size={16} aria-hidden className={active ? "text-[var(--color-accent-light)]" : undefined} />
                 <span className="flex-1">{item.label}</span>
                 {badge[item.href] ? <span className="rounded-full bg-[var(--color-orange)] px-1.5 text-[11px] font-bold tabular">{badge[item.href]}</span> : null}
               </Link>
             );
           })}
         </nav>
-        <div className="border-t border-white/10 pt-3 text-[11.5px] text-white/50">
+        <div className="mt-3 border-t border-white/10 pt-3 text-[11.5px] text-white/65">
           <p className="truncate">{email}</p>
           <Link href="/app" className="mt-1 inline-flex items-center gap-1 text-white/70 hover:text-white">
             <FileClock size={12} /> Back to workspace
@@ -70,11 +83,13 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-canvas)]/90 px-4 py-3 backdrop-blur md:hidden">
-          <button type="button" aria-label="Open menu" onClick={() => setOpen(true)}>
+        <header className="workspace-topbar sticky top-0 z-30 flex min-h-[72px] items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-paper)]/95 px-4 py-3 backdrop-blur sm:px-8">
+          <button type="button" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)} className="grid size-9 place-items-center rounded-lg hover:bg-[var(--color-sand)] md:hidden">
             <Menu size={19} />
           </button>
-          <span className="text-[14px] font-semibold">Operations</span>
+          <Link href="/admin" aria-label="Railor operations overview" className="shrink-0 md:hidden"><RailorMark size={23} /></Link>
+          <span className="min-w-0 truncate text-[12px] text-[var(--color-muted)]"><span className="hidden sm:inline">Operations <span aria-hidden className="mx-2">/</span></span><span className="font-semibold text-[var(--color-ink)]">{NAV.find((item) => item.exact ? pathname === item.href : pathname.startsWith(item.href))?.label ?? "Overview"}</span></span>
+          <Link href="/app" className="ml-auto shrink-0 rounded-xl border border-[var(--color-line)] px-3 py-2 text-[12px] font-semibold hover:bg-[var(--color-surface)]">Workspace →</Link>
         </header>
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div key={pathname} className="railor-page-in mx-auto flex max-w-[1240px] flex-col gap-6">

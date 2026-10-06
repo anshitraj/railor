@@ -126,6 +126,7 @@ export interface ListResponse<T = Record<string, unknown>> extends ApiResponse {
   has_more: boolean;
 }
 
+/** `crypto_address` is reserved: paying a stablecoin wallet is coming soon and is refused for now. */
 export type BeneficiaryMethod = "bank_us" | "iban" | "gb" | "clabe" | "pix" | "in_bank" | "crypto_address";
 
 export interface BeneficiaryCreateParams {

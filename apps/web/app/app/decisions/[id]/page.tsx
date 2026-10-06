@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
-import { decisionApprovals, getDb, productEvents } from "@railor/database";
+import { and, desc, eq } from "drizzle-orm";
+import { decisionApprovals, getDb, payments, productEvents } from "@railor/database";
 import { loadDecision, loadDecisionEvents, decisionAuthorization } from "@railor/core";
 import { requireSession } from "../../../../lib/auth";
 import { ApprovalReview, ControlButton } from "../../../../components/app/control-forms";
 import { ProductBadge } from "../../../../components/app/product-ui";
+import { ExecutionAccess } from "../../../../components/app/execution-access";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Decision" };
@@ -30,8 +31,16 @@ export default async function DecisionPage({ params }: { params: Promise<{ id: s
     db.select().from(decisionApprovals).where(and(eq(decisionApprovals.organizationId, org), eq(decisionApprovals.decisionId, id))), decisionAuthorization(org, id),
   ]);
   const approval = approvals[0];
+  const linkedPayments = await db.select({ id: payments.id, status: payments.status, mode: payments.mode }).from(payments)
+    .where(and(eq(payments.organizationId, org), eq(payments.decisionId, id))).orderBy(desc(payments.createdAt)).limit(1);
   const explanation = decision.explain as { whySelected?: string[]; missingInformation?: string[]; whatWouldChange?: string[] };
   return <div className="product-page space-y-7"><Link href="/app/decisions" className="product-quiet-link">← Decision history</Link>
+    <section className="product-panel p-5 sm:p-7" aria-label="Execution status"><span className="product-eyebrow">Execution / handoff</span>
+      <h2 className="mt-1 font-display text-xl font-semibold">Decision: {decision.status.toUpperCase()} · Execution: {linkedPayments.length ? linkedPayments[0]!.status.replaceAll("_", " ").toUpperCase() : "NOT INITIATED"}</h2>
+      {linkedPayments.length ? <p className="mt-2 text-sm text-[var(--color-muted)]">A linked payment record exists. Its actual status is shown above; the decision alone did not move funds.</p>
+        : <><p className="mt-2 text-sm text-[var(--color-muted)]">Direct execution is in private beta. Railor has completed the policy and infrastructure decision; direct execution through connected providers is being rolled out.</p>
+          {session.role !== "viewer" && (decision.proposedExecutor ?? decision.recommendedProviderSlug) ? <ExecutionAccess provider={(decision.proposedExecutor ?? decision.recommendedProviderSlug)!} /> : null}</>}
+    </section>
     <section className="product-dark p-6 sm:p-9"><span className="product-eyebrow">Initial evaluation / {decision.mode.toUpperCase()}</span><div className="relative z-10 grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(260px,.45fr)]"><div><h1 className="font-display text-4xl font-semibold leading-none tracking-[-.05em] sm:text-6xl">{decision.status.replaceAll("_", " ").toUpperCase()}</h1><p className="mt-5 font-display text-xl text-[#f5e7d9]">{String(decision.intentSnapshot.sourceCurrency ?? decision.intentSnapshot.sourceAsset ?? "Source")} <span className="px-2 text-[#ff9a70]">→</span> {String(decision.intentSnapshot.destinationCurrency ?? decision.intentSnapshot.destinationCountry ?? "Destination")}</p><p className="mt-2 text-sm text-[#c8c0b6]">{decision.proposedExecutor ?? decision.recommendedProviderSlug ?? "No eligible provider"}</p></div><div className="border-t border-white/20 pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"><p className="product-mono text-[#b5aaa0]">CURRENT AUTHORIZATION</p><p className="mt-2 font-display text-xl">{authorization.reason.replaceAll("_", " ")}</p><p className="mt-2 text-xs leading-relaxed text-[#b5aaa0]">The initial result stays in the record; approval or revalidation changes current authorization.</p><div className="mt-5 flex flex-wrap gap-3">{session.role !== "viewer" && <ControlButton command={{ action: "revalidate", id }}>Revalidate</ControlButton>}<Link href={`/app/policies/${decision.policyId}`} className="self-center text-xs text-[#ffad8c] underline underline-offset-4">Policy v{decision.policyVersionNumber} ↗</Link></div></div></div><div className="relative z-10 mt-7 border-t border-white/15 pt-4 text-xs text-[#b5aaa0]"><span className="product-mono break-all">Decision hash {decision.decisionHash}</span>{decision.previousDecisionId && <Link className="ml-3 text-[#ffad8c] underline" href={`/app/decisions/${decision.previousDecisionId}`}>Previous decision ↗</Link>}</div></section>
     <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.55fr)]"><div className="product-panel p-5 sm:p-7"><span className="product-eyebrow">Reasoning / 01</span><h2 className="font-display text-2xl font-semibold">Why this decision</h2><div className="mt-5 space-y-3">{[...(explanation.whySelected ?? []), ...decision.warnings, ...(explanation.missingInformation ?? []), ...(explanation.whatWouldChange ?? [])].map((line, index) => <p className="flex gap-3 border-b border-[var(--color-line)] pb-3 text-sm leading-relaxed last:border-0" key={index}><span className="product-index">{String(index + 1).padStart(2, "0")}</span>{line}</p>)}</div></div>
       <div className="product-panel p-5 sm:p-7"><span className="product-eyebrow">Input / 02</span><h2 className="font-display text-2xl font-semibold">Payment intent</h2><dl className="mt-5 grid grid-cols-2 gap-4 text-sm"><div><dt className="product-index">AMOUNT</dt><dd className="mt-1 font-display text-2xl font-semibold tabular">{String(decision.intentSnapshot.amount)}</dd></div><div><dt className="product-index">MODE</dt><dd className="mt-1 capitalize">{decision.mode}</dd></div></dl><details className="mt-5 border-t border-[var(--color-line)] pt-4"><summary className="cursor-pointer text-sm font-semibold">View full intent data</summary><pre className="mt-3 max-h-72 overflow-auto rounded-lg bg-[var(--color-paper)] p-3 text-xs">{JSON.stringify(decision.intentSnapshot, null, 2)}</pre></details></div></section>

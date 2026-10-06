@@ -15,13 +15,13 @@ const dataDir = mkdtempSync(join(tmpdir(), "railor-coverage-gaps-test-"));
 process.env.PGLITE_DATA_DIR = dataDir;
 process.env.DATABASE_URL = "";
 
-vi.mock("../repository.js", () => ({ loadProviderInputs: vi.fn() }));
+vi.mock("../repository.js", () => ({ loadProviderInputs: vi.fn(), loadCountryProfile: vi.fn(async () => null) }));
 
 const { getDb, getDbHandle, providers, coverageGaps, corridorDemand, changeEvents, ensureMigrated } = await import("@railor/database");
 const { eq } = await import("drizzle-orm");
 const { loadProviderInputs } = await import("../repository.js");
 const { recordSearchTelemetry, revalidateCoverageGaps } = await import("../coverage-gaps.js");
-const { corridorKey } = await import("../search.js");
+const { corridorKey, searchCorridors } = await import("../search.js");
 const { evaluateProvider } = await import("../eligibility.js");
 import type { CapabilityFacet, ProviderInput } from "../eligibility.js";
 import type { CorridorQuery } from "@railor/types";
@@ -111,11 +111,44 @@ function search(query: CorridorQuery, results: Parameters<typeof recordSearchTel
 }
 
 describe("recordSearchTelemetry", () => {
-  it("records nothing for a query with no real destination", async () => {
-    await search({ customerType: "business" } as CorridorQuery, []);
+  it("evaluates a dashboard corridor without recording demand or gaps", async () => {
     const db = await getDb();
+    const query: CorridorQuery = { destinationCountry: "AU", customerType: "business" };
+    vi.mocked(loadProviderInputs).mockResolvedValue([providerInput(providerId, [])]);
+    const result = await searchCorridors(query, { recordTelemetry: false });
+    expect(result.providersChecked).toBe(1);
+    expect(result.counts.unknown).toBe(1);
+    const key = corridorKey(query);
+    expect(await db.select().from(corridorDemand).where(eq(corridorDemand.corridorKey, key))).toHaveLength(0);
+    expect(await db.select().from(coverageGaps).where(eq(coverageGaps.corridorKey, key))).toHaveLength(0);
+    // Explicit customer searches retain the default telemetry behavior.
+    await searchCorridors(query);
+    expect(await db.select().from(corridorDemand).where(eq(corridorDemand.corridorKey, key))).toHaveLength(1);
+  });
+
+  it("upserts multiple provider gaps with each provider's latest reasons", async () => {
+    const db = await getDb();
+    const [second] = await db.insert(providers).values({ slug: "coverage-batch-test", name: "Second", category: "Test", description: "test" }).returning({ id: providers.id });
+    const query: CorridorQuery = { destinationCountry: "CA", customerType: "business" };
+    const firstReasons = [{ code: "no_data", message: "First missing evidence", alsoTrue: [], wouldChange: [] }];
+    const secondReasons = [{ code: "no_data", message: "Second missing evidence", alsoTrue: [], wouldChange: [] }];
+    const results = [unknownResult(firstReasons)[0]!, { ...unknownResult(secondReasons)[0]!, provider: { ...unknownResult()[0]!.provider, id: second!.id } }];
+    await search(query, results);
+    const updatedReasons = [{ ...firstReasons[0]!, message: "First updated evidence" }];
+    await search(query, [{ ...results[0]!, reasons: updatedReasons as never }, results[1]!]);
+    const rows = await db.select().from(coverageGaps).where(eq(coverageGaps.corridorKey, corridorKey(query)));
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.timesRequested === 2)).toBe(true);
+    expect(rows.find((row) => row.providerId === providerId)!.reasons).toEqual(updatedReasons);
+    expect(rows.find((row) => row.providerId === second!.id)!.reasons).toEqual(secondReasons);
+  });
+
+  it("records nothing for a query with no real destination", async () => {
+    const db = await getDb();
+    const before = await db.select().from(corridorDemand);
+    await search({ customerType: "business" } as CorridorQuery, []);
     const rows = await db.select().from(corridorDemand);
-    expect(rows).toHaveLength(0);
+    expect(rows).toEqual(before);
   });
 
   it("creates a corridor_demand row on first search and increments on repeat, tracking volume only when an amount was given", async () => {

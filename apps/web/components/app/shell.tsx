@@ -12,6 +12,7 @@ import {
   Calculator,
   ChevronsLeft,
   ChevronsRight,
+  ChevronDown,
   ClipboardCheck,
   Code2,
   FileCheck2,
@@ -34,7 +35,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { CommandPalette, StageBadge, cn, type CommandItem } from "@railor/ui";
+import { CommandPalette, StageBadge, cn, useModalFocus, type CommandItem } from "@railor/ui";
 import { RailorMark } from "../marketing/nav";
 
 interface NavItem {
@@ -46,12 +47,19 @@ interface NavItem {
   exact?: boolean;
 }
 
-export const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
-  { title: null, items: [{ href: "/app", label: "Overview", icon: LayoutDashboard, exact: true }] },
+export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items: NavItem[] }> = [
+  { title: null, items: [
+    { href: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
+    { href: "/app/prices", label: "Price check", icon: Calculator },
+    { href: "/app/search", label: "Search & compare", icon: ScanSearch },
+    { href: "/app/corridors", label: "Corridors", icon: Route },
+    { href: "/app/payments", label: "Payments", icon: Banknote, stage: "beta" },
+    { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
+  ] },
   {
-    title: "Explore",
+    title: "Infrastructure",
+    icon: Globe2,
     items: [
-      { href: "/app/corridors", label: "Corridors", icon: Route },
       { href: "/app/map", label: "Route map", icon: Globe2 },
       { href: "/app/providers", label: "Providers", icon: Warehouse },
       { href: "/app/compare", label: "Compare", icon: GitCompare },
@@ -59,25 +67,25 @@ export const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
   },
   {
     title: "Move money",
+    icon: Banknote,
     items: [
-      { href: "/app/payments", label: "Payments", icon: Banknote, stage: "beta" },
-      { href: "/app/prices", label: "Price check", icon: Calculator },
       { href: "/app/beneficiaries", label: "Beneficiaries", icon: Users },
       { href: "/app/routing", label: "Routing", icon: Shuffle },
       { href: "/app/settings/connections", label: "Connections", icon: Link2 },
     ],
   },
   {
-    title: "Decide",
+    title: "Controls",
+    icon: ListChecks,
     items: [
       { href: "/app/decisions", label: "Decisions", icon: Scale },
       { href: "/app/approvals", label: "Approvals", icon: BadgeCheck },
       { href: "/app/policies", label: "Policies", icon: ListChecks },
-      { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
     ],
   },
   {
     title: "Monitor",
+    icon: Radar,
     items: [
       { href: "/app/monitoring", label: "Monitoring", icon: Radar },
       { href: "/app/changes", label: "Changes", icon: Activity },
@@ -87,6 +95,7 @@ export const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
   },
   {
     title: "Build",
+    icon: Code2,
     items: [
       { href: "/app/readiness", label: "Readiness", icon: ClipboardCheck },
       { href: "/app/connectors", label: "Connectors", icon: Plug, stage: "beta" },
@@ -118,8 +127,22 @@ export function AppShell({
   const reduceMotion = useReducedMotion();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const drawerRef = useModalFocus<HTMLElement>(mobileOpen, () => setMobileOpen(false));
+  const currentGroup = NAV_GROUPS.find((group) => group.items.some((item) => isActive(pathname, item)));
+  const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? "Settings";
 
   useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => {
+    const title = NAV_GROUPS.find((group) => group.title && group.items.some((item) => isActive(pathname, item)))?.title;
+    if (title) setOpenGroups((groups) => groups.includes(title) ? groups : [...groups, title]);
+  }, [pathname]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   // Collapsing is a per-viewer convenience; storage can be unavailable (private windows).
   useEffect(() => {
@@ -158,7 +181,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/app/settings") && !pathname.startsWith("/app/settings/connections");
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-canvas)]">
+    <div className="workspace-frame flex min-h-screen bg-[var(--color-canvas)]">
       {mobileOpen ? (
         <button
           type="button"
@@ -169,17 +192,22 @@ export function AppShell({
       ) : null}
 
       <aside
+        ref={drawerRef}
+        role={mobileOpen ? "dialog" : undefined}
+        aria-modal={mobileOpen || undefined}
+        aria-label="Workspace menu"
+        tabIndex={-1}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen w-[248px] shrink-0 flex-col gap-1 border-r border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-4 transition-[transform,width] duration-200 ease-out md:sticky md:top-0 md:z-0 md:translate-x-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-          collapsed ? "md:w-[68px]" : "md:w-[224px]",
+          "workspace-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[272px] shrink-0 flex-col gap-1 border-r border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-5 transition-[transform,visibility] duration-200 ease-out md:sticky md:top-0 md:z-0 md:visible md:translate-x-0",
+          mobileOpen ? "visible translate-x-0" : "invisible -translate-x-full",
+          collapsed ? "md:w-[72px]" : "md:w-[244px]",
         )}
       >
         <div className="mb-3 flex items-center gap-2 px-2">
-          <Link href="/app" className="flex flex-1 items-center gap-2">
-            <RailorMark />
+          <Link href="/app" aria-label="Railor overview" className="flex flex-1 items-center gap-2.5">
+            <RailorMark size={28} />
             {!collapsed ? (
-              <span className="font-display text-[17px] font-bold tracking-[-0.05em]">Railor</span>
+              <span className="font-display text-[21px] font-bold tracking-[-0.05em]">Railor</span>
             ) : null}
           </Link>
           <button
@@ -207,16 +235,23 @@ export function AppShell({
           </Link>
         ) : null}
 
-        <nav aria-label="Workspace" className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 pb-2 [scrollbar-width:thin]">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.title ?? "root"} className="flex flex-col gap-0.5">
-              {group.title && !collapsed ? (
-                <p className="px-2.5 pb-1 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-faint)]">
-                  {group.title}
-                </p>
-              ) : group.title ? (
-                <span className="mx-3 my-1 h-px bg-[var(--color-line)]" aria-hidden />
+        <nav aria-label="Workspace" className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1 pb-2 [scrollbar-width:thin]">
+          {NAV_GROUPS.map((group) => {
+            const open = !group.title || openGroups.includes(group.title);
+            const groupId = `nav-${group.title?.toLowerCase().replaceAll(" ", "-") ?? "main"}`;
+            return <div key={group.title ?? "root"} className={cn("flex flex-col gap-0.5", !group.title && "mb-4")}>
+              {group.title ? (
+                <button type="button" title={collapsed ? group.title : undefined} aria-label={collapsed ? group.title : undefined} aria-expanded={!collapsed && open} aria-controls={groupId}
+                  onClick={() => {
+                    if (collapsed) { setCollapsed(false); setOpenGroups((groups) => groups.includes(group.title!) ? groups : [...groups, group.title!]); }
+                    else setOpenGroups((groups) => groups.includes(group.title!) ? groups.filter((title) => title !== group.title) : [...groups, group.title!]);
+                  }}
+                  className={cn("sidebar-group-toggle flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 text-[13px] text-[var(--color-muted)] hover:bg-[var(--color-canvas)]", collapsed && "justify-center")}>
+                  {group.icon ? <group.icon size={17} aria-hidden /> : null}
+                  {!collapsed ? <><span className="flex-1 text-left">{group.title}</span><ChevronDown size={14} aria-hidden className={cn("transition-transform duration-200", open && "rotate-180")} /></> : null}
+                </button>
               ) : null}
+              <div id={groupId} hidden={Boolean(group.title && (collapsed || !open))} className={cn(group.title && "sidebar-subnav")}>
               {group.items.map((item) => {
                 const active = isActive(pathname, item);
                 return (
@@ -224,11 +259,12 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     title={collapsed ? item.label : undefined}
+                    aria-label={collapsed ? item.label : undefined}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative flex items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[13.5px] transition-colors",
+                      "relative flex min-h-11 items-center gap-3 rounded-xl px-2.5 py-2.5 text-[13px] transition-colors",
                       active
-                        ? "font-semibold text-[var(--color-orange-deep)]"
+                        ? "font-semibold text-white"
                         : "text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]",
                       collapsed && "justify-center",
                     )}
@@ -236,29 +272,31 @@ export function AppShell({
                     {active ? (
                       <motion.span
                         layoutId="sidebar-active"
-                        className="absolute inset-0 rounded-xl bg-[var(--color-lavender)]"
+                        className="absolute inset-0 rounded-xl bg-[var(--color-ink)] shadow-[var(--shadow-soft)]"
                         transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 40 }}
                         aria-hidden
                       />
                     ) : null}
-                    <item.icon size={16} strokeWidth={active ? 2.25 : 1.9} className="relative shrink-0" aria-hidden />
+                    <item.icon size={19} strokeWidth={active ? 2.25 : 1.9} className={cn("relative shrink-0", active && "text-[var(--color-accent-light)]")} aria-hidden />
                     {!collapsed ? (
                       <span className="relative flex flex-1 items-center gap-1.5">
                         {item.label}
-                        {item.stage ? <StageBadge stage={item.stage} /> : null}
+                        {item.stage ? <span className={cn("ml-auto", active && "[&>span]:border-white/20 [&>span]:bg-white/10 [&>span]:text-white/80")}><StageBadge stage={item.stage} /></span> : null}
                       </span>
                     ) : null}
                   </Link>
                 );
               })}
-            </div>
-          ))}
+              </div>
+            </div>;
+          })}
         </nav>
 
         <div className="flex flex-col gap-0.5 border-t border-[var(--color-line)] pt-2">
           <Link
             href="/app/settings"
             title={collapsed ? "Settings" : undefined}
+            aria-label={collapsed ? "Settings" : undefined}
             aria-current={settingsActive ? "page" : undefined}
             className={cn(
               "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
@@ -297,14 +335,14 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         {isDemo ? (
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-[var(--color-orange)] px-4 py-1.5 text-center text-[12.5px] font-medium text-white">
-            <span>You&apos;re viewing the shared demo — it resets every time someone clicks &quot;View demo&quot;.</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-[var(--color-action)] px-4 py-1.5 text-center text-[12.5px] font-medium text-white">
+            <span>Demo workspace · shared and reset on each demo visit.</span>
             <Link href="/login" className="underline decoration-white/50 underline-offset-2 hover:decoration-white">
-              Create your own free workspace →
+              Create a workspace →
             </Link>
           </div>
         ) : null}
-        <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-[var(--color-line)] bg-[var(--color-canvas)]/85 px-3 py-2.5 backdrop-blur sm:gap-3 sm:px-6 sm:py-3">
+        <header className="workspace-topbar sticky top-0 z-30 flex min-h-[72px] items-center gap-2 border-b border-[var(--color-line)] bg-[var(--color-paper)]/95 px-3 py-3 backdrop-blur sm:gap-3 sm:px-7">
           <button
             type="button"
             onClick={() => {
@@ -312,32 +350,37 @@ export function AppShell({
               setMobileOpen(true);
             }}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] md:hidden"
           >
             <Menu size={19} />
           </button>
+          <Link href="/app" aria-label="Railor overview" className="mr-1 shrink-0 md:hidden"><RailorMark size={23} /></Link>
+          <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{currentGroup?.title ?? "Workspace"}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
           <CommandPalette items={items} recent={recent} />
-          <span className="flex-1" />
+          <span className="flex-1 lg:hidden" />
           <Link
-            href="/app/corridors"
-            className="rounded-full bg-[var(--color-purple)] px-3 py-1.5 text-[13px] font-medium text-white transition hover:bg-[var(--color-purple-deep)] sm:px-3.5"
+            href="/app/prices"
+            aria-label="Check a price"
+            className="inline-flex min-h-10 shrink-0 items-center rounded-xl bg-[var(--color-action)] px-3 text-[12px] font-semibold text-white transition hover:bg-[var(--color-orange-deep)] sm:px-3.5"
           >
-            <span className="sm:hidden">New</span>
-            <span className="hidden sm:inline">New corridor</span>
+            <Calculator size={16} aria-hidden className="mr-2" />
+            <span className="sm:hidden">Price</span>
+            <span className="hidden sm:inline">Check a price</span>
           </Link>
           <form action="/api/auth/signout" method="post" className="hidden md:block">
             <button
               type="submit"
-              className="rounded-full border border-[var(--color-line)] px-3 py-1.5 text-[13px] text-[var(--color-muted)] transition hover:border-[var(--color-line-strong)] hover:text-[var(--color-ink)]"
+              className="min-h-10 rounded-xl px-3 text-[12px] text-[var(--color-muted)] transition hover:bg-[var(--color-sand)] hover:text-[var(--color-ink)]"
             >
               Sign out
             </button>
           </form>
         </header>
 
-        <main id="main" className="min-w-0 flex-1 px-4 py-5 sm:px-6 sm:py-6">
+        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-7 sm:py-8">
           {/* Keyed by path so each workspace page lands with the same short rise (CSS; reduced-motion aware). */}
-          <div key={pathname} className="railor-page-in">
+          <div key={pathname} className="railor-page-in mx-auto max-w-[1320px]">
             {children}
           </div>
         </main>

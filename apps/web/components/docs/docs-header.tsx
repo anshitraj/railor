@@ -14,7 +14,7 @@ export function DocsHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-4">
+    <header className="railor-rise flex flex-col gap-4 border-b border-[var(--color-line-strong)] pb-7">
       <p className="product-eyebrow mb-0">{eyebrow}</p>
       <h1 className="flex flex-wrap items-center gap-x-4 gap-y-2 text-balance font-display text-[clamp(2.1rem,4.2vw,2.9rem)] font-semibold leading-[1.03] tracking-[-0.045em]">
         {title}

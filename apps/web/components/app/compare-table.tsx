@@ -31,6 +31,7 @@ export function CompareBoard({
   const router = useRouter();
   const [diffOnly, setDiffOnly] = useState(false);
   const [link, setLink] = useState<string | undefined>(shareUrl);
+  const [shareError, setShareError] = useState("");
   const [pending, startTransition] = useTransition();
 
   const grouped = useMemo(() => {
@@ -51,9 +52,10 @@ export function CompareBoard({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="workspace-heading flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">Compare providers</h1>
+          <span className="product-eyebrow">Side by side</span>
+          <h1 className="font-semibold tracking-tight">Compare providers</h1>
           <p className="text-[14px] text-[var(--color-muted)]">
             Like-for-like, from the same capability graph. Anything unevidenced reads “Unknown”.
           </p>
@@ -67,10 +69,13 @@ export function CompareBoard({
               size="sm"
               variant="secondary"
               disabled={pending || table.providers.length < 2}
+              title={table.providers.length < 2 ? "Pick at least two providers to share a comparison" : undefined}
               onClick={() =>
                 startTransition(async () => {
+                  setShareError("");
                   const res = await shareComparison(table.providers.map((p) => p.slug));
                   if (res.ok) setLink(res.url);
+                  else setShareError("Couldn't create a share link. Try again.");
                 })
               }
             >
@@ -79,6 +84,12 @@ export function CompareBoard({
           </div>
         ) : null}
       </div>
+
+      {shareError ? (
+        <p role="alert" className="text-[13px] text-[var(--color-bad)]">
+          {shareError}
+        </p>
+      ) : null}
 
       {link ? (
         <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-3">

@@ -4,6 +4,7 @@ import { loadPricePage, productionConnectedSlugs } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
 import { PriceLabelsCard, PriceToolsNav } from "../../../components/app/price-panels";
 import { SwapQuote } from "../../../components/app/swap-quote";
+import { ProviderFeatureComparison } from "../../../components/app/provider-feature-comparison";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Price check" };
@@ -31,6 +32,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
         />
         <PriceLabelsCard mode="app" connectedAny={connected.some((s) => s === "wise" || s === "airwallex")} />
       </div>
+      <ProviderFeatureComparison />
     </div>
   );
 }

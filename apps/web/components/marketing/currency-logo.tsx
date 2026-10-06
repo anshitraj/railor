@@ -23,6 +23,12 @@ export function CurrencyLogo({
   symbol: CurrencySymbol;
   size?: number;
 }) {
+  if (symbol === "AED") {
+    return <span role="img" aria-label="UAE dirham" style={{ width: size, height: size }} className="inline-flex shrink-0 items-center justify-center bg-white">
+      {/* eslint-disable-next-line @next/next/no-img-element -- bundled currency symbol, not a font-dependent glyph */}
+      <img src="/brand/currencies/aed.svg" alt="" width={size} height={size} className="h-[72%] w-[72%] object-contain" />
+    </span>;
+  }
   if (symbol === "USDT") {
     return (
       <svg width={size} height={size} viewBox="0 0 32 32" aria-label="USDT" role="img">

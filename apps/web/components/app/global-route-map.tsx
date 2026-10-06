@@ -97,9 +97,10 @@ export function GlobalRouteMap({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="workspace-heading flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[24px] font-semibold tracking-tight">Global route map</h1>
+          <span className="product-eyebrow">Coverage atlas</span>
+          <h1 className="font-semibold tracking-tight">Global route map</h1>
           <p className="text-[14px] text-[var(--color-muted)]">
             {routes.length} corridors with real coverage, derived from {providersChecked} mapped
             providers. Click a country to isolate its routes.

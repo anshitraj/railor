@@ -1633,11 +1633,12 @@ export const featureInterest = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     feature: text("feature").notNull(),
     email: text("email").notNull(),
+    providerRequested: text("provider_requested"),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "set null" }),
     createdAt: now(),
   },
-  (t) => ({ featureEmailIdx: uniqueIndex("feature_interest_feature_email_idx").on(t.feature, t.email) }),
+  (t) => ({ featureEmailIdx: uniqueIndex("feature_interest_feature_email_provider_idx").on(t.feature, t.email, sql`coalesce(${t.providerRequested}, '')`) }),
 );
 
 export const sharedComparisons = pgTable("shared_comparisons", {

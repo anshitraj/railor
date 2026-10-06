@@ -8,6 +8,7 @@ export * from "./geo.js";
 export * from "./route-map.js";
 export * from "./repository.js";
 export * from "./search.js";
+export * from "./search-preview.js";
 export * from "./vocab.js";
 export * from "./analytics.js";
 export * from "./connectivity.js";

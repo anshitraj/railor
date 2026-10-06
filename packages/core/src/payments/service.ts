@@ -16,6 +16,7 @@ import {
   providerConnections,
   providers,
   providerWebhookEvents,
+  type BeneficiaryMethod,
   type PaymentStatus,
 } from "@railor/database";
 import { PaymentIntent, PolicyRules } from "@railor/types";
@@ -28,6 +29,7 @@ import { decisionAuthorization } from "../product-control.js";
 import { loadProviderInputs } from "../repository.js";
 import { decryptJson, encryptJson, sha256Hex } from "../secrets.js";
 import { getPayoutAdapter, sandboxPayoutAdapter } from "./adapters/index.js";
+import { wireAmount } from "./http.js";
 import { deliverDueWebhooks, enqueueWebhookEvent } from "./outbound.js";
 import { scoreRoute, type PaymentRoutePlan, type RouteCandidateInput, type RouteExecutor, type RoutingPreset } from "./routing.js";
 import {
@@ -214,6 +216,13 @@ const Details = z.object({
   email: z.string().trim().email().max(200).optional(),
 });
 
+/**
+ * A payment's destination is a fiat currency (the policy engine's routes are keyed by ISO 4217), so a stablecoin
+ * wallet cannot be paid yet. The Bridge/Circle/sandbox wallet branches exist for when destination assets are
+ * modelled; until then a wallet beneficiary is refused up front rather than saved and left unpayable.
+ */
+export const WALLET_PAYOUTS_ENABLED = false;
+
 export const BeneficiaryInput = z
   .object({
     label: z.string().trim().max(80).optional(),
@@ -246,6 +255,10 @@ export const BeneficiaryInput = z
       need(/^\d{9,18}$/.test(d.accountNumber ?? ""), "accountNumber", "Indian account numbers are 9–18 digits.");
     }
     if (v.method === "pix") need(Boolean(d.pixKey), "pixKey", "A Pix key is required.");
+    if (v.method === "crypto_address" && !WALLET_PAYOUTS_ENABLED) {
+      ctx.addIssue({ code: "custom", path: ["method"], message: "Paying a stablecoin wallet is coming soon. For now a payment's destination is a bank account in a fiat currency." });
+      return;
+    }
     if (v.method === "crypto_address") {
       const network = (v.network ?? "").toLowerCase();
       const pattern = NETWORK_ADDRESS[network];
@@ -409,6 +422,8 @@ interface PlanInput {
   destinationCurrency: string;
   destinationCountry: string;
   pinnedProvider?: string | null;
+  /** The payout method of the beneficiary being paid; a rail that cannot pay it is never offered. */
+  beneficiaryMethod?: BeneficiaryMethod;
   candidates: Array<{ providerSlug: string; providerName: string; policyResult: string; eligibilityStatus: string; policyReasonCodes: string[] }>;
 }
 
@@ -421,6 +436,22 @@ function quoteSummary(quote: { feeAmount?: number; costPartial: boolean; estimat
     quoteType: quote.quoteType,
     expiresAt: quote.expiresAt,
   };
+}
+
+const METHOD_LABEL: Record<BeneficiaryMethod, string> = {
+  bank_us: "US bank (ACH/wire)",
+  iban: "IBAN",
+  gb: "UK bank",
+  clabe: "Mexican CLABE",
+  pix: "Pix",
+  in_bank: "Indian bank (IFSC)",
+  crypto_address: "stablecoin wallet",
+};
+
+async function beneficiaryMethodOf(payment: Pick<PaymentRow, "beneficiaryId" | "organizationId">): Promise<BeneficiaryMethod | undefined> {
+  const db = await getDb();
+  const [row] = await db.select({ method: beneficiaries.method }).from(beneficiaries).where(and(eq(beneficiaries.id, payment.beneficiaryId), eq(beneficiaries.organizationId, payment.organizationId))).limit(1);
+  return row?.method;
 }
 
 export async function planPaymentRoute(organizationId: string, input: PlanInput): Promise<PaymentRoutePlan> {
@@ -457,7 +488,9 @@ export async function planPaymentRoute(organizationId: string, input: PlanInput)
       const connection = connections.find((row) => row.slug === c.providerSlug && row.connection.environment === wantEnv);
       let executor: RouteExecutor | null = null;
       let executorNote: string | undefined;
-      if (input.mode === "test") {
+      if (payout && input.beneficiaryMethod && !payout.supportedMethods.includes(input.beneficiaryMethod)) {
+        executorNote = `${c.providerName} cannot pay ${METHOD_LABEL[input.beneficiaryMethod]} beneficiaries through Railor.`;
+      } else if (input.mode === "test") {
         if (connection && payout) {
           executor = { kind: "provider", connectionId: connection.connection.id, environment: "sandbox" };
           executorNote = `${c.providerName} sandbox API via your connection.`;
@@ -662,7 +695,11 @@ async function decide(organizationId: string, intent: PaymentIntent, pinnedProvi
   return loaded;
 }
 
-function planInputFrom(payment: Pick<PaymentRow, "mode" | "amount" | "sourceCurrency" | "destinationCurrency" | "destinationCountry" | "pinnedProvider" | "intent">, candidates: NonNullable<Awaited<ReturnType<typeof loadDecision>>>["candidates"]): PlanInput {
+function planInputFrom(
+  payment: Pick<PaymentRow, "mode" | "amount" | "sourceCurrency" | "destinationCurrency" | "destinationCountry" | "pinnedProvider" | "intent">,
+  candidates: NonNullable<Awaited<ReturnType<typeof loadDecision>>>["candidates"],
+  beneficiaryMethod?: BeneficiaryMethod,
+): PlanInput {
   const intent = payment.intent as { sourceNetwork?: string };
   return {
     mode: payment.mode,
@@ -672,6 +709,7 @@ function planInputFrom(payment: Pick<PaymentRow, "mode" | "amount" | "sourceCurr
     destinationCurrency: payment.destinationCurrency,
     destinationCountry: payment.destinationCountry,
     pinnedProvider: payment.pinnedProvider,
+    beneficiaryMethod,
     candidates: candidates.map((c) => ({
       providerSlug: c.providerSlug,
       providerName: c.providerName,
@@ -802,7 +840,7 @@ export async function createPayment(organizationId: string, actor: PaymentActor,
     pinnedProvider: input.pinnedProvider ?? null,
     intent: intent as unknown as Record<string, unknown>,
   };
-  const plan = await planPaymentRoute(organizationId, planInputFrom(base, loaded.candidates));
+  const plan = await planPaymentRoute(organizationId, planInputFrom(base, loaded.candidates, beneficiary.method));
   const outcome = statusFromDecision(loaded.decision.status, plan);
 
   let row: PaymentRow;
@@ -866,7 +904,7 @@ async function ensureFreshAuthorization(payment: PaymentRow, actor: PaymentActor
   }
   // The decision expired or the policy changed: evaluate again under the current policy.
   const loaded = await decide(payment.organizationId, PaymentIntent.parse(payment.intent), payment.pinnedProvider, actor.userId, deps);
-  const plan = await planPaymentRoute(payment.organizationId, planInputFrom(payment, loaded.candidates));
+  const plan = await planPaymentRoute(payment.organizationId, planInputFrom(payment, loaded.candidates, await beneficiaryMethodOf(payment)));
   const outcome = statusFromDecision(loaded.decision.status, plan);
   const db = await getDb();
   const [updated] = await db
@@ -948,7 +986,7 @@ export async function submitPayment(organizationId: string, actor: PaymentActor,
   if (!Number.isFinite(planAge) || planAge > PLAN_MAX_AGE_MS) {
     const loaded = payment.decisionId ? await loadDecision(organizationId, payment.decisionId) : null;
     if (loaded) {
-      const plan = await planPaymentRoute(organizationId, planInputFrom(payment, loaded.candidates));
+      const plan = await planPaymentRoute(organizationId, planInputFrom(payment, loaded.candidates, await beneficiaryMethodOf(payment)));
       const db = await getDb();
       [payment] = (await db.update(payments).set({ routePlan: plan as unknown as Record<string, unknown>, updatedAt: new Date() }).where(eq(payments.id, payment.id)).returning()) as [PaymentRow];
       await recordEvent(payment, "route.replanned", "ready", "ready", "system", actor.userId, { candidates: plan.candidates.map((c) => c.providerSlug) });
@@ -985,6 +1023,14 @@ export async function submitPayment(organizationId: string, actor: PaymentActor,
       continue;
     }
 
+    if (!resolved.adapter.supportedMethods.includes(beneficiary.method)) {
+      const message = `${candidate.providerName} cannot pay ${METHOD_LABEL[beneficiary.method]} beneficiaries through Railor.`;
+      await db.insert(paymentAttempts).values({ ...base, environment: resolved.environment, connectionId: resolved.connectionId, status: "rejected", errorCode: "beneficiary_method_unsupported", errorMessage: message });
+      await recordEvent(payment, "attempt.skipped", "submitting", "submitting", "system", actor.userId, { attemptNumber, provider: candidate.providerSlug, reason: message });
+      lastRejection = { code: "beneficiary_method_unsupported", message };
+      continue;
+    }
+
     let providerRef: string | undefined;
     try {
       providerRef = await beneficiaryRef(resolved.adapter, resolved.credentials, beneficiary, candidate.providerSlug, resolved.connectionId, resolved.environment);
@@ -1000,7 +1046,7 @@ export async function submitPayment(organizationId: string, actor: PaymentActor,
       paymentId: payment.id,
       attemptNumber,
       idempotencyKey,
-      amount: payment.amount,
+      amount: wireAmount(payment.amount),
       sourceCurrency: payment.sourceCurrency,
       sourceNetwork: (payment.intent as { sourceNetwork?: string }).sourceNetwork,
       destinationCurrency: payment.destinationCurrency,
@@ -1081,6 +1127,9 @@ export async function cancelPayment(organizationId: string, actor: PaymentActor,
  * Provider status: webhooks + reconciliation
  * ------------------------------------------------------------------------- */
 
+/** Longer than any function can run (maxDuration 300s): past this, a `submitting` payment is no longer being worked on. */
+const SUBMIT_STALE_MS = 10 * 60_000;
+
 const PAYMENT_EDGES: Record<string, PaymentStatus[]> = {
   submitting: ["awaiting_funds", "processing", "completed", "failed", "returned", "cancelled", "unknown"],
   unknown: ["awaiting_funds", "processing", "completed", "failed", "returned", "cancelled"],
@@ -1138,7 +1187,20 @@ export async function reconcilePayment(paymentId: string) {
   const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId)).limit(1);
   if (!payment || !OPEN_STATUSES.has(payment.status)) return { paymentId, outcome: "not_open" as const };
   const [attempt] = await db.select().from(paymentAttempts).where(eq(paymentAttempts.paymentId, paymentId)).orderBy(desc(paymentAttempts.attemptNumber)).limit(1);
-  if (!attempt) return { paymentId, outcome: "no_attempt" as const };
+  // A submit that died between claiming the payment and finishing its attempts. The attempt row is written
+  // before any provider is asked to move money, so with no attempt, or a last attempt the provider rejected,
+  // nothing is in flight: close it out instead of leaving it in `submitting` forever.
+  const stranded = payment.status === "submitting" && Date.now() - payment.updatedAt.getTime() > SUBMIT_STALE_MS;
+  if (!attempt) {
+    if (!stranded) return { paymentId, outcome: "no_attempt" as const };
+    await transition(payment, "failed", "reconciler", null, { failureCode: "submit_interrupted", failureMessage: "The submission was interrupted before any provider was contacted. Nothing was sent; create the payment again." });
+    return { paymentId, outcome: "updated" as const };
+  }
+  if (attempt.status === "rejected") {
+    if (!stranded) return { paymentId, outcome: "unchanged" as const };
+    await transition(payment, "failed", "reconciler", null, { failureCode: attempt.errorCode ?? "submit_interrupted", failureMessage: attempt.errorMessage ?? "The provider rejected this payment." });
+    return { paymentId, outcome: "updated" as const };
+  }
   const resolved = await adapterForAttempt(attempt, payment.organizationId);
   if (!resolved) {
     await recordEvent(payment, "reconcile.skipped", payment.status, payment.status, "reconciler", null, { reason: "connection_unavailable" });
@@ -1172,7 +1234,7 @@ export async function reconcilePayment(paymentId: string) {
         paymentId: payment.id,
         attemptNumber: attempt.attemptNumber,
         idempotencyKey: attempt.idempotencyKey,
-        amount: payment.amount,
+        amount: wireAmount(payment.amount),
         sourceCurrency: payment.sourceCurrency,
         sourceNetwork: (payment.intent as { sourceNetwork?: string }).sourceNetwork,
         destinationCurrency: payment.destinationCurrency,
@@ -1197,6 +1259,59 @@ export async function reconcilePayment(paymentId: string) {
   }
   await recordEvent(payment, "reconcile.pending", payment.status, payment.status, "reconciler", null, { attemptNumber: attempt.attemptNumber });
   return { paymentId, outcome: "pending" as const };
+}
+
+/** How long after completing a payment is still checked for a bank return (providers can bounce a settled payment days later). */
+const RETURN_WATCH_WINDOW_MS = 3 * 86_400_000;
+/** Real providers are asked at most this often about a completed payment; the test rail has no rate limit to respect. */
+const RETURN_WATCH_INTERVAL_MS = 10 * 60_000;
+
+/**
+ * Open payments are polled until they settle, but a settled payment can still be returned by the beneficiary's
+ * bank. For a few days after completion, ask the provider again and apply a return if there is one.
+ */
+export async function watchCompletedForReturns(options: { limit?: number; organizationId?: string } = {}) {
+  const db = await getDb();
+  const candidates = await db
+    .select()
+    .from(payments)
+    .where(
+      and(
+        eq(payments.status, "completed"),
+        gte(payments.completedAt, new Date(Date.now() - RETURN_WATCH_WINDOW_MS)),
+        lt(payments.updatedAt, new Date(Date.now() - 15_000)),
+        options.organizationId ? eq(payments.organizationId, options.organizationId) : sql`true`,
+      ),
+    )
+    .orderBy(payments.updatedAt)
+    .limit(options.limit ?? 25);
+  const results: Array<{ paymentId: string; outcome: "returned" | "unchanged" | "skipped" | "error"; error?: string }> = [];
+  for (const payment of candidates) {
+    try {
+      const [attempt] = await db.select().from(paymentAttempts).where(eq(paymentAttempts.paymentId, payment.id)).orderBy(desc(paymentAttempts.attemptNumber)).limit(1);
+      const resolved = attempt ? await adapterForAttempt(attempt, payment.organizationId) : null;
+      if (!attempt || !resolved || !attempt.providerReference) {
+        results.push({ paymentId: payment.id, outcome: "skipped" });
+        continue;
+      }
+      if (attempt.executor !== "railor_sandbox" && Date.now() - payment.updatedAt.getTime() < RETURN_WATCH_INTERVAL_MS) {
+        results.push({ paymentId: payment.id, outcome: "skipped" });
+        continue;
+      }
+      const lookup = await resolved.adapter.getPayout(resolved.credentials, { providerReference: attempt.providerReference, idempotencyKey: attempt.idempotencyKey, environment: attempt.environment, createdAt: attempt.createdAt });
+      if (lookup.found && lookup.status === "returned") {
+        const applied = await applyProviderStatus(attempt, lookup, "reconciler");
+        results.push({ paymentId: payment.id, outcome: applied.changed ? "returned" : "unchanged" });
+        continue;
+      }
+      // Nothing to report: note the check so the next run looks at the payments that have waited longest.
+      await db.update(payments).set({ updatedAt: new Date() }).where(and(eq(payments.id, payment.id), eq(payments.status, "completed")));
+      results.push({ paymentId: payment.id, outcome: "unchanged" });
+    } catch (error) {
+      results.push({ paymentId: payment.id, outcome: "error", error: error instanceof Error ? error.message : "unknown" });
+    }
+  }
+  return results;
 }
 
 export async function reconcileOpenPayments(options: { limit?: number; organizationId?: string } = {}) {

@@ -1,26 +1,50 @@
 import { z } from "zod";
-import { PaymentIntent, PolicyRules } from "@railor/types";
+import { PaymentIntent, PolicyRules, type RankingPreset } from "@railor/types";
 import { interpretRules } from "./interpret.js";
 import { loadDecision } from "./decision-repository.js";
 
-/** Draft-only tools. No model or natural-language tool may activate policy,
+/** Draft and read-only search tools. No natural-language tool may activate policy,
  * grant approval, execute a payment or silently fill missing payment facts. */
+export function agentPreference(text: string): RankingPreset | null {
+  const value = text.toLowerCase();
+  const priority = value.match(/\b(reliability|speed|price|cost)\s+(?:matters? more than|over)\s+(reliability|speed|price|cost)\b/);
+  if (priority) return priority[1] === "reliability" ? "most_reliable" : priority[1] === "speed" ? "fastest" : "cheapest";
+  if (/\b(?:reliability|reliable|uptime)\b/.test(value) && !/\b(?:not|ignore|don't prioritize)\s+(?:reliability|reliable|uptime)\b/.test(value)) return "most_reliable";
+  if (/\b(?:fastest|fast|speed|quickest|as soon as possible)\b/.test(value)) return "fastest";
+  if (/\b(?:maximum|max|highest|most)\s+(?:recipient|received|payout)|\bmaximize\s+(?:recipient|payout)\b/.test(value)) return "max_recipient_amount";
+  if (/\b(?:cheapest|lowest (?:cost|fees?)|minimi[sz]e (?:cost|fees?)|prioriti[sz]e (?:price|cost)|compare by price|price matters)\b/.test(value)) return "cheapest";
+  if (/\b(?:balanced|balance (?:cost|price|speed)|best overall)\b/.test(value)) return "balanced";
+  return null;
+}
+
 export function draftPaymentIntent(text: string, entityCountry?: string) {
   z.string().trim().min(1).max(2000).parse(text);
   const interpretation = interpretRules(text);
   const q = interpretation.query;
+  const explicit = (field: string) => interpretation.tokens.some((token) => token.field === field && Boolean(token.matchedText));
+  const inferred = interpretation.tokens.filter((token) => !token.matchedText && ["destinationCountry", "destinationCurrency"].includes(token.field));
+  const preference = agentPreference(text) ?? "balanced";
   const draft = Object.fromEntries(Object.entries({
     sourceEntityCountry: q.entityCountry ?? entityCountry,
-    sourceEntityType: q.customerType, sourceCurrency: q.sourceCurrency,
+    sourceEntityType: q.customerType, sourceCurrency: q.sourceAsset ? undefined : q.sourceCurrency,
     sourceAsset: q.sourceAsset, sourceNetwork: q.sourceNetwork,
     destinationCountry: q.destinationCountry, destinationCurrency: q.destinationCurrency,
-    product: q.product, amount: q.amount, amountCurrency: q.amountCurrency,
-    namedRail: q.namedRail, paymentMethod: q.paymentMethod, endpointType: q.endpointType,
+    product: explicit("product") ? q.product : undefined, amount: q.amount,
+    amountCurrency: q.sourceAsset ? undefined : q.sourceCurrency,
+    namedRail: q.namedRail, paymentMethod: explicit("paymentMethod") ? q.paymentMethod : undefined,
+    endpointType: q.endpointType, preference,
   }).filter(([, v]) => v !== undefined));
   const parsed = PaymentIntent.safeParse(draft);
-  return { kind: "payment_intent_draft", draft, valid: parsed.success,
-    missing: parsed.success ? [] : [...new Set(parsed.error.issues.map((i) => i.path.join(".")))],
-    notes: ["Review every field before evaluating. A draft is not a decision or authorization.",
+  const missing = [...new Set([...(parsed.success ? [] : parsed.error.issues.map((i) => i.path.join("."))),
+    ...(!draft.sourceAsset && !draft.sourceCurrency ? ["sourceAsset or sourceCurrency"] : []),
+    ...(draft.sourceAsset && !draft.sourceNetwork ? ["sourceNetwork"] : []),
+    ...(!draft.destinationCurrency ? ["destinationCurrency"] : []),
+  ])];
+  return { kind: "payment_intent_draft" as const, draft, valid: parsed.success && missing.length === 0,
+    missing, needsReview: inferred.length > 0,
+    inferredFields: inferred.map((token) => ({ field: token.field, value: token.value })),
+    notes: [
+      ...(inferred.length ? ["Destination values suggested from the country or currency need your confirmation."] : []),
       ...(entityCountry && !q.entityCountry ? ["Entity country came from your workspace profile."] : [])],
     interpretation,
   };

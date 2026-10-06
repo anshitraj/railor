@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { motion } from "motion/react";
-import {
-  ChoiceGrid,
-  PasteToStructure,
-  SmartPicker,
-  StepFlow,
-  type Choice,
-  type PickerOption,
-} from "@railor/ui";
+import { Banknote, Wallet, Landmark, Store, CreditCard, Vault, Coins, ArrowLeftRight, CircleHelp, ArrowDownToLine, ArrowUpFromLine, ShieldCheck, Building2 } from "lucide-react";
+import { ChoiceGrid, SmartPicker, StepFlow, type Choice, type PickerOption } from "@railor/ui";
 import { finishOnboarding, saveStep } from "../../app/welcome/actions";
+import { CurrencyLogo } from "../marketing/currency-logo";
 
 export interface OnboardingSeed {
   building?: string;
@@ -19,238 +13,109 @@ export interface OnboardingSeed {
   targetCountries: string[];
   settlementCurrencies: string[];
   interests: string[];
+  assumptions?: string[];
+  initialStep?: number;
   fromQuery?: string;
 }
 
 const BUILDING: Choice[] = [
-  { value: "payments", label: "Payments", hint: "Moving money for customers", icon: "→" },
-  { value: "wallet", label: "Wallet", hint: "Balances and transfers", icon: "◎" },
-  { value: "neobank", label: "Neobank", hint: "Accounts and cards", icon: "▤" },
-  { value: "marketplace", label: "Marketplace", hint: "Paying sellers or vendors", icon: "⇄" },
-  { value: "card_program", label: "Card program", hint: "Issuing and funding cards", icon: "▭" },
-  { value: "treasury", label: "Treasury", hint: "Managing corporate balances", icon: "≡" },
-  { value: "stablecoin_infrastructure", label: "Stablecoin infrastructure", hint: "Rails for others", icon: "◈" },
-  { value: "remittances", label: "Remittances", hint: "Consumer cross-border", icon: "↔" },
-  { value: "other", label: "Something else", hint: "Tell us later", icon: "•" },
+  { value: "payments", label: "Payments", hint: "Move money for customers", icon: <Banknote size={20} aria-hidden /> },
+  { value: "wallet", label: "Wallet", hint: "Balances and transfers", icon: <Wallet size={20} aria-hidden /> },
+  { value: "neobank", label: "Neobank", hint: "Accounts and cards", icon: <Landmark size={20} aria-hidden /> },
+  { value: "marketplace", label: "Marketplace", hint: "Pay sellers or vendors", icon: <Store size={20} aria-hidden /> },
+  { value: "card_program", label: "Card program", hint: "Issue and fund cards", icon: <CreditCard size={20} aria-hidden /> },
+  { value: "treasury", label: "Treasury", hint: "Manage company balances", icon: <Vault size={20} aria-hidden /> },
+  { value: "stablecoin_infrastructure", label: "Stablecoin infrastructure", hint: "Build rails for others", icon: <Coins size={20} aria-hidden /> },
+  { value: "remittances", label: "Remittances", hint: "Cross-border transfers", icon: <ArrowLeftRight size={20} aria-hidden /> },
+  { value: "other", label: "Something else", hint: "Start exploring", icon: <CircleHelp size={20} aria-hidden /> },
 ];
-
 const INTERESTS: Choice[] = [
-  { value: "stablecoin_to_fiat", label: "Stablecoin → fiat", hint: "Off-ramp and payouts" },
-  { value: "fiat_to_stablecoin", label: "Fiat → stablecoin", hint: "On-ramp and funding" },
-  { value: "cards", label: "Cards", hint: "Issuing and spend" },
-  { value: "bank_payouts", label: "Bank payouts", hint: "Local and SWIFT rails" },
-  { value: "collections", label: "Collections", hint: "Getting paid locally" },
-  { value: "virtual_accounts", label: "Virtual accounts", hint: "Named IBANs and equivalents" },
-  { value: "kyc_kyb", label: "KYC / KYB", hint: "Verification requirements" },
-  { value: "treasury", label: "Treasury", hint: "Balance and FX management" },
-  { value: "wallet_infrastructure", label: "Wallet infrastructure", hint: "Custody and transfers" },
+  { value: "stablecoin_to_fiat", label: "Stablecoin → fiat", icon: <ArrowDownToLine size={20} aria-hidden /> },
+  { value: "fiat_to_stablecoin", label: "Fiat → stablecoin", icon: <ArrowUpFromLine size={20} aria-hidden /> },
+  { value: "cards", label: "Cards", icon: <CreditCard size={20} aria-hidden /> },
+  { value: "bank_payouts", label: "Bank payouts", icon: <Landmark size={20} aria-hidden /> },
+  { value: "collections", label: "Collections", icon: <Banknote size={20} aria-hidden /> },
+  { value: "virtual_accounts", label: "Virtual accounts", icon: <Building2 size={20} aria-hidden /> },
+  { value: "kyc_kyb", label: "KYC / KYB", icon: <ShieldCheck size={20} aria-hidden /> },
+  { value: "treasury", label: "Treasury", icon: <Vault size={20} aria-hidden /> },
+  { value: "wallet_infrastructure", label: "Wallet infrastructure", icon: <Wallet size={20} aria-hidden /> },
+];
+const QUESTIONS = [
+  ["What are you building?", "Choose the closest fit. You can change this later."],
+  ["Where is your company based?", "This helps us find providers that can work with your business."],
+  ["Where does money need to go?", "Choose the markets you want to reach."],
+  ["Which currencies do you use?", "Choose how you want money to arrive."],
+  ["What would you like to explore?", "Select the tools that matter to you."],
+] as const;
+const SKIPPED = [
+  "Product type not specified — Railor assumed general payments.",
+  "Company country not specified — Railor used US for suggested routes. Confirm your company country.",
+  "Target markets not specified — Railor suggested the United Arab Emirates.",
+  "Settlement currencies not specified — no currency filter was applied to suggested routes.",
+  "Infrastructure focus not specified — Railor assumed bank payouts.",
 ];
 
-/**
- * Three questions, zero keystrokes required.
- *
- * Every step is answerable with a pointer, every step autosaves, every skip is
- * recorded as a visible assumption rather than a silent default, and anything
- * the visitor already told us in the public search arrives pre-filled.
- */
-export function OnboardingFlow({
-  seed,
-  countries,
-  currencies,
-}: {
-  seed: OnboardingSeed;
-  countries: PickerOption[];
-  currencies: PickerOption[];
-}) {
-  const [step, setStep] = useState(0);
+export function OnboardingFlow({ seed, countries, currencies }: { seed: OnboardingSeed; countries: PickerOption[]; currencies: PickerOption[] }) {
+  const [step, setStep] = useState(Math.max(0, Math.min(4, seed.initialStep ?? 0)));
   const [building, setBuilding] = useState<string[]>(seed.building ? [seed.building] : []);
-  const [entityCountry, setEntityCountry] = useState<string[]>(
-    seed.entityCountry ? [seed.entityCountry] : seed.detectedCountry ? [seed.detectedCountry] : [],
-  );
-  const [targets, setTargets] = useState<string[]>(seed.targetCountries);
-  const [settlement, setSettlement] = useState<string[]>(seed.settlementCurrencies);
-  const [interests, setInterests] = useState<string[]>(seed.interests);
-  const [assumptions, setAssumptions] = useState<string[]>([]);
+  const [entityCountry, setEntityCountry] = useState<string[]>(seed.entityCountry ? [seed.entityCountry] : seed.detectedCountry ? [seed.detectedCountry] : []);
+  const [targets, setTargets] = useState(seed.targetCountries);
+  const [settlement, setSettlement] = useState(seed.settlementCurrencies);
+  const [interests, setInterests] = useState(seed.interests);
+  const [assumptions, setAssumptions] = useState(seed.assumptions ?? []);
+  const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const selections = [building, entityCountry, targets, settlement, interests];
+  const answers = () => ({ building: building[0], entityCountry: entityCountry[0], targetCountries: targets, settlementCurrencies: settlement, interests, assumptions });
 
-  const answers = () => ({
-    building: building[0] === "__unsure__" ? undefined : building[0],
-    entityCountry: entityCountry[0],
-    targetCountries: targets,
-    settlementCurrencies: settlement,
-    interests: interests.filter((i) => i !== "__unsure__"),
-    assumptions,
-  });
-
-  const advance = (next: number, assumption?: string) => {
-    const nextAssumptions = assumption ? [...assumptions, assumption] : assumptions;
-    if (assumption) setAssumptions(nextAssumptions);
+  const advance = (skip = false) => {
+    if (pending) return;
+    setError("");
+    const skippedAnswer = SKIPPED[step]!;
+    const nextAssumptions = [...new Set([...assumptions.filter((item) => item !== skippedAnswer), ...(skip ? [skippedAnswer] : [])])];
+    const nextAnswers = { ...answers(), assumptions: nextAssumptions };
+    if (skip) {
+      // A skipped answer must not remain populated from a previous visit.
+      if (step === 0) nextAnswers.building = undefined;
+      if (step === 1) nextAnswers.entityCountry = undefined;
+      if (step === 2) nextAnswers.targetCountries = [];
+      if (step === 3) nextAnswers.settlementCurrencies = [];
+      if (step === 4) nextAnswers.interests = ["bank_payouts"];
+    }
     startTransition(async () => {
-      await saveStep(next, { ...answers(), assumptions: nextAssumptions });
-      setStep(next);
+      try {
+        if (step === 4) await finishOnboarding(nextAnswers);
+        else {
+          const result = await saveStep(step + 1, nextAnswers);
+          if (!result.ok) throw new Error("Workspace unavailable");
+          if (skip) {
+            if (step === 0) setBuilding([]);
+            if (step === 1) setEntityCountry([]);
+            if (step === 2) setTargets([]);
+            if (step === 3) setSettlement([]);
+          }
+          setAssumptions(nextAssumptions);
+          setStep(step + 1);
+        }
+      } catch { setError("We couldn’t save your answers. Please try again."); }
     });
   };
 
-  const finish = () => {
-    startTransition(async () => {
-      await finishOnboarding(answers());
-    });
-  };
-
-  if (step === 0) {
-    return (
-      <StepFlow
-        step={0}
-        total={3}
-        title="What are you building?"
-        subtitle="This decides which products, corridors and requirements Railor puts in front of you first. One tap is enough."
-        onNext={() => advance(1)}
-        onSkip={() => advance(1, "Product type not specified — Railor assumed general payments.")}
-        nextDisabled={!building.length || pending}
-        footnote={
-          seed.fromQuery ? (
-            <>Pre-filled from your search: “{seed.fromQuery}”. Change anything.</>
-          ) : null
-        }
-      >
-        <ChoiceGrid options={BUILDING} value={building} onChange={setBuilding} columns={3} name="What are you building" />
-      </StepFlow>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <StepFlow
-        step={1}
-        total={3}
-        title="Where do you operate?"
-        subtitle="Entity jurisdiction decides who can onboard you. Target markets decide where value has to land."
-        onBack={() => setStep(0)}
-        onNext={() => advance(2)}
-        onSkip={() =>
-          advance(2, "Markets not specified — Railor used the most common corridor in the dataset.")
-        }
-        nextDisabled={pending}
-      >
-        <div className="flex flex-col gap-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-5">
-          <SmartPicker
-            label="Company jurisdiction"
-            options={countries}
-            value={entityCountry}
-            onChange={setEntityCountry}
-            detected={seed.detectedCountry}
-            placeholder="Search countries"
-          />
-          <SmartPicker
-            label="Target customer countries"
-            options={countries}
-            value={targets}
-            onChange={setTargets}
-            multiple
-            placeholder="Add a market"
-          />
-          <SmartPicker
-            label="Primary settlement currencies"
-            options={currencies}
-            value={settlement}
-            onChange={setSettlement}
-            multiple
-            placeholder="Add a currency"
-          />
-          <PasteToStructure
-            compact
-            placeholder="Or paste a list — “IN, AE, SG” or a spreadsheet column"
-            hint="Railor turns pasted text into chips you can edit before anything is applied."
-            parse={(input) => {
-              const parts = input
-                .split(/[,\n\t;]+/)
-                .map((p) => p.trim().toLowerCase())
-                .filter(Boolean);
-              const matchedCountries = countries.filter(
-                (c) => parts.includes(c.value.toLowerCase()) || parts.includes(c.label.toLowerCase()),
-              );
-              const matchedCurrencies = currencies.filter((c) =>
-                parts.includes(c.value.toLowerCase()),
-              );
-              return [
-                ...matchedCountries.map((c) => ({
-                  field: "targetCountries",
-                  value: c.value,
-                  label: c.label,
-                })),
-                ...matchedCurrencies.map((c) => ({
-                  field: "settlementCurrencies",
-                  value: c.value,
-                  label: c.value,
-                })),
-              ];
-            }}
-            onConfirm={(items) => {
-              setTargets([
-                ...new Set([
-                  ...targets,
-                  ...items.filter((i) => i.field === "targetCountries").map((i) => i.value),
-                ]),
-              ]);
-              setSettlement([
-                ...new Set([
-                  ...settlement,
-                  ...items.filter((i) => i.field === "settlementCurrencies").map((i) => i.value),
-                ]),
-              ]);
-            }}
-          />
-        </div>
-      </StepFlow>
-    );
-  }
-
-  return (
-    <StepFlow
-      step={2}
-      total={3}
-      title="Which infrastructure matters?"
-      subtitle="Pick everything that applies. Railor uses this to build your first corridors and decide what to monitor."
-      onBack={() => setStep(1)}
-      onNext={finish}
-      nextLabel={pending ? "Building…" : "Build my infrastructure map"}
-      nextDisabled={pending}
-      onSkip={() =>
-        startTransition(async () => {
-          await finishOnboarding({
-            ...answers(),
-            interests: ["bank_payouts"],
-            assumptions: [...assumptions, "Infrastructure focus not specified — Railor assumed bank payouts."],
-          });
-        })
-      }
-    >
-      <ChoiceGrid
-        options={INTERESTS}
-        value={interests}
-        onChange={setInterests}
-        multiple
-        columns={3}
-        name="Which infrastructure matters"
-      />
-      {assumptions.length ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-warn-bg)]/60 p-3"
-        >
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-warn)]">
-            Assumptions Railor recorded
-          </p>
-          <ul className="mt-1 flex flex-col gap-1">
-            {assumptions.map((a) => (
-              <li key={a} className="text-[12.5px] text-[var(--color-ink-soft)]">
-                • {a}
-              </li>
-            ))}
-          </ul>
-        </motion.div>
-      ) : null}
-    </StepFlow>
-  );
+  const question = QUESTIONS[step]!;
+  return <StepFlow className="onboarding-screen" step={step} total={5} title={question[0]} subtitle={question[1]}
+    onBack={step > 0 && !pending ? () => { setError(""); setStep(step - 1); } : undefined}
+    onNext={() => advance()} onSkip={!pending ? () => advance(true) : undefined}
+    nextLabel={pending ? (step === 4 ? "Opening workspace…" : "Saving…") : step === 4 ? "Open my workspace" : "Continue"}
+    nextDisabled={pending || !selections[step]!.length} skipLabel="Decide later"
+    footnote={step === 0 && seed.fromQuery ? <>Pre-filled from your search: “{seed.fromQuery}”.</> : null}>
+    <fieldset disabled={pending} className="min-w-0">
+      {step === 0 ? <ChoiceGrid className="onboarding-choices" options={BUILDING} value={building} onChange={setBuilding} columns={3} name="What are you building" /> : null}
+      {step === 1 ? <SmartPicker label="Company country" options={countries} value={entityCountry} onChange={setEntityCountry} detected={seed.detectedCountry} placeholder="Search countries" /> : null}
+      {step === 2 ? <SmartPicker label="Target markets" options={countries} value={targets} onChange={setTargets} multiple placeholder="Add a market" /> : null}
+      {step === 3 ? <SmartPicker label="Settlement currencies" options={currencies} value={settlement} onChange={setSettlement} multiple placeholder="Add a currency" renderMark={(option) => <CurrencyLogo symbol={option.value} size={20} />} /> : null}
+      {step === 4 ? <ChoiceGrid className="onboarding-choices" options={INTERESTS} value={interests} onChange={setInterests} multiple columns={3} name="Which infrastructure matters" /> : null}
+    </fieldset>
+    {error ? <p role="alert" className="text-sm text-[var(--color-bad)]">{error}</p> : null}
+    {step === 4 && assumptions.length ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-xs text-[var(--color-muted)]"><summary className="cursor-pointer">Review skipped answers ({assumptions.length})</summary><ul className="mt-3 space-y-2">{assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
+  </StepFlow>;
 }

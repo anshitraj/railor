@@ -1,0 +1,16 @@
+if (process.env.DATABASE_URL?.trim() || !process.env.PGLITE_DATA_DIR?.includes("railor-browser-test-")) throw new Error("Disposable browser-test database required");
+const { getDb, getDbHandle, organizations, policies, decisions, payments, featureInterest } = await import("@railor/database");
+const { eq } = await import("drizzle-orm");
+const db = await getDb();
+const [org] = await db.select().from(organizations).where(eq(organizations.emailDomain, "fresh-acceptance.test"));
+if (!org) throw new Error("New organization was not created");
+const rows = await db.select().from(decisions).where(eq(decisions.organizationId, org.id));
+if (rows.length !== 1 || rows[0]!.status !== "allow") throw new Error("Expected one explicit allowed decision in new organization");
+const policyRows = await db.select().from(policies).where(eq(policies.organizationId, org.id));
+if (!policyRows.some((p) => p.status === "active")) throw new Error("New-user policy not activated");
+if ((await db.select().from(payments)).length !== 0) throw new Error("Agent/search/access request created a payment");
+const requests = await db.select().from(featureInterest).where(eq(featureInterest.organizationId, org.id));
+if (!requests.some((r) => r.feature === "execution" && r.providerRequested === "browser-permitted" && r.email === "founder@fresh-acceptance.test" && r.createdAt)) throw new Error("Scoped execution request not persisted");
+if (!requests.some((r) => r.feature === "provider_connection" && r.providerRequested === "browser-permitted")) throw new Error("Scoped connection request not persisted");
+await (await getDbHandle()).close();
+console.log("Database assertions passed: new workspace, active policy, one explicit decision, scoped access requests, zero payments.");

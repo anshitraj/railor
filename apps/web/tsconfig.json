@@ -5,12 +5,31 @@
     "allowJs": true,
     "incremental": true,
     "jsx": "preserve",
-    "types": ["node"],
-    "plugins": [{ "name": "next" }],
+    "types": [
+      "node"
+    ],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next-audit/types/**/*.ts",
+    ".next-debug/types/**/*.ts",
+    ".next-platform-dev/types/**/*.ts",
+    ".next-polish/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

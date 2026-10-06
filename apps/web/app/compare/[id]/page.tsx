@@ -26,7 +26,7 @@ export default async function SharedComparison({
   const table = await buildComparison(shared.providerSlugs);
 
   return (
-    <main className="mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-col gap-6 py-10">
+    <main id="main" className="mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-col gap-6 py-10">
       <header className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-2">
           <RailorMark />

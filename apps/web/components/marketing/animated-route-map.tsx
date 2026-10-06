@@ -1,132 +1,121 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Check, Radio } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useInView } from "motion/react";
+import { ArrowRight, ArrowUpRight, BadgeCheck, CircleDashed, FileSearch, Radio, ScanSearch, ShieldAlert } from "lucide-react";
 import { CurrencyLogo } from "./currency-logo";
-import { CountryFlag, type CountryCode } from "./country-flag";
+import { NetworkLogo } from "./network-logo";
+import { CountryFlag } from "./country-flag";
+import { routeMapState, type RouteMapStats } from "./route-map-state";
 
-const nodes = [
-  { left: "8%", top: "58%", flag: "IN" as CountryCode, label: "India", hint: "Entity" },
-  { left: "29%", top: "43%", asset: "USDC" as const, label: "USDC", hint: "Asset" },
-  { left: "51%", top: "58%", icon: "B", label: "Base", hint: "Network" },
-  { left: "73%", top: "42%", flag: "AE" as CountryCode, label: "UAE", hint: "Destination" },
-  { left: "92%", top: "58%", icon: "د.إ", label: "AED", hint: "Bank rail" },
-];
+export type { RouteMapStats } from "./route-map-state";
 
-export interface RouteMapStats {
-  checked: number;
-  supported: number;
-  partial: number;
-  topConfidence: number | null;
-  evidenceCount: number;
+const STATE_ICONS = { good: BadgeCheck, warn: ShieldAlert, muted: FileSearch, pending: ScanSearch };
+const ROUTE_QUERY = "Indian business sending USDC on Base to a UAE bank account receiving AED";
+const ROUTE_DESTINATION = `/app/corridors?q=${encodeURIComponent(ROUTE_QUERY)}`;
+
+/** Route requirements are illustrative; coverage and evidence are live, never payment activity. */
+export function AnimatedRouteMap({ stats }: { stats: RouteMapStats | null }) {
+  const figure = useRef<HTMLElement>(null);
+  const visible = useInView(figure, { amount: 0.2 });
+  // Start still on the server and listen for preference changes while mounted.
+  const [reducedMotion, setReducedMotion] = useState(true);
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
+  const state = routeMapState(stats);
+  const Icon = stats?.checked === 0 ? CircleDashed : STATE_ICONS[state.tone];
+  const confidence = stats?.topConfidence == null ? "—" : `${Math.round(stats.topConfidence * 100)}%`;
+  const checked = stats ? stats.checked.toLocaleString("en-US") : "—";
+  const evidence = stats ? stats.evidenceCount.toLocaleString("en-US") : "—";
+
+  return (
+    <figure ref={figure} className={`corridor-dossier ${visible && !reducedMotion ? "is-running" : ""}`} aria-label="Live corridor analysis: India, USDC on Base, UAE dirham bank payout" aria-busy={!stats}>
+      <figcaption className="corridor-heading">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent-light)]">
+            <span className="size-1.5 rounded-full bg-[var(--color-orange)]" aria-hidden /> Live corridor check
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-[10px] text-white/80">
+            <Radio size={12} aria-hidden /> {stats ? `${checked} providers scanned` : "Scanning index"}
+          </span>
+        </div>
+        <div className="mt-5 flex items-center gap-3">
+          <span className="font-display text-[clamp(1.65rem,5cqi,2.2rem)] font-semibold leading-none tracking-[-0.045em]">India</span>
+          <ArrowRight size={23} strokeWidth={1.5} aria-hidden className="shrink-0 text-[var(--color-accent-light)]" />
+          <span className="font-display text-[clamp(1.65rem,5cqi,2.2rem)] font-semibold leading-none tracking-[-0.045em]">United Arab Emirates</span>
+        </div>
+        <p className="mt-3 text-[12px] text-white/65">Business payout <span className="mx-2 text-white/30">/</span> USDC on Base <span className="mx-2 text-white/30">→</span> AED</p>
+      </figcaption>
+
+      <div className="corridor-journey">
+        <div className="corridor-grid" aria-hidden />
+        <ol className="corridor-stages" aria-label="Route requirements">
+          <li className="corridor-stage">
+            <StageLabel step="01" label="Origin" />
+            <div className="corridor-node"><CountryFlag code="IN" size={30} /></div>
+            <p className="corridor-stage-title">India</p>
+            <p className="corridor-stage-detail">Business entity</p>
+          </li>
+          <li className="corridor-stage">
+            <StageLabel step="02" label="Settlement" />
+            <div className="corridor-node corridor-settlement">
+              <CurrencyLogo symbol="USDC" size={36} />
+              <span className="h-7 w-px bg-[var(--color-line)]" aria-hidden />
+              <NetworkLogo slug="base" size={40} />
+            </div>
+            <p className="corridor-stage-title">USDC <span className="font-normal text-[var(--color-muted)]">on</span> Base</p>
+            <p className="corridor-stage-detail">Asset + network</p>
+          </li>
+          <li className="corridor-stage">
+            <StageLabel step="03" label="Payout" />
+            <div className="corridor-node"><CurrencyLogo symbol="AED" size={34} /></div>
+            <p className="corridor-stage-title">Dirhams</p>
+            <p className="corridor-stage-detail inline-flex items-center gap-1.5"><CountryFlag code="AE" size={12} /> UAE bank account</p>
+          </li>
+        </ol>
+        <div className="corridor-track" aria-hidden>
+          <span className="corridor-packet"><span /></span>
+          <ArrowRight size={13} className="absolute left-[27%] -top-1.5 bg-[var(--color-paper)] text-[var(--color-orange-deep)]" />
+          <ArrowRight size={13} className="absolute right-[27%] -top-1.5 bg-[var(--color-paper)] text-[var(--color-orange-deep)]" />
+        </div>
+        <p className="relative mt-6 flex items-center justify-center gap-1.5 text-center text-[10px] text-[var(--color-muted)]"><ScanSearch size={12} aria-hidden /> Capability analysis. No money is moving.</p>
+      </div>
+
+      <div className="corridor-verdict" data-route-state={state.tone}>
+        <div className="flex items-start gap-3">
+          <span className={`corridor-verdict-icon corridor-tone-${state.tone}`}><Icon size={20} strokeWidth={1.6} aria-hidden /></span>
+          <div className="min-w-0">
+            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">{state.eyebrow}</p>
+            <p className="mt-1.5 font-display text-[18px] font-semibold leading-tight tracking-[-0.025em] text-[var(--color-ink)]">{state.title}</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--color-muted)]">{state.description}</p>
+          </div>
+        </div>
+        <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--color-line)] pt-4">
+          <Metric label="Best confidence" value={confidence} detail={confidence === "—" ? "No scored match" : "Highest match"} />
+          <Metric label="Evidence" value={evidence} detail={stats?.evidenceCount === 1 ? "Current source" : "Current sources"} />
+        </dl>
+        <Link href={`/login?next=${encodeURIComponent(ROUTE_DESTINATION)}`} className="mt-5 inline-flex w-full items-center justify-between gap-3 border-t border-[var(--color-line)] pt-3 text-[12px] font-semibold text-[var(--color-orange-deep)] transition-colors hover:text-[var(--color-ink)]">
+          Inspect this corridor <ArrowUpRight size={16} aria-hidden />
+        </Link>
+      </div>
+    </figure>
+  );
 }
 
-/** Hero artwork. The path animates; every figure on it is the live result for this exact corridor. */
-export function AnimatedRouteMap({ stats }: { stats: RouteMapStats | null }) {
-  const verdict = !stats
-    ? "Unknown"
-    : stats.supported > 0
-      ? `${stats.supported} supported`
-      : stats.partial > 0
-        ? `${stats.partial} need KYB`
-        : "No verified route";
-  const cards: Array<[string, string]> = [
-    ["Eligibility", verdict],
-    ["Best confidence", stats?.topConfidence == null ? "Unknown" : stats.topConfidence.toFixed(2)],
-    ["Evidence", stats ? `${stats.evidenceCount} ${stats.evidenceCount === 1 ? "source" : "sources"}` : "Unknown"],
-  ];
-  return (
-    <div
-      className="relative min-h-[500px] overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-[var(--color-sand)]"
-      role="img"
-      aria-label="Animated route from an Indian business through USDC on Base to an AED bank account in the UAE"
-    >
-      <div className="absolute inset-0 rail-map-grid opacity-65" aria-hidden />
+function StageLabel({ step, label }: { step: string; label: string }) {
+  return <p className="mb-4 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--color-muted)]"><span className="mr-1.5 text-[var(--color-orange-deep)]">{step}</span>{label}</p>;
+}
 
-      <div className="relative flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-paper)]/85 px-5 py-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">Live route check</p>
-          <p className="mt-1 text-[13px] font-semibold text-[var(--color-ink)]">India → USDC → UAE → AED</p>
-        </div>
-        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--color-orange-deep)]">
-          <Radio size={13} /> {stats ? `${stats.checked} ${stats.checked === 1 ? "provider" : "providers"} checked` : "Checking providers"}
-        </span>
-      </div>
-
-      <div className="absolute inset-x-5 bottom-[122px] top-[78px]" aria-hidden>
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible">
-          <path
-            d="M8 58 C16 58 21 43 29 43 S42 58 51 58 S64 42 73 42 S84 58 92 58"
-            fill="none"
-            stroke="var(--color-line-strong)"
-            strokeWidth="1.1"
-            vectorEffect="non-scaling-stroke"
-          />
-          <motion.path
-            d="M8 58 C16 58 21 43 29 43 S42 58 51 58 S64 42 73 42 S84 58 92 58"
-            fill="none"
-            stroke="var(--color-orange)"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeDasharray="18 82"
-            vectorEffect="non-scaling-stroke"
-            animate={{ strokeDashoffset: [100, 0] }}
-            transition={{ duration: 4.8, repeat: Infinity, ease: "linear" }}
-          />
-          <path
-            d="M29 43 C34 68 38 76 47 82"
-            fill="none"
-            stroke="var(--color-line-strong)"
-            strokeWidth="1"
-            strokeDasharray="3 4"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-
-        <motion.span
-          className="absolute z-20 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--color-orange)] shadow-[0_0_0_4px_rgba(233,86,42,.14)]"
-          animate={{
-            left: ["8%", "29%", "51%", "73%", "92%"],
-            top: ["58%", "43%", "58%", "42%", "58%"],
-          }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", times: [0, 0.23, 0.5, 0.76, 1] }}
-        />
-
-        {nodes.map((node, index) => (
-          <motion.div
-            key={node.label}
-            className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-            style={{ left: node.left, top: node.top }}
-            animate={{ y: [0, index % 2 === 0 ? -3 : 3, 0] }}
-            transition={{ duration: 4 + index * 0.25, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <span className="grid size-12 place-items-center rounded-2xl border border-[var(--color-line-strong)] bg-[var(--color-paper)] text-[22px] font-bold shadow-[0_10px_25px_-18px_rgba(28,27,25,.45)]">
-              {node.asset ? <CurrencyLogo symbol={node.asset} size={28} /> : node.flag ? <CountryFlag code={node.flag} size={22} /> : node.icon}
-            </span>
-            <span className="mt-2 whitespace-nowrap text-[12px] font-bold text-[var(--color-ink)]">{node.label}</span>
-            <span className="whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.11em] text-[var(--color-faint)]">{node.hint}</span>
-          </motion.div>
-        ))}
-
-      </div>
-
-      <div className="absolute inset-x-5 bottom-5 grid grid-cols-3 gap-2">
-        {cards.map(([label, value], index) => (
-          <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 + index * 0.12 }}
-            className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-3"
-          >
-            <p className="text-[9px] font-bold uppercase tracking-[0.11em] text-[var(--color-faint)]">{label}</p>
-            <p className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-[var(--color-ink)]">
-              {index === 0 && stats && stats.supported > 0 ? <Check size={13} className="text-[var(--color-ok)]" /> : null}
-              {value}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
+function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return <div>
+    <dt className="font-mono text-[9px] font-semibold uppercase tracking-[0.11em] text-[var(--color-muted)]">{label}</dt>
+    <dd className="mt-1.5 font-display text-[27px] font-semibold leading-none tracking-[-0.04em] text-[var(--color-ink)]">{value}</dd>
+    <dd className="mt-1.5 text-[10px] text-[var(--color-muted)]">{detail}</dd>
+  </div>;
 }

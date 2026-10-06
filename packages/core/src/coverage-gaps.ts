@@ -83,20 +83,21 @@ export async function recordSearchTelemetry(
         },
       });
 
-    for (const result of results) {
-      if (result.eligibility !== "unknown") continue;
+    // One upsert for the whole result set: avoid a remote DB round trip per provider.
+    const unknownResults = results.filter((result) => result.eligibility === "unknown");
+    if (unknownResults.length) {
       await db
         .insert(coverageGaps)
-        .values({
+        .values(unknownResults.map((result) => ({
           providerId: result.provider.id,
           corridorKey: key,
           query: query as Record<string, unknown>,
           reasons: result.reasons as unknown as Record<string, unknown>[],
-        })
+        })))
         .onConflictDoUpdate({
           target: [coverageGaps.providerId, coverageGaps.corridorKey],
           set: {
-            reasons: result.reasons as unknown as Record<string, unknown>[],
+            reasons: sql`excluded.reasons`,
             timesRequested: sql`${coverageGaps.timesRequested} + 1`,
             lastRequestedAt: new Date(),
             // A gap that resurfaces after being marked resolved is genuinely

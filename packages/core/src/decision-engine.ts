@@ -60,6 +60,8 @@ export interface DecisionEngineOptions {
   now?: Date;
   /** Injected because credential decryption lives outside @railor/core. Omit to skip live-quote fetching entirely (the engine still produces a full Decision from eligibility/policy/reliability data alone). */
   fetchQuote?: QuoteFetcher;
+  /** Allowlisted backend reference-price integrations, not customer connections or execution authority. */
+  referenceQuoteProviders?: string[];
   previousDecisionId?: string | null;
   mode?: "enforce" | "optimize";
   proposedExecutor?: { provider: string };
@@ -89,13 +91,14 @@ function toQuoteSnapshot(quote: UnifiedQuote): QuoteSnapshot {
     exchangeRate: quote.exchangeRate,
     estimatedArrivalMinutes: quote.estimatedArrivalMinutes,
     quoteType: quote.quoteType,
+    accountContext: quote.accountContext,
     observedAt: quote.observedAt,
     expiresAt: quote.expiresAt,
   };
 }
 
 function costCompletenessOf(quote: UnifiedQuote | null): CostCompleteness {
-  if (!quote) return "unknown";
+  if (!quote || quote.feeAmount === undefined || !quote.feeCurrency) return "unknown";
   return quote.costPartial ? "partial" : "complete";
 }
 
@@ -112,13 +115,30 @@ function costCompletenessOf(quote: UnifiedQuote | null): CostCompleteness {
  */
 function finalScore(base: number, quote: UnifiedQuote | null, rules: PolicyRules, category: string): number {
   let score = base;
-  if (quote && !quote.costPartial && quote.feeAmount !== undefined && quote.amount > 0) {
+  if (quote?.quoteType === "live" && quote.accountContext === "customer_connected" && !quote.costPartial && quote.feeAmount !== undefined && quote.amount > 0) {
     const bps = (quote.feeAmount / quote.amount) * 10_000;
     const quoteComponent = Math.max(0, Math.min(100, 100 - bps / 2));
     score = base * 0.7 + quoteComponent * 0.3;
   }
   score += directProviderBonus(rules, category) * 2;
   return Math.round(Math.max(0, Math.min(100, score)) * 100) / 100;
+}
+
+/** A specific preference needs its own observed/published metric; provider fee and
+ * onboarding proxies must never masquerade as a payout, total cost or uptime. */
+function preferenceMetric(candidate: EnginedCandidate, preference: PaymentIntent["preference"]): number | null {
+  switch (preference) {
+    case "cheapest": return candidate.quote && candidate.quote.quoteType === "live" && candidate.quote.accountContext === "customer_connected" && !candidate.quote.costPartial
+      && candidate.quote.feeAmount !== undefined ? -candidate.quote.feeAmount : null;
+    case "fastest": {
+      const minutes = candidate.quote?.estimatedArrivalMinutes ?? settlementMinutes(candidate.provider.advertisedSettlement);
+      return minutes === null || minutes === undefined ? null : -minutes;
+    }
+    case "most_reliable": return candidate.provider.healthOkRatio;
+    case "max_recipient_amount": return candidate.quote && candidate.quote.quoteType === "live" && candidate.quote.accountContext === "customer_connected"
+      ? candidate.quote.recipientAmount ?? null : null;
+    default: return candidate.score;
+  }
 }
 
 /** Ordinal used only to pick the single "best" RouteConfirmation among rejected candidates for the top-level Decision.certainty fallback - never used to upgrade any individual candidate's own value. */
@@ -189,11 +209,12 @@ export async function runDecisionEngine(
 
   // Only fetch a live quote for a candidate that (a) has a plausible base
   // route, (b) didn't already hard-fail policy on pre-quote facts, and (c)
-  // is actually connected with quote support - fetching a quote nobody could
-  // ever use would just spend a real network call for nothing.
+  // is connected with quote support, or Wise has a public fiat indicative
+  // endpoint. Public pricing is never treated as a customer live quote.
   const quoteWorthy = enginedByProvider.filter(
     (c) => isDecisionEligible(c.evaluation) && !c.prePolicy.ruleResults.some((r) =>
-      r.result === "fail" && !["requireLiveQuote", "maximumKnownCostBps", "maximumEtaMinutes"].includes(r.rule)) && c.connected && c.hasQuoteAdapter,
+      r.result === "fail" && !["requireLiveQuote", "maximumKnownCostBps", "maximumEtaMinutes"].includes(r.rule)) &&
+      (c.connected || (Boolean(intent.sourceCurrency) && (c.provider.slug === "wise" || options.referenceQuoteProviders?.includes(c.provider.slug)))) && c.hasQuoteAdapter,
   );
 
   const warnings: string[] = [];
@@ -206,6 +227,7 @@ export async function runDecisionEngine(
       destinationCountry: intent.destinationCountry,
       amount: intent.amount,
       entityCountry: intent.sourceEntityCountry,
+      paymentMethodType: intent.namedRail,
     };
     await Promise.all(
       quoteWorthy.map(async (c) => {
@@ -273,7 +295,9 @@ export async function runDecisionEngine(
   const policyPassers = eligible.filter((c) => c.finalPolicy.result === "pass");
   const policyUnknowns = eligible.filter((c) => c.finalPolicy.result === "unknown");
 
-  const ranked = [...policyPassers].sort((a, b) => b.score - a.score || a.provider.slug.localeCompare(b.provider.slug));
+  const rankingPreference = mode === "enforce" ? "balanced" : intent.preference;
+  const ranked = policyPassers.filter((c) => preferenceMetric(c, rankingPreference) !== null)
+    .sort((a, b) => (preferenceMetric(b, rankingPreference)! - preferenceMetric(a, rankingPreference)!) || b.score - a.score || a.provider.slug.localeCompare(b.provider.slug));
   const winner = ranked[0] ?? null;
 
   let status: DecisionStatus;
@@ -283,7 +307,7 @@ export async function runDecisionEngine(
     status = "approval_required";
   } else if (winner) {
     status = "allow";
-  } else if (policyUnknowns.length > 0) {
+  } else if (policyUnknowns.length > 0 || policyPassers.length > 0) {
     status = "insufficient_data";
   } else {
     status = "deny";
@@ -326,6 +350,8 @@ export async function runDecisionEngine(
       policyEvaluation: c.finalPolicy,
       dependencySnapshot: {
         connected: c.connected, activeIncident: incidentSet.has(c.provider.id),
+        quoteCapable: c.hasQuoteAdapter, rankingScore: c.score, rankingConfidence: c.rankingConfidence,
+        rankingPreference, rankingMetric: preferenceMetric(c, rankingPreference),
         lastVerifiedAt: c.evaluation.lastVerifiedAt?.toISOString() ?? null,
         feeCostBps: c.provider.feeCostBps ?? null, settlement: c.provider.advertisedSettlement ?? null,
         evidence: [...c.evaluation.evidence].sort((a, b) => (a.id ?? a.sourceUrl).localeCompare(b.id ?? b.sourceUrl)),
@@ -342,7 +368,7 @@ export async function runDecisionEngine(
     };
   });
 
-  const explain = buildExplain(enginedByProvider, winner, eligible);
+  const explain = buildExplain(enginedByProvider, winner, eligible, rankingPreference);
 
   const bestFallbackCertainty = eligible.length
     ? eligible.reduce<RouteConfirmation | null>((best, c) => {
@@ -387,13 +413,17 @@ function buildExplain(
   all: EnginedCandidate[],
   winner: EnginedCandidate | null,
   eligible: EnginedCandidate[],
+  preference: PaymentIntent["preference"],
 ): DecisionExplain {
   const whySelected: string[] = [];
   if (winner) {
     whySelected.push(`${winner.provider.name} passed every configured policy rule.`);
     whySelected.push(`Route certainty: ${winner.evaluation.routeConfirmation ?? "not applicable"}.`);
     if (winner.evaluation.entityEligibility) whySelected.push(`Entity eligibility: ${winner.evaluation.entityEligibility}.`);
-    whySelected.push(`Ranking score ${winner.score}/100 (${Math.round(winner.rankingConfidence * 100)}% of ranking inputs were real data).`);
+    const metric = preferenceMetric(winner, preference);
+    whySelected.push(preference === "balanced" || preference === "easiest_onboarding" || preference === "widest_coverage"
+      ? `Ranking score ${winner.score}/100 (${Math.round(winner.rankingConfidence * 100)}% of ranking inputs were real data).`
+      : `Selected by ${preference.replaceAll("_", " ")} using the available comparable metric ${metric === null ? "(missing)" : Math.abs(metric)}; candidates without that metric were not ranked.`);
     if (winner.quote) whySelected.push(`Backed by a ${winner.quote.quoteType} quote observed at ${winner.quote.observedAt}.`);
   }
 
@@ -405,7 +435,9 @@ function buildExplain(
       reasons:
         c.finalPolicy.result === "fail" || c.finalPolicy.result === "unknown"
           ? c.finalPolicy.ruleResults.filter((r) => r.result !== "pass").map((r) => r.message)
-          : [`Ranked lower (score ${c.score}/100 vs. ${winner?.score ?? "n/a"}/100).`],
+          : preferenceMetric(c, preference) === null
+            ? [`Not ranked for ${preference.replaceAll("_", " ")}: comparable metric missing.`]
+            : [`Ranked lower for ${preference.replaceAll("_", " ")} (metric ${Math.abs(preferenceMetric(c, preference)!)} vs. ${winner ? Math.abs(preferenceMetric(winner, preference)!) : "n/a"}).`],
     }));
 
   const whatWouldChange: string[] = [];

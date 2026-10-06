@@ -60,7 +60,7 @@ export async function provisionDemoSession(): Promise<void> {
 
   await resetOrgWorkspace(org.id);
   await renameOrganization(org.id, DEMO_ORG_NAME);
-  await saveOnboarding(org.id, DEMO_ANSWERS, 3);
+  await saveOnboarding(org.id, DEMO_ANSWERS, 5);
   await materializeWorkspace(org.id, user.id, DEMO_ANSWERS);
 
   for (const key of DEMO_KYB_HAVE) {

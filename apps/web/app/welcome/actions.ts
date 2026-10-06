@@ -20,9 +20,9 @@ export async function saveStep(step: number, answers: unknown) {
  */
 export async function finishOnboarding(answers: unknown) {
   const session = await requireSession();
-  if (!session.organization) return;
+  if (!session.organization) throw new Error("Workspace unavailable");
   const parsed = OnboardingAnswers.parse(answers);
-  await saveOnboarding(session.organization.id, parsed, 3);
+  await saveOnboarding(session.organization.id, parsed, 5);
   await materializeWorkspace(session.organization.id, session.user.id, parsed);
   redirect("/app");
 }

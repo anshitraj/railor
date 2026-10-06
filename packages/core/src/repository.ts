@@ -454,6 +454,14 @@ async function loadProviderInputsFresh(): Promise<ProviderInput[]> {
   });
 }
 
+/** Navigation only needs names and links, not the full capability/evidence graph. */
+export function loadProviderNavigation() {
+  return readThrough("provider-navigation", async () => {
+    const db = await getDb();
+    return db.select({ slug: providers.slug, name: providers.name, category: providers.category }).from(providers);
+  });
+}
+
 /** Directory rows: enough to filter and compare without loading the graph. */
 export function loadProviderSummaries(): Promise<ProviderSummary[]> {
   return readThrough("provider-summaries", loadProviderSummariesFresh);

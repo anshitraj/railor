@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../cn.js";
 import { Button } from "./base.js";
 
@@ -56,22 +55,15 @@ export function StepFlow({
             />
           ))}
         </div>
-        <span className="tabular text-[12px] text-[var(--color-muted)]">
+        <span aria-live="polite" className="tabular text-[12px] text-[var(--color-muted)]">
           {step + 1} of {total}
         </span>
       </div>
 
-      {/* Keyed enter-only animation, deliberately without AnimatePresence: an
-          exit transition that never completes (throttled compositor, hidden
-          tab, reduced motion) would leave the previous question on screen
-          while the progress bar had already advanced. Content must never lag
-          the step counter. */}
-      <motion.div
+      {/* CSS keeps server and client markup identical and honors reduced motion. */}
+      <div
         key={step}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-col gap-6"
+        className="railor-step-in flex flex-col gap-6"
       >
         <div className="flex flex-col gap-2">
           <h1 className="text-[28px] font-semibold leading-tight text-[var(--color-ink)]">
@@ -84,7 +76,7 @@ export function StepFlow({
           ) : null}
         </div>
         {children}
-      </motion.div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-5">
         {onBack ? (

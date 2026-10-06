@@ -149,7 +149,7 @@ export function WebhookEndpoints({ endpoints, deliveries, canManage }: { endpoin
               placeholder="https://api.example.com/railor/webhooks"
               className="min-w-[240px] flex-1 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 font-mono text-[12.5px] outline-none focus:border-[var(--color-orange)]"
             />
-            <Button type="submit" size="sm" disabled={pending || !url.trim()}>
+            <Button type="submit" size="sm" disabled={pending || !url.trim()} title={url.trim() ? undefined : "Enter the https URL that should receive events"}>
               Add endpoint
             </Button>
           </div>

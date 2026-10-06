@@ -75,10 +75,10 @@ export function Reveal({
     <Component
       ref={ref as React.Ref<HTMLDivElement>}
       initial={false}
-      animate={state}
+      animate={reduced ? "shown" : state}
       variants={{
         hidden: { opacity: 0, ...from, transition: { duration: 0 } },
-        shown: { opacity: 1, x: 0, y: 0, transition: { duration, delay, ease: EASE } },
+        shown: { opacity: 1, x: 0, y: 0, transition: { duration: reduced ? 0 : duration, delay: reduced ? 0 : delay, ease: EASE } },
       }}
       className={className}
     >
@@ -118,7 +118,7 @@ export function Stagger({
   };
 
   return (
-    <Component ref={ref as React.Ref<HTMLDivElement>} variants={variants} initial={false} animate={state} className={className}>
+    <Component ref={ref as React.Ref<HTMLDivElement>} variants={variants} initial={false} animate={reduced ? "shown" : state} className={className}>
       {children}
     </Component>
   );

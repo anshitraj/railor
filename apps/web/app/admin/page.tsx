@@ -60,7 +60,7 @@ export default async function AdminOverview() {
     <>
       <AdminHeader title="Overview" description="Everything that needs an operator today, and how the platform is being used." />
 
-      <section className="grid gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] lg:grid-cols-4">
         {tiles.map((t) => (
           <Link key={t.label} href={t.href} className="flex items-end justify-between gap-3 bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-paper)]">
             <span className="flex flex-col gap-1">
@@ -68,7 +68,7 @@ export default async function AdminOverview() {
               <span className="text-[13px] text-[var(--color-ink-soft)]">{t.label}</span>
               <span className="text-[11px] text-[var(--color-faint)]">{t.hint}</span>
             </span>
-            {t.series ? <Sparkline values={t.series} label={`${t.label} per day, 14 days`} width={90} height={30} /> : null}
+            {t.series ? <span className="hidden xl:block"><Sparkline values={t.series} label={`${t.label} per day, 14 days`} width={90} height={30} /></span> : null}
           </Link>
         ))}
       </section>

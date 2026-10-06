@@ -58,7 +58,7 @@ const unknownAcceptances = new Map<string, number>();
 export const sandboxPayoutAdapter: PayoutAdapter = {
   slug: "railor-sandbox",
   verification: "simulated",
-  supportedMethods: ["bank_us", "iban", "gb", "clabe", "pix", "crypto_address"],
+  supportedMethods: ["bank_us", "iban", "gb", "clabe", "pix", "in_bank", "crypto_address"],
   payoutCredentialFields: [],
 
   async ensureBeneficiary(_credentials, beneficiary) {

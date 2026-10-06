@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Code2, Package, Zap, type LucideIcon } from "lucide-react";
-import { CodeSample } from "@railor/ui";
+import { CodeSample, TechnologyLogo, TechnologyLogoStack } from "@railor/ui";
 import { DocsHeader } from "../../../components/docs/docs-header";
 import { getSession } from "../../../lib/auth";
 import { getOrgTestKey } from "../../../lib/org";
@@ -142,8 +142,8 @@ print(res.json()["counts"])`,
                 href={href}
                 className="group flex h-full flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-lift)]"
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--color-sand)] text-[var(--color-orange-deep)] transition-colors group-hover:bg-[var(--color-orange)] group-hover:text-white">
-                  <Icon size={17} strokeWidth={2} aria-hidden />
+                <span className="flex h-9 w-fit min-w-9 items-center justify-center rounded-xl bg-[var(--color-sand)] px-2 text-[var(--color-orange-deep)] transition-colors group-hover:bg-[var(--color-orange)] group-hover:text-white">
+                  {href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={23} /> : href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={23} /> : <Icon size={17} strokeWidth={2} aria-hidden />}
                 </span>
                 <span className="flex flex-col gap-1">
                   <span className="flex items-center gap-1.5 font-display text-[16px] font-semibold tracking-[-0.02em]">

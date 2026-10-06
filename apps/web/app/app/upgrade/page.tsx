@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { Card, SectionLabel } from "@railor/ui";
+import { Card } from "@railor/ui";
 import { getSession } from "../../../lib/auth";
 import { getEntitlement } from "../../../lib/entitlements";
 import { paymentLink } from "../../../lib/security";
+import { ProductHeader } from "../../../components/app/product-ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Upgrade" };
@@ -11,10 +12,8 @@ export default async function UpgradePage() {
   if (!session?.organization) redirect("/login");
   const entitlement = await getEntitlement(session.organization.id);
   const configured = Boolean(paymentLink());
-  return <main id="main" className="max-w-[850px] space-y-6">
-    <SectionLabel>Founding access</SectionLabel>
-    <h1 className="text-4xl font-semibold tracking-tight">Make the next provider decision with evidence.</h1>
-    <p className="text-[var(--color-muted)]">Keep your shortlist, follow infrastructure changes, and bring your own provider accounts when you need a quote.</p>
+  return <div className="max-w-[1100px] space-y-6">
+    <ProductHeader eyebrow="Founding access" title="Make your next move with evidence." description="Keep your shortlist, follow infrastructure changes, and bring your own provider accounts when you need a quote." />
     <div className="grid gap-5 sm:grid-cols-2">
       <Card className="space-y-4 p-6"><h2 className="text-xl font-semibold">Free</h2><p className="text-3xl">$0</p>
         <ul className="space-y-2 text-sm"><li>Public catalog and corridor search</li><li>3 saved corridors</li><li>1 in-app monitor</li><li>500 API requests per month</li></ul>
@@ -27,5 +26,5 @@ export default async function UpgradePage() {
       </Card>
     </div>
     <p className="text-sm text-[var(--color-muted)]">After payment, Railor verifies your payment reference and activates one month of access manually. Payment alone does not activate a plan. Use your account email and workspace reference <strong>{session.organization.slug}</strong>. Railor provides research and recommendations; funds remain with your selected provider.</p>
-  </main>;
+  </div>;
 }
