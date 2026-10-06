@@ -5,7 +5,7 @@ description = "Railor ingestion worker — fetch, extract, normalize, diff and q
 requires-python = ">=3.11"
 dependencies = [
   "httpx>=0.27",
-  "selectolax>=0.3.21",
+  "selectolax>=0.3.21,<1.0",
   "pydantic>=2.7",
   "psycopg[binary]>=3.2",
   "python-dotenv>=1.0",
