@@ -44,8 +44,8 @@ For production email delivery through Resend SMTP, see [EMAIL_SIGNIN_SETUP.md](E
 2. Railor renders the interpreted query as editable chips, then the real breakdown: 15 providers checked, 2 compatible, 3 needing additional KYB, 10 unavailable.
 3. Two provider results are fully visible before any sign-up; the rest is withheld, not faked.
 4. *View full comparison* → sign in → the workspace is named from your email domain, and your question is carried through.
-5. Three onboarding questions, all answerable with clicks. Country is pre-selected as **Detected**.
-6. *Build my infrastructure map* → the dashboard is already populated: a corridor, its provider verdicts, an armed monitor and a change feed filtered to your markets.
+5. Five guided onboarding questions with business, freelancer and personal choices, country/currency cards, saved progress and an answer review. Inferred countries are labelled **Detected** and remain editable.
+6. *Open my workspace* → suggested corridors and a monitor reflect the selected customer type and markets. Price comparisons start with the saved account profile; coverage verdicts remain evidence-based.
 7. Open any result row for the reason, what is nonetheless true, what would change it, the evidence and the change history.
 8. *Copy as API call* in the Corridor Explorer → the developer portal already holds a `rail_test_…` key → the same answer over HTTP.
 

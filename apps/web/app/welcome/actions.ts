@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { OnboardingAnswers } from "@railor/types";
 import { requireSession } from "../../lib/auth";
 import { materializeWorkspace, saveOnboarding } from "../../lib/org";
+import { onboardingFinishPath } from "../../lib/security";
 
 /** Autosave after every answer, so a reload never costs the user their work. */
 export async function saveStep(step: number, answers: unknown) {
@@ -18,11 +19,11 @@ export async function saveStep(step: number, answers: unknown) {
  * Builds the workspace from the answers: corridors, provider eligibility, an
  * armed monitor and a filtered change feed. The dashboard is never empty.
  */
-export async function finishOnboarding(answers: unknown) {
+export async function finishOnboarding(answers: unknown, returnTo?: string) {
   const session = await requireSession();
   if (!session.organization) throw new Error("Workspace unavailable");
   const parsed = OnboardingAnswers.parse(answers);
   await saveOnboarding(session.organization.id, parsed, 5);
   await materializeWorkspace(session.organization.id, session.user.id, parsed);
-  redirect("/app");
+  redirect(onboardingFinishPath(returnTo));
 }

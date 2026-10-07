@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "../../lib/auth";
-import { safeReturnPath } from "../../lib/security";
+import { safeReturnPath, signInDestination } from "../../lib/security";
 import { LoginForm } from "../../components/auth/login-form";
 import { RailArtwork } from "../../components/marketing/rail-artwork";
 import { RailorBrand } from "../../components/brand";
@@ -18,7 +18,7 @@ export default async function LoginPage({
   // `next` lets flows like /invite/:token send people back after signing in.
   const next = typeof params.next === "string" ? safeReturnPath(params.next, "") : "";
   const session = await getSession();
-  if (session) redirect(next || (session.organization?.onboardingCompletedAt ? "/app" : "/welcome"));
+  if (session) redirect(signInDestination(next || "/welcome", Boolean(session.organization?.onboardingCompletedAt)));
 
   const query = typeof params.q === "string" ? params.q : undefined;
   const error = typeof params.error === "string" ? params.error : undefined;

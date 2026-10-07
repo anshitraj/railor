@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { findOrCreateUserByEmail, getSession, startSession } from "../../../../../../lib/auth";
 import { createOrganizationForUser } from "../../../../../../lib/org";
 import { completeOAuthExchange, isOAuthProvider } from "../../../../../../lib/oauth";
-import { appOrigin, safeReturnPath } from "../../../../../../lib/security";
+import { appOrigin, safeReturnPath, signInDestination } from "../../../../../../lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,7 +67,7 @@ export async function GET(request: Request, context: { params: Promise<{ provide
       await createOrganizationForUser(user.id, user.email);
     }
 
-    return clearState(new URL(returnTo, appOrigin()));
+    return clearState(new URL(signInDestination(returnTo, Boolean(session?.organization?.onboardingCompletedAt)), appOrigin()));
   } catch (error) {
     console.error(JSON.stringify({ event: "oauth_failed", provider, errorType: error instanceof Error ? error.name : "UnknownError" }));
     return clearState(new URL("/login?error=oauth_failed", url));

@@ -35,4 +35,15 @@ describe("email sign-in verification", () => {
     expect((await GET(request(""))).headers.get("location")).toBe("https://www.railor.xyz/login?error=missing_token");
     expect(mocks.consume).not.toHaveBeenCalled();
   });
+
+  it("takes a newly created account through onboarding before a requested app page", async () => {
+    mocks.consume.mockResolvedValue({ user: { id: "user-1", email: "first@test.invalid" }, returnTo: "/app/prices" });
+    expect((await GET(request())).headers.get("location")).toBe("https://www.railor.xyz/welcome?next=%2Fapp%2Fprices");
+  });
+
+  it("returns an already-onboarded account to its app", async () => {
+    mocks.session.mockResolvedValue({ organization: { onboardingCompletedAt: new Date() } });
+    expect((await GET(request())).headers.get("location")).toBe("https://www.railor.xyz/app");
+    expect(mocks.createOrg).not.toHaveBeenCalled();
+  });
 });

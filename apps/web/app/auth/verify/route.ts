@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { consumeMagicLink, getSession } from "../../../lib/auth";
 import { createOrganizationForUser } from "../../../lib/org";
-import { appOrigin, safeReturnPath } from "../../../lib/security";
+import { appOrigin, safeReturnPath, signInDestination } from "../../../lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,5 +25,5 @@ export async function GET(request: Request) {
     await createOrganizationForUser(result.user.id, result.user.email);
   }
 
-  return NextResponse.redirect(new URL(safeReturnPath(result.returnTo), appOrigin()));
+  return NextResponse.redirect(new URL(signInDestination(result.returnTo, Boolean(session?.organization?.onboardingCompletedAt)), appOrigin()));
 }

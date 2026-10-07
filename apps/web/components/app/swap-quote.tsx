@@ -370,10 +370,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           <div role="group" aria-label="Account type" className="flex flex-wrap items-center justify-between gap-2 px-1 py-1">
             <span className="text-[12px] font-medium text-white/60">I’m {context.direction === "receive" ? "receiving" : "sending"} as</span>
             <div className="inline-flex rounded-full border border-white/15 bg-white/[0.03] p-1">
-              {([{ value: "business", label: "Business" }, { value: "freelancer", label: "Freelancer" }] as const).map((option) => {
-                const active = option.value === "business" ? context.profile === "business" : context.profile !== "business";
+              {([{ value: "business", label: "Business" }, { value: "freelancer", label: "Freelancer" }, { value: "personal", label: "Personal" }] as const).map((option) => {
+                const active = context.profile === option.value || (option.value === "freelancer" && context.profile === "sole_proprietor");
                 return <button key={option.value} type="button" aria-pressed={active}
-                  onClick={() => setContext((c) => ({ ...c, profile: option.value }))}
+                  onClick={() => setContext((c) => ({ ...c, profile: option.value, purpose: option.value === "personal" ? "personal" : c.purpose === "personal" ? "services" : c.purpose }))}
                   className={cn("rounded-full px-3 py-1.5 text-[12px] font-semibold transition", active ? "bg-[#ffad8c]/15 text-[#ffad8c]" : "text-white/60 hover:text-white")}>
                   {option.label}
                 </button>;

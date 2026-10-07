@@ -36,6 +36,10 @@ export function ChoiceGrid({
   name?: string;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const all: Choice[] = notSureLabel
+    ? [...options, { value: "__unsure__", label: notSureLabel, hint: "Railor will pick a sensible default and show it to you." }]
+    : options;
+  const selectedIndex = all.findIndex((option) => value.includes(option.value));
 
   const toggle = (v: string) => {
     if (!multiple) {
@@ -46,17 +50,19 @@ export function ChoiceGrid({
   };
 
   const onKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const grid = refs.current[index]?.parentElement;
+    const rowSize = grid ? getComputedStyle(grid).gridTemplateColumns.split(" ").length : columns;
     const delta =
-      e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : e.key === "ArrowDown" ? columns : e.key === "ArrowUp" ? -columns : 0;
-    if (!delta) return;
+      e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : e.key === "ArrowDown" ? rowSize : e.key === "ArrowUp" ? -rowSize : 0;
+    if (!delta && e.key !== "Home" && e.key !== "End") return;
     e.preventDefault();
-    const next = Math.max(0, Math.min(refs.current.length - 1, index + delta));
+    const next = e.key === "Home" ? 0 : e.key === "End" ? all.length - 1 : Math.max(0, Math.min(all.length - 1, index + delta));
     refs.current[next]?.focus();
+    if (!multiple) {
+      const option = all[next];
+      if (option) onChange([option.value]);
+    }
   };
-
-  const all: Choice[] = notSureLabel
-    ? [...options, { value: "__unsure__", label: notSureLabel, hint: "Railor will pick a sensible default and show it to you." }]
-    : options;
 
   return (
     <div
@@ -81,6 +87,7 @@ export function ChoiceGrid({
             type="button"
             role={multiple ? "checkbox" : "radio"}
             aria-checked={selected}
+            tabIndex={multiple || i === (selectedIndex < 0 ? 0 : selectedIndex) ? 0 : -1}
             onClick={() => toggle(option.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(

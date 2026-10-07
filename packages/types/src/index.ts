@@ -620,6 +620,9 @@ export type ReviewStatus = z.infer<typeof ReviewStatus>;
 /* -------------------------------------------------------------------------- */
 
 export const BuildingType = z.enum([
+  "personal",
+  "freelancer",
+  "freelancer_business",
   "payments",
   "wallet",
   "neobank",

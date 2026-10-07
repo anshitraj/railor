@@ -22,6 +22,7 @@ import type { CorridorQuery, OnboardingAnswers } from "@railor/types";
 import { randomBytes } from "node:crypto";
 import { hashApiKey, suggestedOrgName } from "./auth";
 import { backfillWatchlistAlerts } from "./alerting";
+import { onboardingCustomerType } from "./onboarding";
 
 const slugify = (value: string) =>
   value
@@ -240,7 +241,7 @@ export async function materializeWorkspace(
   for (const [index, country] of targets.slice(0, Math.min(3, remaining)).entries()) {
     const query: CorridorQuery = {
       entityCountry,
-      customerType: "business",
+      customerType: onboardingCustomerType(answers.building),
       destinationCountry: country,
       destinationCurrency: currencies[index] ?? currencies[0],
       sourceAsset: asset,

@@ -605,6 +605,21 @@
 .sidebar-subnav[hidden] { display: none; }
 .onboarding-choices button { min-height: 104px; box-shadow: none; }
 .onboarding-choices button:hover { transform: none; box-shadow: none; }
+.railor-step-in { animation: railor-onboarding-arrive 220ms ease-out both; }
+@keyframes railor-onboarding-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.onboarding-profiles button { min-height: 154px; }
+.onboarding-quick button { min-height: 80px; }
+.onboarding-quick, .onboarding-interests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 640px) { .onboarding-quick, .onboarding-interests { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.onboarding-review { border: 1px solid var(--color-line); border-radius: var(--radius-card); padding: 20px; background: var(--color-lavender); }
+.onboarding-review-row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--color-line); }
+@media (prefers-reduced-motion: reduce) {
+  .railor-step-in { animation: none; }
+  .onboarding-screen *, .onboarding-screen *::before, .onboarding-screen *::after { transition: none !important; }
+}
 .onboarding-screen { max-width: 680px; padding-top: 30px; }
 @media (max-width: 1199px) { .overview-price-art { display: none; } }
 @media (max-width: 1023px) {

@@ -5,6 +5,7 @@ import { FxTicker } from "../../../components/app/fx-ticker";
 import { PriceLabelsCard, PriceToolsNav } from "../../../components/app/price-panels";
 import { SwapQuote } from "../../../components/app/swap-quote";
 import { ProviderFeatureComparison } from "../../../components/app/provider-feature-comparison";
+import { onboardingPriceProfile } from "../../../lib/onboarding";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Price check" };
@@ -13,7 +14,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
   const session = await getSession();
   if (!session?.organization) redirect("/login");
   const org = session.organization;
-  const [page, connected] = await Promise.all([loadPricePage(await searchParams, org.id, org.entityCountry), productionConnectedSlugs(org.id)]);
+  const [page, connected] = await Promise.all([loadPricePage(await searchParams, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id)]);
 
   return (
     <div className="product-page space-y-5">

@@ -10,11 +10,28 @@ export function safeReturnPath(value: unknown, fallback = "/welcome"): string {
   } catch { return fallback; }
 }
 
-/**
- * When APP_ORIGIN is unset on Vercel, the platform's own host stands in. Vercel injects these variables itself
- * (they are never taken from a request), so this cannot be steered by a caller. Set APP_ORIGIN for a custom
- * domain: OAuth callbacks and emailed links must use the exact address you registered.
- */
+/** Keep setup completion local and avoid redirecting into another auth flow. */
+export function onboardingFinishPath(value: unknown): string {
+  const path = safeReturnPath(value, "/app");
+  const pathname = new URL(path, "https://railor.invalid").pathname;
+  return /^\/(welcome|login|auth|api)(\/|$)/.test(pathname) ? "/app" : path;
+}
+
+/** First sign-in starts setup; completed users and invitations keep their destination. */
+export function signInDestination(value: unknown, onboardingComplete: boolean): string {
+  const path = safeReturnPath(value);
+  const url = new URL(path, "https://railor.invalid");
+  if (url.pathname.startsWith("/invite/")) return path;
+  if (url.pathname === "/welcome") {
+    if (!onboardingComplete) return path;
+    if (url.searchParams.has("next")) return onboardingFinishPath(url.searchParams.get("next"));
+    const query = url.searchParams.get("q");
+    return query ? `/app/search?q=${encodeURIComponent(query)}` : "/app";
+  }
+  return onboardingComplete ? onboardingFinishPath(path) : `/welcome?next=${encodeURIComponent(onboardingFinishPath(path))}`;
+}
+
+/** Platform hosts come from Vercel's environment, never from a caller's request. */
 function platformOrigin(): string | null {
   const host = (process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_URL)?.trim();
   return host && /^[a-z0-9.-]+(:\d+)?$/i.test(host) ? `https://${host}` : null;

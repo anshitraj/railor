@@ -6,6 +6,7 @@ import { getReferenceOptions } from "../../lib/reference";
 import { createOrganizationForUser } from "../../lib/org";
 import { OnboardingFlow } from "../../components/onboarding/onboarding-flow";
 import { RailorBrand } from "../../components/brand";
+import { onboardingFinishPath } from "../../lib/security";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Welcome" };
@@ -51,6 +52,7 @@ export default async function WelcomePage({
   }
 
   const query = typeof params.q === "string" ? params.q : undefined;
+  const returnTo = onboardingFinishPath(params.next);
   const reference = await getReferenceOptions();
 
   // Anything the visitor typed before signing up becomes the starting point.
@@ -71,7 +73,7 @@ export default async function WelcomePage({
           {org.name}
         </span>
         <span className="flex-1" />
-        <Link href="/app" className="text-[13px] text-[var(--color-muted)] hover:text-[var(--color-ink)]">
+        <Link href={returnTo} className="text-[13px] text-[var(--color-muted)] hover:text-[var(--color-ink)]">
           Do this later
         </Link>
       </header>
@@ -100,6 +102,7 @@ export default async function WelcomePage({
                   : [],
             interests: org.interests ?? [],
             fromQuery: query,
+            returnTo,
           }}
         />
       </div>

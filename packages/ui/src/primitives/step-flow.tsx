@@ -2,6 +2,7 @@
 
 import { cn } from "../cn.js";
 import { Button } from "./base.js";
+import { useEffect, useRef } from "react";
 
 /**
  * One decision per view. Progress is explicit, Back is always live, Skip is
@@ -37,10 +38,17 @@ export function StepFlow({
   footnote?: React.ReactNode;
   className?: string;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  const initial = useRef(true);
+  useEffect(() => {
+    if (initial.current) { initial.current = false; return; }
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }, [step]);
   return (
     <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-8", className)}>
       <div className="flex items-center gap-3">
-        <div className="flex flex-1 gap-1.5" aria-hidden>
+        <div className="flex flex-1 gap-1.5" role="progressbar" aria-label="Account setup" aria-valuemin={0} aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${total}`}>
           {Array.from({ length: total }, (_, i) => (
             <span
               key={i}
@@ -66,7 +74,7 @@ export function StepFlow({
         className="railor-step-in flex flex-col gap-6"
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-[28px] font-semibold leading-tight text-[var(--color-ink)]">
+          <h1 ref={heading} tabIndex={-1} className="outline-none text-[28px] font-semibold leading-tight text-[var(--color-ink)]">
             {title}
           </h1>
           {subtitle ? (

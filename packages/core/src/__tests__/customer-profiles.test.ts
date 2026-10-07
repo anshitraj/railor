@@ -8,6 +8,10 @@ const request = { sourceCurrency: "USD", destinationCurrency: "INR", amount: 100
 const assess = (slug = "wise", overrides: Partial<CustomerContext> = {}, amounts: Partial<typeof request> = {}) => assessCustomerProfile(slug, { ...context, ...overrides }, { ...request, ...amounts });
 
 describe("account-holder product eligibility", () => {
+  it("does not apply commercial receiving evidence to personal accounts", () => {
+    expect(CustomerContext.parse({ ...context, profile: "personal", purpose: "personal" }).profile).toBe("personal");
+    for (const provider of ["wise", "skydo"]) expect(assess(provider, { profile: "personal" })).toMatchObject({ status: "unconfirmed", priceApplicable: false });
+  });
   it("changes bank-name and document requirements for an individual freelancer, registered sole proprietor and company", () => {
     const freelance = assess("wise", { profile: "freelancer" });
     const sole = assess("wise", { profile: "sole_proprietor" });

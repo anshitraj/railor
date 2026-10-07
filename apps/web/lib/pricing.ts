@@ -84,7 +84,7 @@ const STABLECOINS = new Set(["USDC", "USDT", "EURC", "PYUSD", "DAI", "USDP", "FD
  * from the URL (or a sensible default for the workspace's country), and a
  * server-side first quote so the card never opens empty.
  */
-export async function loadPricePage(params: Record<string, string | undefined>, organizationId: string | null, entityCountry?: string | null) {
+export async function loadPricePage(params: Record<string, string | undefined>, organizationId: string | null, entityCountry?: string | null, profile: CustomerContext["profile"] = "business") {
   const options = await getIntentOptions();
   const currencies = options.currencies.filter((c) => /^[A-Z]{3}$/.test(c.value) && !STABLECOINS.has(c.value));
   const known = new Set(currencies.map((c) => c.value));
@@ -99,7 +99,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   // business quotes.
   const market = params.market === undefined ? true : params.market === "1";
   const context = readCustomerContext((key) => params[key], {
-    profile: "business", country: entity || "IN", direction: (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: "services",
+    profile, country: entity || "IN", direction: profile !== "personal" && (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: profile === "personal" ? "personal" : "services",
   });
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;

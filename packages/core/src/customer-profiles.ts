@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /** Account holder, not the overseas payer. Freelance income is commercial. */
 export const CustomerContext = z.object({
-  profile: z.enum(["business", "freelancer", "sole_proprietor"]),
+  profile: z.enum(["business", "freelancer", "sole_proprietor", "personal"]),
   country: z.string().regex(/^[A-Z]{2}$/),
   direction: z.enum(["send", "receive"]),
   purpose: z.enum(["services", "goods", "salary", "personal"]),
@@ -47,6 +47,8 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     priceApplicable: false, sources: [], reviewedAt: null,
   };
   const provider = slug.replace(/^market:/, "");
+  // Export-collection evidence cannot establish eligibility for a personal account.
+  if (context.profile === "personal") return unknown;
   if (!["wise", "skydo"].includes(provider) || context.country !== "IN" || context.direction !== "receive") return unknown;
   const individualName = context.profile === "freelancer";
   const a: ProviderProfileAssessment = {
