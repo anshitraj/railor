@@ -34,6 +34,8 @@ pnpm db:migrate && pnpm db:seed
 
 Sign-in uses magic links. In development (`AUTH_EMAIL_TRANSPORT=console`, the default) the link is printed to the server log **and** shown in the UI, so you can sign in immediately.
 
+For production email delivery through Resend SMTP, see [EMAIL_SIGNIN_SETUP.md](EMAIL_SIGNIN_SETUP.md).
+
 ---
 
 ## The 60-second demo

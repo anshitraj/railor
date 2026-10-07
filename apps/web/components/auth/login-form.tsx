@@ -28,6 +28,7 @@ const ERROR_MESSAGE: Record<string, string> = {
   email_unavailable: "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator.",
   mail_transport_not_configured: "Email sign-in is temporarily unavailable. Try again later or contact your workspace administrator.",
   send_failed: "Couldn't send that email. Please try again shortly.",
+  sign_in_unavailable: "Sign-in is temporarily unavailable. Please try again shortly.",
 };
 
 /**
@@ -122,7 +123,7 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3" aria-busy={state === "sending"}>
-          <label htmlFor="sign-in-email" className="text-[12px] font-semibold">Work email</label>
+          <label htmlFor="sign-in-email" className="text-[12px] font-semibold">Email address</label>
           <input
             id="sign-in-email"
             name="email"
@@ -133,8 +134,10 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
             className="rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 py-3 text-[14px] focus:border-[var(--color-action)]"
-            aria-label="Work email"
+            aria-label="Email address"
+            aria-describedby="sign-in-email-hint"
           />
+          <p id="sign-in-email-hint" className="text-[12px] text-[var(--color-muted)]">Company or work email preferred. Personal email is welcome too.</p>
           <Button type="submit" disabled={state === "sending"} className="justify-center">
             {state === "sending" ? "Sending…" : "Continue with email"}
             <ArrowRight size={16} aria-hidden />

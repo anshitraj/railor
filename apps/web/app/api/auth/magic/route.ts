@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createMagicLink } from "../../../../lib/auth";
-import { sendMail } from "../../../../lib/mail";
+import { sendMail, smtpConfigured } from "../../../../lib/mail";
 import { consumeLimit, requestIdentity } from "../../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const Body = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   returnTo: z.string().max(500).optional(),
 });
 
@@ -19,9 +20,20 @@ const Body = z.object({
  */
 export async function POST(request: Request) {
   const transport = process.env.AUTH_EMAIL_TRANSPORT ?? "console";
-  if (process.env.NODE_ENV === "production" && transport === "console") {
+  if (!["console", "smtp"].includes(transport) ||
+      (process.env.NODE_ENV === "production" && transport === "console") ||
+      (transport === "smtp" && !smtpConfigured())) {
     return NextResponse.json({ error: "email_unavailable" }, { status: 503 });
   }
+  try {
+    return await issueLink(request, transport);
+  } catch (error) {
+    console.error(JSON.stringify({ event: "sign_in_failed", errorType: error instanceof Error ? error.name : "UnknownError" }));
+    return NextResponse.json({ error: "sign_in_unavailable" }, { status: 503 });
+  }
+}
+
+async function issueLink(request: Request, transport: string) {
   if (!await consumeLimit("magic-ip", requestIdentity(request), 10, 900_000)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
