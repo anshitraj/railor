@@ -574,7 +574,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   </li>
                 ))}
               </ul>
-              <Link href={mode === "app" ? "/app/providers" : "/providers"} className="mx-2 mb-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#ffad8c] hover:text-white">
+              <Link href={mode === "app" ? "/app/providers" : "/providers?view=infrastructure"} className="mx-2 mb-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#ffad8c] hover:text-white">
                 Browse the full {result.marketCoverage.totalTracked}-provider payment market <ArrowUpRight size={12} />
               </Link>
             </details>
