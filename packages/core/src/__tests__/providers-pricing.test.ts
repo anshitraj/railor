@@ -74,6 +74,14 @@ afterEach(() => {
 });
 
 describe("Wise quotes", () => {
+  it("uses the full price total including taxes instead of the legacy fee summary", () => {
+    const body = { ...WISE_PUBLIC, paymentOptions: WISE_PUBLIC.paymentOptions.map(option => option.payIn === "BANK_TRANSFER" ? { ...option, price: { total: { value: { amount: 13.29, currency: "USD" } } } } : option) };
+    expect(wiseQuoteToUnified(body, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "public_published").feeAmount).toBe(13.29);
+  });
+  it("captures a fee when Wise returns price.total without a legacy fee.total", () => {
+    const body = { ...WISE_PUBLIC, paymentOptions: [{ ...WISE_PUBLIC.paymentOptions[0]!, fee: undefined }] };
+    expect(wiseQuoteToUnified(body, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "public_published")).toMatchObject({ feeAmount: 11.26, costPartial: false });
+  });
   it("reads a real public quote: bank-transfer option when the balance option is disabled", () => {
     const q = wiseQuoteToUnified(WISE_PUBLIC, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "public_published", new Date("2026-09-27T04:34:27Z"));
     expect(q.recipientAmount).toBe(94700.73);

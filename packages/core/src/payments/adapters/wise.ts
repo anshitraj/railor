@@ -101,6 +101,8 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
   if (!option) throw new Error("Wise returned no bank-transfer option for this route.");
   const eta = option.estimatedDelivery ? Math.max(0, Math.round((Date.parse(option.estimatedDelivery) - now.getTime()) / 60_000)) : undefined;
   const feeCurrency = option.price?.total?.value?.currency ?? body.sourceCurrency ?? request.sourceAsset;
+  // price.total includes taxes/discounts that the legacy fee summary can omit.
+  const totalFee = option.price?.total?.value?.amount ?? option.fee?.total;
   return {
     providerSlug: "wise",
     providerQuoteId: body.id,
@@ -110,12 +112,11 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
     destinationCountry: request.destinationCountry,
     amount: request.amount,
     recipientAmount: option.targetAmount,
-    // Wise itemizes its whole charge in `fee.total` and converts at the quoted rate.
-    feeAmount: option.fee?.total,
+    feeAmount: totalFee,
     feeCurrency,
     payoutFeeAmount: option.fee?.transferwise,
     platformFeeAmount: option.fee?.payIn,
-    costPartial: option.fee?.total === undefined,
+    costPartial: totalFee === undefined,
     exchangeRate: body.rate !== undefined ? String(body.rate) : undefined,
     estimatedArrivalMinutes: Number.isFinite(eta) ? eta : undefined,
     quoteType: accountContext === "public_published" ? "indicative" : "live",

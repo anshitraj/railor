@@ -1,4 +1,5 @@
-import { loadProviderSummaries } from "@railor/core";
+import Link from "next/link";
+import { loadProviderSummaries, remittanceProviderCatalog } from "@railor/core";
 import { ProviderDirectory } from "../../../components/app/provider-directory";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,12 @@ export default async function ProvidersPage() {
   const providers = (await loadProviderSummaries()).filter((p) => !p.isDemo);
 
   return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-[13px]">
+        <p className="font-semibold">Looking for the expanded fee survey?</p>
+        <p className="mt-1 text-[var(--color-muted)]">Browse {remittanceProviderCatalog().length} surveyed provider entries with dated fee samples across many countries. These records are separate from the verified payment infrastructure below.</p>
+        <Link href="/providers" className="mt-2 inline-block font-semibold text-[var(--color-orange-deep)]">Explore surveyed provider fees →</Link>
+      </div>
     <ProviderDirectory
       providers={providers.map((p) => ({
         slug: p.slug,
@@ -28,5 +35,6 @@ export default async function ProvidersPage() {
         lastVerifiedAt: p.lastVerifiedAt?.toISOString() ?? null,
       }))}
     />
+    </div>
   );
 }

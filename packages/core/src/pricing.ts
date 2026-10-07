@@ -1,6 +1,7 @@
 import { wisePublicQuote } from "./payments/adapters/wise.js";
 import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
+import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
 import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment } from "./customer-profiles.js";
 
 /**
@@ -81,6 +82,8 @@ export interface PriceCheckResult {
    * evidence to calculate or fetch a price for this request.
    */
   marketCoverage?: MarketCoverage;
+  /** Surveyed fees at their original amounts and dates, never current quotes or ranked prices. */
+  historicalPricing?: RemittanceSurvey;
 }
 
 export interface MarketCoverageProvider {
@@ -90,6 +93,8 @@ export interface MarketCoverageProvider {
   category: string;
   currencyMatch: "both" | "destination";
   lastVerified: string | null;
+  pricingStatus?: { label: string; reason: string };
+  feeEvidence?: Array<{ summary: string; product: string; sourceUrl: string | null; observedAt: string | null }>;
 }
 
 export interface MarketCoverage {
@@ -373,7 +378,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const best = rows.find((r) => tier(r) === 0 && group(r) === 0 && fits(r));
   for (const row of rows) row.shortfall = best && tier(row) === 0 && fits(row) ? round(best.recipientAmount! - row.recipientAmount!) : null;
 
-  return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes };
+  return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes, historicalPricing: remittanceSurvey(input) };
 }
 
 function basisOrder(b: PriceBasis) {

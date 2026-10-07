@@ -1,11 +1,12 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import { PAYOUT_ADAPTERS, comparePrices, getAdapter, CustomerContext, type PriceCheckInput } from "@railor/core";
-import { getDb, providerConnections, providers } from "@railor/database";
+import { evidence, fees, getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
 import { getPlatformQuoteCheck } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
+import { attachMarketPricingEvidence } from "./market-pricing-evidence";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -62,7 +63,15 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
     const entry = result.unavailable.find(u => u.providerSlug === check.providerSlug);
     if (entry && check.status === "quoted") entry.reason = "Railor's backend FX observation is shown separately below. Connecting your own account is optional, for account-specific pricing.";
   }
-  result.marketCoverage = providerMarketCoverage(input);
+  const coverage = providerMarketCoverage(input);
+  const captured = coverage.providers.length ? await db.select({
+    providerSlug: providers.slug, summary: fees.summary, product: fees.product,
+    destinationCurrency: fees.destinationCurrency, sourceUrl: evidence.sourceUrl,
+    observedAt: fees.lastVerifiedAt,
+  }).from(fees).innerJoin(providers, eq(providers.id, fees.providerId))
+    .leftJoin(evidence, eq(evidence.id, fees.evidenceId))
+    .where(and(eq(providers.isDemo, false), inArray(providers.slug, coverage.providers.map(provider => provider.providerSlug)))) : [];
+  result.marketCoverage = attachMarketPricingEvidence(coverage, input.destinationCurrency, result.rows, result.unavailable, captured.map(fee => ({ ...fee, observedAt: fee.observedAt?.toISOString() ?? null })));
   return result;
 }
 

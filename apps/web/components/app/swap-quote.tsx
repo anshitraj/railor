@@ -8,6 +8,7 @@ import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
+import { RemittanceSurveyPanel } from "./remittance-survey-panel";
 import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from "../../lib/connection-navigation";
 
 /**
@@ -536,20 +537,23 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </details>
           ) : null}
 
+          {result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}
+
           {result?.marketCoverage?.matched ? (
             <details open className="group rounded-2xl border border-white/10 px-1.5 py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
-                <span>Broader market coverage · {result.marketCoverage.matched}</span>
+                <span>Business provider coverage · {result.marketCoverage.matched}</span>
                 <span className="text-right text-[11px] font-normal text-white/40">
                   {result.marketCoverage.matched} of {result.marketCoverage.totalTracked} tracked payment providers list {to}
                 </span>
               </summary>
               <p className="px-2 pb-2 text-[11px] leading-snug text-white/45">
-                Coverage records only — not quotes or proof that this exact {from} → {to} route is available. Open a provider to confirm eligibility and pricing.
+                Captured fee statements are shown where available. Currency coverage does not confirm this exact {from} → {to} route or your account’s pricing.
               </p>
               <ul className="grid grid-cols-1 gap-1 pb-1">
                 {result.marketCoverage.providers.map((provider) => (
-                  <li key={provider.providerSlug} className="flex min-w-0 items-center gap-2 rounded-xl px-2 py-2 hover:bg-white/[0.04]">
+                  <li key={provider.providerSlug} className="min-w-0 rounded-xl border border-white/10 p-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={24} />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-[12.5px] font-semibold text-white">{provider.providerName}</span>
@@ -563,7 +567,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                         <ArrowUpRight size={13} />
                       </a>
                     ) : null}
-                    <ConnectionLink slug={provider.providerSlug} name={provider.providerName} mode={mode} connected={connected.includes(provider.providerSlug)} />
+                    {result.unavailable.some(entry => entry.providerSlug === provider.providerSlug && entry.connectable) || connected.includes(provider.providerSlug) ? <ConnectionLink slug={provider.providerSlug} name={provider.providerName} mode={mode} connected={connected.includes(provider.providerSlug)} /> : null}
+                    </div>
+                    {provider.pricingStatus ? <div className="mt-2 text-[11px] leading-relaxed"><p className="font-semibold text-white/75">{provider.pricingStatus.label}</p><p className="text-white/45">{provider.pricingStatus.reason}</p></div> : null}
+                    {provider.feeEvidence?.length ? <details className="mt-2 text-[11px]"><summary className="cursor-pointer font-semibold text-[#ffad8c]">View captured fees ({provider.feeEvidence.length})</summary><ul className="mt-2 space-y-3">{provider.feeEvidence.map((fee, index) => <li key={index} className="border-t border-white/10 pt-2"><p className="text-white/65">{fee.summary}</p><p className="mt-1 flex flex-wrap gap-2 text-[10px] text-white/40"><span>{fee.product}{fee.observedAt ? ` · Recorded ${fee.observedAt.slice(0, 10)}` : " · Collection date unavailable"}</span>{fee.sourceUrl ? <a href={fee.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">Source ↗</a> : null}</p></li>)}</ul><p className="mt-2 text-white/40">Provider fee statements; applicability to this amount and account is unconfirmed.</p></details> : null}
                   </li>
                 ))}
               </ul>

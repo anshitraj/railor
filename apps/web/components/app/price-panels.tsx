@@ -51,6 +51,7 @@ const LABELS = [
   { tag: "Railor account", tone: "bg-orange-100 text-orange-800", text: "Backend-managed FX observation, displayed separately. Sandbox means test data; payout fees are excluded." },
   { tag: "Published", tone: "bg-amber-100 text-amber-800", text: "The provider's published fee schedule (PayZoll, Skydo) applied at the mid-market rate." },
   { tag: "Estimate", tone: "bg-[var(--color-canvas)] text-[var(--color-muted)]", text: "Dated consumer prices Wise collects from banks and remittance apps. Context only." },
+  { tag: "Historical sample", tone: "bg-amber-100 text-amber-800", text: "World Bank remittance fee surveys across 400 provider entries. Original amounts and dates are preserved; never ranked as current quotes." },
   { tag: "Market coverage", tone: "bg-violet-100 text-violet-800", text: "Providers in Railor's wider market catalog that list the destination currency. Coverage is not a quote or route guarantee." },
 ];
 

@@ -1,4 +1,4 @@
-import { loadChangeFeed, loadPlatformCounts, searchCorridors } from "@railor/core";
+import { loadChangeFeed, loadPlatformCounts, remittanceProviderCatalog, searchCorridors } from "@railor/core";
 import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import { ensureMigrated, evidence as evidenceTable, getDb, providerCapabilities, providers } from "@railor/database";
 import {
@@ -147,6 +147,7 @@ export default async function HomePage() {
 
       <MarketingLanding
         counts={counts}
+        surveyProviderCount={remittanceProviderCatalog().length}
         optionsByField={optionsByField(reference)}
         fieldLabels={FIELD_LABELS}
         signals={signals}

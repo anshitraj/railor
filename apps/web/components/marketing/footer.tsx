@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { remittanceProviderCatalog } from "@railor/core";
 import { RailorMark } from "./nav";
 
 const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
@@ -49,6 +50,7 @@ export function MarketingFooter({
 }: {
   counts: { providers: number; countries: number; sources: number; capabilities: number };
 }) {
+  const surveyProviderCount = remittanceProviderCatalog().length;
   return (
     <footer className="bg-[var(--color-ink)] text-[var(--color-paper)]">
       <div className="mx-auto grid w-[min(1360px,calc(100%-2rem))] gap-10 py-16 lg:grid-cols-[1.4fr_2fr]">
@@ -67,6 +69,10 @@ export function MarketingFooter({
               <dd className="tabular font-medium">{counts.providers}</dd>
             </div>
             <div>
+              <dt className="text-white/65"><Link href="/providers" className="hover:underline">Surveyed fee providers</Link></dt>
+              <dd className="tabular font-medium">{surveyProviderCount}</dd>
+            </div>
+            <div>
               <dt className="text-white/65">Countries indexed</dt>
               <dd className="tabular font-medium">{counts.countries}</dd>
             </div>
@@ -80,8 +86,8 @@ export function MarketingFooter({
             </div>
           </dl>
           <p className="max-w-sm text-[11.5px] leading-relaxed text-white/65">
-            This deployment runs on a clearly-labelled demonstration dataset. Providers shown are
-            fictional and exist to exercise the product, not to describe real companies.
+            Mapped infrastructure and historical fee surveys use different sources. Demonstration
+            providers in this deployment are labelled; the fee survey cites its original source and dates.
           </p>
         </div>
 

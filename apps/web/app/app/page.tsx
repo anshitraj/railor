@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { getDefaultActivePolicy, listDecisions, searchCorridors } from "@railor/core";
 import { CorridorQuery } from "@railor/types";
 import { ArrowRight, Calculator, ChevronRight, Radar, Route, ScanSearch } from "lucide-react";
-import { Freshness } from "@railor/ui";
 import { getSession } from "../../lib/auth";
 import { getKybProfile, getOrgAlerts, getSavedCorridors } from "../../lib/org";
 import { RoutePill } from "../../components/app/route-pill";
+import { ActivityCards } from "../../components/app/activity-cards";
 import { WorkspaceSetup } from "../../components/app/workspace-setup";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export default async function OverviewPage() {
         </div>
         <div className="overview-section">
           <header><h2><Radar size={18} aria-hidden /> Latest activity</h2><Link href="/app/changes">View all <ChevronRight size={15} aria-hidden /></Link></header>
-          {alerts.length ? <ul className="overview-activity">{alerts.map(({ alert, change, providerName }) => <li key={alert.id}><Link href="/app/changes"><p>{change.summary}</p><span>{providerName} <Freshness date={change.detectedAt} prefix="" /></span></Link></li>)}</ul> : <div className="overview-empty"><Radar size={26} aria-hidden /><h3>You’re all caught up.</h3><p>Watch a route or provider for changes.</p><Link href="/app/monitoring" className="overview-text-action">Set up monitoring <ArrowRight size={16} aria-hidden /></Link></div>}
+          {alerts.length ? <ActivityCards items={alerts.map(({ alert, change, providerName, providerSlug }) => ({ id: alert.id, providerName, providerSlug, summary: change.summary, detectedAt: change.detectedAt }))} /> : <div className="overview-empty"><Radar size={26} aria-hidden /><h3>You’re all caught up.</h3><p>Watch a route or provider for changes.</p><Link href="/app/monitoring" className="overview-text-action">Set up monitoring <ArrowRight size={16} aria-hidden /></Link></div>}
         </div>
       </section>
     </div>

@@ -46,7 +46,7 @@ export default async function PublicProviderProfile({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <Link href="/providers" className="text-[13px] text-[var(--color-muted)]">
+          <Link href="/providers?view=infrastructure" className="text-[13px] text-[var(--color-muted)]">
             ← All providers
           </Link>
           <h1 className="flex items-center gap-3 text-[30px] font-semibold tracking-tight">

@@ -29,6 +29,7 @@ import {
 
 type LandingProps = {
   counts: { providers: number; countries: number; sources: number; capabilities: number };
+  surveyProviderCount: number;
   optionsByField: Record<string, PickerOption[]>;
   fieldLabels: Record<string, string>;
   signals: LandingSignal[];
@@ -56,7 +57,7 @@ const layers = [
   ["03", "Monitor", "See the moment a limit, route or requirement changes beneath your integration.", Radar],
 ] as const;
 
-export function MarketingLanding({ counts, optionsByField, fieldLabels, signals, changes, evidence }: LandingProps) {
+export function MarketingLanding({ counts, surveyProviderCount, optionsByField, fieldLabels, signals, changes, evidence }: LandingProps) {
   return (
     <div className="overflow-hidden">
       <section className="border-b border-[var(--color-line)] bg-[var(--color-ink)] text-[var(--color-paper)]">
@@ -108,6 +109,11 @@ export function MarketingLanding({ counts, optionsByField, fieldLabels, signals,
                 </StaggerItem>
               ))}
             </Stagger>
+
+            <Link href="/providers" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] px-5 py-3 text-[13px] transition hover:border-[var(--color-orange)]">
+              <span><strong className="text-[var(--color-ink)]">{surveyProviderCount} surveyed fee providers</strong><span className="text-[var(--color-muted)]"> · Dated public samples across receiving countries</span></span>
+              <span className="font-semibold text-[var(--color-orange-deep)]">Explore fees →</span>
+            </Link>
 
             <Reveal className="mt-2">
               <RailsStrip />

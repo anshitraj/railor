@@ -43,7 +43,7 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
       { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live", icon: Search },
       { label: "Live prices", href: "/prices", hint: "What arrives through each provider, quoted live", stage: "beta", icon: Zap },
       { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live", icon: Route },
-      { label: "Provider Intelligence", href: "/providers", hint: "Coverage, requirements, limits, sources", stage: "live", icon: Warehouse },
+      { label: "Provider Intelligence", href: "/providers?view=infrastructure", hint: "Coverage, requirements, limits, sources", stage: "live", icon: Warehouse },
       { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live", icon: Radar },
       { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live", icon: GitCompare },
       { label: "Payments & routing", href: "/docs/payments", hint: "Send through your own provider accounts, routed with fallback", stage: "beta", icon: Plug },
@@ -71,7 +71,7 @@ const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: s
   },
   Resources: {
     items: [
-      { label: "Provider Directory", href: "/providers", hint: "Filter by market, product, rail", stage: "live", icon: Warehouse },
+      { label: "Provider Directory", href: "/providers", hint: "400 surveyed provider entries and dated fees", stage: "live", icon: Warehouse },
       { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live", icon: Globe },
       { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live", icon: Radio },
       { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "live", icon: BookOpen },
