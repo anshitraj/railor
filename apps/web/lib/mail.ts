@@ -11,7 +11,10 @@ let transportUrl: string | null = null;
  * per-provider SDK, no per-provider code path.
  */
 function smtpSettings() {
-  const url = process.env.SMTP_URL?.trim();
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  const url = process.env.SMTP_URL?.trim() || (resendKey
+    ? `smtps://resend:${encodeURIComponent(resendKey)}@smtp.resend.com:465`
+    : "");
   if (!url) return null;
   const from = process.env.AUTH_FROM?.trim() || (process.env.NODE_ENV !== "production" ? "Railor <no-reply@railor.dev>" : "");
   if (!from || /[\r\n]/.test(from)) return null;
@@ -44,7 +47,21 @@ function getTransporter(url: string) {
   return transporter;
 }
 
-export async function sendMail(options: { to: string; subject: string; text: string; html?: string }) {
+export interface MailMessage {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    cid: string;
+    contentType: "image/png";
+    contentDisposition: "inline";
+  }>;
+}
+
+export async function sendMail(options: MailMessage) {
   const settings = smtpSettings();
   if (!settings) return { sent: false as const, error: "mail_transport_not_configured" as const };
 

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { appOrigin, safeReturnPath } from "./security";
+import { MAGIC_LINK_MINUTES } from "./auth-constants";
 import {
   ensureMigrated,
   getDb,
@@ -17,7 +18,6 @@ import {
 const SESSION_COOKIE = "railor_session";
 const ORG_COOKIE = "railor_org";
 const SESSION_DAYS = 30;
-const MAGIC_LINK_MINUTES = 20;
 
 export interface SessionUser {
   id: string;

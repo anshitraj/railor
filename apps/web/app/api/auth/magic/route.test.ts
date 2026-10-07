@@ -21,8 +21,10 @@ describe("email sign-in through SMTP", () => {
     const response = await POST(request());
     expect(await response.json()).toEqual({ sent: true, transport: "smtp" });
     expect(mocks.send).toHaveBeenCalledWith(expect.objectContaining({
-      to: "person@example.com", subject: "Sign in to Railor",
+      to: "person@example.com", subject: "Verify your email to sign in to Railor",
       text: expect.stringContaining("https://www.railor.xyz/auth/verify?token=private"),
+      html: expect.stringContaining('href="https://www.railor.xyz/auth/verify?token=private"'),
+      attachments: expect.arrayContaining([expect.objectContaining({ cid: "railor-logo@mail.railor.xyz" }), expect.objectContaining({ cid: "resend-logo@mail.railor.xyz" })]),
     }));
   });
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createMagicLink } from "../../../../lib/auth";
 import { sendMail, smtpConfigured } from "../../../../lib/mail";
 import { consumeLimit, requestIdentity } from "../../../../lib/rate-limit";
+import { createSignInEmail } from "../../../../lib/emails/sign-in";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,12 +53,7 @@ async function issueLink(request: Request, transport: string) {
     return NextResponse.json({ sent: true, devLink: url, transport });
   }
 
-  const result = await sendMail({
-    to: parsed.data.email,
-    subject: "Sign in to Railor",
-    text: `Sign in to Railor: ${url}\n\nThis link expires in 20 minutes.`,
-    html: `<p><a href="${url}">Sign in to Railor</a></p><p>This link expires in 20 minutes.</p>`,
-  });
+  const result = await sendMail(createSignInEmail(parsed.data.email, url));
 
   if (!result.sent) {
     return NextResponse.json({ sent: false, error: "email_unavailable" }, { status: 503 });

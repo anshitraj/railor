@@ -11,7 +11,8 @@ describe("Resend SMTP delivery", () => {
     vi.resetModules(); vi.clearAllMocks();
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("SMTP_URL", "smtps://resend:test-secret@smtp.resend.com:465");
-    vi.stubEnv("AUTH_FROM", "Railor <no-reply@railor.xyz>");
+    vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("AUTH_FROM", "Railor <hello@mail.railor.xyz>");
     mocks.send.mockResolvedValue({ accepted: [message.to] });
     mocks.createTransport.mockReturnValue({ sendMail: mocks.send, close: mocks.close });
   });
@@ -24,7 +25,44 @@ describe("Resend SMTP delivery", () => {
       url: "smtps://resend:test-secret@smtp.resend.com:465",
       connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000,
     }));
-    expect(mocks.send).toHaveBeenCalledWith({ from: "Railor <no-reply@railor.xyz>", ...message });
+    expect(mocks.send).toHaveBeenCalledWith({ from: "Railor <hello@mail.railor.xyz>", ...message });
+  });
+
+  it("sends through Resend using its API key when SMTP_URL is empty", async () => {
+    vi.stubEnv("SMTP_URL", "");
+    vi.stubEnv("RESEND_API_KEY", "  re_test-secret  ");
+    const { sendMail } = await import("./mail");
+    expect(await sendMail(message)).toEqual({ sent: true });
+    expect(mocks.createTransport).toHaveBeenCalledWith(expect.objectContaining({
+      url: "smtps://resend:re_test-secret@smtp.resend.com:465",
+    }));
+    expect(mocks.send).toHaveBeenCalledWith({ from: "Railor <hello@mail.railor.xyz>", ...message });
+  });
+
+  it("URL-encodes the Resend SMTP password", async () => {
+    vi.stubEnv("SMTP_URL", "");
+    vi.stubEnv("RESEND_API_KEY", "secret:@/?#%");
+    const { sendMail } = await import("./mail");
+    expect(await sendMail(message)).toEqual({ sent: true });
+    expect(mocks.createTransport).toHaveBeenCalledWith(expect.objectContaining({
+      url: "smtps://resend:secret%3A%40%2F%3F%23%25@smtp.resend.com:465",
+    }));
+  });
+
+  it("keeps an explicit SMTP_URL ahead of the Resend fallback", async () => {
+    vi.stubEnv("RESEND_API_KEY", "another-key");
+    const { sendMail } = await import("./mail");
+    expect(await sendMail(message)).toEqual({ sent: true });
+    expect(mocks.createTransport).toHaveBeenCalledWith(expect.objectContaining({
+      url: "smtps://resend:test-secret@smtp.resend.com:465",
+    }));
+  });
+
+  it("passes inline logo bytes and content IDs through to the SMTP message", async () => {
+    const attachments = [{ filename: "logo.png", content: Buffer.from("fixture"), cid: "logo@mail.railor.xyz", contentType: "image/png" as const, contentDisposition: "inline" as const }];
+    const { sendMail } = await import("./mail");
+    expect(await sendMail({ ...message, html: '<img src="cid:logo@mail.railor.xyz" alt="Railor">', attachments })).toEqual({ sent: true });
+    expect(mocks.send).toHaveBeenCalledWith(expect.objectContaining({ attachments }));
   });
 
   it("refuses an absent production sender instead of using the development domain", async () => {
