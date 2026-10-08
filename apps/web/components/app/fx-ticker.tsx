@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { TickerRate } from "@railor/core";
-import { cn } from "@railor/ui";
+import { Flag, cn, currencyFlagCode } from "@railor/ui";
 
 /**
  * Scrolling mid-market FX strip (Wise's public rate, refreshed every 60s).
@@ -61,6 +61,10 @@ export function FxTicker({ className = "" }: { className?: string }) {
           const move = moves[`${r.from}${r.to}`] ?? 0;
           return (
             <li key={`${r.from}${r.to}-${i}`} aria-hidden={i >= rates.length} className="flex items-center gap-1.5 whitespace-nowrap text-[12.5px]">
+              <span className="inline-flex shrink-0 items-center -space-x-1" aria-hidden="true">
+                <Flag code={currencyFlagCode(r.from) ?? ""} size={18} round className="ring-2 ring-[var(--color-surface)]" />
+                <Flag code={currencyFlagCode(r.to) ?? ""} size={18} round className="ring-2 ring-[var(--color-surface)]" />
+              </span>
               <span className="font-bold text-[var(--color-ink)]">
                 {r.from}/{r.to}
               </span>
