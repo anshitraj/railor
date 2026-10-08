@@ -359,7 +359,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       listed.connectable = true;
       continue;
     }
-    unavailable.push({ providerSlug: provider.slug, providerName: provider.name, reason: "Prices are per account and not public — connect it to see your exact price.", connectable: true });
+    unavailable.push({ providerSlug: provider.slug, providerName: provider.name, reason: "Pricing is account-specific — connect to check the quote and its fee coverage for this route.", connectable: true });
   }
 
   // Rank: prices a business can act on before market estimates; within each,
