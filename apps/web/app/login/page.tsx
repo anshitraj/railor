@@ -29,7 +29,7 @@ export default async function LoginPage({
 
   return (
     <main id="main" className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-paper)] p-12 lg:flex">
+      <section className="relative hidden flex-col justify-between gap-10 overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-paper)] p-10 xl:p-12 lg:flex">
         <div className="rail-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
         <Link href="/" className="relative flex items-center gap-2">
           <RailorBrand size={32} />
@@ -45,10 +45,10 @@ export default async function LoginPage({
               is what it is.
             </p>
           </div>
-          <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-lavender)] px-4 py-6"><RailArtwork /></div>
+          <RailArtwork />
         </div>
         <p className="relative text-[12px] text-[var(--color-muted)]">
-          Demonstration dataset — providers shown are fictional.
+          Know the route. Understand the evidence. Move with clarity.
         </p>
       </section>
 

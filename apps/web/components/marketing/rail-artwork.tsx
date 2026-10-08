@@ -1,31 +1,40 @@
 "use client";
 
-import { useId, useRef, useEffect, useState } from "react";
-import { motion, useInView } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { useInView } from "motion/react";
+import { Flag, currencyFlagCode } from "@railor/ui";
+import { ArrowUpRight, Pause, Play, Route } from "lucide-react";
+import { RailorMark } from "../brand";
+import { CurrencyLogo } from "./currency-logo";
+import styles from "./rail-artwork.module.css";
 
-const RAILS = [
-  { label: "USDC", y: 30, delay: 0 },
-  { label: "EUR", y: 70, delay: 0.35 },
-  { label: "GBP", y: 110, delay: 0.7 },
-  { label: "NGN", y: 150, delay: 1.05 },
+const INPUTS = [
+  { symbol: "USDC", name: "USD Coin", path: "M154 76 H204 C260 76 242 160 282 160" },
+  { symbol: "EUR", name: "Euro", path: "M154 160 H282" },
+  { symbol: "GBP", name: "British pound", path: "M154 244 H204 C260 244 242 160 282 160" },
+];
+const OUTPUTS = [
+  { symbol: "AED", name: "UAE dirham", path: "M358 160 C402 160 384 76 436 76 H486" },
+  { symbol: "USD", name: "US dollar", path: "M358 160 H486" },
+  { symbol: "INR", name: "Indian rupee", path: "M358 160 C402 160 384 244 436 244 H486" },
 ];
 
-const EXITS = [
-  { label: "AED", y: 50, live: true },
-  { label: "USD", y: 90, live: true },
-  { label: "INR", y: 130, live: false },
-];
+function CurrencyNode({ symbol, name }: { symbol: string; name: string }) {
+  const flag = currencyFlagCode(symbol);
+  return <>
+    <span className={styles.currencyIcon} aria-hidden="true">
+      {flag ? <Flag code={flag} size={30} round /> : <CurrencyLogo symbol={symbol} size={30} />}
+    </span>
+    <span className={styles.currencyLabel}><strong>{symbol}</strong><span>{name}</span></span>
+  </>;
+}
 
-/**
- * The brand object: several corridors entering one routing node, one route
- * illuminated, ineligible routes desaturated. Motion here describes the
- * product's behaviour rather than decorating it.
- */
+/** An illustrative route map, with a pausable signal flowing through the brand hub. */
 export function RailArtwork() {
-  const artworkRef = useRef<SVGSVGElement>(null);
-  const inView = useInView(artworkRef, { amount: .1 });
+  const artworkRef = useRef<HTMLElement>(null);
+  const inView = useInView(artworkRef, { amount: 0.15 });
   const [reduced, setReduced] = useState(true);
-  const identifier = useId().replaceAll(":", "");
+  const [paused, setPaused] = useState(false);
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(preference.matches);
@@ -33,103 +42,42 @@ export function RailArtwork() {
     preference.addEventListener("change", update);
     return () => preference.removeEventListener("change", update);
   }, []);
-  const animate = inView && !reduced;
+
   return (
-    <svg
-      ref={artworkRef}
-      viewBox="0 0 520 200"
-      className="h-auto w-full max-w-[560px]"
-      role="img"
-      aria-label="Corridors converging on the Railor routing node, with one eligible route illuminated"
-    >
-      <defs>
-        <linearGradient id={`${identifier}-in`} x1="0" x2="1">
-          <stop offset="0%" stopColor="var(--color-violet)" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="var(--color-purple)" stopOpacity="0.75" />
-        </linearGradient>
-        <linearGradient id={`${identifier}-out`} x1="0" x2="1">
-          <stop offset="0%" stopColor="var(--color-purple)" stopOpacity="0.75" />
-          <stop offset="100%" stopColor="var(--color-violet)" stopOpacity="0.12" />
-        </linearGradient>
-        <filter id={`${identifier}-glow`}>
-          <feGaussianBlur stdDeviation="6" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {RAILS.map((rail) => (
-        <g key={rail.label}>
-          <path
-            d={`M20 ${rail.y} H180 Q240 ${rail.y} 250 100`}
-            fill="none"
-            stroke={`url(#${identifier}-in)`}
-            strokeWidth="1.5"
-          />
-          {animate && <motion.circle
-            r="3"
-            fill="var(--color-purple)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 2.8, delay: rail.delay, repeat: Infinity, ease: "linear" }}
-          >
-            <animateMotion
-              dur="2.8s"
-              begin={`${rail.delay}s`}
-              repeatCount="indefinite"
-              path={`M20 ${rail.y} H180 Q240 ${rail.y} 250 100`}
-            />
-          </motion.circle>}
-          <text x="6" y={rail.y + 4} className="fill-[var(--color-muted)] text-[9px]">
-            {rail.label}
-          </text>
-        </g>
-      ))}
-
-      {EXITS.map((exit, i) => (
-        <g key={exit.label} opacity={exit.live ? 1 : 0.32}>
-          <path
-            d={`M270 100 Q290 ${exit.y} 350 ${exit.y} H500`}
-            fill="none"
-            stroke={exit.live ? `url(#${identifier}-out)` : "var(--color-line-strong)"}
-            strokeWidth={exit.live ? 1.8 : 1.2}
-            strokeDasharray={exit.live ? undefined : "4 4"}
-          />
-          {exit.live && animate ? (
-            <motion.circle r="3" fill="var(--color-lime)">
-              <animateMotion
-                dur="2.4s"
-                begin={`${0.4 + i * 0.5}s`}
-                repeatCount="indefinite"
-                path={`M270 100 Q290 ${exit.y} 350 ${exit.y} H500`}
-              />
-            </motion.circle>
-          ) : null}
-          <text x="504" y={exit.y + 4} className="fill-[var(--color-muted)] text-[9px]">
-            {exit.label}
-          </text>
-        </g>
-      ))}
-
-      <motion.g
-        animate={animate ? { scale: [1, 1.025, 1] } : { scale: 1 }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        style={{ transformOrigin: "260px 100px" }}
-      >
-        <rect
-          x="228"
-          y="68"
-          width="64"
-          height="64"
-          rx="20"
-          fill="var(--color-brand)"
-          filter={`url(#${identifier}-glow)`}
-          opacity="0.92"
-        />
-        <image href="/brand/railor-r.png" x="242" y="77" width="36" height="46" />
-      </motion.g>
-    </svg>
+    <figure ref={artworkRef} className={styles.artwork} data-running={inView && !reduced && !paused}>
+      <figcaption className={styles.header}>
+        <span className={styles.heading}><Route size={15} aria-hidden="true" /> One view. Every route.</span>
+        <span className={styles.caption}>Illustrative map</span>
+      </figcaption>
+      <div className={styles.stage} role="img" aria-label="Illustration of USDC, euros and British pounds flowing through Railor to UAE dirhams, US dollars and Indian rupees. This is not a statement of route availability.">
+        <div className={styles.grid} aria-hidden="true" />
+        <div className={styles.orbit} aria-hidden="true" />
+        <svg className={styles.rails} viewBox="0 0 640 320" fill="none" aria-hidden="true">
+          {[...INPUTS, ...OUTPUTS].map((rail, index) => <g key={rail.symbol}>
+            <path d={rail.path} className={styles.track} />
+            <path d={rail.path} pathLength="100" className={styles.signal} style={{ animationDelay: `${(index % 3) * 1.4 + (index > 2 ? 2 : 0)}s` }} />
+          </g>)}
+        </svg>
+        <div className={`${styles.nodes} ${styles.inputs}`} aria-hidden="true">
+          {INPUTS.map((rail) => <div key={rail.symbol} className={styles.node}><CurrencyNode {...rail} /></div>)}
+        </div>
+        <div className={styles.hub} aria-hidden="true">
+          <span className={styles.hubEyebrow}>Connect the dots</span>
+          <span className={styles.brand}><RailorMark size={66} /></span>
+          <strong>Railor</strong>
+          <span className={styles.hubCaption}>Financial infrastructure, mapped</span>
+        </div>
+        <div className={`${styles.nodes} ${styles.outputs}`} aria-hidden="true">
+          {OUTPUTS.map((rail) => <div key={rail.symbol} className={styles.node}><CurrencyNode {...rail} /><ArrowUpRight className={styles.nodeArrow} size={13} /></div>)}
+        </div>
+      </div>
+      <div className={styles.footer}>
+        <span>Different currencies. <strong>One clear picture.</strong></span>
+        {!reduced && <button type="button" onClick={() => setPaused(!paused)} aria-label={paused ? "Play route animation" : "Pause route animation"} aria-pressed={paused} className={styles.motionControl}>
+          {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
+          <span>{paused ? "Play" : "Pause"}</span>
+        </button>}
+      </div>
+    </figure>
   );
 }
