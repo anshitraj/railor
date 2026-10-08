@@ -28,7 +28,7 @@ const PRESETS = [
 ];
 
 const BASIS: Record<PriceBasis, { label: string; cls: string; hint: string }> = {
-  exact: { label: "Your account", cls: "bg-emerald-400/15 text-emerald-300", hint: "A live quote from your own connected account — the price you'd pay." },
+  exact: { label: "Your account", cls: "bg-emerald-400/15 text-emerald-300", hint: "A live quote from your connected account; check whether fees and total debit are complete." },
   live_public: { label: "Public reference", cls: "bg-sky-400/15 text-sky-300", hint: "A public API observation, not your business's executable quote. Your account's price can differ." },
   published: { label: "Published", cls: "bg-amber-300/15 text-amber-200", hint: "The provider's published fee schedule at the mid-market rate — not a quote." },
   market_estimate: { label: "Estimate", cls: "bg-white/10 text-white/60", hint: "Consumer pricing collected by Wise from the provider's site, dated." },

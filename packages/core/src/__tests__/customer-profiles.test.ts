@@ -65,10 +65,10 @@ describe("profile-aware price comparisons", () => {
     expect(consumer.rows.find((r) => r.providerSlug === "market:remitly")?.profileAssessment).toBeUndefined();
     expect(network.mock.calls.filter(([url]) => String(url).includes("/v4/comparisons"))).toHaveLength(1);
   });
-  it("does not call outgoing account quote adapters for a receiving context or promote unrelated public products", async () => {
+  it("allows a recipient-owned quote dependency without promoting unrelated public products", async () => {
     const connectedQuotes = vi.fn(async () => []);
     const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000, includeMarket: true, context }, { fetcher, connectedQuotes });
-    expect(connectedQuotes).not.toHaveBeenCalled();
+    expect(connectedQuotes).toHaveBeenCalledOnce();
     expect(result.rows.find((r) => r.providerSlug === "wise")).toMatchObject({ partial: true, totalCostPct: null, shortfall: null, profileAssessment: { status: "documented", priceApplicable: false } });
     expect(result.rows.find((r) => r.providerSlug === "market:remitly")).toMatchObject({ partial: true, shortfall: null, profileAssessment: { status: "unconfirmed" } });
     expect(result.rows.find((r) => r.shortfall === 0)?.providerSlug).toBe("skydo");

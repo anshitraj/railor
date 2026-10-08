@@ -2,12 +2,8 @@
  * Unified data objects — Railor's own normalized shape for what a connected
  * provider reports, independent of that provider's own API quirks.
  *
- * Only UnifiedConnectionStatus is actually populated by anything today (by
- * calling a ProviderAdapter's testConnection). UnifiedQuote is the shape a
- * future getQuote() would fill — defined now so the adapter interface has
- * somewhere real to grow into, not populated by any adapter yet since no
- * provider's actual quote/rate endpoint has been verified the way
- * testConnection's endpoints have.
+ * Quotes are point-in-time provider observations. Their fee completeness and
+ * account context must travel with the amount rather than being inferred by a UI.
  */
 
 export interface UnifiedConnectionStatus {
@@ -59,6 +55,8 @@ export interface UnifiedQuote {
   platformFeeAmount?: number;
   /** Set when the provider's response didn't break out every fee component Railor would need for a true total — so a caller never treats a partial sum as the full cost. */
   costPartial: boolean;
+  /** Provider-specific qualification shown with a partial quote, instead of assuming every gap is a transfer fee. */
+  costNote?: string;
   exchangeRate?: string;
   estimatedArrivalMinutes?: number;
   /** LIVE = this exact call just hit the provider's quote endpoint. INDICATIVE = derived from a published rate/fee schedule, not a live call. HISTORICAL = a past observation being replayed (e.g. "last observed 22 minutes ago"). */

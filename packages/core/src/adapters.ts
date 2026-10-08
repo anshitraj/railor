@@ -49,7 +49,9 @@
  * explicitly; this file never infers either from the destination currency.
  */
 import { airwallexProviderAdapter } from "./payments/adapters/airwallex.js";
+import { dlocalProviderAdapter } from "./payments/adapters/dlocal.js";
 import { wiseProviderAdapter } from "./payments/adapters/wise.js";
+import { xflowProviderAdapter } from "./payments/adapters/xflow.js";
 import type { QuoteRequest, UnifiedQuote } from "./unified.js";
 
 export interface CredentialField {
@@ -394,6 +396,8 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
   // Fiat payout networks: see payments/adapters/{wise,airwallex}.ts for what each call proves.
   wise: wiseProviderAdapter,
   airwallex: airwallexProviderAdapter,
+  xflow: xflowProviderAdapter,
+  dlocal: dlocalProviderAdapter,
 };
 
 export function getAdapter(slug: string): ProviderAdapter | null {

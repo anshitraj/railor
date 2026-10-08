@@ -245,7 +245,7 @@ function fromQuote(q: UnifiedQuote, name: string, basis: PriceBasis, extra: { de
     observedAt: q.observedAt,
     expiresAt: q.expiresAt,
     source: extra.source,
-    notes: [...(q.costPartial ? ["Excludes the transfer fee — the provider's quote covers FX only."] : []), ...(extra.notes ?? [])],
+    notes: [...(q.costPartial ? [q.costNote ?? "Excludes the transfer fee — the provider's quote covers FX only."] : []), ...(extra.notes ?? [])],
   };
 }
 
@@ -277,7 +277,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}`;
   const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic] = await Promise.all([
-    deps.connectedQuotes && input.context?.direction !== "receive" ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
+    deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
     input.sourceCurrency === "USD"
@@ -290,10 +290,12 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   ]);
 
   for (const c of connected) {
-    if (c.quote) rows.push(fromQuote(c.quote, c.providerName, "exact", { source: { label: "Your connected account" } }));
+    if (c.quote?.expiresAt && (!Number.isFinite(Date.parse(c.quote.expiresAt)) || Date.parse(c.quote.expiresAt) <= now.getTime())) {
+      unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: "The provider quote expired; refresh to request a new one." });
+    } else if (c.quote) rows.push(fromQuote(c.quote, c.providerName, "exact", { source: { label: "Your connected account" } }));
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
-  const connectedSlugs = new Set(connected.filter((c) => c.quote).map((c) => c.providerSlug));
+  const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
   if (revolutPublic && !connectedSlugs.has("revolut")) rows.push({ ...revolutPublic, notes: [...revolutPublic.notes] });
   else if (!revolutPublic && !connectedSlugs.has("revolut")) unavailable.push({ providerSlug: "revolut", providerName: "Revolut", reason: "No public UK FX reference for this request. Public pricing does not confirm business eligibility or total transfer cost." });
 

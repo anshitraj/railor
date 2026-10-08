@@ -4,7 +4,7 @@ import { PAYOUT_ADAPTERS, comparePrices, getAdapter, CustomerContext, type Price
 import { evidence, fees, getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
-import { getPlatformQuoteCheck } from "./platform-pricing";
+import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
 
@@ -12,6 +12,8 @@ import { attachMarketPricingEvidence } from "./market-pricing-evidence";
 const ACCOUNT_PRICED = [
   { slug: "wise", name: "Wise" },
   { slug: "airwallex", name: "Airwallex" },
+  { slug: "xflow", name: "Xflow" },
+  { slug: "dlocal", name: "dLocal" },
 ];
 
 /**
@@ -24,8 +26,11 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   const rows = await db.select({ id: providers.id, slug: providers.slug, name: providers.name }).from(providers).where(inArray(providers.slug, ACCOUNT_PRICED.map((p) => p.slug)));
   const connected = new Map<string, Record<string, string>>();
   const sandboxOnly = new Set<string>();
-  if (organizationId && input.context?.direction !== "receive") {
+  if (organizationId) {
     for (const row of rows) {
+      // Xflow quotes an Indian recipient's own account; outbound payout
+      // accounts belong to the sender and cannot price a recipient's deal.
+      if (input.context?.direction === "receive" && row.slug !== "xflow") continue;
       const credentials = await getConnectionCredentials(organizationId, row.id);
       if (!credentials) continue;
       if (credentials.environment === "production") connected.set(row.slug, credentials);
@@ -35,11 +40,9 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   const nameOf = (slug: string) => rows.find((r) => r.slug === slug)?.name ?? ACCOUNT_PRICED.find((p) => p.slug === slug)?.name ?? slug;
 
   const result = await comparePrices(input, {
-    platformQuotes: async (req) => {
-      const check = await getPlatformQuoteCheck({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount });
-      return check ? [check] : [];
-    },
-    connectable: ACCOUNT_PRICED.map((p) => ({ slug: p.slug, name: nameOf(p.slug), connected: connected.has(p.slug) })),
+    platformQuotes: async (req) => getPlatformQuoteChecks({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount }),
+    connectable: ACCOUNT_PRICED.filter((p) => input.context?.direction !== "receive" || p.slug === "xflow")
+      .map((p) => ({ slug: p.slug, name: nameOf(p.slug), connected: connected.has(p.slug) })),
     connectedQuotes: async (req) =>
       Promise.all(
         [...connected].map(async ([slug, credentials]) => {

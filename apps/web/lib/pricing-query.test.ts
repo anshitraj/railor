@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ options: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("./connections", () => ({ getConnectionCredentials: vi.fn() }));
 vi.mock("./reference", () => ({ getIntentOptions: mocks.options }));
-vi.mock("./platform-pricing", () => ({ getPlatformQuoteCheck: vi.fn() }));
+vi.mock("./platform-pricing", () => ({ getPlatformQuoteChecks: vi.fn(async () => []) }));
 vi.mock("./provider-market", () => ({ providerMarketCoverage: vi.fn() }));
 const { parsePriceQuery, loadPricePage } = await import("./pricing");
 

@@ -20,7 +20,7 @@ export function PlatformQuotePanel({ checks, now }: { checks: PlatformQuoteCheck
         </div>
         <p className="mt-4 text-[11px] text-[var(--color-muted)]">{sandbox ? "Simulated FX conversion" : "Reference FX conversion"}</p>
         <p className="mt-1 font-display text-[25px] font-semibold tracking-tight tabular">{available && q.recipientAmount !== undefined ? `${q.recipientAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${q.destinationCurrency}` : expired ? "Refreshing observation…" : "Quote unavailable"}</p>
-        <p className="mt-2 text-[11.5px] leading-relaxed text-[var(--color-muted)]">{available ? sandbox ? "Backend integration is working. These are test rates, not real payment prices." : "Quoted for Railor's account, not your business. Payout fees are excluded; this is not an executable customer quote." : expired ? "The previous quote expired. Values stay hidden until a fresh quote arrives." : check.error}</p>
+        <p className="mt-2 text-[11.5px] leading-relaxed text-[var(--color-muted)]">{available ? sandbox ? "Backend integration is working. These are test rates, not real payment prices." : `Quoted for Railor's account, not your business. ${q.costNote ?? "Payout fees are excluded; this is not an executable customer quote."}` : expired ? "The previous quote expired. Values stay hidden until a fresh quote arrives." : check.error}</p>
         <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-[var(--color-line)] pt-3 text-[10px] text-[var(--color-muted)]">
           <span>No visitor API key needed · never ranked best</span>
           {available && <span>Observed {new Date(q.observedAt).toISOString().slice(11, 19)} UTC</span>}

@@ -5,9 +5,9 @@ const limit = vi.hoisted(() => vi.fn());
 vi.mock("server-only", () => ({}));
 vi.mock("@railor/core", () => ({ getAdapter: () => adapter }));
 vi.mock("./rate-limit", () => ({ consumeLimit: limit }));
-const { platformQuoteProviders, getPlatformQuoteCheck, fetchPlatformReferenceQuote } = await import("./platform-pricing");
+const { platformQuoteProviders, getPlatformQuoteCheck, getPlatformQuoteChecks, fetchPlatformReferenceQuote } = await import("./platform-pricing");
 const request = { sourceAsset: "USD", destinationCurrency: "EUR", amount: 1000 };
-const envKeys = ["AIRWALLEX_PLATFORM_ENVIRONMENT", "AIRWALLEX_PLATFORM_CLIENT_ID", "AIRWALLEX_PLATFORM_API_KEY", "AIRWALLEX_SANDBOX_CLIENT_ID", "AIRWALLEX_SANDBOX_API_KEY", "airwallex_sandbox_client_id", "airwallex_sandbox_scoped_api", "RAILOR_SHOW_SANDBOX_QUOTES"];
+const envKeys = ["AIRWALLEX_PLATFORM_ENVIRONMENT", "AIRWALLEX_PLATFORM_CLIENT_ID", "AIRWALLEX_PLATFORM_API_KEY", "AIRWALLEX_SANDBOX_CLIENT_ID", "AIRWALLEX_SANDBOX_API_KEY", "airwallex_sandbox_client_id", "airwallex_sandbox_scoped_api", "RAILOR_SHOW_SANDBOX_QUOTES", "XFLOW_PLATFORM_PUBLIC_QUOTES", "XFLOW_PLATFORM_ENVIRONMENT", "XFLOW_PLATFORM_API_KEY", "XFLOW_PLATFORM_ACCOUNT_ID", "DLOCAL_PLATFORM_PUBLIC_QUOTES", "DLOCAL_PLATFORM_ENVIRONMENT", "DLOCAL_PLATFORM_CLIENT_ID", "DLOCAL_PLATFORM_CLIENT_SECRET"];
 
 describe("Railor-owned, server-only pricing", () => {
   beforeEach(() => {
@@ -69,5 +69,27 @@ describe("Railor-owned, server-only pricing", () => {
     vi.stubEnv("AIRWALLEX_SANDBOX_CLIENT_ID", "test-client"); vi.stubEnv("AIRWALLEX_SANDBOX_API_KEY", "amount-secret");
     for (const amount of [NaN, Infinity, -1, 0, 10000001]) expect(await getPlatformQuoteCheck({ ...request, amount })).toMatchObject({ status: "unavailable" });
     expect(limit).not.toHaveBeenCalled(); expect(adapter.getQuote).not.toHaveBeenCalled();
+  });
+  it("requires explicit partner public-display opt-in and suppresses sandbox observations in production", async () => {
+    const india = { ...request, destinationCurrency: "INR", destinationCountry: "IN" };
+    vi.stubEnv("XFLOW_PLATFORM_ENVIRONMENT", "production"); vi.stubEnv("XFLOW_PLATFORM_API_KEY", "sk_live_example");
+    expect(await getPlatformQuoteChecks(india)).toEqual([]);
+    vi.stubEnv("XFLOW_PLATFORM_PUBLIC_QUOTES", "true"); vi.stubEnv("NODE_ENV", "production");
+    adapter.getQuote.mockImplementation(async (_credentials, r) => ({ ...r, providerSlug: "xflow", recipientAmount: 8250, exchangeRate: "82.5", costPartial: true, costNote: "Indicative FX only.", observedAt: new Date().toISOString(), quotedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 60000).toISOString(), providerQuoteId: "private-xflow-id" }));
+    const checks = await getPlatformQuoteChecks(india);
+    expect(checks).toMatchObject([{ providerSlug: "xflow", status: "quoted", quote: { accountContext: "railor_network", costNote: "Indicative FX only." } }]);
+    expect(JSON.stringify(checks)).not.toContain("private-xflow-id");
+    expect(JSON.stringify(checks)).not.toContain("sk_live_example");
+    vi.stubEnv("XFLOW_PLATFORM_ENVIRONMENT", "sandbox");
+    expect(await getPlatformQuoteChecks(india)).toEqual([]);
+  });
+  it("gates dLocal on an amount-specific USD destination-country route", async () => {
+    vi.stubEnv("DLOCAL_PLATFORM_PUBLIC_QUOTES", "true"); vi.stubEnv("DLOCAL_PLATFORM_ENVIRONMENT", "production");
+    vi.stubEnv("DLOCAL_PLATFORM_CLIENT_ID", "client"); vi.stubEnv("DLOCAL_PLATFORM_CLIENT_SECRET", "secret");
+    expect(await getPlatformQuoteChecks(request)).toEqual([]);
+    adapter.getQuote.mockImplementation(async (_credentials, r) => ({ ...r, providerSlug: "dlocal", recipientAmount: 8300, exchangeRate: "83", costPartial: true, observedAt: new Date().toISOString(), quotedAt: new Date().toISOString() }));
+    const checks = await getPlatformQuoteChecks({ ...request, destinationCountry: "IN", destinationCurrency: "INR" });
+    expect(checks).toMatchObject([{ providerSlug: "dlocal", status: "quoted", quote: { accountContext: "railor_network", recipientAmount: 8300 } }]);
+    expect(JSON.stringify(checks)).not.toContain("secret");
   });
 });
