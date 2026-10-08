@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, SmartPicker, type PickerOption } from "@railor/ui";
 import { controlCommand } from "../../app/app/control-actions";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { NetworkLogo } from "../marketing/network-logo";
-import { FieldBlock, NumberWithPresets, PresetChip, ResultNotice, Segmented, Toggle } from "./form-kit";
+import { FieldBlock, PresetChip, ResultNotice, Segmented } from "./form-kit";
+import { PolicyRules } from "@railor/types";
+import { ArrowLeft, ArrowRight, Check, Pencil, ShieldCheck } from "lucide-react";
+import { RuleSummary } from "./product-ui";
+import { PolicyChoices, PolicyNumberQuestion } from "./policy-setup-fields";
+import { POLICY_CHECKS, POLICY_STAGES, SCOPE_RULES, applyGuardrailProfile, clearRules, guardrailProfile, hasPolicyLimits, hasPolicyScope, listRule, numberRule, parsePolicyRules, policyStage, policySteps, type DraftRules, type GuardrailProfile, type PolicyStep } from "./policy-setup";
+import styles from "./policy-setup.module.css";
 import { ProviderLogo } from "./provider-logo";
 import {
   IntentBuilder,
@@ -63,246 +69,206 @@ function humanError(code?: string) {
   return known[code] ?? code.replaceAll("_", " ");
 }
 
-type Rules = Record<string, unknown>;
-
-const SAFEGUARDS: Array<[string, string, string]> = [
-  ["requireExactRouteEvidence", "Require exact route evidence", "Only routes confirmed end-to-end by a source pass."],
-  ["requireConfirmedEntityEligibility", "Require confirmed entity eligibility", "Unknown onboarding eligibility counts as a fail, not a pass."],
-  ["requireCustomerConnectedProvider", "Require connected provider", "Only providers your workspace has connected."],
-  ["requireLiveQuote", "Require live quote", "A fresh quote must exist before a route can be allowed."],
-  ["denyDuringActiveIncident", "Block during active incidents", "Degraded providers are excluded until they recover."],
-];
-
-function listValue(rules: Rules, key: string): string[] {
-  const value = rules[key];
-  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
-}
-
-function numberValue(rules: Rules, key: string): number | undefined {
-  const value = rules[key];
-  return typeof value === "number" ? value : undefined;
-}
-
 export function PolicyEditor({
-  policyId,
-  initialRules = {},
-  initialName = "Production policy",
-  canEdit,
-  providers,
-  options,
-  entityCountry,
+  policyId, initialRules = {}, initialName = "Production policy", canEdit, providers, options, entityCountry,
 }: {
-  policyId?: string;
-  initialRules?: Rules;
-  initialName?: string;
-  canEdit: boolean;
-  providers: Array<{ slug: string; name: string }>;
-  options: IntentOptions;
-  entityCountry?: string;
+  policyId?: string; initialRules?: DraftRules; initialName?: string; canEdit: boolean;
+  providers: Array<{ slug: string; name: string }>; options: IntentOptions; entityCountry?: string;
 }) {
   const [name, setName] = useState(initialName);
-  const [rules, setRules] = useState<Rules>(initialRules);
+  const [rules, setRules] = useState<DraftRules>(() => PolicyRules.parse(initialRules));
+  const [profile, setProfile] = useState<GuardrailProfile>(() => guardrailProfile(initialRules));
+  const [limits, setLimits] = useState(() => hasPolicyLimits(initialRules));
+  const [scope, setScope] = useState(() => hasPolicyScope(initialRules));
+  const [step, setStep] = useState<PolicyStep>(policyId ? "checks" : "name");
+  const [editingReview, setEditingReview] = useState(false);
+  const [inputError, setInputError] = useState("");
   const [intent, setIntent] = useState<IntentDraft>(() => defaultIntentDraft(entityCountry));
-  const [advanced, setAdvanced] = useState(JSON.stringify(initialRules, null, 2));
+  const [advanced, setAdvanced] = useState("");
+  const [advancedError, setAdvancedError] = useState("");
   const [simulation, setSimulation] = useState<SimulationSummary | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const nameId = useId();
   const c = useCommand();
   const sim = useCommand();
-  const update = (key: string, value: unknown) =>
-    setRules((previous) => {
-      const next = { ...previous, [key]: value };
-      if (value === undefined) delete next[key];
-      return next;
-    });
+  const steps = policySteps(profile, limits, scope, Boolean(policyId));
+  const position = steps.indexOf(step);
+  const stage = policyStage(step);
+  const stages = policyId ? POLICY_STAGES.filter((item) => item !== "Basics") : POLICY_STAGES;
+  const fingerprint = JSON.stringify({ rules, intent });
+  const currentSimulationInput = useRef(fingerprint);
+  currentSimulationInput.current = fingerprint;
+  useEffect(() => {
+    setSimulation(null);
+    sim.setError("");
+  }, [rules, intent]); // A comparison is valid only for the inputs it evaluated.
+  useEffect(() => {
+    setInputError("");
+    if (step !== (policyId ? "checks" : "name")) {
+      heading.current?.focus({ preventScroll: true });
+      heading.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [step, policyId]);
+  const update = (key: string, value: unknown) => setRules((previous) => {
+    const next = { ...previous, [key]: value };
+    if (value === undefined) delete next[key];
+    return next;
+  });
+  const move = (next: PolicyStep) => { c.setError(""); setInputError(""); setStep(next); };
+  const edit = (next: PolicyStep) => { setEditingReview(true); move(next); };
+  const chooseProfile = (next: string) => {
+    setProfile(next as GuardrailProfile);
+    setRules((previous) => applyGuardrailProfile(previous, next as GuardrailProfile));
+  };
   const providerOptions: PickerOption[] = providers.map((p) => ({ value: p.slug, label: p.name }));
-  const enabledCount = SAFEGUARDS.filter(([key]) => Boolean(rules[key])).length;
+  const check = POLICY_CHECKS.find(({ key }) => key === step);
+  const titles: Partial<Record<PolicyStep, [string, string]>> = {
+    name: ["What would you like to call this policy?", "A policy is your workspace's set of rules for evaluating payments. Give it a name your team will recognize."],
+    checks: ["What checks should every route pass?", "Start with a set of checks, or choose your own. These checks decide which routes can pass your policy."],
+    evidence: ["How recent should route evidence be?", "This is the age of the evidence about a route, not the age of a quote. Older evidence will fail this check."],
+    approval: ["When should a person approve a payment?", "Payments above this amount need human review. The threshold uses each payment's funding currency or asset; Railor does not convert it to a common currency."],
+    limits: ["Do you want fee and delivery limits?", "You can cap the quoted cost and the estimated settlement time. Both limits are optional."],
+    cost: ["What is the highest quoted fee you'll allow?", "Choose a percentage of the payment amount. A cost limit requires a live quote with known fees; routes without that information cannot pass."],
+    settlement: ["How quickly must a payment arrive?", "Choose the longest estimated settlement time. A time limit requires a live quote with a delivery estimate; routes without it cannot pass."],
+    scope: ["Do you want to narrow the choices?", "Use all eligible providers, assets and networks, or choose specific ones. Every route must still pass your other checks."],
+    providerAllowlist: ["Which providers may Railor consider?", "Choose the providers your team wants to use. Leave this empty to consider any eligible provider."],
+    providerDenylist: ["Are there any providers to exclude?", "These providers will be blocked even if they meet every other rule. Leave this empty if you have no exclusions."],
+    allowedAssets: ["Which digital assets may a payment use?", "Choose the assets your team supports. Leave this empty to allow any asset. This list does not restrict fiat currencies."],
+    allowedNetworks: ["Which blockchain networks may a payment use?", "Choose the networks your team supports. Leave this empty to allow any network."],
+    review: ["Does everything look right?", "Review your answers, edit anything, and save a draft. You can activate it separately after reviewing the saved version."],
+  };
+  const [title, hint] = check ? [check.question, check.hint] : titles[step]!;
+  const validation = PolicyRules.safeParse(rules);
+  const blocked = c.pending || sim.pending || Boolean(inputError) || (step === "name" && (!name.trim() || name.trim().length > 120));
+  const namesOf = (key: string, choices: PickerOption[], empty: string) => {
+    const values = listRule(rules, key);
+    return values.length ? values.map((value) => choices.find((option) => option.value === value)?.label ?? value).join(", ") : empty;
+  };
+  const age = numberRule(rules, "maximumEvidenceAgeHours");
+  const approval = numberRule(rules, "humanApprovalAboveAmount");
+  const cost = numberRule(rules, "maximumKnownCostBps");
+  const eta = numberRule(rules, "maximumEtaMinutes");
+  const guidedKeys = [...POLICY_CHECKS.map(({ key }) => key), ...SCOPE_RULES, "maximumEvidenceAgeHours", "humanApprovalAboveAmount", "maximumKnownCostBps", "maximumEtaMinutes"];
+  const extraRules = Object.fromEntries(Object.entries(rules).filter(([key, value]) =>
+    !guidedKeys.includes(key) && value !== undefined && value !== false && !(Array.isArray(value) && value.length === 0) &&
+    !((key === "allowAggregators" || key === "allowPrefunding") && value === true)
+  ));
+  const reviewRows: Array<{ title: string; text: string; step: PolicyStep }> = [
+    ...(policyId ? [] : [{ title: "Policy name", text: name, step: "name" as const }]),
+    { title: "Route checks", text: POLICY_CHECKS.map(({ key, label }) => `${label}: ${rules[key] ? "required" : "not required"}`).join(" · "), step: "checks" },
+    { title: "Evidence freshness", text: age === undefined ? "No evidence age limit" : `Evidence no older than ${age % 24 === 0 ? `${age / 24} days` : `${age} hours`}`, step: "evidence" },
+    { title: "Human approval", text: approval === undefined ? "No amount-based approval step" : `Required above ${approval.toLocaleString()} in each payment's funding currency or asset`, step: "approval" },
+    { title: "Fees and delivery", text: `${cost === undefined ? "No fee cap" : `Maximum quoted fee: ${cost / 100}%`} · ${eta === undefined ? "No settlement time cap" : `Maximum settlement: ${eta >= 60 && eta % 60 === 0 ? `${eta / 60} hours` : `${eta} minutes`}`}`, step: "limits" },
+    { title: "Providers", text: `Allowed: ${namesOf("providerAllowlist", providerOptions, "any eligible provider")}. Excluded: ${namesOf("providerDenylist", providerOptions, "none")}.`, step: scope ? "providerAllowlist" : "scope" },
+    { title: "Assets and networks", text: `Assets: ${namesOf("allowedAssets", options.assets, "any")}. Networks: ${namesOf("allowedNetworks", options.networks, "any")}.`, step: scope ? "allowedAssets" : "scope" },
+  ];
+  const numberQuestion = (key: string, presets: Array<{ value: number; label: string; description?: string; tag?: string }>, offLabel: string, customLabel: string, unit: string, extra: { factor?: number; integer?: boolean; allowZero?: boolean } = {}) =>
+    <PolicyNumberQuestion label={title} value={numberRule(rules, key)} onChange={(value) => update(key, value)} presets={presets} offLabel={offLabel} customLabel={customLabel} unit={unit} onError={setInputError} {...extra} />;
 
-  return (
-    <Card className="product-panel product-form">
-      <div className="product-panel-head">
-        <div>
-          <span className="product-index">CONFIGURATION / {policyId ? "NEW VERSION" : "NEW POLICY"}</span>
-          <h2 className="mt-1">{policyId ? "Create a new version" : "Create policy"}</h2>
-          <p>Set guardrails with clicks, simulate them against a real route, then save a draft for review.</p>
-        </div>
-        <span className="product-badge" data-tone="warn">Draft only</span>
-      </div>
-      <div className="space-y-7 p-5 sm:p-7">
-        {!policyId && (
-          <label className="block max-w-md">
-            Policy name
-            <input className={field} value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-        )}
-
-        <section className="space-y-3">
-          <p className="product-index">REQUIRED SAFEGUARDS · {enabledCount} OF {SAFEGUARDS.length} ON</p>
-          <div className="grid gap-2 md:grid-cols-2">
-            {SAFEGUARDS.map(([key, label, hint]) => (
-              <Toggle key={key} label={label} hint={hint} checked={Boolean(rules[key])} onChange={(v) => update(key, v)} />
-            ))}
+  return <Card className={styles.wizard}>
+    <header className={styles.header}>
+      <div><span className="product-index">{policyId ? "POLICY / NEW VERSION" : "POLICY / GUIDED SETUP"}</span><h2>{policyId ? "Create a new version" : "Create policy"}</h2><p>One question at a time. Choose your rules, then review your draft.</p></div>
+      <span className="product-badge" data-tone="warn">Draft only</span>
+    </header>
+    <div className={styles.progress} role="progressbar" aria-label="Policy setup progress" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={position + 1} aria-valuetext={`Question ${position + 1} of ${steps.length}: ${stage}`}><span style={{ width: `${((position + 1) / steps.length) * 100}%` }} /></div>
+    <div className={styles.layout}>
+      <aside className={styles.sidebar} aria-label="Setup stages">
+        <ol>{stages.map((item, index) => <li key={item} className={styles.stage} aria-current={stage === item ? "step" : undefined} data-complete={stages.indexOf(stage) > index}><span>{stages.indexOf(stage) > index ? <Check size={13} aria-hidden="true" /> : String(index + 1).padStart(2, "0")}</span>{item}</li>)}</ol>
+        <p className={styles.sidebarNote}><ShieldCheck size={20} aria-hidden="true" />Your answers become a draft.<br />Extra questions appear only when you choose custom rules.</p>
+      </aside>
+      <div className={styles.body}>
+        <section key={step} className={styles.question} aria-labelledby={`${nameId}-question`}>
+          <span className={styles.eyebrow}>Question {String(position + 1).padStart(2, "0")} of {String(steps.length).padStart(2, "0")} / {stage}</span>
+          <h3 id={`${nameId}-question`} ref={heading} tabIndex={-1}>{title}</h3>
+          <p className={styles.hint}>{hint}</p>
+          {step === "name" && <>
+            <div className={styles.nameField}><label htmlFor={nameId}>Policy name</label><input id={nameId} autoComplete="off" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Team payment policy" /></div>
+            <div className={styles.examples}><span>Try:</span>{["Production policy", "Supplier payments", "Treasury policy"].map((example) => <button type="button" key={example} onClick={() => setName(example)}>{example}</button>)}</div>
+          </>}
+          {step === "checks" && <PolicyChoices label={title} value={profile} onChange={chooseProfile} options={[
+            { value: "verified", label: "Verified and eligible routes", tag: "Suggested starting point", description: "Require exact route evidence and confirmed company eligibility. Block providers during active incidents." },
+            { value: "strict", label: "Connected accounts with live quotes", description: "All the checks above, plus a connected provider account and a fresh live quote. Routes without either are blocked." },
+            { value: "custom", label: "Choose each check myself", description: "Answer a few yes-or-no questions. Existing custom rules stay as they are until you change them." },
+          ]} />}
+          {check && <PolicyChoices label={title} value={rules[check.key] ? "yes" : "no"} onChange={(value) => update(check.key, value === "yes")} options={[{ value: "yes", label: check.yes }, { value: "no", label: check.no }]} />}
+          {step === "evidence" && numberQuestion("maximumEvidenceAgeHours", [
+            { value: 24, label: "Within 1 day" }, { value: 72, label: "Within 3 days" }, { value: 168, label: "Within 7 days" }, { value: 720, label: "Within 30 days" },
+          ], "No age limit", "Maximum evidence age", "hours", { integer: true })}
+          {step === "approval" && numberQuestion("humanApprovalAboveAmount", [
+            { value: 1000, label: "Above 1,000" }, { value: 10000, label: "Above 10,000" }, { value: 100000, label: "Above 100,000" },
+          ], "No amount-based approval", "Approval required above", "funding units")}
+          {step === "limits" && <PolicyChoices label={title} value={limits ? "custom" : "none"} options={[
+            { value: "none", label: "Continue without fee or time caps", description: "Your route checks still apply. Fees and delivery times won't add another restriction." },
+            { value: "custom", label: "Set fee and delivery limits", description: "Choose a fee cap and a settlement time in the next two questions. You can leave either one uncapped." },
+          ]} onChange={(value) => { setLimits(value === "custom"); if (value === "none") setRules((previous) => clearRules(previous, ["maximumKnownCostBps", "maximumEtaMinutes"])); }} />}
+          {step === "cost" && numberQuestion("maximumKnownCostBps", [
+            { value: 25, label: "Up to 0.25%" }, { value: 50, label: "Up to 0.5%" }, { value: 100, label: "Up to 1%" }, { value: 200, label: "Up to 2%" },
+          ], "No fee cap", "Maximum quoted fee", "% of payment amount", { factor: 100, allowZero: true })}
+          {step === "settlement" && numberQuestion("maximumEtaMinutes", [
+            { value: 15, label: "Within 15 minutes" }, { value: 60, label: "Within 1 hour" }, { value: 1440, label: "Within 1 day" },
+          ], "No time cap", "Maximum settlement time", "minutes")}
+          {step === "scope" && <PolicyChoices label={title} value={scope ? "custom" : "any"} options={[
+            { value: "any", label: "Consider all eligible options", description: "No extra allowlists or provider exclusions. Your route checks and limits still decide what can pass." },
+            { value: "custom", label: "Choose providers, assets or networks", description: "Pick one list at a time. You can leave any list empty to keep that choice open." },
+          ]} onChange={(value) => { setScope(value === "custom"); if (value === "any") setRules((previous) => clearRules(previous, SCOPE_RULES)); }} />}
+          {SCOPE_RULES.some((key) => key === step) && <div className={styles.picker}>
+            <SmartPicker multiple renderMark={step === "allowedAssets" ? assetMark : step === "allowedNetworks" ? networkMark : providerMark} options={step === "allowedAssets" ? options.assets : step === "allowedNetworks" ? options.networks : providerOptions} value={listRule(rules, step)} onChange={(value) => update(step, value.length ? value : undefined)} placeholder={step === "allowedAssets" ? "Search assets…" : step === "allowedNetworks" ? "Search networks…" : "Search providers…"} suggestionCount={5} />
+            <p className={styles.pickerNote}>{listRule(rules, step).length ? `${listRule(rules, step).length} selected. Click a selected choice to remove it.` : step === "providerDenylist" ? "No providers excluded. Continue if you don't need exclusions." : "No restrictions selected. Continue to keep all eligible options available."}</p>
+          </div>}
+          {step === "review" && <>
+            <div className={styles.review}>{reviewRows.map((row) => <div className={styles.reviewRow} key={row.title}><div><h4>{row.title}</h4><p>{row.text}</p></div><button type="button" aria-label={`Edit ${row.title.toLowerCase()}`} onClick={() => edit(row.step)}>Edit <Pencil size={11} className="inline" aria-hidden="true" /></button></div>)}</div>
+            {Object.keys(extraRules).length > 0 && <div className={styles.optional}><p className="mb-3 text-xs font-semibold">Additional rules from this policy</p><RuleSummary rules={extraRules} /></div>}
+            <details className={styles.optional}>
+              <summary>Test these rules on a sample payment <span className="font-normal text-[var(--color-muted)]">· optional</span></summary>
+              <div className="space-y-4">
+                <p className="text-xs leading-relaxed text-[var(--color-muted)]">Compare the current rules with this draft. This test does not send a payment.</p>
+                <IntentBuilder value={intent} onChange={setIntent} options={options} detectedEntity={entityCountry} />
+                <Button type="button" disabled={sim.pending || !validation.success || missingIntentFields(intent).length > 0} onClick={() => {
+                  const evaluatedInput = fingerprint;
+                  sim.run({ action: "simulate", intent: intentFromDraft(intent), baseline: initialRules, rules }, (data) => {
+                    if (currentSimulationInput.current === evaluatedInput) setSimulation(data as SimulationSummary);
+                  });
+                }}>{sim.pending ? "Testing…" : "Compare with current rules"}</Button>
+                {missingIntentFields(intent).length > 0 && <p className="text-xs text-[var(--color-muted)]">Still needed: {missingIntentFields(intent).join(", ")}.</p>}
+                {sim.error && <p role="alert" className={styles.error}>{sim.error}</p>}
+                {simulation && <SimulationResult result={simulation} providers={providers} />}
+              </div>
+            </details>
+            <details className={styles.optional} open={advancedOpen} onToggle={(event) => {
+              if (event.currentTarget.open && !advancedOpen) { setAdvanced(JSON.stringify(rules, null, 2)); setAdvancedError(""); }
+              setAdvancedOpen(event.currentTarget.open);
+            }}>
+              <summary>Advanced rules <span className="font-normal text-[var(--color-muted)]">· JSON editor</span></summary>
+              <div className="space-y-3"><label className="block text-xs font-semibold">Rules JSON<textarea className={`${field} font-mono`} rows={10} value={advanced} onChange={(event) => setAdvanced(event.target.value)} /></label>
+                <Button type="button" variant="ghost" onClick={() => {
+                  const result = parsePolicyRules(advanced);
+                  if (result.error) { setAdvancedError(result.error); return; }
+                  setRules(result.rules!); setProfile(guardrailProfile(result.rules!)); setLimits(hasPolicyLimits(result.rules!)); setScope(hasPolicyScope(result.rules!)); setAdvancedError(""); setAdvancedOpen(false);
+                }}>Apply JSON to draft</Button>
+                {advancedError && <p role="alert" className={styles.error}>{advancedError}</p>}
+              </div>
+            </details>
+            <p className={styles.saveNote}><ShieldCheck size={15} aria-hidden="true" />Saving creates a draft. It does not activate this policy or send a payment.</p>
+            {!canEdit && <p className={styles.error}>Only owners and admins can save policies.</p>}
+            {c.data !== undefined && !c.error && <p role="status" className="mt-3 text-sm text-[var(--color-ok)]">Draft saved. Activate it from the version history.</p>}
+          </>}
+        </section>
+        {c.error && <p role="alert" className={styles.error}>{c.error}</p>}
+        <footer className={styles.navigation}>
+          <Button type="button" variant="ghost" disabled={position === 0 || c.pending || sim.pending} onClick={() => move(steps[position - 1]!)}><ArrowLeft size={15} aria-hidden="true" /> Back</Button>
+          <div>
+            {editingReview && step !== "review" && <button type="button" className={styles.returnLink} disabled={blocked} onClick={() => { setEditingReview(false); move("review"); }}>Return to review</button>}
+            {step === "review" ? <Button type="button" disabled={blocked || !canEdit || !validation.success || (!policyId && !name.trim()) || Boolean(advancedError) || advancedOpen} onClick={() => {
+              if (!validation.success) { c.setError("Check your rules before saving."); return; }
+              c.run(policyId ? { action: "version_policy", policyId, rules: validation.data } : { action: "create_policy", name: name.trim(), rules: validation.data });
+            }}>{c.pending ? "Saving…" : "Save draft"}<Check size={15} aria-hidden="true" /></Button> : <Button type="button" disabled={blocked} onClick={() => move(steps[position + 1]!)}>Continue <ArrowRight size={15} aria-hidden="true" /></Button>}
           </div>
-        </section>
-
-        <section className="grid gap-6 md:grid-cols-2">
-          <NumberWithPresets
-            label="Approval above amount (intent currency)"
-            value={numberValue(rules, "humanApprovalAboveAmount")}
-            onChange={(v) => update("humanApprovalAboveAmount", v)}
-            presets={[
-              { value: 1_000, label: "1K" },
-              { value: 10_000, label: "10K" },
-              { value: 100_000, label: "100K" },
-            ]}
-            offLabel="No approval step"
-          />
-          <NumberWithPresets
-            label="Maximum evidence age (hours)"
-            value={numberValue(rules, "maximumEvidenceAgeHours")}
-            onChange={(v) => update("maximumEvidenceAgeHours", v === undefined ? undefined : Math.max(1, Math.round(v)))}
-            presets={[
-              { value: 24, label: "1 day" },
-              { value: 72, label: "3 days" },
-              { value: 168, label: "7 days" },
-              { value: 720, label: "30 days" },
-            ]}
-            offLabel="Any age"
-            step="1"
-          />
-          <NumberWithPresets
-            label="Maximum known cost (basis points)"
-            value={numberValue(rules, "maximumKnownCostBps")}
-            onChange={(v) => update("maximumKnownCostBps", v)}
-            presets={[
-              { value: 25, label: "0.25%" },
-              { value: 50, label: "0.5%" },
-              { value: 100, label: "1%" },
-              { value: 200, label: "2%" },
-            ]}
-            offLabel="No cap"
-          />
-          <NumberWithPresets
-            label="Maximum settlement time (minutes)"
-            value={numberValue(rules, "maximumEtaMinutes")}
-            onChange={(v) => update("maximumEtaMinutes", v)}
-            presets={[
-              { value: 15, label: "15 min" },
-              { value: 60, label: "1 hour" },
-              { value: 1440, label: "1 day" },
-            ]}
-            offLabel="No cap"
-          />
-        </section>
-
-        <section className="grid gap-6 md:grid-cols-2">
-          <FieldBlock label="Allowed providers" hint="Leave empty to allow any eligible provider.">
-            <SmartPicker
-              multiple
-              renderMark={providerMark}
-              options={providerOptions}
-              value={listValue(rules, "providerAllowlist")}
-              onChange={(v) => update("providerAllowlist", v.length ? v : undefined)}
-              placeholder="Search providers…"
-              suggestionCount={4}
-            />
-          </FieldBlock>
-          <FieldBlock label="Blocked providers" hint="Never recommended, whatever their score.">
-            <SmartPicker
-              multiple
-              renderMark={providerMark}
-              options={providerOptions}
-              value={listValue(rules, "providerDenylist")}
-              onChange={(v) => update("providerDenylist", v)}
-              placeholder="Search providers…"
-              suggestionCount={4}
-            />
-          </FieldBlock>
-          <FieldBlock label="Allowed assets" hint="Empty means any asset.">
-            <SmartPicker
-              multiple
-              renderMark={assetMark}
-              options={options.assets}
-              value={listValue(rules, "allowedAssets")}
-              onChange={(v) => update("allowedAssets", v.length ? v : undefined)}
-              suggestionCount={5}
-            />
-          </FieldBlock>
-          <FieldBlock label="Allowed networks" hint="Empty means any network.">
-            <SmartPicker
-              multiple
-              renderMark={networkMark}
-              options={options.networks}
-              value={listValue(rules, "allowedNetworks")}
-              onChange={(v) => update("allowedNetworks", v.length ? v : undefined)}
-              suggestionCount={5}
-            />
-          </FieldBlock>
-        </section>
-
-        <details
-          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3"
-          onToggle={(e) => {
-            if (e.currentTarget.open) setAdvanced(JSON.stringify(rules, null, 2));
-          }}
-        >
-          <summary className="cursor-pointer text-sm font-semibold">All policy rules (advanced JSON)</summary>
-          <label className="mt-3 block text-sm">
-            Rules JSON
-            <textarea className={`${field} font-mono`} rows={12} value={advanced} onChange={(e) => setAdvanced(e.target.value)} />
-          </label>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              try {
-                const value = JSON.parse(advanced);
-                if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error();
-                setRules(value);
-                c.setError("");
-              } catch {
-                c.setError("Rules must be a JSON object.");
-              }
-            }}
-          >
-            Apply JSON to draft
-          </Button>
-        </details>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            disabled={!canEdit || c.pending || (!policyId && !name.trim())}
-            onClick={() => c.run(policyId ? { action: "version_policy", policyId, rules } : { action: "create_policy", name, rules })}
-          >
-            {c.pending ? "Saving…" : "Save draft"}
-          </Button>
-          {!canEdit ? <span className="text-[12px] text-[var(--color-muted)]">Only owners and admins can save policies.</span> : null}
-          {c.data !== undefined && !c.error ? <span className="text-[12.5px] font-semibold text-[var(--color-ok)]">Draft saved. Activate it from the version history.</span> : null}
-        </div>
-        {c.error && <p role="alert" className="text-sm text-red-700">{c.error}</p>}
-
-        <details className="rounded-xl border border-[var(--color-line)] px-4 py-3">
-          <summary className="cursor-pointer text-sm font-semibold">Simulate before activation</summary>
-          <div className="mt-4 space-y-4">
-            <p className="text-[12.5px] text-[var(--color-muted)]">
-              Pick a sample payment. Railor evaluates it under the current version and under this draft, then shows what changes.
-            </p>
-            <IntentBuilder value={intent} onChange={setIntent} options={options} detectedEntity={entityCountry} />
-            <Button
-              disabled={sim.pending || missingIntentFields(intent).length > 0}
-              onClick={() =>
-                sim.run({ action: "simulate", intent: intentFromDraft(intent), baseline: initialRules, rules }, (d) => setSimulation(d as SimulationSummary))
-              }
-            >
-              {sim.pending ? "Simulating…" : "Compare with current version"}
-            </Button>
-            {missingIntentFields(intent).length ? (
-              <p className="text-[12px] text-[var(--color-muted)]">Still needed: {missingIntentFields(intent).join(", ")}.</p>
-            ) : null}
-            {sim.error && <p role="alert" className="text-sm text-red-700">{sim.error}</p>}
-            {simulation ? <SimulationResult result={simulation} providers={providers} /> : null}
-          </div>
-        </details>
+        </footer>
+        {step === "review" && advancedOpen && <p className="mt-3 text-xs text-[var(--color-muted)]">Apply your JSON changes or close the advanced editor before saving.</p>}
       </div>
-    </Card>
-  );
+    </div>
+  </Card>;
 }
 
 interface SimulationSummary {
