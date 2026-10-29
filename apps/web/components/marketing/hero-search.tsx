@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { postSearch } from "../../lib/search-client";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import {
   Button,
   Chip,
@@ -147,9 +147,9 @@ export function HeroSearch({
         }}
         className="relative"
       >
-        <div className="flex flex-col gap-2 rounded-[20px] border border-[var(--color-line-strong)] bg-white p-2 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[var(--shadow-lift)] sm:flex-row sm:items-center sm:rounded-full sm:pl-5">
+        <div className="flex flex-col gap-2 rounded-[14px] border border-[var(--color-line)] bg-white p-1.5 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[var(--shadow-lift)] sm:flex-row sm:items-center sm:pl-3">
           <Search size={18} className="ml-2 hidden shrink-0 text-[var(--color-faint)] sm:block" aria-hidden />
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <input
               ref={inputRef}
               value={input}
@@ -160,12 +160,12 @@ export function HeroSearch({
               aria-invalid={needsInput || undefined}
               aria-describedby={needsInput ? "hero-search-hint" : undefined}
               placeholder={PLACEHOLDER}
-              className="w-full bg-transparent px-2 py-2.5 text-[14px] outline-none placeholder:text-[var(--color-faint)] sm:px-0 sm:text-[15px]"
+              className="w-full min-w-0 bg-transparent px-2 py-2.5 text-[16px] outline-none placeholder:text-[var(--color-faint)] sm:px-0 sm:text-[11px]"
               aria-label="What are you trying to build or move?"
             />
           </div>
-          <Button type="submit" disabled={pending} className="w-full shrink-0 sm:w-auto">
-            {pending ? "Checking…" : "Check compatibility"}
+          <Button type="submit" disabled={pending} className="w-full shrink-0 gap-2 rounded-[10px] px-3 text-[11px] sm:w-auto">
+            {pending ? "Checking…" : "Check compatibility"}<ArrowRight size={13} aria-hidden />
           </Button>
         </div>
       </form>
@@ -183,7 +183,7 @@ export function HeroSearch({
       ) : null}
 
       {!data ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-hero-examples className="flex flex-wrap items-center gap-2">
           {EXAMPLES.map((example) => (
             <Chip
               key={example.query}

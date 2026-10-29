@@ -38,7 +38,7 @@ export function BeneficiaryList({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-5">
-          <Link href="/app/readiness" className="comparison-primary-action">Review KYC / KYB readiness <ArrowRight size={14} /></Link>
+          <Link href="/app/settings/connections" className="comparison-primary-action">Review provider account access <ArrowRight size={14} /></Link>
           <span className="text-[12px] text-[var(--color-muted)]">Provider verification still applies after this profile is complete.</span>
         </div>
       </div>

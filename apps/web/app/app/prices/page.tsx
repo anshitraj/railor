@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "../../../lib/auth";
 import { loadPricePage, productionConnectedSlugs } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
-import { PriceLabelsCard, PriceToolsNav } from "../../../components/app/price-panels";
+import { PriceCheckHeader, PriceLabelsCard } from "../../../components/app/price-panels";
 import { SwapQuote } from "../../../components/app/swap-quote";
 import { ProviderFeatureComparison } from "../../../components/app/provider-feature-comparison";
+import { PriceDisclosure } from "../../../components/app/price-disclosure";
+import styles from "../../../components/app/price-check.module.css";
 import { onboardingPriceProfile } from "../../../lib/onboarding";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +19,9 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
   const [page, connected] = await Promise.all([loadPricePage(await searchParams, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id)]);
 
   return (
-    <div className="product-page space-y-5">
+    <div className={styles.page}>
       <FxTicker />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[170px_minmax(0,540px)_minmax(0,1fr)] lg:items-start">
-        <PriceToolsNav mode="app" title="Price check" />
+      <PriceCheckHeader mode="app" />
         <SwapQuote
           mode="app"
           basePath="/app/prices"
@@ -31,9 +32,8 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           executable={page.executable}
           connected={connected}
         />
-        <PriceLabelsCard mode="app" connectedAny={connected.some((s) => s === "wise" || s === "airwallex")} />
-      </div>
-      <ProviderFeatureComparison />
+      <PriceDisclosure title="How prices and sources work" description="Account quotes, published schedules, public references and evidence labels."><PriceLabelsCard mode="app" connectedAny={connected.some((s) => s === "wise" || s === "airwallex")} /></PriceDisclosure>
+      <PriceDisclosure title="Compare provider features" description="Explore coverage, capabilities and account requirements."><ProviderFeatureComparison /></PriceDisclosure>
     </div>
   );
 }

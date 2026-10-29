@@ -84,9 +84,6 @@ export default async function SettingsPage() {
         <Link href="/app/developers" className="text-[13px] font-medium text-[var(--color-purple)]">
           API keys and usage →
         </Link>
-        <Link href="/app/readiness" className="text-[13px] font-medium text-[var(--color-purple)]">
-          KYB readiness profile →
-        </Link>
       </Card>
     </div>
   );

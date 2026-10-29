@@ -15,6 +15,7 @@ export function ProviderLogo({
   src,
   size = 28,
   className = "",
+  loading = "lazy",
 }: {
   slug: string;
   name: string;
@@ -22,6 +23,8 @@ export function ProviderLogo({
   src?: string;
   size?: number;
   className?: string;
+  /** Visible disclosure summaries need eager loading even while their details are closed. */
+  loading?: "lazy" | "eager";
 }) {
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
@@ -57,7 +60,7 @@ export function ProviderLogo({
         alt=""
         width={size}
         height={size}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         onError={() => setFailed(true)}
         // "No logo" arrives as a 1×1 transparent pixel rather than an error.

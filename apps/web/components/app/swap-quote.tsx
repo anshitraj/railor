@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, RefreshCw, Search, ShieldCheck, Tag, TriangleAlert } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow, RowWebCheck, WebCheckSummary } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
@@ -11,6 +12,9 @@ import { PlatformQuotePanel } from "./platform-quote-panel";
 import { RemittanceSurveyPanel } from "./remittance-survey-panel";
 import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from "../../lib/connection-navigation";
 import { BENEFICIARIES_AVAILABLE } from "../../lib/product-features";
+import { PriceProviderBrowser } from "./price-provider-browser";
+import { PriceDisclosure } from "./price-disclosure";
+import styles from "./price-check.module.css";
 
 /**
  * A swap-style live quote: pick what you send and what they receive, and
@@ -353,8 +357,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return openIt ? { label: `View ${selected.providerName}'s ${sourceKind}`, href: openIt.href, external: true } : { label: `${selected.providerName} isn't integrated for execution yet`, disabled: true as const };
   })();
 
+  const reducedMotion = useReducedMotion();
   return (
-    <div className="flex flex-col gap-3">
+    <div className={styles.comparisonLayout}>
       <section className="product-dark p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2 px-1">
@@ -434,7 +439,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               aria-label="Swap currencies"
               className="absolute left-1/2 top-1/2 z-10 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-[#22211f] bg-[#34322e] text-white/80 transition hover:rotate-180 hover:text-white"
             >
-              <ArrowDownUp size={15} />
+              <motion.span initial={false} animate={{ rotate: (from > to) === (initial.from > initial.to) ? 0 : 180 }} transition={{ duration: reducedMotion ? 0 : .2 }}><ArrowDownUp size={15} /></motion.span>
             </button>
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -517,26 +522,14 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </p>
           ) : null}
 
-          <div className="mt-2 flex items-center justify-between gap-2 px-1">
-            <h2 className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">
-              <Tag size={15} className="text-[#ffad8c]" /> Provider prices
-              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/70">{quotes.length + estimates.length}</span>
-            </h2>
-            <span className="text-right text-[11.5px] text-white/45">
-              checked {ago(now - fetchedAt)}
-              {result?.webCheck ? <WebCheckStatus summary={result.webCheck} /> : null}
-            </span>
-          </div>
-
-          <ol className="flex flex-col gap-1 rounded-2xl border border-white/10 p-1.5">
-            {quotes.length ? (
-              quotes.map((row) => <QuoteRow key={row.providerSlug} row={row} best={row === best} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} mode={mode} connected={connected.includes(connectionProviderSlug(row.providerSlug))} />)
-            ) : (
-              <li className="px-3 py-4 text-[12.5px] text-white/50">{loading ? "Fetching quotes…" : "No provider returned a price for this pair."}</li>
-            )}
-          </ol>
-
-          {estimates.length ? (
+        </div>
+      </section>
+      <PriceProviderBrowser
+        rows={quotes} selected={selected} best={best} onSelect={setPicked}
+        from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
+        action={{ label: cta.label, href: "href" in cta ? cta.href : undefined, external: "external" in cta ? cta.external : undefined }}
+        connection={selected && selected.side !== "payer" ? <ConnectionLink slug={selected.providerSlug} name={selected.providerName} mode={mode} connected={connected.includes(connectionProviderSlug(selected.providerSlug))} light /> : null}
+        market={estimates.length ? <div className="product-dark p-3">{estimates.length ? (
             <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-white/10 px-1.5 py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
                 Market estimates · {estimates.length}
@@ -548,11 +541,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 ))}
               </ol>
             </details>
-          ) : null}
-
-          {result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}
-
-          {result?.marketCoverage?.matched ? (
+          ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
+        history={result?.historicalPricing ? <div className="product-dark p-3">{result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}</div> : <p className={styles.contextEmpty}>No historical survey was returned for this pair.</p>}
+        coverage={result?.marketCoverage?.matched ? <div className="product-dark mt-3 p-3">{result?.marketCoverage?.matched ? (
             <details open className="group rounded-2xl border border-white/10 px-1.5 py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
                 <span>Business provider coverage · {result.marketCoverage.matched}</span>
@@ -591,9 +582,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 Browse the full {result.marketCoverage.totalTracked}-provider payment market <ArrowUpRight size={12} />
               </Link>
             </details>
-          ) : null}
-
-          {unavailable.length ? (
+          ) : null}</div> : <p className={styles.contextEmpty}>No broader currency coverage was returned for this setup.</p>}
+        webEvidence={selected?.webChecks?.length ? <div className="product-dark mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
+      />
+      <div className={styles.moreContext}>
+        {result?.webCheck ? <WebCheckStatus summary={result.webCheck} light /> : null}
+        {(result?.platformQuotes?.length ?? 0) > 0 && <PriceDisclosure title="Railor account observations" description="Backend account observations; kept separate from your customer price."><PlatformQuotePanel checks={result?.platformQuotes ?? []} now={now} /></PriceDisclosure>}
+        {(unavailable.length > 0 || excluded.length > 0) && <PriceDisclosure title="Unavailable providers & profile exclusions" description={String(unavailable.length + excluded.length) + " providers need more information or do not meet the documented rules."}><div className="product-dark p-4">{unavailable.length ? (
             <ul className="flex flex-col gap-1">
               {unavailable.map((u) => (
                 <li key={u.providerSlug} className="flex items-center gap-3 rounded-2xl border border-dashed border-white/15 px-3 py-2.5">
@@ -607,24 +602,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               ))}
             </ul>
           ) : null}
-          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}
-          {selected?.profileAssessment ? <section aria-label="Selected provider profile requirements" className="rounded-xl border border-white/15 p-3 text-[12px] text-white/70"><h3 className="font-semibold text-white">{selected.providerName} · {selected.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</h3><p className="mt-2">{selected.profileAssessment.reasons.join(" ")}</p><dl className="mt-3 space-y-3">{[{ label: "KYC / KYB", value: selected.profileAssessment.verification.join(" ") }, { label: "Expected fees", value: selected.profileAssessment.fees }, { label: "Transfer limits", value: selected.profileAssessment.limits }, { label: "Available corridors", value: selected.profileAssessment.corridors }, { label: "Settlement methods", value: selected.profileAssessment.settlement.join(" ") }, { label: "Documents", value: selected.profileAssessment.documents.join(" ") }, { label: "Payment purpose", value: selected.profileAssessment.purpose }].map((item) => <div key={item.label}><dt className="font-semibold text-white/90">{item.label}</dt><dd className="mt-0.5 leading-relaxed">{item.value}</dd></div>)}</dl>{selected.profileAssessment.sources.length ? <div className="mt-3 flex flex-wrap gap-2">{selected.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}<p className="w-full text-[10px] text-white/45">Rules reviewed {selected.profileAssessment.reviewedAt}</p></div> : null}</section> : null}
-          {selected?.webChecks?.length ? <WebCheckDetails checks={selected.webChecks} /> : null}
-          {selected ? (
-            <details className="rounded-xl border border-white/10 px-3 py-2 text-[11.5px] text-white/55">
-              <summary className="cursor-pointer">{selected.providerName} · {priceSourceTime(selected.observedAt, selected.basis)}</summary>
-              <div className="mt-2 flex flex-col gap-2">
-                {selected.source.url ? <a href={selected.source.url} target="_blank" rel="noreferrer noopener" className="w-fit text-[#ffad8c] underline underline-offset-2">{selected.source.label} ↗</a> : <span>{selected.source.label}</span>}
-                {selected.notes.map((note, index) => <p key={index}>{note}</p>)}
-              </div>
-            </details>
-          ) : null}
-        </div>
-      </section>
-      <PlatformQuotePanel checks={result?.platformQuotes ?? []} now={now} />
-      <p className="px-1 text-[11.5px] leading-relaxed text-[var(--color-muted)]">
-        Sources and price basis are labelled separately. Mid-market reference: {result?.reference?.source ?? "not available"}. Published schedules are estimates, not guaranteed payout amounts. Additional banking or corridor fees may apply.
-      </p>
+          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}</div></PriceDisclosure>}
+        <p className={styles.priceFootnote}>Sources and price basis are labelled separately. Mid-market reference: {result?.reference?.source ?? "not available"}. Published schedules are estimates, not guaranteed payout amounts. Additional banking or corridor fees may apply.</p>
+      </div>
     </div>
   );
 }
@@ -637,10 +617,10 @@ function hostOf(url: string | null) {
   }
 }
 
-function WebCheckStatus({ summary }: { summary: WebCheckSummary }) {
+function WebCheckStatus({ summary, light = false }: { summary: WebCheckSummary; light?: boolean }) {
   if (!summary.configured) return null;
   const text = summary.paused ? "Google check paused" : summary.pending ? `Google-checking ${summary.pending}…` : summary.checked ? `${summary.checked} Google-checked` : null;
-  return text ? <span className="block text-[10.5px] text-white/40">{text}</span> : null;
+  return text ? <span className={light ? styles.webSummary : "block text-[10.5px] text-white/40"}>{text}</span> : null;
 }
 
 /** One chip per row: what Google found about the route this price implies. */
@@ -680,11 +660,11 @@ function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; c
   );
 }
 
-function ConnectionLink({ slug, name, mode, connected }: { slug: string; name: string; mode: "app" | "public"; connected: boolean }) {
+function ConnectionLink({ slug, name, mode, connected, light = false }: { slug: string; name: string; mode: "app" | "public"; connected: boolean; light?: boolean }) {
   if (!ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
   return <Link href={providerConnectionPath(slug, mode)} prefetch={false} aria-label={`${connected ? "Manage" : "Connect"} ${name}`}
     title={`Open ${name}'s account connection options`}
-    className="mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]">
+    className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]"}>
     {connected ? "Manage" : "Connect"}
   </Link>;
 }

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   BookOpen,
+  ArrowRight,
+  ChevronDown,
   Code2,
   GitCompare,
   Globe,
@@ -127,7 +129,7 @@ export function MarketingNav() {
       }}
     >
       <nav className="mx-auto flex w-[min(1360px,calc(100%-2rem))] items-center gap-1 py-3">
-        <Link href="/" className="flex items-center gap-2.5 pr-5 py-1">
+        <Link href="/" className="flex shrink-0 items-center gap-2 pr-1 py-1 sm:gap-2.5 sm:pr-5">
           <RailorMark size={30} />
           <span className="font-display text-[21px] font-bold tracking-[-0.055em]">Railor</span>
         </Link>
@@ -142,13 +144,14 @@ export function MarketingNav() {
               onClick={() => setOpen(key)}
               aria-expanded={open === key}
               className={cn(
-                "rounded-full px-3 py-1.5 text-[13px] font-semibold transition",
+                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition",
                 open === key
                   ? "bg-[var(--color-ink)] text-white"
                   : "text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]",
               )}
             >
               {key}
+              <ChevronDown size={11} aria-hidden className={open === key ? "rotate-180 transition-transform" : "transition-transform"} />
             </button>
           ))}
         </div>
@@ -157,21 +160,22 @@ export function MarketingNav() {
 
         <Link
           href="/#search"
-          className="hidden rounded-full px-3 py-1.5 text-[13px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] sm:block"
+          aria-label="Search rails, providers and countries"
+          className="hidden h-9 items-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-[11px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] sm:inline-flex"
         >
-          Search rails
+          <Search size={14} aria-hidden /><span className="hidden xl:block">Search rails, providers, countries…</span>
         </Link>
         <Link
           href="/login"
-          className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]"
+          className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[11px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] sm:px-3 sm:text-[13px]"
         >
           Sign in
         </Link>
         <Link
           href="/login?intent=start"
-          className="rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[var(--color-orange-deep)]"
+          className="inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--color-ink)] px-3 py-2.5 text-[11px] font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[var(--color-orange-deep)] sm:gap-2 sm:px-4 sm:text-[12px]"
         >
-          Get started
+          Get started <ArrowRight size={13} aria-hidden />
         </Link>
         <button
           type="button"
@@ -179,7 +183,7 @@ export function MarketingNav() {
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           ref={mobileTrigger}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-sand)] md:hidden"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-sand)] md:hidden"
         >
           {mobileOpen ? <X size={19} /> : <Menu size={19} />}
         </button>

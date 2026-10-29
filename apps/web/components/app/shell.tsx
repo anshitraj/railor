@@ -13,7 +13,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
-  ClipboardCheck,
   Code2,
   FileCheck2,
   FileText,
@@ -38,6 +37,7 @@ import {
 } from "lucide-react";
 import { CommandPalette, StageBadge, cn, useModalFocus, type CommandItem } from "@railor/ui";
 import { RailorMark } from "../marketing/nav";
+import { ProviderLogo } from "./provider-logo";
 
 interface NavItem {
   href: string;
@@ -98,7 +98,6 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     title: "Build",
     icon: Code2,
     items: [
-      { href: "/app/readiness", label: "Readiness", icon: ClipboardCheck },
       { href: "/app/connectors", label: "Connectors", icon: Plug, stage: "beta" },
       { href: "/app/developers", label: "Developers", icon: Code2 },
     ],
@@ -169,15 +168,28 @@ export function AppShell({
     group: "Go to",
     href: item.href,
   }));
-  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }].map((p) => ({
-    id: p.id,
-    label: p.label,
-    group: p.group,
-    hint: p.hint,
-    keywords: p.keywords,
-    run: () => router.push(p.href),
-  }));
-  const recent = items.filter((i) => i.group === "Corridor" || i.group === "Action").slice(0, 8);
+  const navItems = NAV_GROUPS.flatMap((group) => group.items);
+  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }].map((p) => {
+    const Icon = p.id === "action:invite" ? Users : navItems.find((item) => item.href === p.href || (!item.exact && p.href.startsWith(`${item.href}/`)))?.icon;
+    return {
+      id: p.id,
+      label: p.label,
+      group: p.group,
+      hint: p.hint,
+      keywords: p.keywords,
+      icon: p.group === "Provider"
+        ? <ProviderLogo slug={p.id.replace(/^provider:/, "")} name={p.label} size={30} />
+        : Icon ? <Icon size={17} /> : undefined,
+      run: () => router.push(p.href),
+    };
+  });
+  const providerItems = items.filter((i) => i.group === "Provider");
+  const featuredProviders = ["wise", "circle", "bridge"].flatMap((slug) => providerItems.find((i) => i.id === `provider:${slug}`) ?? []);
+  const recent = [
+    ...items.filter((i) => i.group === "Corridor").slice(0, 2),
+    ...items.filter((i) => i.group === "Action").slice(0, 4),
+    ...[...featuredProviders, ...providerItems.filter((i) => !featuredProviders.includes(i))].slice(0, 3),
+  ];
 
   const settingsActive = pathname.startsWith("/app/settings") && !pathname.startsWith("/app/settings/connections");
 
@@ -358,7 +370,7 @@ export function AppShell({
           </button>
           <Link href="/app" aria-label="Railor overview" className="mr-1 shrink-0 md:hidden"><RailorMark size={23} /></Link>
           <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{currentGroup?.title ?? "Workspace"}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
-          <CommandPalette items={items} recent={recent} />
+          <CommandPalette items={items} recent={recent} brand={<RailorMark size={22} />} />
           <span className="flex-1 lg:hidden" />
           <Link
             href="/app/prices"

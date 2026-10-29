@@ -1,0 +1,107 @@
+.atlasScroll {
+  --map-ocean: #17282c;
+  --map-land: #304248;
+  --map-coast: #526369;
+  --map-grid: #80969a;
+  --map-coral: #f48a60;
+  --map-muted: #91aaac;
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
+  background: var(--map-ocean);
+}
+
+.atlas {
+  display: block;
+  width: 100%;
+  min-width: 680px;
+  height: auto;
+  background: radial-gradient(ellipse at 45% 35%, #23383b 0%, var(--map-ocean) 75%);
+}
+
+.graticule {
+  fill: none;
+  stroke: var(--map-grid);
+  stroke-width: 0.65;
+  opacity: 0.2;
+}
+
+.land {
+  fill: var(--map-land);
+  stroke: var(--map-coast);
+  stroke-width: 0.65;
+  stroke-linejoin: round;
+}
+
+.routePriced,
+.routeMuted,
+.routeActive {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.routePriced {
+  stroke: var(--map-coral);
+  stroke-width: 1.5;
+  opacity: 0.64;
+}
+
+.routeMuted {
+  stroke: var(--map-muted);
+  stroke-width: 1.2;
+  opacity: 0.34;
+}
+
+.routeActive {
+  stroke: #ffd7b4;
+  stroke-width: 3;
+  opacity: 1;
+  filter: drop-shadow(0 0 4px var(--map-coral));
+}
+
+.routeHit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.routeHit:focus-visible {
+  stroke: rgb(255 215 180 / 35%);
+  outline: none;
+}
+
+.markerButton { cursor: pointer; outline: none; }
+.markerHit { fill: transparent; }
+.markerHalo { fill: rgb(244 138 96 / 18%); stroke: var(--map-coral); stroke-width: 1; }
+.marker { fill: var(--map-coral); stroke: var(--map-ocean); stroke-width: 1.5; }
+.markerButton:focus-visible .markerHit { fill: rgb(255 215 180 / 24%); stroke: #ffd7b4; stroke-width: 1.5; }
+.markerLabel {
+  fill: #f8faf6;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  paint-order: stroke;
+  stroke: var(--map-ocean);
+  stroke-width: 3;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mapStamp {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  color: #bbccca;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.mapStamp span { color: var(--map-coral); }

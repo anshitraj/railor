@@ -51,6 +51,12 @@ async function loadSignals(): Promise<LandingSignal[]> {
           partial: result.counts.additional_requirements,
           topConfidence: confident.length ? Math.max(...confident) : null,
           evidenceCount: new Set(eligible.flatMap((r) => r.evidence.map((e) => e.sourceUrl))).size,
+          providerExamples: result.results.slice(0, 4).map((r) => ({ slug: r.provider.slug, name: r.provider.name })),
+          requirements: [...new Set(eligible.flatMap((r) => r.outstandingRequirements))].slice(0, 3),
+          latestVerified: (() => {
+            const dates = result.results.flatMap((r) => r.lastVerifiedAt ? [r.lastVerifiedAt] : []);
+            return dates.length ? relativeTime(new Date(Math.max(...dates.map((d) => d.getTime())))) : undefined;
+          })(),
         };
       } catch {
         return { ...signal, checked: 0, supported: 0, partial: 0, topConfidence: null, evidenceCount: 0 };

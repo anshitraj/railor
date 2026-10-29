@@ -40,7 +40,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { id: "action:policy", label: "Create a policy", group: "Action", href: "/app/policies", keywords: "rules guardrails" },
     { id: "action:compare", label: "Compare providers", group: "Action", href: "/app/compare", keywords: "diff side by side" },
     { id: "action:monitor", label: "Monitor a provider or corridor", group: "Action", href: "/app/monitoring", keywords: "watch alert notify" },
-    { id: "action:readiness", label: "Update KYB readiness profile", group: "Action", href: "/app/readiness", keywords: "kyc kyb documents" },
     { id: "action:invite", label: "Invite a teammate", group: "Action", href: "/app/settings#team", keywords: "member team user" },
     { id: "action:keys", label: "Create or reveal API key", group: "Developer", href: "/app/developers", keywords: "token test live" },
     { id: "docs:start", label: "Docs — Getting started", group: "Docs", href: "/docs" },

@@ -3,6 +3,11 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  ArrowRight,
+  Database,
+  FileText,
+  Globe2,
+  Layers3,
   Radar,
   Route,
   ScanSearch,
@@ -15,14 +20,13 @@ import { CountryFlag, type CountryCode } from "./country-flag";
 import { HeroSearch } from "./hero-search";
 import type { LandingChange, LandingEvidence, LandingSignal } from "./landing-data";
 import { RailsStrip } from "./rails-strip";
+import { HeroTerminal } from "./hero-terminal";
+import styles from "./landing.module.css";
 import {
   CodeSample,
   TechnologyLogo,
-  CommandBlock,
   CountUp,
   Reveal,
-  Stagger,
-  StaggerItem,
   StageBadge,
   type PickerOption,
 } from "@railor/ui";
@@ -60,78 +64,74 @@ const layers = [
 export function MarketingLanding({ counts, surveyProviderCount, optionsByField, fieldLabels, signals, changes, evidence }: LandingProps) {
   return (
     <div className="overflow-hidden">
-      <section className="border-b border-[var(--color-line)] bg-[var(--color-ink)] text-[var(--color-paper)]">
-        <div className="mx-auto flex w-[min(1360px,calc(100%-2rem))] items-center justify-between gap-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] sm:text-[11px]">
-          <span className="inline-flex items-center gap-2"><span className="size-1.5 rounded-full bg-[var(--color-orange)]" />Railor Intelligence Index</span>
-          <span className="hidden text-white/55 sm:block">Infrastructure facts change. Your map should too.</span>
-          <Link href="/changes" className="inline-flex items-center gap-1 text-[var(--color-paper)] transition hover:text-[var(--color-orange)]">Live change feed <ArrowUpRight size={13} /></Link>
+      <section className={styles.indexBar} aria-label="Railor intelligence updates">
+        <div className={styles.indexInner}>
+          <span className={styles.indexLabel}><span />Railor Intelligence Index</span>
+          <div className={styles.indexUpdates}>
+            {changes.length ? changes.map((change, index) => <Link key={change.id} href="/changes" title={change.summary}>
+              {index === 0 && <em>New:</em>} <span>{change.provider} · {change.kind}</span><time>{change.when}</time>
+            </Link>) : <span>Infrastructure facts change. Your map should too.</span>}
+          </div>
+          <Link href="/changes" className={styles.feedLink}>Live change feed <ArrowRight size={12} /></Link>
         </div>
       </section>
 
       <main id="main">
-        <section className="relative border-b border-[var(--color-line)] bg-[var(--color-paper)]">
-          <div className="railor-rule pointer-events-none absolute inset-x-0 top-0 h-full opacity-50" aria-hidden />
-          <div className="relative mx-auto w-[min(1360px,calc(100%-2rem))] pb-10 pt-14 lg:pb-14 lg:pt-20">
-            <div className="railor-rise grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-              <div className="relative z-10 min-w-0 max-w-[760px] pb-2">
-                <p className="mb-5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">
+        <section className={styles.hero}>
+          <div className={styles.heroGrid} aria-hidden />
+          <svg className={styles.routeArt} viewBox="0 0 1440 640" fill="none" aria-hidden="true">
+            <defs><pattern id="landing-route-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="currentColor" /></pattern></defs>
+            <ellipse cx="770" cy="265" rx="355" ry="210" fill="url(#landing-route-dots)" />
+            <path d="M440 155C725 105 640 435 1050 365S1340 200 1440 320" />
+            <path d="M430 182C700 130 690 470 1070 395S1350 238 1450 352" />
+            <circle r="3" className={styles.signalOne} /><circle r="3" className={styles.signalTwo} />
+          </svg>
+          <div className={styles.heroInner}>
+            <div className={styles.heroColumns}>
+              <div className={styles.heroCopy}>
+                <p className={styles.eyebrow}>
                   <span className="h-px w-8 bg-[var(--color-orange)]" /> Financial infrastructure, mapped
                 </p>
-                <h1 className="font-display text-[clamp(3.35rem,6.4vw,7rem)] font-medium leading-[0.9] tracking-[-0.07em] text-[var(--color-ink)]">
-                  Know which stablecoin rail<br />
-                  <span className="text-[var(--color-orange)]">actually works.</span>
+                <h1 className={styles.headline}>
+                  <span>Know which</span><span>stablecoin rails</span>
+                  <span className={styles.accent}>actually work</span><span className={styles.accent}>in the real world.</span>
                 </h1>
-                <p className="mt-5 max-w-[600px] text-[16px] leading-[1.55] text-[var(--color-muted)] sm:text-[18px]">
+                <p className={styles.heroDescription}>
                   Check provider compatibility, requirements and infrastructure health before you integrate.
                 </p>
-                <div className="mt-7 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-sand)] p-3 sm:p-4">
+                <div className={styles.searchBox}>
                   <HeroSearch optionsByField={optionsByField} fieldLabels={fieldLabels} />
                 </div>
               </div>
 
-              <div className="railor-rise min-w-0 [animation-delay:120ms]">
+              <div className={styles.heroVisual}>
                 <AnimatedRouteMap stats={signals.find((x) => x.sourceCode === "IN" && x.destinationCode === "AE") ?? null} />
               </div>
             </div>
 
-            <Stagger className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-4" step={0.07}>
+            <div className={styles.metrics}>
               {[
-                [counts.providers, "providers mapped"],
-                [counts.countries, "markets indexed"],
-                [counts.sources, "sources monitored"],
-                [counts.capabilities, "facts structured"],
-              ].map(([value, label]) => (
-                <StaggerItem key={label as string} className="group bg-[var(--color-paper)] px-5 py-5 transition-colors duration-200 hover:bg-[var(--color-lavender)] sm:px-6">
-                  <p className="font-display text-[32px] font-medium leading-none tracking-[-0.055em] text-[var(--color-ink)]">
-                    <CountUp value={value as number} />
-                  </p>
-                  <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)] transition-colors duration-200 group-hover:text-[var(--color-orange-deep)]">{label}</p>
-                </StaggerItem>
+                { value: counts.providers, label: "providers mapped", Icon: Layers3 },
+                { value: counts.countries, label: "markets indexed", Icon: Globe2 },
+                { value: counts.sources, label: "sources monitored", Icon: Database },
+                { value: counts.capabilities, label: "facts structured", Icon: FileText },
+              ].map(({value, label, Icon}) => (
+                <div key={label} className={styles.metric}>
+                  <span className={styles.metricIcon}><Icon size={22} strokeWidth={1.6} /></span>
+                  <div><p><CountUp value={value} /></p><span>{label}</span></div>
+                </div>
               ))}
-            </Stagger>
+            </div>
 
-            <Link href="/providers" className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] px-5 py-3 text-[13px] transition hover:border-[var(--color-orange)]">
-              <span><strong className="text-[var(--color-ink)]">{surveyProviderCount} surveyed fee providers</strong><span className="text-[var(--color-muted)]"> · Dated public samples across receiving countries</span></span>
-              <span className="font-semibold text-[var(--color-orange-deep)]">Explore fees →</span>
-            </Link>
-
-            <Reveal className="mt-2">
+            <div className={styles.rails}>
               <RailsStrip />
-            </Reveal>
+            </div>
 
-            <Reveal delay={0.05} className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
-              <CommandBlock
-                label="Or query it from your terminal"
-                command="railor corridors search --entity IN --to AE --asset USDC --currency AED"
-              />
-              <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
-                Every screen here is a thin client over the same public API.{" "}
-                <Link href="/docs/api" className="font-semibold text-[var(--color-orange-deep)] underline decoration-[var(--color-orange)]/40 underline-offset-2 transition hover:decoration-[var(--color-orange)]">
-                  Read the API docs
-                </Link>
-                .
-              </p>
-            </Reveal>
+            <div className={styles.developerRow}>
+              <HeroTerminal />
+              <div className={styles.developerNote}><strong>Or query it from your terminal</strong><p>Every screen here is a thin client over the same public API.</p><Link href="/docs/api">Read the API docs <ArrowRight size={13} /></Link></div>
+            </div>
+            <Link href="/providers" className={styles.surveyNote}>{surveyProviderCount} surveyed fee providers · Explore dated public pricing <ArrowUpRight size={12} /></Link>
           </div>
         </section>
 

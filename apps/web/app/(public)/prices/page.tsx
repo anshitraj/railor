@@ -1,9 +1,11 @@
 import { getSession } from "../../../lib/auth";
 import { loadPricePage } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
-import { PriceLabelsCard, PriceToolsNav } from "../../../components/app/price-panels";
+import { PriceCheckHeader, PriceLabelsCard } from "../../../components/app/price-panels";
 import { SwapQuote } from "../../../components/app/swap-quote";
 import { ProviderFeatureComparison } from "../../../components/app/provider-feature-comparison";
+import { PriceDisclosure } from "../../../components/app/price-disclosure";
+import styles from "../../../components/app/price-check.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -17,10 +19,9 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
   const page = await loadPricePage(await searchParams, null, session?.organization?.entityCountry);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={styles.page}>
       <FxTicker />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[170px_minmax(0,540px)_minmax(0,1fr)] lg:items-start">
-        <PriceToolsNav mode="public" title="Price check" />
+      <PriceCheckHeader mode="public" />
         <SwapQuote
           mode="public"
           basePath="/prices"
@@ -31,9 +32,8 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
           executable={page.executable}
           connected={[]}
         />
-        <PriceLabelsCard mode="public" connectedAny={false} />
-      </div>
-      <ProviderFeatureComparison />
+      <PriceDisclosure title="How prices and sources work" description="Account quotes, published schedules, public references and evidence labels."><PriceLabelsCard mode="public" connectedAny={false} /></PriceDisclosure>
+      <PriceDisclosure title="Compare provider features" description="Explore coverage, capabilities and account requirements."><ProviderFeatureComparison /></PriceDisclosure>
     </div>
   );
 }

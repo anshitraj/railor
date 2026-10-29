@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { Search, X, ArrowUpRight } from "lucide-react";
+import { Search, X, ArrowUpRight, ArrowDown, ArrowUp, CornerDownLeft, Route, Building2, BookOpen, Code2, Zap, Compass } from "lucide-react";
 import { cn } from "../cn.js";
 import { useModalFocus } from "./use-modal-focus.js";
 
@@ -13,6 +13,7 @@ export interface CommandItem {
   group: string;
   hint?: string;
   keywords?: string;
+  icon?: ReactNode;
   run: () => void;
 }
 
@@ -21,10 +22,12 @@ export function CommandPalette({
   items,
   placeholder = "Search Railor…",
   recent = [],
+  brand,
 }: {
   items: CommandItem[];
   placeholder?: string;
   recent?: CommandItem[];
+  brand?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -65,12 +68,13 @@ export function CommandPalette({
       .slice(0, 12);
   }, [query, items, recent]);
 
-  useEffect(() => setCursor(0), [query]);
+  useEffect(() => setCursor(0), [query, open]);
   useEffect(() => {
     if (open) document.getElementById(`${resultsId}-${cursor}`)?.scrollIntoView({ block: "nearest" });
   }, [cursor, open, resultsId]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setCursor((c) => Math.max(0, Math.min(results.length - 1, c + 1)));
@@ -105,11 +109,11 @@ export function CommandPalette({
 
       {mounted ? createPortal(<AnimatePresence>{open ? (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-start justify-center bg-[var(--color-ink)]/40 p-4 pt-[10dvh] backdrop-blur-sm"
+            className="command-backdrop fixed inset-0 z-[100] flex items-start justify-center p-3 pt-[8dvh] sm:p-4 sm:pt-[12dvh]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.14 }}
+            transition={{ duration: reduceMotion ? 0 : 0.16 }}
             onClick={() => setOpen(false)}
             role="dialog"
             aria-modal="true"
@@ -120,13 +124,13 @@ export function CommandPalette({
               tabIndex={-1}
               initial={reduceMotion ? false : { opacity: 0, scale: 0.98, y: -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: -4 }}
-              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: -4 }}
+              transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xl overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] shadow-[var(--shadow-panel)]"
+              className="command-panel w-full max-w-[540px] overflow-hidden"
             >
-              <div className="flex items-center gap-3 border-b border-[var(--color-line)] px-4 py-2">
-              <Search size={20} className="shrink-0 text-[var(--color-orange-deep)]" aria-hidden />
+              <div className="command-search">
+              <span className="command-brand" aria-hidden>{brand ?? <Search size={20} />}</span>
               <input
                 ref={inputRef}
                 value={query}
@@ -139,13 +143,15 @@ export function CommandPalette({
                 aria-expanded="true"
                 aria-controls={resultsId}
                 aria-activedescendant={results.length ? `${resultsId}-${cursor}` : undefined}
-                className="min-w-0 flex-1 bg-transparent px-1 py-3 text-[15px] placeholder:text-[var(--color-faint)]"
+                className="command-input"
               />
-              <button type="button" aria-label="Close search" onClick={() => setOpen(false)} className="grid size-9 shrink-0 place-items-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-sand)]"><X size={17} /></button>
+              {query ? <button type="button" aria-label="Clear search" onClick={() => { setQuery(""); inputRef.current?.focus(); }} className="command-clear"><X size={14} aria-hidden /></button> : null}
+              <button type="button" aria-label="Close search" onClick={() => setOpen(false)} className="command-close"><X size={16} aria-hidden /></button>
               </div>
-              <ul id={resultsId} role="listbox" aria-label="Search results" className="max-h-[55dvh] overflow-auto p-2">
+              <ul id={resultsId} role="listbox" aria-label="Search results" className="command-results">
                 {results.map((item, i) => (
-                  <li key={item.id}>
+                  <motion.li key={item.id} role="presentation" initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.18, delay: reduceMotion ? 0 : Math.min(i * 0.018, 0.1) }}>
+                    {i === 0 || results[i - 1]?.group !== item.group ? <div className="command-section" aria-hidden>{groupLabel(item.group)}</div> : null}
                     <button
                       id={`${resultsId}-${i}`}
                       role="option"
@@ -157,31 +163,37 @@ export function CommandPalette({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left",
-                        i === cursor ? "bg-[var(--color-lavender)] ring-1 ring-inset ring-[var(--color-orange)]/20" : "hover:bg-[var(--color-canvas)]",
+                        "command-result",
+                        i === cursor && "is-selected",
                       )}
                     >
-                      <span className="min-w-14 font-mono text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
-                        {item.group}
-                      </span>
-                      <span className="flex-1 text-[14px] text-[var(--color-ink)]">{item.label}</span>
-                      {item.hint ? (
-                        <span className="text-[12px] text-[var(--color-muted)]">{item.hint}</span>
-                      ) : null}
-                      <ArrowUpRight size={15} aria-hidden className="shrink-0 text-[var(--color-muted)]" />
+                      <span className="command-icon" aria-hidden>{item.icon ?? <GroupIcon group={item.group} />}</span>
+                      <span className="command-copy"><span className="command-label">{item.label}</span>{item.hint ? <span className="command-hint">{item.hint}</span> : null}</span>
+                      {i === cursor ? <CornerDownLeft size={15} aria-hidden className="command-open" /> : <ArrowUpRight size={14} aria-hidden className="command-open" />}
                     </button>
-                  </li>
+                  </motion.li>
                 ))}
                 {!results.length ? (
-                  <li className="px-3 py-6 text-center text-[13px] text-[var(--color-muted)]">
-                    Nothing matched “{query}”. Try a country, a provider or an asset.
+                  <li role="presentation" className="command-empty">
+                    <span className="command-empty-icon"><Search size={22} aria-hidden /></span>
+                    <strong>Nothing matched “{query}”</strong>
+                    <span>Try a page, provider, or payment action.</span>
                   </li>
                 ) : null}
               </ul>
-              <div className="flex gap-4 border-t border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-2.5 font-mono text-[10px] text-[var(--color-muted)]"><span>↑ ↓ Navigate</span><span>↵ Open</span><span className="ml-auto">Esc Close</span></div>
+              <div className="command-footer"><span className="command-footer-brand"><Search size={12} aria-hidden /> Railor search</span><span className="command-key-help"><kbd><ArrowUp size={10} aria-hidden /></kbd><kbd><ArrowDown size={10} aria-hidden /></kbd><span>Navigate</span></span><span className="command-key-help"><kbd><CornerDownLeft size={11} aria-hidden /></kbd><span>Open</span></span><span className="command-key-help"><kbd>esc</kbd><span>Close</span></span></div>
             </motion.div>
           </motion.div>
       ) : null}</AnimatePresence>, document.body) : null}
     </>
   );
+}
+
+function groupLabel(group: string) {
+  return ({ Action: "Quick actions", Corridor: "Saved corridors", Provider: "Providers", "Go to": "Pages", Docs: "Documentation", Developer: "Developer tools" } as Record<string, string>)[group] ?? group;
+}
+
+function GroupIcon({ group }: { group: string }) {
+  const Icon = ({ Action: Zap, Corridor: Route, Provider: Building2, "Go to": Compass, Docs: BookOpen, Developer: Code2 } as Record<string, typeof Search>)[group] ?? Search;
+  return <Icon size={17} />;
 }

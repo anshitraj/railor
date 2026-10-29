@@ -1,6 +1,6 @@
 "use client";
 
-import { Stagger, StaggerItem } from "@railor/ui";
+import styles from "./rails-strip.module.css";
 import { CurrencyLogo } from "./currency-logo";
 import { NetworkLogo, type NetworkSlug } from "./network-logo";
 
@@ -110,35 +110,11 @@ const TILES: Tile[] = [
 ];
 
 export function RailsStrip() {
-  return (
-    <div className="flex flex-col gap-4 border-y border-[var(--color-line)] py-6 sm:flex-row sm:items-center sm:gap-8">
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <span className="section-kicker">Supported rails</span>
-        <span className="text-[13px] text-[var(--color-muted)]">
-          12 assets &amp; networks, plus local rails
-        </span>
-      </div>
-
-      <Stagger className="flex flex-1 flex-wrap items-center gap-2" step={0.035} amount={0.3}>
-        {TILES.map((tile) => (
-          <StaggerItem key={tile.label}>
-            <span
-              title={tile.label}
-              className="group flex size-10 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] p-1.5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-line-strong)] hover:shadow-[var(--shadow-soft)]"
-            >
-              <span className="size-full" aria-hidden>
-                {tile.node}
-              </span>
-              <span className="sr-only">{tile.label}</span>
-            </span>
-          </StaggerItem>
-        ))}
-        <StaggerItem>
-          <span className="flex h-10 items-center rounded-xl border border-dashed border-[var(--color-line-strong)] px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-muted)]">
-            + more
-          </span>
-        </StaggerItem>
-      </Stagger>
+  const tile = (item: Tile) => <span key={item.label} className={styles.tile}><span aria-hidden>{item.node}</span>{item.label}</span>;
+  return <div className={styles.strip}>
+    <div className={styles.heading}><span>Supported rails</span><p>Assets, networks &amp; local rails</p></div>
+    <div className={styles.items}>{TILES.slice(0, 8).map(tile)}
+      <details className={styles.more}><summary>+ More</summary><div>{TILES.slice(8).map(tile)}<a href="/coverage">Explore coverage →</a></div></details>
     </div>
-  );
+  </div>;
 }

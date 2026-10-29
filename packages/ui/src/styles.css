@@ -1,5 +1,49 @@
 @import "./tokens.css";
 
+/* Scoped sizing keeps the search field independent of page form styles. */
+.command-backdrop { background: color-mix(in srgb, var(--color-ink) 28%, transparent); backdrop-filter: blur(5px); }
+.command-panel { display: flex; flex-direction: column; max-height: 80dvh; border: 1px solid var(--color-line-strong); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-panel), var(--shadow-lift); }
+.command-search { display: flex; flex: none; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--color-line); transition: border-color .18s; }
+.command-search:has(.command-input:focus-visible) { border-bottom-color: var(--color-orange); box-shadow: inset 0 -1px 0 var(--color-orange); }
+.command-brand { display: inline-flex; flex: none; color: var(--color-orange-deep); }
+.command-search .command-input { width: 100%; min-width: 0; height: 44px; flex: 1; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--color-ink); font: 400 14px/1.5 var(--font-sans); outline: none; box-shadow: none; }
+.command-input::placeholder { color: var(--color-faint); }
+.command-close, .command-clear { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--color-muted); transition: background .15s, color .15s; }
+.command-clear { width: 28px; height: 28px; }
+.command-close:hover, .command-clear:hover { background: var(--color-canvas); color: var(--color-ink); }
+.command-results { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 10px; scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+.command-section { padding: 12px 12px 6px; color: var(--color-muted); font: 600 10px/1.4 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; }
+.command-result { position: relative; display: flex; width: 100%; min-height: 46px; align-items: center; gap: 12px; padding: 7px 12px; border: 1px solid transparent; border-radius: 11px; text-align: left; transition: background .15s, border-color .15s; }
+.command-result.is-selected { border-color: color-mix(in srgb, var(--color-orange) 22%, transparent); background: var(--color-lavender); }
+.command-icon { display: grid; flex: none; place-items: center; width: 30px; height: 30px; border: 1px solid var(--color-line); border-radius: 9px; background: var(--color-paper); color: var(--color-ink-soft); transition: color .15s, border-color .15s, background .15s; }
+.command-icon:has(img) { border: 0; background: transparent; }
+.command-result.is-selected .command-icon { border-color: color-mix(in srgb, var(--color-orange) 22%, transparent); background: var(--color-surface); color: var(--color-orange-deep); }
+.command-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.command-label { overflow: hidden; color: var(--color-ink); font: 600 13px/1.5 var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
+.command-hint { overflow: hidden; color: var(--color-muted); font: 400 11px/1.4 var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
+.command-open { flex: none; color: var(--color-faint); transition: color .15s, transform .15s; }
+.command-result.is-selected .command-open { color: var(--color-orange-deep); transform: translateX(2px); }
+.command-empty { display: flex; align-items: center; flex-direction: column; gap: 8px; padding: 32px 16px 36px; color: var(--color-muted); font: 400 12px/1.5 var(--font-sans); text-align: center; overflow-wrap: anywhere; }
+.command-empty strong { max-width: 100%; color: var(--color-ink); font-weight: 600; }
+.command-empty-icon { display: grid; width: 44px; height: 44px; margin-bottom: 4px; place-items: center; border: 1px solid var(--color-line); border-radius: 14px; background: var(--color-paper); }
+.command-footer { display: flex; flex: none; align-items: center; gap: 14px; padding: 12px 20px; border-top: 1px solid var(--color-line); background: var(--color-paper); color: var(--color-muted); font: 400 10px/1.4 var(--font-sans); }
+.command-footer-brand { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; }
+.command-key-help { display: inline-flex; align-items: center; gap: 4px; }
+.command-key-help kbd { display: inline-grid; min-width: 18px; height: 18px; padding-inline: 3px; place-items: center; border: 1px solid var(--color-line); border-radius: 4px; background: var(--color-surface); font: 400 9px/1 var(--font-mono); box-shadow: 0 1px 0 var(--color-line); }
+@media (max-width: 640px) {
+  .command-panel { max-height: 84dvh; border-radius: 16px; }
+  .command-search { padding-left: 16px; gap: 10px; }
+  .command-search .command-input { font-size: 16px; }
+  .command-footer { padding-inline: 16px; gap: 10px; }
+  .command-key-help:nth-child(2) { display: none; }
+  .command-key-help > span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .command-search, .command-close, .command-clear, .command-result, .command-icon, .command-open { transition: none; }
+  /* Also honor preference changes while Motion's inline entrance is running. */
+  .command-panel, .command-results > li { transform: none !important; }
+}
+
 @keyframes railor-step-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }

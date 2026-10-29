@@ -1,0 +1,18 @@
+.strip { display: flex; align-items: center; gap: 22px; padding-block: 15px; }
+.heading { flex: none; }
+.heading > span { color: var(--color-orange-deep); font: 500 9px var(--font-mono); text-transform: uppercase; letter-spacing: .09em; }
+.heading p { margin-top: 4px; color: var(--color-muted); font-size: 10px; }
+.items { display: flex; flex: 1; flex-wrap: wrap; gap: 7px; align-items: center; }
+.tile { display: inline-flex; flex: none; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--color-line); border-radius: 9px; background: var(--color-surface); color: var(--color-ink-soft); font-size: 10px; transition: border-color .2s, transform .2s; }
+.tile:hover { border-color: var(--color-line-strong); transform: translateY(-2px); }
+.tile > span { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; }
+.tile svg, .tile img { width: 20px; height: 20px; }
+.more { position: relative; }
+.more summary { padding: 9px 10px; border: 1px solid var(--color-line); border-radius: 9px; background: var(--color-surface); color: var(--color-muted); font-size: 10px; cursor: pointer; list-style: none; }
+.more summary::-webkit-details-marker { display: none; }
+.more[open] summary { border-color: var(--color-orange); color: var(--color-orange-deep); }
+.more > div { position: absolute; z-index: 10; top: calc(100% + 8px); right: 0; display: flex; flex-wrap: wrap; width: 245px; gap: 8px; padding: 12px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-lift); }
+.more a { display: block; width: 100%; padding-top: 5px; color: var(--color-orange-deep); font-size: 11px; }
+@media (max-width: 1100px) { .strip { gap: 17px; } .heading p { font-size: 9px; } .tile { padding: 5px 7px; gap: 5px; font-size: 9px; } .items { gap: 5px; } }
+@media (max-width: 799px) { .strip { align-items: flex-start; flex-direction: column; gap: 12px; } .heading { display: flex; align-items: center; gap: 12px; } .heading p { margin: 0; } .tile { font-size: 10px; padding: 6px 8px; } }
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }

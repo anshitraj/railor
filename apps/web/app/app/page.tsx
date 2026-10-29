@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDefaultActivePolicy, listDecisions, searchCorridors } from "@railor/core";
+import { getDefaultActivePolicy, listDecisions, listPolicies, searchCorridors } from "@railor/core";
 import { CorridorQuery } from "@railor/types";
 import { ArrowRight, Calculator, ChevronRight, Radar, Route, ScanSearch } from "lucide-react";
 import { getSession } from "../../lib/auth";
-import { getKybProfile, getOrgAlerts, getSavedCorridors } from "../../lib/org";
+import { getSatisfiedRequirements, getOrgAlerts, getSavedCorridors } from "../../lib/org";
 import { RoutePill } from "../../components/app/route-pill";
 import { ActivityCards } from "../../components/app/activity-cards";
 import { WorkspaceSetup } from "../../components/app/workspace-setup";
@@ -16,11 +16,11 @@ export default async function OverviewPage() {
   const session = await getSession();
   if (!session?.organization) redirect("/login");
   const org = session.organization;
-  const [corridors, alerts, kyb, activePolicy, decisions] = await Promise.all([
-    getSavedCorridors(org.id), getOrgAlerts(org.id, 3), getKybProfile(org.id),
-    getDefaultActivePolicy(org.id), listDecisions(org.id, { limit: 1 }),
+  const [corridors, alerts, satisfiedRequirements, activePolicy, decisions, policies] = await Promise.all([
+    getSavedCorridors(org.id), getOrgAlerts(org.id, 3), getSatisfiedRequirements(org.id),
+    getDefaultActivePolicy(org.id), listDecisions(org.id, { limit: 1 }), listPolicies(org.id),
   ]);
-  const satisfiedRequirements = kyb.filter((item) => item.status === "have").map((item) => item.key);
+  const savedPolicy = activePolicy?.policy ?? policies.find((policy) => policy.status === "draft" || policy.status === "active") ?? null;
   const routes = await Promise.all(corridors.slice(0, 3).map(async (corridor) => {
     const query = CorridorQuery.parse(corridor.query);
     const result = await searchCorridors(query, { satisfiedRequirements, recordTelemetry: false });
@@ -46,7 +46,7 @@ export default async function OverviewPage() {
           <span className="overview-text-action">Search & compare <ArrowRight size={16} aria-hidden /></span>
         </Link>
       </section>
-      <WorkspaceSetup organizationId={org.id} profileComplete={Boolean(org.onboardingCompletedAt)} policyActive={Boolean(activePolicy)} hasDecision={Boolean(decisions.length)} canEditPolicy={["owner", "admin"].includes(session.role ?? "")} canDecide={session.role !== "viewer"} />
+      <WorkspaceSetup organizationId={org.id} profileComplete={Boolean(org.onboardingCompletedAt)} policyActive={Boolean(activePolicy)} savedPolicy={savedPolicy ? { id: savedPolicy.id, name: savedPolicy.name } : null} hasDecision={Boolean(decisions.length)} canEditPolicy={["owner", "admin"].includes(session.role ?? "")} canDecide={session.role !== "viewer"} />
       <section className="overview-summary" aria-label="Your workspace">
         <div className="overview-section">
           <header><h2><Route size={18} aria-hidden /> Your routes</h2><Link href="/app/corridors">View all <ChevronRight size={15} aria-hidden /></Link></header>

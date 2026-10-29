@@ -301,40 +301,6 @@
   }
 }
 
-/* Route dossier: an editorial header, a readable route, and an evidence receipt. */
-.corridor-dossier { container-type: inline-size; overflow: hidden; border: 1px solid var(--color-line-strong); border-radius: 26px; background: var(--color-paper); box-shadow: var(--shadow-lift); }
-.corridor-heading { padding: 22px; background: var(--color-ink); color: var(--color-on-dark); }
-.corridor-journey { position: relative; padding: 26px 16px 22px; border-bottom: 1px solid var(--color-line); }
-.corridor-grid { position: absolute; inset: 0; opacity: .35; pointer-events: none; background-image: linear-gradient(var(--color-line) 1px, transparent 1px), linear-gradient(90deg, var(--color-line) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(transparent, black 35%, transparent); }
-.corridor-stages { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 8px; }
-.corridor-stage { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: center; text-align: center; }
-.corridor-node { display: flex; width: 70px; height: 70px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid var(--color-line-strong); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-soft); }
-.corridor-settlement { width: 124px; gap: 8px; }
-.corridor-stage-title { margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--color-ink); white-space: nowrap; }
-.corridor-stage-detail { margin-top: 5px; font-size: 9px; line-height: 1.5; color: var(--color-muted); }
-.corridor-track { position: absolute; left: 14%; right: 14%; top: 92px; height: 1px; background: var(--color-line-strong); }
-.corridor-packet { position: absolute; inset: -3px 0; overflow: hidden; pointer-events: none; }
-.corridor-packet > span { position: absolute; inset: 0; transform: translateX(-100%); }
-.corridor-packet > span::after { content: ""; position: absolute; left: 50%; top: 1px; width: 6px; height: 6px; border-radius: 50%; background: var(--color-orange); }
-.corridor-dossier.is-running .corridor-packet > span { animation: corridor-packet 4s ease-in-out infinite; }
-.corridor-verdict { margin: 16px; padding: 20px; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); }
-.corridor-verdict-icon { display: grid; width: 42px; height: 42px; flex-shrink: 0; place-items: center; border: 1px solid var(--color-line); border-radius: 13px; }
-.corridor-tone-good { color: var(--color-ok); background: var(--color-ok-bg); }
-.corridor-tone-warn { color: var(--color-warn); background: var(--color-warn-bg); }
-.corridor-tone-muted { color: var(--color-ink-soft); background: var(--color-paper); }
-.corridor-tone-pending { color: var(--color-orange-deep); background: var(--color-lavender); }
-@keyframes corridor-packet { 0%, 10% { transform: translateX(-60%); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 90%, 100% { transform: translateX(60%); opacity: 0; } }
-@container (max-width: 375px) {
-  .corridor-heading { padding: 18px; }
-  .corridor-journey { padding-inline: 10px; }
-  .corridor-node { width: 60px; height: 60px; border-radius: 17px; }
-  .corridor-settlement { width: 112px; gap: 5px; }
-  .corridor-track { top: 87px; }
-  .corridor-stage-title { font-size: 10px; }
-  .corridor-stage-detail { font-size: 8px; }
-  .corridor-verdict { margin: 12px; padding: 16px; }
-}
-
 /* Evidence folio: one claim, one source, and a numbered audit trail. */
 .evidence-folio { container-type: inline-size; position: relative; min-width: 0; border: 1px solid var(--color-line); border-radius: 22px; background: var(--color-surface); box-shadow: var(--shadow-soft); }
 .evidence-folio-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 25px 28px; border-bottom: 1px solid var(--color-line); }

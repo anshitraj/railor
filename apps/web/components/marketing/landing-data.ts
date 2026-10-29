@@ -24,6 +24,9 @@ export interface LandingSignal {
   topConfidence: number | null;
   /** Distinct evidence records behind the supported / KYB-gated results. */
   evidenceCount: number;
+  providerExamples?: Array<{ slug: string; name: string }>;
+  requirements?: string[];
+  latestVerified?: string;
 }
 
 /** The corridors the landing page evaluates live on every request. Shared by the server page and the client view. */

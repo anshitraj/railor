@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, ChevronDown, ListChecks, MessageSquare, SlidersHorizontal } from "lucide-react";
+import { workspacePolicySetup, type SavedSetupPolicy } from "../../lib/workspace-policy-setup";
 
-export function WorkspaceSetup({ organizationId, profileComplete, policyActive, hasDecision, canEditPolicy, canDecide }: {
-  organizationId: string; profileComplete: boolean; policyActive: boolean; hasDecision: boolean; canEditPolicy: boolean; canDecide: boolean;
+export function WorkspaceSetup({ organizationId, profileComplete, policyActive, savedPolicy = null, hasDecision, canEditPolicy, canDecide }: {
+  organizationId: string; profileComplete: boolean; policyActive: boolean; savedPolicy?: SavedSetupPolicy | null; hasDecision: boolean; canEditPolicy: boolean; canDecide: boolean;
 }) {
   const [dismissed, setDismissed] = useState(false);
   const storageKey = `railor.setup-hidden:${organizationId}`;
   useEffect(() => { try { setDismissed(localStorage.getItem(storageKey) === "true"); } catch { /* Storage is optional. */ } }, [storageKey]);
   const steps = [
     { title: "Make Railor yours", description: "A few quick questions to tailor your workspace.", action: "Set up workspace", href: "/welcome", done: profileComplete, Icon: SlidersHorizontal },
-    { title: "Set your company policy", description: canEditPolicy ? "Choose your guardrails, then review and activate your policy." : "Ask your workspace owner to create and activate a company policy.", action: canEditPolicy ? "Create a policy" : "View policies", href: canEditPolicy ? "/app/policies#create-policy" : "/app/policies", done: policyActive, Icon: ListChecks },
+    { ...workspacePolicySetup(policyActive, savedPolicy, canEditPolicy), Icon: ListChecks },
     { title: "Describe your money movement", description: canDecide ? "Tell the Agent where money needs to go. Review its suggested paths." : "Explore routes while your team records its first decision.", action: canDecide ? "Describe a movement" : "Explore routes", href: canDecide ? "/app/agent" : "/app/search", done: hasDecision, Icon: MessageSquare },
   ];
   const completed = steps.filter((step) => step.done).length;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Link2, Shuffle, Zap } from "lucide-react";
 import { cn } from "@railor/ui";
+import styles from "./price-check.module.css";
 
 const TOOLS = {
   app: [
@@ -15,6 +16,10 @@ const TOOLS = {
     { href: "/docs/payments", label: "API", icon: BookOpen },
   ],
 };
+
+export function PriceCheckHeader({ mode }: { mode: "app" | "public" }) {
+  return <header className={styles.pageHeader}><div><span className={styles.eyebrow}>Price intelligence</span><h1>Price check</h1><p>Compare what arrives, what it costs, and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
+}
 
 /** The left rail: where live quotes sit among the other ways to act on a price. */
 export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: string }) {
