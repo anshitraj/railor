@@ -67,7 +67,7 @@ const SKIPPED = [
 ];
 
 export function OnboardingFlow({ seed, countries, currencies }: { seed: OnboardingSeed; countries: PickerOption[]; currencies: PickerOption[] }) {
-  const [step, setStep] = useState(Math.max(0, Math.min(4, seed.initialStep ?? 0)));
+  const [step, setStep] = useState(Math.max(0, Math.min(2, seed.initialStep ?? 0)));
   const [building, setBuilding] = useState<string[]>(seed.building ? [seed.building] : []);
   const [entityCountry, setEntityCountry] = useState<string[]>(seed.entityCountry ? [seed.entityCountry] : seed.detectedCountry ? [seed.detectedCountry] : []);
   const [targets, setTargets] = useState(seed.targetCountries);
@@ -76,14 +76,15 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
   const [assumptions, setAssumptions] = useState(seed.assumptions ?? []);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const [setupApi, setSetupApi] = useState(false);
   const selectedBuilding = building[0];
   const profile = selectedBuilding === "personal" ? "personal" : selectedBuilding?.startsWith("freelancer") ? "freelancer" : selectedBuilding ? "business" : undefined;
   const isBusiness = Boolean(selectedBuilding && selectedBuilding !== "personal" && selectedBuilding !== "freelancer");
   const quickCountries = countries.filter((item) => [seed.detectedCountry, "IN", "US", "GB", "AE", "SG", "DE"].includes(item.value));
   const quickCurrencies = currencies.filter((item) => ["USD", "EUR", "GBP", "INR", "AED", "SGD"].includes(item.value));
   const choices = (items: PickerOption[]): Choice[] => items.map((item) => ({ value: item.value, label: item.label, hint: item.value, icon: <Flag code={item.value} size={20} /> }));
-  const selections = [building, entityCountry, targets, settlement, interests];
-  const answers = () => ({ building: building[0], entityCountry: entityCountry[0], targetCountries: targets, settlementCurrencies: settlement, interests, assumptions });
+  const selections = [building, entityCountry, targets];
+  const answers = () => ({ building: building[0], entityCountry: entityCountry[0], targetCountries: targets, settlementCurrencies: settlement, interests: interests.length ? interests : ["bank_payouts"], assumptions });
 
   const advance = (skip = false) => {
     if (pending) return;
@@ -101,7 +102,7 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     }
     startTransition(async () => {
       try {
-        if (step === 4) await finishOnboarding(nextAnswers, seed.returnTo);
+        if (step === 2) await finishOnboarding(nextAnswers, setupApi && (!seed.returnTo || seed.returnTo === "/app") ? "/app/developers" : seed.returnTo);
         else {
           const result = await saveStep(step + 1, nextAnswers);
           if (!result.ok) throw new Error("Workspace unavailable");
@@ -132,26 +133,25 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     { label: "Destination markets", value: labelFor(countries, targets), step: 2 },
     { label: "Currencies", value: labelFor(currencies, settlement), step: 3 },
   ];
-  return <StepFlow className="onboarding-screen" step={step} total={5} title={question[0]} subtitle={question[1]}
+  return <StepFlow className="onboarding-screen" step={step} total={3} title={question[0]} subtitle={question[1]}
     onBack={step > 0 && !pending ? () => { setError(""); setStep(step - 1); } : undefined}
     onNext={() => advance()} onSkip={!pending ? () => advance(true) : undefined}
-    nextLabel={pending ? (step === 4 ? "Opening workspace…" : "Saving…") : step === 4 ? "Open my workspace" : "Continue"}
+    nextLabel={pending ? (step === 2 ? "Opening workspace…" : "Saving…") : step === 2 ? "Open my workspace" : "Continue"}
     nextDisabled={pending || !selections[step]!.length} skipLabel="Decide later"
     footnote={step === 0 && seed.fromQuery ? <>Pre-filled from your search: “{seed.fromQuery}”.</> : <>Your answers save as you continue. You can change them later.</>}>
     <fieldset disabled={pending} className="min-w-0">
       {step === 0 ? <div className="space-y-6">
         <ChoiceGrid className="onboarding-choices onboarding-profiles" options={PROFILES} value={profile ? [profile] : []} onChange={([value]) => setBuilding([value === "business" ? "payments" : value!])} columns={3} name="How will you use Railor" />
-        {profile === "business" ? <div className="railor-step-in space-y-3"><h2 className="text-sm font-semibold">What are you building or managing?</h2><ChoiceGrid className="onboarding-choices" options={BUILDING} value={building} onChange={setBuilding} columns={3} name="Business purpose" /></div> : null}
+        {profile === "business" ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-sm"><summary className="cursor-pointer">Business purpose · optional</summary><div className="railor-step-in mt-4 space-y-3"><h2 className="text-sm font-semibold">What are you building or managing?</h2><ChoiceGrid className="onboarding-choices" options={BUILDING} value={building} onChange={setBuilding} columns={3} name="Business purpose" /></div></details> : null}
         {profile === "freelancer" ? <div className="railor-step-in space-y-3"><h2 className="text-sm font-semibold">How do you work with clients?</h2><ChoiceGrid className="onboarding-choices" options={FREELANCER_TYPES} value={building} onChange={setBuilding} columns={2} name="Freelancer customer type" /></div> : null}
-        <p className="text-xs leading-relaxed text-[var(--color-muted)]">This sets up your comparisons and workspace. Each provider has its own account verification process.</p>
+        <label className="flex items-center gap-3 rounded-xl border border-[var(--color-line)] p-4 text-sm"><input type="checkbox" checked={setupApi} onChange={event => setSetupApi(event.target.checked)} />I also want to set up the API or an AI tool</label><p className="text-xs leading-relaxed text-[var(--color-muted)]">This sets up your comparisons and workspace. Each provider has its own account verification process.</p>
       </div> : null}
       {step === 1 ? <div className="space-y-5"><ChoiceGrid className="onboarding-choices onboarding-quick" options={choices(quickCountries)} value={entityCountry} onChange={setEntityCountry} name="Common home countries" /><SmartPicker suggestionCount={0} label={isBusiness ? "Company country" : "Home country"} options={countries} value={entityCountry} onChange={setEntityCountry} detected={seed.detectedCountry} placeholder="Search all countries" /></div> : null}
       {step === 2 ? <div className="space-y-5"><ChoiceGrid className="onboarding-choices onboarding-quick" options={choices(quickCountries)} value={targets} onChange={setTargets} multiple name="Common destination markets" /><SmartPicker suggestionCount={0} label="Target markets" options={countries} value={targets} onChange={setTargets} multiple placeholder="Search all markets" /></div> : null}
-      {step === 3 ? <div className="space-y-5"><ChoiceGrid className="onboarding-choices onboarding-quick" options={choices(quickCurrencies).map((item) => ({ ...item, icon: <CurrencyLogo symbol={item.value} size={20} /> }))} value={settlement} onChange={setSettlement} multiple name="Common settlement currencies" /><SmartPicker suggestionCount={0} label="Settlement currencies" options={currencies} value={settlement} onChange={setSettlement} multiple placeholder="Search all currencies" renderMark={(option) => <CurrencyLogo symbol={option.value} size={20} />} /></div> : null}
-      {step === 4 ? <ChoiceGrid className="onboarding-choices onboarding-interests" options={INTERESTS} value={interests} onChange={setInterests} multiple columns={3} name="Which infrastructure matters" /> : null}
+      {step === 2 ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-sm"><summary className="cursor-pointer">Currency & product preferences · optional</summary><div className="mt-4 space-y-5"><SmartPicker suggestionCount={0} label="Receiving currencies" options={currencies} value={settlement} onChange={setSettlement} multiple placeholder="Choose currencies" renderMark={option => <CurrencyLogo symbol={option.value} size={20} />} /><ChoiceGrid className="onboarding-choices onboarding-interests" options={INTERESTS} value={interests} onChange={setInterests} multiple columns={3} name="Which infrastructure matters" /></div></details> : null}
     </fieldset>
     {error ? <p role="alert" className="text-sm text-[var(--color-bad)]">{error}</p> : null}
-    {step === 4 ? <section className="onboarding-review" aria-label="Review your answers"><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Check size={16} aria-hidden />Your workspace, at a glance</div><dl>{review.map((item) => <div key={item.label} className="onboarding-review-row"><div><dt className="text-xs text-[var(--color-muted)]">{item.label}</dt><dd className="mt-1 text-sm">{item.value}</dd></div><button type="button" disabled={pending} className="text-xs font-medium text-[var(--color-purple)]" aria-label={`Edit ${item.label.toLowerCase()}`} onClick={() => setStep(item.step)}>Edit</button></div>)}</dl></section> : null}
-    {step === 4 && assumptions.length ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-xs text-[var(--color-muted)]"><summary className="cursor-pointer">Review skipped answers ({assumptions.length})</summary><ul className="mt-3 space-y-2">{assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
+    {step === 2 ? <details className="onboarding-review" aria-label="Review your answers"><summary className="cursor-pointer text-sm font-semibold">Review your answers</summary><section><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Check size={16} aria-hidden />Your workspace, at a glance</div><dl>{review.map((item) => <div key={item.label} className="onboarding-review-row"><div><dt className="text-xs text-[var(--color-muted)]">{item.label}</dt><dd className="mt-1 text-sm">{item.value}</dd></div><button type="button" disabled={pending} className="text-xs font-medium text-[var(--color-purple)]" aria-label={`Edit ${item.label.toLowerCase()}`} onClick={() => setStep(Math.min(2, item.step))}>Edit</button></div>)}</dl></section></details> : null}
+    {step === 2 && assumptions.length ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-xs text-[var(--color-muted)]"><summary className="cursor-pointer">Review skipped answers ({assumptions.length})</summary><ul className="mt-3 space-y-2">{assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
   </StepFlow>;
 }

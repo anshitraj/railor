@@ -86,7 +86,7 @@ export function CodeSample({
         </div>
         {apiKey ? (
           <span className="mr-2 shrink-0 rounded-full bg-[var(--color-lime)]/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-lime)]">
-            Your test key
+            Your API key
           </span>
         ) : null}
         <button

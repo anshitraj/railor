@@ -1,559 +1,81 @@
 "use client";
-
+import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Check, Copy, Trash2 } from "lucide-react";
-import { Button, Card, CodeSample, Freshness, SectionLabel, StageBadge, TechnologyLogo } from "@railor/ui";
-import { createKey, revokeKey } from "../../app/app/developers/actions";
+import { ArrowRight, Check, Copy, Eye, EyeOff, KeyRound, RefreshCw, Terminal, Trash2 } from "lucide-react";
+import { CodeSample, TechnologyLogo } from "@railor/ui";
+import { createKey, regenerateKey, revokeKey } from "../../app/app/developers/actions";
+import { SETUP_CLIENTS, setupSnippet, type SetupClient } from "../../lib/developer-setup";
+import styles from "./developer-portal.module.css";
 
-export interface KeyRow {
-  id: string;
-  label: string;
-  mode: "test" | "live";
-  prefix: string;
-  secret: string | null;
-  lastUsedAt: string | null;
-  createdAt: string;
-  revoked: boolean;
-  /** null once revoked — a dead key has no ongoing month to measure. */
-  monthlyUsed: number | null;
-  monthlyCap: number | null;
-}
+export interface KeyRow { id: string; label: string; mode: "test" | "live"; prefix: string; secret: string | null; lastUsedAt: string | null; createdAt: string; revoked: boolean; monthlyUsed: number | null; monthlyCap: number | null }
+export interface UsageRow { endpoint: string; count: number; errors: number; p95: number }
+export interface DailyUsagePoint { day: string; count: number; errors: number }
+export interface QuotaInfo { used: number; cap: number; mode: "test" | "live" }
 
-export interface UsageRow {
-  endpoint: string;
-  count: number;
-  errors: number;
-  p95: number;
-}
-
-export interface DailyUsagePoint {
-  day: string;
-  count: number;
-  errors: number;
-}
-
-export interface QuotaInfo {
-  used: number;
-  cap: number;
-  /** Which key this bar reflects — a test-only org sees its test key here, not a blank card. */
-  mode: "test" | "live";
-}
-
-/**
- * Keys, usage and agent installation in one place. The test key already exists
- * — nobody has to find a "create key" button before the docs work.
- */
-export function DeveloperPortal({
-  keys,
-  usage,
-  dailySeries,
-  quota,
-  baseUrl,
-  exampleQuery,
-}: {
-  keys: KeyRow[];
-  usage: UsageRow[];
-  dailySeries: DailyUsagePoint[];
-  quota: QuotaInfo | null;
-  baseUrl: string;
-  exampleQuery: Record<string, unknown>;
+export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exampleQuery, canManage = false }: {
+  keys: KeyRow[]; usage: UsageRow[]; dailySeries: DailyUsagePoint[]; quota: QuotaInfo | null; baseUrl: string; exampleQuery: Record<string, unknown>; canManage?: boolean;
 }) {
-  const [freshSecret, setFreshSecret] = useState<string | null>(null);
-  const [label, setLabel] = useState("");
-  const [pending, startTransition] = useTransition();
-
-  const testKey = keys.find((k) => k.mode === "test" && !k.revoked)?.secret ?? undefined;
-
-  const mcpConfig = {
-    railor: {
-      url: `${baseUrl}/api/mcp`,
-      headers: { Authorization: `Bearer ${testKey ?? "rail_test_your_key"}` },
-    },
-  };
-  const cursorDeeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=railor&config=${encodeURIComponent(
-    Buffer.from(JSON.stringify(mcpConfig.railor)).toString("base64"),
-  )}`;
-
-  // VS Code's documented install link: vscode:mcp/install?{url-encoded server config}.
-  const vscodeDeeplink = `vscode:mcp/install?${encodeURIComponent(
-    JSON.stringify({ name: "railor", type: "http", ...mcpConfig.railor }),
-  )}`;
-
-  const hasLiveKey = keys.some((k) => k.mode === "live" && !k.revoked);
-  const hasCalledApi = usage.length > 0;
-  const createLiveKey = () =>
-    startTransition(async () => {
-      const res = await createKey("Live key", "live");
-      if (res.ok && res.secret) setFreshSecret(res.secret);
-    });
-
-  const copySecret = (secret: string) => {
-    void navigator.clipboard.writeText(secret);
-  };
-
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="workspace-heading flex flex-col gap-1">
-        <span className="product-eyebrow">Build with Railor</span>
-        <h1 className="font-semibold tracking-tight">Developers</h1>
-        <p className="max-w-2xl text-[14px] text-[var(--color-muted)]">
-          The screens in this app are thin clients over these endpoints. Your test key is already
-          live and every snippet below is rendered with it.
-        </p>
-      </div>
-
-      <Card className="flex flex-col gap-3 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <SectionLabel>API usage</SectionLabel>
-            {quota ? (
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                  quota.mode === "test"
-                    ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
-                    : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
-                }`}
-              >
-                {quota.mode} key
-              </span>
-            ) : null}
-          </div>
-          <span className="text-[11px] text-[var(--color-faint)]">Resets monthly, per key</span>
-        </div>
-
-        {quota ? (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between text-[14px]">
-              <span className="tabular font-medium">
-                {quota.used.toLocaleString("en-US")} / {quota.cap.toLocaleString("en-US")} requests
-              </span>
-              <span className="text-[11px] text-[var(--color-faint)]">this month</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-[var(--color-line)]">
-              <div
-                className={`h-full rounded-full ${
-                  quota.used / quota.cap >= 1
-                    ? "bg-[var(--color-bad)]"
-                    : quota.used / quota.cap >= 0.8
-                      ? "bg-[var(--color-warn)]"
-                      : "bg-[var(--color-purple)]"
-                }`}
-                style={{ width: `${Math.min(100, (quota.used / quota.cap) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-[13px] text-[var(--color-muted)]">
-            No API key on this workspace yet.
-          </p>
-        )}
-      </Card>
-
-      <Card className="flex flex-col gap-1 p-5">
-        <SectionLabel className="mb-2">Getting started</SectionLabel>
-        <ChecklistRow step={1} done label="Get your API key" hint="One test key already works across every endpoint." />
-        <ChecklistRow
-          step={2}
-          done={hasCalledApi}
-          label="Run your first request"
-          hint="Copy the snippet below — it's rendered with your real test key."
-          action={!hasCalledApi ? <a href="#quickstart" className="text-[12.5px] font-medium text-[var(--color-purple)]">View snippet →</a> : null}
-        />
-        <ChecklistRow
-          step={3}
-          done={hasLiveKey}
-          label="Create a live key"
-          hint="Test keys never touch production data; a live key does."
-          action={
-            !hasLiveKey ? (
-              <Button size="sm" variant="secondary" disabled={pending} onClick={createLiveKey}>
-                New live key
-              </Button>
-            ) : null
-          }
-          last
-        />
-      </Card>
-
-      <div id="quickstart" className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <Card className="flex flex-col gap-4 p-5">
-          <SectionLabel>60-second start</SectionLabel>
-          <CodeSample
-            apiKey={testKey}
-            variants={[
-              {
-                language: "curl",
-                label: "cURL",
-                code: `curl ${baseUrl}/v1/corridors/search \\
-  -H "Authorization: Bearer RAILOR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(exampleQuery, null, 2)}'`,
-              },
-              {
-                language: "ts",
-                label: "TypeScript",
-                code: `const response = await fetch("${baseUrl}/v1/corridors/search", {
-  method: "POST",
-  headers: {
-    Authorization: "Bearer RAILOR_API_KEY",
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(${JSON.stringify(exampleQuery, null, 2)}),
-})
-
-const { data, providers_checked } = await response.json()`,
-              },
-              {
-                language: "python",
-                label: "Python",
-                code: `import httpx
-
-response = httpx.post(
-    "${baseUrl}/v1/corridors/search",
-    headers={"Authorization": "Bearer RAILOR_API_KEY"},
-    json=${JSON.stringify(exampleQuery, null, 4).replace(/"/g, '"')},
-)
-print(response.json()["providers_checked"])`,
-              },
-            ]}
-            caption="Rendered with your workspace's test key and your most recent corridor."
-          />
-        </Card>
-
-        <Card className="flex flex-col gap-3 p-5">
-          <div className="flex items-center justify-between">
-            <SectionLabel>API keys</SectionLabel>
-            <span className="text-[11px] text-[var(--color-faint)]">
-              Live keys are shown once and stored hashed
-            </span>
-          </div>
-
-          {/* relative: keeps the sr-only header (absolutely positioned) inside the scroller on phones */}
-          <div className="relative overflow-x-auto">
-            <table className="w-full min-w-[420px] text-left text-[13px]">
-              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
-                <tr>
-                  <th className="pb-2 pr-2 font-medium">Name</th>
-                  <th className="pb-2 pr-2 font-medium">Type</th>
-                  <th className="pb-2 pr-2 font-medium">Usage</th>
-                  <th className="pb-2 pr-2 font-medium">Key</th>
-                  <th className="pb-2 font-medium">
-                    <span className="sr-only">Options</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key) => (
-                  <tr key={key.id} className="border-t border-[var(--color-line)] align-top">
-                    <td className="py-2.5 pr-2">
-                      <div className="flex flex-col">
-                        <span className="whitespace-nowrap font-medium">{key.label}</span>
-                        <span className="text-[11px] text-[var(--color-faint)]">
-                          {key.revoked ? (
-                            <span className="text-[var(--color-bad)]">revoked</span>
-                          ) : key.lastUsedAt ? (
-                            <Freshness date={key.lastUsedAt} prefix="Last used" />
-                          ) : (
-                            "Never used"
-                          )}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 pr-2">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                          key.mode === "test"
-                            ? "bg-[var(--color-lavender)] text-[var(--color-purple)]"
-                            : "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
-                        }`}
-                      >
-                        {key.mode}
-                      </span>
-                    </td>
-                    <td className="tabular whitespace-nowrap py-2.5 pr-2 text-[var(--color-muted)]">
-                      {key.monthlyUsed !== null && key.monthlyCap !== null
-                        ? `${key.monthlyUsed.toLocaleString("en-US")} / ${key.monthlyCap.toLocaleString("en-US")}`
-                        : "—"}
-                    </td>
-                    <td className="py-2.5 pr-2">
-                      <div className="flex items-center gap-1.5">
-                        {/* The full test key is in the snippets and the copy button; the table only needs to identify it. */}
-                        <code className="tabular whitespace-nowrap text-[12px] text-[var(--color-muted)]" title={key.secret ?? undefined}>
-                          {key.secret ? `${key.secret.slice(0, 14)}…${key.secret.slice(-4)}` : `${key.prefix}…`}
-                        </code>
-                        {key.secret ? (
-                          <button
-                            type="button"
-                            title="Copy key"
-                            onClick={() => copySecret(key.secret!)}
-                            className="rounded-full p-1 text-[var(--color-faint)] hover:bg-[var(--color-lavender)] hover:text-[var(--color-purple)]"
-                          >
-                            <Copy size={13} />
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="py-2.5 text-right">
-                      {!key.revoked ? (
-                        <button
-                          type="button"
-                          title="Revoke key"
-                          onClick={() => startTransition(async () => void (await revokeKey(key.id)))}
-                          className="rounded-full p-1.5 text-[var(--color-faint)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
-            <input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Key label (e.g. staging worker)"
-              className="flex-1 rounded-full border border-[var(--color-line)] px-3 py-1.5 text-[13px] outline-none focus:border-[var(--color-violet)]"
-            />
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  const res = await createKey(label || "Test key", "test");
-                  if (res.ok) setLabel("");
-                })
-              }
-            >
-              New test key
-            </Button>
-            <Button
-              size="sm"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  const res = await createKey(label || "Live key", "live");
-                  if (res.ok && res.secret) setFreshSecret(res.secret);
-                  setLabel("");
-                })
-              }
-            >
-              New live key
-            </Button>
-          </div>
-
-          {freshSecret ? (
-            <div className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-3">
-              <span className="text-[11px] uppercase tracking-wide text-[var(--color-purple)]">
-                Copy this now — it is not shown again
-              </span>
-              <code className="break-all text-[12.5px]">{freshSecret}</code>
-            </div>
-          ) : null}
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
-        <Card className="flex flex-col gap-3 p-5">
-          <div className="flex items-center gap-2">
-            <TechnologyLogo name="MCP" size={24} />
-            <SectionLabel>MCP server</SectionLabel>
-            <StageBadge stage="beta" />
-          </div>
-          <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
-            Let a coding or treasury agent query the same verified data. Every tool response carries
-            source, verified_at and confidence.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { name: "Cursor", label: "Add to Cursor", href: cursorDeeplink },
-              { name: "VS Code", label: "Add to VS Code", href: vscodeDeeplink },
-              { name: "Claude Code", label: "Claude Code instructions", href: "/docs/mcp" },
-            ].map((client) => <a key={client.name} href={client.href} className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--color-paper)]">
-              <TechnologyLogo name={client.name} size={20} /> {client.label}
-            </a>)}
-          </div>
-          <CodeSample
-            apiKey={testKey}
-            variants={[
-              {
-                language: "json",
-                label: "mcp.json",
-                code: JSON.stringify(
-                  {
-                    mcpServers: {
-                      railor: {
-                        url: `${baseUrl}/api/mcp`,
-                        headers: { Authorization: "Bearer RAILOR_API_KEY" },
-                      },
-                    },
-                  },
-                  null,
-                  2,
-                ),
-              },
-              {
-                language: "cli",
-                label: "Claude Code",
-                code: `claude mcp add --transport http railor ${baseUrl}/api/mcp \\
-  --header "Authorization: Bearer RAILOR_API_KEY"`,
-              },
-              {
-                language: "antigravity",
-                label: "Antigravity",
-                // Antigravity's own docs are explicit: "Legacy fields like
-                // `url` or `httpUrl` are not supported" for remote servers —
-                // it has to be `serverUrl`, unlike every other client here.
-                // Global config: ~/.gemini/config/mcp_config.json
-                // Workspace config: .agents/mcp_config.json
-                code: JSON.stringify(
-                  {
-                    mcpServers: {
-                      railor: {
-                        serverUrl: `${baseUrl}/api/mcp`,
-                        headers: { Authorization: "Bearer RAILOR_API_KEY" },
-                      },
-                    },
-                  },
-                  null,
-                  2,
-                ),
-              },
-              {
-                language: "toml",
-                label: "Codex",
-                // Codex reads the token from an env var, not an inline
-                // string — RAILOR_KEY here is just the var's name; only the
-                // value after `=` is your actual key.
-                code: `# ~/.codex/config.toml (or ./.codex/config.toml for this project only)
-export RAILOR_KEY=RAILOR_API_KEY
-
-[mcp_servers.railor]
-url = "${baseUrl}/api/mcp"
-bearer_token_env_var = "RAILOR_KEY"`,
-              },
-            ]}
-            caption="Ask your agent: “Which mapped providers can settle USDC to an AED business account for an Indian entity?”"
-          />
-        </Card>
-
-        <Card className="flex flex-col gap-3 p-5">
-          <SectionLabel>Usage by endpoint</SectionLabel>
-
-          {dailySeries.some((d) => d.count > 0) ? (
-            <div className="flex items-end gap-[2px] border-t border-[var(--color-line)] pt-3" style={{ height: 40 }}>
-              {(() => {
-                const max = Math.max(1, ...dailySeries.map((d) => d.count));
-                return dailySeries.map((d) => (
-                  <div
-                    key={d.day}
-                    title={`${d.day}: ${d.count} request${d.count === 1 ? "" : "s"}${d.errors ? `, ${d.errors} error${d.errors === 1 ? "" : "s"}` : ""}`}
-                    className={`flex-1 rounded-t-[2px] ${d.errors ? "bg-[var(--color-bad)]" : "bg-[var(--color-purple)]"} opacity-70`}
-                    style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
-                  />
-                ));
-              })()}
-            </div>
-          ) : null}
-
-          {usage.length ? (
-            <table className="w-full text-left text-[13px]">
-              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
-                <tr>
-                  <th className="pb-2">Endpoint</th>
-                  <th className="pb-2">Requests</th>
-                  <th className="pb-2">Errors</th>
-                  <th className="pb-2">p95</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usage.map((row) => (
-                  <tr key={row.endpoint} className="border-t border-[var(--color-line)]">
-                    <td className="py-2 font-mono text-[12px]">{row.endpoint}</td>
-                    <td className="tabular py-2">{row.count}</td>
-                    <td className="tabular py-2">{row.errors}</td>
-                    <td className="tabular py-2">{row.p95}ms</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-[13px] text-[var(--color-muted)]">
-              No API calls yet. Copy the snippet above — it runs as printed.
-            </p>
-          )}
-
-          <div className="border-t border-[var(--color-line)] pt-3">
-            <SectionLabel>Endpoints</SectionLabel>
-            <ul className="mt-2 flex flex-col gap-1 font-mono text-[12px] text-[var(--color-ink-soft)]">
-              {[
-                "POST /v1/corridors/search",
-                "POST /v1/eligibility",
-                "GET /v1/providers",
-                "GET /v1/providers/{id}",
-                "POST /v1/compare",
-                "GET /v1/capabilities",
-                "GET /v1/changes",
-                "GET|POST /v1/watchlists",
-                "POST /v1/decisions",
-                "GET|POST /v1/policies",
-                "POST /v1/routes",
-                "POST /v1/prices",
-                "GET|POST /v1/payments",
-                "POST /v1/payments/{id}/submit",
-                "GET|POST /v1/beneficiaries",
-                "GET|POST /v1/webhook_endpoints",
-              ].map((endpoint) => (
-                <li key={endpoint}>{endpoint}</li>
-              ))}
-            </ul>
-            <a href="/docs/api" className="mt-2 inline-block text-[12px] font-semibold text-[var(--color-orange-deep)] underline underline-offset-2">
-              Full API reference →
-            </a>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function ChecklistRow({
-  step,
-  done,
-  label,
-  hint,
-  action,
-  last,
-}: {
-  step: number;
-  done: boolean;
-  label: string;
-  hint: string;
-  action?: React.ReactNode;
-  last?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-3 py-2.5 ${!last ? "border-b border-[var(--color-line)]" : ""}`}
-    >
-      <span
-        className={`grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-medium ${
-          done
-            ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
-            : "bg-[var(--color-lavender)] text-[var(--color-purple)]"
-        }`}
-      >
-        {done ? <Check size={13} /> : step}
-      </span>
-      <div className="flex flex-1 flex-col">
-        <span className="text-[13.5px] font-medium">{label}</span>
-        <span className="text-[12px] text-[var(--color-muted)]">{hint}</span>
-      </div>
-      {action}
-    </div>
-  );
+  const [replacement, setReplacement] = useState<KeyRow | null>(null);
+  const primary = replacement ?? keys.find(key => key.mode === "live" && !key.revoked) ?? keys.find(key => !key.revoked);
+  const [revealed, setRevealed] = useState(false);
+  const [client, setClient] = useState<SetupClient>("Claude Code");
+  const [powershell, setPowershell] = useState(true);
+  const [copied, setCopied] = useState(""); const [error, setError] = useState("");
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const [pending, start] = useTransition(); const [label, setLabel] = useState("");
+  const [example, setExample] = useState(false);
+  const [view, setView] = useState<"key" | "setup">("key");
+  const secret = primary?.secret ?? undefined;
+  const stamp = (value: string | null | undefined) => value ? `${new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC` : "Never";
+  async function copy(text: string, target: string) {
+    try { await navigator.clipboard.writeText(text); setCopied(target); setError(""); window.setTimeout(() => setCopied(""), 1800); }
+    catch { setError("Clipboard is unavailable. Reveal and select the text to copy it manually."); }
+  }
+  const command = setupSnippet(client, baseUrl, secret ?? "YOUR_RAILOR_KEY", powershell);
+  function rotate() {
+    if (!primary) return;
+    start(async () => { try {
+      const result = await regenerateKey(primary.id);
+      if (!result.ok) { setError("Couldn’t regenerate this key. Check your access and try again."); return; }
+      setReplacement({ ...primary, id: result.id, secret: result.secret, prefix: result.secret.slice(0, 12), createdAt: new Date().toISOString(), lastUsedAt: null, monthlyUsed: 0 });
+      setConfirm(null); setRevealed(false); setError("");
+    } catch { setError("Couldn’t regenerate this key. Please try again."); } });
+  }
+  function create(mode: "test" | "live") {
+    start(async () => { try {
+      const result = await createKey(label.trim() || `${mode === "live" ? "Live" : "Test"} key`, mode);
+      if (!result.ok) setError("Couldn’t create the key. Check your access.");
+      else { setReplacement({ id: result.id, label: label.trim() || `${mode} key`, mode, prefix: result.secret.slice(0, 12), secret: result.secret, revoked: false, createdAt: new Date().toISOString(), lastUsedAt: null, monthlyUsed: 0, monthlyCap: null }); setLabel(""); setConfirm(null); setRevealed(false); }
+    } catch { setError("Couldn’t create the key. Please try again."); } });
+  }
+  return <div className={styles.portal}>
+    <header className={styles.heading}><span className="product-eyebrow">Build with Railor</span><h1>Developers</h1><p>One workspace key for Railor’s APIs and AI-tool connections.</p></header>
+    <div className={styles.platform} role="tablist" aria-label="Developer setup"><button type="button" role="tab" id="developer-key-tab" aria-controls="developer-key-panel" aria-selected={view === "key"} tabIndex={view === "key" ? 0 : -1} onKeyDown={event => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setView("setup"); document.getElementById("developer-setup-tab")?.focus(); } }} onClick={() => setView("key")}>API key</button><button type="button" role="tab" id="developer-setup-tab" aria-controls="developer-setup-panel" aria-selected={view === "setup"} tabIndex={view === "setup" ? 0 : -1} onKeyDown={event => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setView("key"); document.getElementById("developer-key-tab")?.focus(); } }} onClick={() => setView("setup")}>Connect an AI tool</button></div>
+    <section hidden={view !== "key"} id="developer-key-panel" role="tabpanel" aria-labelledby="developer-key-tab" className={styles.card}><div className={styles.cardHeading}><h2 id="primary-api-key"><KeyRound size={19} />Your API key</h2>{primary && <span className={styles.mode}>{primary.mode} mode</span>}</div>
+      {primary ? <><div className={styles.key}><code>{revealed && secret ? secret : `${primary.prefix}${"•".repeat(24)}`}</code><button type="button" disabled={!secret} aria-label={revealed ? "Hide API key" : "Reveal API key"} onClick={() => setRevealed(value => !value)}>{revealed ? <EyeOff size={17} /> : <Eye size={17} />}</button><button type="button" className={styles.primary} disabled={!secret} onClick={() => copy(secret!, "key")}>{copied === "key" ? <Check size={15} /> : <Copy size={15} />}{copied === "key" ? "Copied" : "Copy"}</button></div>
+      {!secret && <p className={styles.note}>{canManage ? "This key was shown once when created. Use your saved copy, or regenerate it below." : "Ask a workspace owner or admin for API access."}</p>}
+      {replacement?.mode === "live" && <p className={styles.note}>Save this live key now. It is only available during this visit.</p>}
+      <div className={styles.status} data-connected={Boolean(primary.lastUsedAt)}><Check size={15} />{primary.lastUsedAt ? "Connected · Railor received a request with this key." : "Ready · run your first request to verify the connection."}</div>
+      <div className={styles.keyFooter}><div><span>Created: {stamp(primary.createdAt)}</span><span>Last used: {stamp(primary.lastUsedAt)}</span></div>{canManage && <button type="button" disabled={pending} onClick={() => setConfirm("rotate")}><RefreshCw size={13} />Regenerate key</button>}</div></> : <p className={styles.note}>No active API key. {canManage ? "Create one under advanced key management below." : "Ask your workspace admin for access."}</p>}
+      {confirm === "rotate" && <div className={styles.confirm} role="alert"><p>Replace this key? Integrations using it will stop until you update them.</p><button type="button" disabled={pending} onClick={rotate}>{pending ? "Replacing…" : "Replace key"}</button><button type="button" disabled={pending} onClick={() => setConfirm(null)}>Cancel</button></div>}
+      <div className={styles.firstRequest}><div><h3>Make your first request</h3><p>Choose a working example for your route.</p></div><button type="button" aria-expanded={example} onClick={() => setExample(value => !value)}>{example ? "Hide example" : "Choose an example"}</button></div><button type="button" className="mt-4 inline-flex items-center gap-1 text-xs text-[var(--color-orange-deep)]" onClick={() => setView("setup")}>Or connect an AI tool <ArrowRight size={12} /></button>
+      {example && <CodeSample apiKey={secret} variants={[
+        {language:"curl",label:"cURL",code:`curl "${baseUrl}/v1/corridors/search" -H "Authorization: Bearer RAILOR_API_KEY" -H "Content-Type: application/json" -d '${JSON.stringify(exampleQuery)}'`},
+        {language:"ts",label:"TypeScript",code:`const response = await fetch("${baseUrl}/v1/corridors/search", {\n  method: "POST",\n  headers: { Authorization: "Bearer RAILOR_API_KEY", "Content-Type": "application/json" },\n  body: JSON.stringify(${JSON.stringify(exampleQuery, null, 2)})\n});\nconsole.log(await response.json());`},
+        {language:"python",label:"Python",code:`import requests\nresponse = requests.post("${baseUrl}/v1/corridors/search", headers={"Authorization": "Bearer RAILOR_API_KEY"}, json=${JSON.stringify(exampleQuery)})\nprint(response.json())`},
+      ]} />}
+    </section>
+    <section hidden={view !== "setup"} id="developer-setup-panel" role="tabpanel" aria-labelledby="developer-setup-tab" className={styles.card}><h2 id="setup-railor">Connect an AI tool</h2><p className={styles.note}>Choose your tool. Copy its setup, then ask it to compare a payment route.</p>
+      <div className={styles.clients} aria-label="Choose an AI tool">{SETUP_CLIENTS.map(name => <button type="button" key={name} aria-pressed={client === name} onClick={() => setClient(name)}>{name === "Any MCP client" ? <Terminal size={20} /> : <TechnologyLogo name={name} size={22} />}{name}{client === name && <Check size={13} />}</button>)}</div>
+      <div className={styles.setup}><h3>{client} setup</h3>{client === "Codex" && <div className={styles.platform} aria-label="Terminal type"><button type="button" aria-pressed={powershell} onClick={() => setPowershell(true)}>PowerShell</button><button type="button" aria-pressed={!powershell} onClick={() => setPowershell(false)}>macOS / Linux</button></div>}
+      <p>{client === "Claude Code" || client === "Codex" ? "Run this in your terminal with the selected tool installed." : `Add this to ${client === "VS Code" ? ".vscode/mcp.json" : client === "Cursor" ? ".cursor/mcp.json" : "your client’s MCP configuration"}.`}</p>
+      <div className={styles.snippet}><pre>{command.replaceAll(secret ?? "\0", "YOUR_RAILOR_KEY")}</pre><button type="button" className={styles.primary} onClick={() => copy(command, "setup")}>{copied === "setup" ? "Copied" : "Copy setup"}</button></div><p className={styles.note}>{secret ? "Your key is included when copied." : "Replace YOUR_RAILOR_KEY with your saved API key."}</p>
+      <ol><li>Copy the setup into your tool or terminal.</li><li>Restart or reload the tool if needed.</li><li>Ask: “Compare providers for a payment from India to the UAE.”</li></ol><Link href="/docs/mcp">Setup help & supported tools <ArrowRight size={12} /></Link></div>
+    </section>
+    {error && <p role="alert" className={styles.error}>{error}</p>}
+    <details className={styles.card}><summary>Usage & limits</summary><p className={styles.note}>{quota ? `${quota.used.toLocaleString()} / ${quota.cap.toLocaleString()} workspace requests this month` : "Usage is unavailable without an active key."}</p>{dailySeries.some(point => point.count > 0) && <div className={styles.usageChart} aria-label="Daily API requests">{dailySeries.map(point => <span key={point.day} title={`${point.day}: ${point.count} requests; ${point.errors} errors`} style={{height:`${Math.max(3, point.count / Math.max(1, ...dailySeries.map(item => item.count)) * 50)}px`}} />)}</div>}{usage.length ? <div className={styles.scroll}><table><thead><tr><th>Endpoint</th><th>Requests</th><th>Errors</th><th>p95</th></tr></thead><tbody>{usage.map(row => <tr key={row.endpoint}><td>{row.endpoint}</td><td>{row.count}</td><td>{row.errors}</td><td>{row.p95} ms</td></tr>)}</tbody></table></div> : <p className={styles.note}>No API requests recorded yet.</p>}</details>
+    <details className={styles.card}><summary>Advanced key management</summary><p className={styles.note}>Test and live keys keep their existing permissions. Additional keys are optional.</p><div className={styles.scroll}><table><thead><tr><th>Key</th><th>Mode</th><th>Usage</th><th>Action</th></tr></thead><tbody>{keys.map(key => <tr key={key.id}><td>{key.label}<small>{key.prefix}… · {key.revoked ? "Revoked" : "Active"}</small></td><td>{key.mode}</td><td>{key.monthlyUsed ?? "—"}</td><td>{canManage && !key.revoked && <button type="button" aria-label={`Revoke ${key.label}`} onClick={() => setConfirm(key.id)}><Trash2 size={14} /></button>}{confirm === key.id && <span><button type="button" disabled={pending} onClick={() => start(async () => { try { const result = await revokeKey(key.id); if (!result.ok) setError("Couldn’t revoke key."); else { if (replacement?.id === key.id) setReplacement(null); setConfirm(null); } } catch { setError("Couldn’t revoke key."); } })}>Confirm revoke</button><button type="button" onClick={() => setConfirm(null)}>Cancel</button></span>}</td></tr>)}</tbody></table></div>{canManage && <div className={styles.newKey}><input aria-label="New key label" maxLength={100} placeholder="Key label" value={label} onChange={event => setLabel(event.target.value)} /><button type="button" disabled={pending} onClick={() => create("test")}>New test key</button><button type="button" disabled={pending} onClick={() => create("live")}>New live key</button></div>}</details>
+    <details className={styles.card}><summary>Customer-hosted provider runtime</summary><p className={styles.note}>For teams running provider quote requests or sandbox simulations in their own environment. This uses a separate installation token. Start with API or AI-tool setup above for normal Railor access.</p><Link href="/app/connectors">Open runtime setup <ArrowRight size={12} /></Link></details>
+    <p className={styles.note}><Link href="/docs/api">API reference</Link> · <Link href="/docs/pricing#routing">Routing and pricing coverage</Link></p>
+  </div>;
 }

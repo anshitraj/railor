@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   alerts,
   apiKeys,
@@ -96,7 +96,7 @@ export async function getOrgTestKey(organizationId: string) {
   const [key] = await db
     .select()
     .from(apiKeys)
-    .where(and(eq(apiKeys.organizationId, organizationId), eq(apiKeys.mode, "test")))
+    .where(and(eq(apiKeys.organizationId, organizationId), eq(apiKeys.mode, "test"), isNull(apiKeys.revokedAt)))
     .orderBy(desc(apiKeys.createdAt))
     .limit(1);
   return key?.revealableSecret ?? null;

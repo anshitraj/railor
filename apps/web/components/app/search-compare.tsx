@@ -11,6 +11,7 @@ import { InfrastructureResults } from "./infrastructure-results";
 import { defaultIntentDraft, intentFromDraft, type IntentDraft, type IntentOptions } from "./intent-builder";
 import { SearchRequestWizard } from "./search-request-wizard";
 import type { SavedSetupPolicy } from "../../lib/workspace-policy-setup";
+import { exploreRouteHref } from "../../lib/explore-route";
 
 export function SearchCompare({ policies, options, entityCountry, canDecide, defaultEmail, savedPolicy = null, canEditPolicies = false }: {
   policies: Array<{ id: string; name: string }>; options: IntentOptions; entityCountry: string; canDecide: boolean; defaultEmail?: string;
@@ -30,6 +31,7 @@ export function SearchCompare({ policies, options, entityCountry, canDecide, def
 
   function runSearch() {
     setError(""); setPreview(null);
+    if (!policyId) { router.push(exploreRouteHref({ ...intentFromDraft(intent), preference }, preference)); return; }
     start(async () => {
       try {
         const result = await controlCommand({ action: "search_preview", intent: { ...intentFromDraft(intent), preference }, policyId });
@@ -52,7 +54,7 @@ export function SearchCompare({ policies, options, entityCountry, canDecide, def
 
   return <div className="product-page space-y-7">
     <header className="search-intro"><div><p className="product-eyebrow">Search & compare</p><h1 style={{ fontSize: "clamp(30px, 3vw, 42px)" }}>Find your route.</h1>
-      <p>A few simple choices. Compare providers against your company policy.</p></div>
+      <p>A few simple choices. Explore coverage and compare providers. Team rules are optional.</p></div>
       <Link className="search-agent-link" href="/app/agent"><Bot size={20} /><span><strong>Prefer to describe it?</strong><small>Ask the Railor Agent</small></span><ArrowRight size={17} /></Link></header>
     <SearchRequestWizard value={intent} onChange={(next) => { setIntent(next); setPreview(null); setError(""); }} options={options}
       policies={policies} policyId={policyId} onPolicyChange={(next) => { setPolicyId(next); setPreview(null); setError(""); }}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDefaultActivePolicy, listDecisions, listPolicies, searchCorridors } from "@railor/core";
 import { CorridorQuery } from "@railor/types";
-import { ArrowRight, Calculator, ChevronRight, Radar, Route, ScanSearch } from "lucide-react";
+import { ArrowRight, Calculator, ChevronRight, Radar, Route, Code2, FileText } from "lucide-react";
 import { getSession } from "../../lib/auth";
 import { getSatisfiedRequirements, getOrgAlerts, getSavedCorridors } from "../../lib/org";
 import { RoutePill } from "../../components/app/route-pill";
@@ -32,7 +32,7 @@ export default async function OverviewPage() {
     <div className="overview-home">
       <div className="overview-welcome">
         <h1>Welcome back, {name}</h1>
-        <p>Let’s plan your next move.</p>
+        <p>Compare providers, explore a route, or connect Railor to your tools.</p>
       </div>
       <section className="overview-actions" aria-label="Start here">
         <Link href="/app/prices" className="overview-price">
@@ -40,13 +40,14 @@ export default async function OverviewPage() {
           <div className="overview-price-copy"><span className="overview-kicker">Price check</span><h2>See what your money costs to move.</h2><p>Compare fees, exchange rates and what arrives.</p><span className="overview-price-cta">Check a price <ArrowRight size={17} aria-hidden /></span></div>
           <span className="overview-price-art" aria-hidden><RoutePill value="USD" /><ArrowRight size={20} /><RoutePill value="INR" /></span>
         </Link>
-        <Link href="/app/search" className="overview-explore">
-          <span className="overview-action-icon"><ScanSearch size={23} aria-hidden /></span>
-          <h2>Find your route</h2><p>Explore providers for your next transfer.</p>
-          <span className="overview-text-action">Search & compare <ArrowRight size={16} aria-hidden /></span>
+        <Link href="/app/developers" className="overview-explore">
+          <span className="overview-action-icon"><Code2 size={23} aria-hidden /></span>
+          <h2>Use Railor in your tools</h2><p>Get your API key or connect an AI agent.</p>
+          <span className="overview-text-action">Set up Railor <ArrowRight size={16} aria-hidden /></span>
         </Link>
       </section>
       <WorkspaceSetup organizationId={org.id} profileComplete={Boolean(org.onboardingCompletedAt)} policyActive={Boolean(activePolicy)} savedPolicy={savedPolicy ? { id: savedPolicy.id, name: savedPolicy.name } : null} hasDecision={Boolean(decisions.length)} canEditPolicy={["owner", "admin"].includes(session.role ?? "")} canDecide={session.role !== "viewer"} />
+      <nav aria-label="Quick access" className="flex flex-wrap gap-3 text-xs"><Link href="/app/search" className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-line)] px-4 py-3"><Route size={15} />Find a route<ArrowRight size={12} /></Link><Link href="/app/freelancer" className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-line)] px-4 py-3"><FileText size={15} />Get paid · invoices<ArrowRight size={12} /></Link><Link href="/app/monitoring" className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-line)] px-4 py-3"><Radar size={15} />Watch for changes<ArrowRight size={12} /></Link></nav>
       <section className="overview-summary" aria-label="Your workspace">
         <div className="overview-section">
           <header><h2><Route size={18} aria-hidden /> Your routes</h2><Link href="/app/corridors">View all <ChevronRight size={15} aria-hidden /></Link></header>

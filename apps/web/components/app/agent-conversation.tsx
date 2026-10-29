@@ -15,6 +15,7 @@ import { RailorMark } from "../brand";
 import { CHAT_HISTORY_LIMIT, CHAT_MESSAGE_LIMIT, chatTitle, parseAgentHistory, upsertAgentChat, type AgentChat, type ChatMessage } from "../../lib/agent-history";
 import { AgentStarters } from "./agent-starters";
 import styles from "./agent-chat.module.css";
+import { exploreRouteHref } from "../../lib/explore-route";
 
 type DraftResult = ReturnType<typeof draftPaymentIntent>;
 type SearchReply = { state: "needs_input" | "needs_confirmation" | "needs_policy" | "ready"; draft: DraftResult; preview: SearchPreviewResult | null };
@@ -137,7 +138,8 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   }
 
   function searchDraft(nextPreference = preference, nextPolicyId = policyId, message?: string) {
-    if (!intent || !nextPolicyId || missing.length) return;
+    if (!intent || missing.length) return;
+    if (!nextPolicyId) { router.push(exploreRouteHref({ ...intentFromDraft(intent), ...(product ? { product } : {}), ...(method ? { paymentMethod: method } : {}), preference: nextPreference }, nextPreference)); return; }
     setError(""); setPreview(null);
     if (message) add("user", message);
     start(async () => {
@@ -185,10 +187,10 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         setPreference((reply.draft.draft.preference as RankingPreset) ?? "balanced");
         if (reply.preview) receivePreview(reply.preview);
         else {
-          setReviewOpen(reply.state !== "needs_policy");
+          setReviewOpen(true);
           add("agent", reply.state === "needs_input" ? `I need a little more information: ${reply.draft.missing.map((field) => field.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}. Fill the fields below to continue.`
             : reply.state === "needs_confirmation" ? "I’ve prepared the request. Please confirm the suggested destination values below before I compare providers."
-            : "The request is ready. Create and activate your company policy, then return here to compare permitted providers.");
+            : "Your request is ready. Review it below to explore provider coverage. Company rules can be added later.");
         }
       } catch { setError("The connection dropped. Please try again."); }
     });
@@ -213,13 +215,13 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
 
   const requestPanel = intent ? <section className={`agent-request ${styles.request}`}><div className="agent-request-summary"><div><span className="product-index">INTERPRETED REQUEST</span><p>{intent.amount?.toLocaleString() ?? "Amount needed"} {intent.sourceKind === "asset" ? intent.sourceAsset || "Asset needed" : intent.sourceCurrency || "Currency needed"}<ArrowRight size={17} />{intent.destinationCurrency || "Destination currency needed"}<span>{intent.sourceEntityCountry || "Origin needed"} → {intent.destinationCountry || "Destination needed"}{intent.namedRail ? ` · ${intent.namedRail}` : ""}</span></p></div>
         <button type="button" onClick={() => setReviewOpen((open) => !open)} aria-expanded={reviewOpen}><SlidersHorizontal size={15} />Review fields<ChevronDown size={14} /></button></div>
-      <div className="agent-policy-controls"><label>Company policy<select disabled={pending || !policies.length} value={policyId} onChange={(event) => { const next = event.target.value; setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}>{!policies.length ? <option value="">Create a policy first</option> : policies.map((policy) => <option value={policy.id} key={policy.id}>{policy.name}</option>)}</select></label>
+      <div className="agent-policy-controls"><label>Company policy<select disabled={pending || !policies.length} value={policyId} onChange={(event) => { const next = event.target.value; setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}>{!policies.length ? <option value="">Optional · explore coverage</option> : policies.map((policy) => <option value={policy.id} key={policy.id}>{policy.name}</option>)}</select></label>
         <label>Compare by<select disabled={pending} value={preference} onChange={(event) => { const next = event.target.value as RankingPreset; setPreference(next); if (preview) searchDraft(next, policyId, `Compare by ${RANKING_PRESET_LABEL[next].toLowerCase()}.`); }}>{preferences.map((value) => <option key={value} value={value}>{RANKING_PRESET_LABEL[value]}</option>)}</select></label></div>
       {reviewOpen ? <div className="agent-request-fields"><fieldset disabled={pending}><IntentBuilder value={intent} onChange={(next) => { setIntent(next); setPreview(null); }} options={options} detectedEntity={entityCountry} />
         {product || method ? <div className="agent-policy-controls mt-5 !px-0 !pb-0"><label>Interpreted product<select value={product} onChange={(event) => { setProduct(event.target.value); setPreview(null); }}><option value="">Not specified</option>{ProductType.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label><label>Interpreted payment method<select value={method} onChange={(event) => { setMethod(event.target.value); setPreview(null); }}><option value="">Not specified</option>{PaymentMethod.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label></div> : null}
         </fieldset>
         {draft?.notes.map((note) => <p className="mt-3 text-xs text-[var(--color-muted)]" key={note}>{note}</p>)}
-        <div className="mt-5 flex flex-wrap items-center gap-3"><button type="button" className="comparison-primary-action" disabled={pending || !policyId || missing.length > 0} onClick={() => searchDraft()}>Confirm fields & search <ArrowRight size={15} /></button>{missing.length ? <span className="text-xs text-[var(--color-muted)]">Still needed: {missing.join(", ")}.</span> : null}</div></div> : null}
+        <div className="mt-5 flex flex-wrap items-center gap-3"><button type="button" className="comparison-primary-action" disabled={pending || missing.length > 0} onClick={() => searchDraft()}>Confirm fields & search <ArrowRight size={15} /></button>{missing.length ? <span className="text-xs text-[var(--color-muted)]">Still needed: {missing.join(", ")}.</span> : null}</div></div> : null}
     </section> : null;
   const comparison = preview ? <>{requestPanel}<InfrastructureResults preview={preview} canDecide={canDecide} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
       <div className="agent-followups"><span>Keep exploring</span><button type="button" disabled={pending} onClick={() => ask("Why is there no best option?")}>Explain the recommendation</button><button type="button" disabled={pending} onClick={() => ask("What information is missing?")}>What’s missing?</button><button type="button" disabled={pending} onClick={() => ask("Compare by price")}>Compare by price</button></div></> : null;
@@ -246,7 +248,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           <h1>Ask anything.</h1><p>A clearer path for your money. Compare providers, explore a route, or understand the evidence.</p>
           <span className={styles.suggestionLabel}>A few places to start</span>
           <AgentStarters onChoose={(value) => { setText(value); composer.current?.focus(); }} />
-          {!policies.length ? <div className={styles.policyNotice}><div><ShieldCheck size={18} /><p><strong>Your first step: a company policy</strong>You can draft a request now. Activate a policy to compare providers.</p></div><Link href="/app/policies">Set up a policy <ArrowRight size={13} /></Link></div> : null}
+          {!policies.length ? <div className={styles.policyNotice}><div><ShieldCheck size={18} /><p><strong>Start with your route</strong>Explore provider coverage now. Company rules are optional team setup.</p></div><Link href="/app/policies">Team rules <ArrowRight size={13} /></Link></div> : null}
         </div>}
         {pending ? <div className={styles.working} role="status"><span aria-hidden="true"><i /><i /><i /></span>Checking your request, policy and evidence…</div> : null}
         {error ? <p className={styles.error} role="alert">{error}</p> : null}

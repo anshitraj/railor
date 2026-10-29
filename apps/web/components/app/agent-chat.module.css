@@ -136,7 +136,7 @@
   .feed { padding-top: 14px; padding-bottom: 18px; }
 }
 @media (max-width: 600px) {
-  .workspace { height: calc(100dvh - var(--agent-top, 96px) - 30px); min-height: 440px; gap: 0; }
+  .workspace { gap: 0; }
   .toolbar { padding-bottom: 14px; }
   .identity { gap: 10px; font-size: 14px; }
   .iconButton > span { display: none; }
@@ -165,5 +165,8 @@
   .composerHint > span:first-child { display: none; }
   .message > div { padding-left: 0; }
   .toolsBody { padding: 16px; }
+}
+@media (max-width: 767px) {
+  .workspace { height: calc(var(--workspace-viewport-height,100dvh) - var(--agent-top,96px) - var(--workspace-mobile-nav-height,0px) - 30px); min-height:240px; }
 }
 @media (prefers-reduced-motion: reduce) { .feed { scroll-behavior: auto; } .welcome, .message, .artSignal, .working i { animation: none; } .starter, .composer, .send, .iconButton { transition: none; } .starter:hover { transform: none; } }

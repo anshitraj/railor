@@ -190,7 +190,7 @@ export function CorridorExplorer({
   apiKey?: string;
 }) {
   const [query, setQuery] = useState<Query>(initialQuery);
-  const [preset, setPreset] = useState("balanced");
+  const [preset, setPreset] = useState(initial.preset ?? "balanced");
   const [data, setData] = useState<SearchPayload>(initial);
   const [loading, setLoading] = useState(false);
   const [savedId, setSavedId] = useState<string | undefined>(savedCorridorId);

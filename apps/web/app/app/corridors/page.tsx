@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, savedCorridors } from "@railor/database";
 import { interpretRules, searchCorridors } from "@railor/core";
-import { CorridorQuery } from "@railor/types";
+import { CorridorQuery, RankingPreset } from "@railor/types";
+import { parseExploreRoute } from "../../../lib/explore-route";
 import { getSession } from "../../../lib/auth";
 import { getOrgTestKey, getSatisfiedRequirements } from "../../../lib/org";
 import { FIELD_LABELS, getReferenceOptions, optionsByField } from "../../../lib/reference";
@@ -25,7 +26,9 @@ export default async function CorridorsPage({
   let query: CorridorQuery;
   let savedId: string | undefined;
 
-  if (typeof params.saved === "string") {
+  const exploredRoute = parseExploreRoute(params.route);
+  if (exploredRoute) query = exploredRoute;
+  else if (typeof params.saved === "string") {
     const [row] = await db
       .select()
       .from(savedCorridors)
@@ -56,7 +59,8 @@ export default async function CorridorsPage({
     getOrgTestKey(org.id),
   ]);
 
-  const result = await searchCorridors(query, { satisfiedRequirements: satisfied, organizationId: org.id });
+  const requestedPreset = RankingPreset.safeParse(params.preset);
+  const result = await searchCorridors(query, { satisfiedRequirements: satisfied, organizationId: org.id, preset: requestedPreset.success ? requestedPreset.data : "balanced" });
 
   // Reuse the interpreter's token shape so the chips render identically to the
   // public search, whether or not the user typed a sentence.
@@ -84,6 +88,7 @@ export default async function CorridorsPage({
           query: query as Record<string, string | number | undefined>,
         },
         providersChecked: result.providersChecked,
+        preset: requestedPreset.success ? requestedPreset.data : "balanced",
         counts: result.counts,
         results: JSON.parse(JSON.stringify(result.results)),
         countryContext: JSON.parse(JSON.stringify(result.countryContext)),

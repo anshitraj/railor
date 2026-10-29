@@ -7,6 +7,7 @@ import { WorkspaceNameForm } from "../../../components/app/workspace-name-form";
 import { TeamPanel, WorkspaceSwitcher } from "../../../components/app/team-panel";
 import { inviteUrl, listPendingInvites, listUserWorkspaces } from "../../../lib/invites";
 import { getEntitlement } from "../../../lib/entitlements";
+import { ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings" };
@@ -74,7 +75,15 @@ export default async function SettingsPage() {
       ) : null}
 
       <Card className="flex flex-col gap-3 p-5">
-        <SectionLabel>Workspace tools</SectionLabel>
+        <SectionLabel>More workspace tools</SectionLabel>
+        <details className="space-y-3"><summary className="cursor-pointer text-sm font-semibold">Company rules & team reviews</summary><p className="text-xs leading-relaxed text-[var(--color-muted)]">Optional for teams. Compare providers first, then add the controls your company needs.</p>{[
+          ["Company rules", "Set limits and requirements for your team.", "/app/policies"],
+          ["Rule checks", "See recorded results of checking a route against your rules.", "/app/decisions"],
+          ["Team reviews", "Review checks that need another person’s sign-off.", "/app/approvals"],
+          ["Routing preferences", "Choose ranking and fallback preferences.", "/app/routing"],
+        ].map(([label, hint, href]) => <Link key={href} href={href!} className="flex items-center gap-3 rounded-lg border border-[var(--color-line)] p-3 text-xs"><span className="flex-1"><strong className="block">{label}</strong><span className="mt-1 block text-[var(--color-muted)]">{hint}</span></span><ArrowRight size={13} /></Link>)}</details>
+        <details className="space-y-3 border-t border-[var(--color-line)] pt-3"><summary className="cursor-pointer text-sm font-semibold">Monitoring & research</summary>{[["Watch routes and providers", "/app/monitoring"], ["Market changes", "/app/changes"], ["Source evidence", "/app/evidence"], ["Review discoveries", "/app/discovery"]].map(([label, href]) => <Link key={href} href={href!} className="block text-xs text-[var(--color-muted)]">{label} →</Link>)}</details>
+        <details className="space-y-3 border-t border-[var(--color-line)] pt-3"><summary className="cursor-pointer text-sm font-semibold">Connections & workspace setup</summary>
         <Link href="/app/settings/connections" className="text-[13px] font-medium text-[var(--color-purple)]">
           Provider connections →
         </Link>
@@ -84,6 +93,7 @@ export default async function SettingsPage() {
         <Link href="/app/developers" className="text-[13px] font-medium text-[var(--color-purple)]">
           API keys and usage →
         </Link>
+        </details>
       </Card>
     </div>
   );

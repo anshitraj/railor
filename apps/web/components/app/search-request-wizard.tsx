@@ -98,7 +98,7 @@ export function SearchRequestWizard({ value, onChange, options, policies, policy
         if (busy) return;
         if (step < 3) navigate(step + 1);
         else if (missingIntentFields(value).length) setValidation(`Please add ${missingIntentFields(value).join(", ")}.`);
-        else if (policyId) onSearch();
+        else onSearch();
       }}>
         <div className={styles.stepHeading}><span className={styles.eyebrow}>STEP {step + 1} OF 4</span><h2 ref={heading} tabIndex={-1}>{title}</h2><p>{description}</p></div>
         <fieldset disabled={busy} className={styles.fields}>
@@ -147,7 +147,7 @@ export function SearchRequestWizard({ value, onChange, options, policies, policy
                 <fieldset className={styles.choiceGroup}><legend>What matters most?</legend><div className={styles.rankingChoices}>
                   {rankings.map((ranking) => <Choice key={ranking.value} name={`${groupId}-ranking`} value={ranking.value} title={RANKING_PRESET_LABEL[ranking.value]} description={ranking.description} icon={ranking.icon} checked={preference === ranking.value} onChange={() => onPreferenceChange(ranking.value)} />)}
                 </div></fieldset>
-                {policies.length ? <div className={styles.policy}><ShieldCheck size={19} aria-hidden /><div><span>Active company policy</span>{policies.length > 1 ? <select aria-label="Active company policy" value={policyId} onChange={(e) => onPolicyChange(e.target.value)}>{policies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select> : <strong>{policies[0]?.name}</strong>}<small>Providers must pass your guardrails before ranking.</small></div></div> : <div className={styles.policyEmpty}><ShieldCheck size={20} aria-hidden /><div><strong>{policy.title}</strong><p>{policy.description}</p><Link href={policy.href}>{policy.action} <ArrowRight size={13} /></Link></div></div>}
+                {policies.length ? <div className={styles.policy}><ShieldCheck size={19} aria-hidden /><div><span>Active company policy</span>{policies.length > 1 ? <select aria-label="Active company policy" value={policyId} onChange={(e) => onPolicyChange(e.target.value)}>{policies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select> : <strong>{policies[0]?.name}</strong>}<small>Providers must pass your guardrails before ranking.</small></div></div> : <details className={styles.advanced}><summary>Company rules · optional<ChevronDown size={14} /></summary><div><p className={styles.note}>Explore provider coverage now. Add company rules later to check limits and record team decisions.</p><Link href={policy.href}>{savedPolicy ? policy.action : "Set company rules"} <ArrowRight size={13} /></Link></div></details>}
               </>}
             </motion.div>
           </AnimatePresence>
@@ -155,7 +155,7 @@ export function SearchRequestWizard({ value, onChange, options, policies, policy
         {validation && <p className={styles.validation} role="alert">{validation}</p>}
         <footer className={styles.footer}>
           {step > 0 ? <button className={styles.back} type="button" disabled={busy} onClick={() => navigate(step - 1)}><ArrowLeft size={15} />Back</button> : <span className={styles.footerHint}>Four steps. No account credentials needed.</span>}
-          <button type="submit" className={styles.primary} disabled={busy || (step === 3 && !policyId)}>{busy ? <><LoaderCircle size={16} className={styles.spinner} />Checking routes…</> : step === 3 ? <><Search size={16} />Compare routes</> : <>Continue<ArrowRight size={16} /></>}</button>
+          <button type="submit" className={styles.primary} disabled={busy}>{busy ? <><LoaderCircle size={16} className={styles.spinner} />Checking routes…</> : step === 3 ? <><Search size={16} />Compare routes</> : <>Continue<ArrowRight size={16} /></>}</button>
         </footer>
       </form>
       <aside className={styles.summary} aria-label="Your route summary" data-review={step === 3}>
@@ -165,7 +165,7 @@ export function SearchRequestWizard({ value, onChange, options, policies, policy
           <li><span className={styles.stopMark}>{unit ? value.sourceKind === "asset" ? <CurrencyLogo symbol={unit} size={29} /> : currencyFlagCode(unit) ? <Flag code={currencyFlagCode(unit)!} size={22} /> : <CircleDollarSign size={23} /> : <Coins size={23} />}</span><div><small>YOU SEND</small><strong>{value.amount?.toLocaleString("en-US") ?? "—"} {unit}</strong>{value.sourceKind === "asset" && value.sourceNetwork && <span className={styles.network}><NetworkLogo slug={value.sourceNetwork} size={13} />{options.networks.find((network) => network.value === value.sourceNetwork)?.label ?? value.sourceNetwork}</span>}</div></li>
           <li><span className={styles.stopMark}>{value.destinationCountry ? <Flag code={value.destinationCountry} size={22} /> : <Landmark size={20} />}</span><div><small>TO · {value.beneficiaryType === "business" ? "BUSINESS" : "INDIVIDUAL"}</small><strong>{countryName(value.destinationCountry) || "Choose a country"}</strong><span>{value.destinationCurrency || "Any currency"} · {endpoints.find(([endpoint]) => endpoint === value.endpointType)?.[1]}</span>{value.namedRail && <span>{value.namedRail}</span>}</div></li>
         </ol>
-        <p className={styles.summaryNote}><Search size={15} /><span>We’ll check coverage, policy and pricing where available. Comparing doesn’t send money.</span></p>
+        <p className={styles.summaryNote}><Search size={15} /><span>We’ll check coverage and pricing where available. Active company rules apply to policy comparisons. Comparing doesn’t send money.</span></p>
       </aside>
     </div>
   </section>;

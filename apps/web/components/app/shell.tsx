@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   Activity,
@@ -39,6 +39,9 @@ import {
 import { CommandPalette, StageBadge, cn, useModalFocus, type CommandItem } from "@railor/ui";
 import { RailorMark } from "../marketing/nav";
 import { ProviderLogo } from "./provider-logo";
+import { workspaceArea } from "../../lib/workspace-navigation";
+import { WorkspaceAreaNav } from "./workspace-area-nav";
+import mobileStyles from "./mobile-navigation.module.css";
 
 interface NavItem {
   href: string;
@@ -80,9 +83,9 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     title: "Controls",
     icon: ListChecks,
     items: [
-      { href: "/app/decisions", label: "Decisions", icon: Scale },
-      { href: "/app/approvals", label: "Approvals", icon: BadgeCheck },
-      { href: "/app/policies", label: "Policies", icon: ListChecks },
+    { href: "/app/decisions", label: "Rule checks", icon: Scale },
+    { href: "/app/approvals", label: "Team reviews", icon: BadgeCheck },
+    { href: "/app/policies", label: "Company rules", icon: ListChecks },
     ],
   },
   {
@@ -104,6 +107,14 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     ],
   },
 ];
+
+const PRIMARY_NAV = [{ title: null, items: [
+  { href: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/app/prices", label: "Compare", icon: GitCompare },
+  { href: "/app/agent", label: "Agent", icon: Bot },
+  { href: "/app/payments", label: "History", icon: History },
+  { href: "/app/developers", label: "Developers", icon: Code2 },
+] }] as typeof NAV_GROUPS;
 
 function isActive(pathname: string, item: NavItem) {
   if (item.exact) return pathname === item.href;
@@ -129,11 +140,28 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [keyboard, setKeyboard] = useState({ open: false, height: 0 });
   const drawerRef = useModalFocus<HTMLElement>(mobileOpen, () => setMobileOpen(false));
   const currentGroup = NAV_GROUPS.find((group) => group.items.some((item) => isActive(pathname, item)));
   const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? "Settings";
 
   useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let baselineHeight = window.innerHeight;
+    let baselineWidth = window.innerWidth;
+    const fit = () => {
+      if (Math.abs(window.innerWidth - baselineWidth) > 80) { baselineHeight = window.innerHeight; baselineWidth = window.innerWidth; }
+      const element = document.activeElement;
+      const editing = element instanceof HTMLTextAreaElement || (element instanceof HTMLInputElement && !["checkbox", "radio", "button", "submit", "file", "range", "color", "hidden", "reset", "image"].includes(element.type)) || (element instanceof HTMLElement && element.isContentEditable);
+      if (!editing) baselineHeight = window.innerHeight;
+      const open = window.innerWidth < 768 && editing && Math.max(window.innerHeight, baselineHeight) - viewport.height > 120;
+      setKeyboard(current => current.open === open && current.height === Math.round(viewport.height) ? current : { open, height: Math.round(viewport.height) });
+    };
+    fit(); viewport.addEventListener("resize", fit); window.addEventListener("resize", fit); document.addEventListener("focusin", fit); document.addEventListener("focusout", fit);
+    return () => { viewport.removeEventListener("resize", fit); window.removeEventListener("resize", fit); document.removeEventListener("focusin", fit); document.removeEventListener("focusout", fit); };
+  }, []);
   useEffect(() => {
     const title = NAV_GROUPS.find((group) => group.title && group.items.some((item) => isActive(pathname, item)))?.title;
     if (title) setOpenGroups((groups) => groups.includes(title) ? groups : [...groups, title]);
@@ -192,10 +220,10 @@ export function AppShell({
     ...[...featuredProviders, ...providerItems.filter((i) => !featuredProviders.includes(i))].slice(0, 3),
   ];
 
-  const settingsActive = pathname.startsWith("/app/settings") && !pathname.startsWith("/app/settings/connections");
+  const settingsActive = workspaceArea(pathname) === "Settings";
 
   return (
-    <div className="workspace-frame flex min-h-screen bg-[var(--color-canvas)]">
+    <div className={cn("workspace-frame flex min-h-screen bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
       {mobileOpen ? (
         <button
           type="button"
@@ -250,7 +278,7 @@ export function AppShell({
         ) : null}
 
         <nav aria-label="Workspace" className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1 pb-2 [scrollbar-width:thin]">
-          {NAV_GROUPS.map((group) => {
+          {PRIMARY_NAV.map((group) => {
             const open = !group.title || openGroups.includes(group.title);
             const groupId = `nav-${group.title?.toLowerCase().replaceAll(" ", "-") ?? "main"}`;
             return <div key={group.title ?? "root"} className={cn("flex flex-col gap-0.5", !group.title && "mb-4")}>
@@ -267,7 +295,7 @@ export function AppShell({
               ) : null}
               <div id={groupId} hidden={Boolean(group.title && (collapsed || !open))} className={cn(group.title && "sidebar-subnav")}>
               {group.items.map((item) => {
-                const active = isActive(pathname, item);
+                const active = workspaceArea(pathname) === item.label;
                 return (
                   <Link
                     key={item.href}
@@ -370,7 +398,7 @@ export function AppShell({
             <Menu size={19} />
           </button>
           <Link href="/app" aria-label="Railor overview" className="mr-1 shrink-0 md:hidden"><RailorMark size={23} /></Link>
-          <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{currentGroup?.title ?? "Workspace"}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
+          <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{workspaceArea(pathname) === currentPage ? "Workspace" : workspaceArea(pathname)}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
           <CommandPalette items={items} recent={recent} brand={<RailorMark size={22} />} />
           <span className="flex-1 lg:hidden" />
           <Link
@@ -392,13 +420,23 @@ export function AppShell({
           </form>
         </header>
 
-        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-7 sm:py-8">
+        <main id="main" className={cn("min-w-0 flex-1 px-4 py-6 sm:px-7 sm:py-8", mobileStyles.main)}>
           {/* Keyed by path so each workspace page lands with the same short rise (CSS; reduced-motion aware). */}
           <div key={pathname} className="railor-page-in mx-auto max-w-[1320px]">
+            <WorkspaceAreaNav />
             {children}
           </div>
         </main>
       </div>
+      <nav aria-label="Mobile navigation" hidden={mobileOpen || keyboard.open} className={mobileStyles.bottomNav}>
+        {PRIMARY_NAV[0]!.items.map(item => {
+          const active = workspaceArea(pathname) === item.label;
+          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={mobileStyles.item}>
+            <span className={mobileStyles.icon}><item.icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden /></span>
+            <span>{item.label}</span>
+          </Link>;
+        })}
+      </nav>
     </div>
   );
 }

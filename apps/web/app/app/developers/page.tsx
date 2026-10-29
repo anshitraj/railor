@@ -23,14 +23,14 @@ export default async function DevelopersPage() {
   const org = session.organization;
 
   const db = await getDb();
-  // Law 9: a test key exists before anyone asks for one. Workspaces created before
-  // keys were auto-provisioned (or whose key was revoked) get one on first visit.
+  const canManage = session.role === "owner" || session.role === "admin";
+  // Workspaces with no active key get one starter key; existing live-only setups stay intact.
   const [anyTestKey] = await db
     .select({ id: apiKeys.id })
     .from(apiKeys)
-    .where(and(eq(apiKeys.organizationId, org.id), eq(apiKeys.mode, "test"), isNull(apiKeys.revokedAt)))
+    .where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt)))
     .limit(1);
-  if (!anyTestKey && session.role !== "viewer") await createApiKey(org.id, session.user.id, "Default test key", "test");
+  if (!anyTestKey && canManage) await createApiKey(org.id, session.user.id, "Default test key", "test");
 
   const entitlement = await getEntitlement(org.id);
   const [workspaceUsage] = await db.select().from(rateLimitBuckets).where(and(eq(rateLimitBuckets.key, `api-month:${org.id}`), eq(rateLimitBuckets.windowStart, monthStart())));
@@ -85,12 +85,13 @@ export default async function DevelopersPage() {
     <DeveloperPortal
       baseUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
       exampleQuery={exampleQuery}
+      canManage={canManage}
       keys={keys.map((k) => ({
         id: k.id,
         label: k.label,
         mode: k.mode,
         prefix: k.prefix,
-        secret: k.revealableSecret,
+        secret: canManage ? k.revealableSecret : null,
         lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
         createdAt: k.createdAt.toISOString(),
         revoked: Boolean(k.revokedAt),
@@ -101,11 +102,11 @@ export default async function DevelopersPage() {
       dailySeries={dailySeries}
       quota={quota}
     />
-    <WebhookEndpoints
+    <details className="mx-auto w-full max-w-[1000px] rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6"><summary className="cursor-pointer text-sm font-semibold">Webhooks & delivery history</summary><div className="mt-5"><WebhookEndpoints
       canManage={session.role === "owner" || session.role === "admin"}
       endpoints={endpoints.map((e) => ({ id: e.id, url: e.url, description: e.description, mode: e.mode, events: e.events, enabled: e.enabled, secretHint: e.secretHint }))}
       deliveries={deliveries.map(({ delivery, url }) => ({ id: delivery.id, eventType: delivery.eventType, status: delivery.status, attempts: delivery.attempts, lastStatusCode: delivery.lastStatusCode, lastError: delivery.lastError, createdAt: delivery.createdAt.toISOString(), url }))}
-    />
+    /></div></details>
     </div>
   );
 }
