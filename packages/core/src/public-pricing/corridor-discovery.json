@@ -1,0 +1,376 @@
+{
+  "scope": "Community discovery checked against official product sources. Directional coverage is not a quote, account approval or a best-price ranking.",
+  "providers": [
+    {
+      "slug": "careem-pay",
+      "name": "Careem Pay",
+      "website": "https://www.careem.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "AED",
+          "to": "USD",
+          "origin": "AE",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "Fees depend on destination, subscription and transfer history; request the in-app FX rate and final fee. A free-transfer promotion is not standard pricing.",
+      "sources": [
+        "https://www.careem.com/en-AE/send-money-faqs/"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/UAE/comments/1u7nn4i/whats_the_best_way_to_send_money_to_india_with/",
+        "https://x.com/careem/with_replies"
+      ]
+    },
+    {
+      "slug": "botim",
+      "name": "Botim Money",
+      "website": "https://botim.me",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "The app quotes destination- and method-specific fees. Emirates ID and a UAE phone number are required. VAT and the final exchange rate must be included.",
+      "sources": [
+        "https://botim.me/international-transfer/",
+        "https://www.astratech.ae/platform-terms/key-fact-statement"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/UAE/comments/1u7nn4i/whats_the_best_way_to_send_money_to_india_with/"
+      ]
+    },
+    {
+      "slug": "aspora",
+      "name": "Aspora",
+      "website": "https://www.aspora.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "INR",
+          "origin": "US",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "GBP",
+          "to": "INR",
+          "origin": "GB",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "Sender-country funding rules and current fees apply. Historical zero-fee posts and referral promotions do not establish today's transfer cost.",
+      "sources": [
+        "https://www.aspora.com/help/us/transfers"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/UAE/comments/1u7nn4i/whats_the_best_way_to_send_money_to_india_with/"
+      ]
+    },
+    {
+      "slug": "eand-money",
+      "name": "e& money",
+      "website": "https://www.eandmoney.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "AED",
+          "to": "USD",
+          "origin": "AE",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "AED-funded wallet remittance. Final rate, fees, payout method and applicable limits are shown in the app; UAE identity verification is required.",
+      "sources": [
+        "https://www.eandmoney.com/en/send-abroad.html",
+        "https://www.eandmoney.com/en/more/terms-conditions.html"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/UAE/comments/1u7nn4i/whats_the_best_way_to_send_money_to_india_with/",
+        "https://www.reddit.com/r/dubai/comments/1n5lqot/cheapest_way_to_move_funds_from_aed_account_to_a/"
+      ]
+    },
+    {
+      "slug": "al-ansari-exchange",
+      "name": "Al Ansari Exchange",
+      "website": "https://alansariexchange.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "AED",
+          "to": "USD",
+          "origin": "AE",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "Branch/app remittance pricing depends on destination, funding and payout method. Published fee ranges do not establish the FX rate or intermediary deductions.",
+      "sources": [
+        "https://alansariexchange.com/service/remittances/"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/dubai/comments/1n5lqot/cheapest_way_to_move_funds_from_aed_account_to_a/"
+      ]
+    },
+    {
+      "slug": "lulu-exchange",
+      "name": "LuLu Exchange",
+      "website": "https://luluexchange.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "UAE-to-India bank remittance is documented. Confirm the current app or branch fee and exchange rate; overseas LuLu entities and promotions have different tariffs.",
+      "sources": [
+        "https://luluexchange.com/services/money-transfer/"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/DubaiMallus/comments/1s4dts0/sending_money_to_india/"
+      ]
+    },
+    {
+      "slug": "wio",
+      "name": "Wio Bank",
+      "website": "https://wio.io",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "USD",
+          "origin": "AE",
+          "destination": "US",
+          "profiles": [
+            "business"
+          ]
+        },
+        {
+          "from": "AED",
+          "to": "USD",
+          "origin": "AE",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "UAE bank account and plan required. Conversion inside an account is different from an international USD wire; correspondent charges and fee-sharing instructions affect the final receipt.",
+      "sources": [
+        "https://wio.io/pay-and-get-paid",
+        "https://www.wio.io/personal-fees.pdf",
+        "https://desk.wio.io/support/solutions/articles/501000414617-wio-business-managing-transfers-beneficiaries-limits-payment-tracking-troubleshooting"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/dubai/comments/1n5lqot/cheapest_way_to_move_funds_from_aed_account_to_a/"
+      ]
+    },
+    {
+      "slug": "global66",
+      "name": "Global66",
+      "website": "https://www.global66.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "MXN",
+          "to": "USD",
+          "origin": "MX",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "Mexico-to-US transfer discovery has official corridor evidence, but the old corridor URL now redirects to the general product. Reconfirm Mexican onboarding, funding, account limits and an amount-specific quote.",
+      "sources": [
+        "https://www.global66.com/enviar-dinero/MX/US/"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/MexicoFinanciero/comments/1r7h3g2/ayuda_banda_necesito_mandar_dinero_de_m%C3%A9xico_a_eu/"
+      ]
+    },
+    {
+      "slug": "arq",
+      "name": "ARQ (formerly DolarApp)",
+      "website": "https://www.arqfinance.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "MXN",
+          "to": "USD",
+          "origin": "MX",
+          "destination": "US",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "MXN",
+          "to": "USD",
+          "origin": "MX",
+          "destination": "US",
+          "profiles": [
+            "business"
+          ]
+        }
+      ],
+      "pricingNote": "Personal standard ACH has a published USD 3 transfer fee; Wire and paid plans differ. The MXN/digital-dollar conversion rate is also required. A digital-dollar balance is not the same product as a USD bank deposit; the fee alone cannot price the full route.",
+      "sources": [
+        "https://www.arqfinance.com/es-MX/help/intercom/13901947",
+        "https://www.arqfinance.com/en-MX/help/articles/how-does-the-free-international-transfer-usd-or-eur-work-with-premium",
+        "https://www.arqfinance.com/en-MX/help/articles/how-to-send-a-bank-transfer"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/MexicoFinanciero/comments/1r7h3g2/ayuda_banda_necesito_mandar_dinero_de_m%C3%A9xico_a_eu/"
+      ]
+    },
+    {
+      "slug": "taptap-send",
+      "name": "Taptap Send",
+      "website": "https://www.taptapsend.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "AED",
+          "to": "INR",
+          "origin": "AE",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "UAE funding and India bank/UPI delivery are documented. No card-funding fee does not mean zero FX spread or zero total cost; obtain the full transfer quote.",
+      "sources": [
+        "https://help.taptapsend.com/en/sending-countries/how-do-i-send-money-from-the-uae/uae-what-payment-methods-can-i-use",
+        "https://help.taptapsend.com/en/receiving-countries/how-can-i-send-money-to-india"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/dubai/comments/1m20hi9/money_exchange_vs_bank_transfer/"
+      ]
+    },
+    {
+      "slug": "remitly",
+      "name": "Remitly",
+      "website": "https://www.remitly.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "origin": "US",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "MXN",
+          "origin": "US",
+          "destination": "MX",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "Personal remittance pricing depends on funding, delivery method and amount. New-customer exchange rates must not be used as standard ongoing prices. Business products need their own eligibility and pricing checks.",
+      "sources": [
+        "https://www.remitly.com/us/en/money-transfer/send-money-to-india",
+        "https://news.remitly.com/company-and-product-news/remitly-on-whatsapp-just-got-an-upgrade/"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/nri/comments/1lt6scs/has_anyone_sent_money_through_remitly_to_india/"
+      ]
+    },
+    {
+      "slug": "xoom",
+      "name": "Xoom",
+      "website": "https://www.xoom.com",
+      "reviewedAt": "2026-10-30",
+      "routes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "origin": "US",
+          "destination": "IN",
+          "profiles": [
+            "personal"
+          ]
+        }
+      ],
+      "pricingNote": "A sender's personal remittance product. Transfer fees depend on funding and amount; Xoom also earns from currency conversion. Eligible zero-transfer-fee transactions still need the offered FX rate.",
+      "sources": [
+        "https://www.xoom.com/india/send-money?locale=en-us",
+        "https://www.xoom.com/legal/xoom-transfer-fees"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/backtoindia/comments/1tm41hk/10000_to_india_take2_actual_rupees_from_xoom_wu/"
+      ]
+    }
+  ]
+}

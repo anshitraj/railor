@@ -40,10 +40,18 @@ interface RankResult {
 
 const EMPTY_RANK: RankResult = { ranked: [], rankingConfidence: 0, rankingInputsUsed: [], rankingInputsMissing: [] };
 
+/** Fee-only comparisons must use the same unit; an unspecified fee currency is unknown. */
+function sourceFee(q: UnifiedQuote): number | undefined {
+  if (q.feeAmount === undefined) return undefined;
+  if (q.feeCurrency === q.sourceAsset) return q.feeAmount;
+  const rate = Number(q.exchangeRate);
+  return q.feeCurrency === q.destinationCurrency && Number.isFinite(rate) && rate > 0 ? q.feeAmount / rate : undefined;
+}
+
 /** A fee is only a trustworthy "cost" input once it's a confirmed total, not a partial sum the provider's response happened to expose. */
 const INPUT_CHECKERS: Record<string, (c: RankableQuote) => boolean> = {
-  cost: (c) => c.quote.feeAmount !== undefined && !c.quote.costPartial,
-  recipientAmount: (c) => c.quote.recipientAmount !== undefined,
+  cost: (c) => sourceFee(c.quote) !== undefined && !c.quote.costPartial,
+  recipientAmount: (c) => c.quote.recipientAmount !== undefined && !c.quote.costPartial,
   eta: (c) => c.quote.estimatedArrivalMinutes !== undefined,
   reliability: (c) => c.healthOkRatio !== null,
 };
@@ -61,17 +69,24 @@ function rankingMetaFor(
 
 /** 0 = confirmed total, 1 = known but partial, 2 = unknown — cheapest must never let an incomplete number outrank a complete one just because it looks smaller. */
 function costTier(q: UnifiedQuote): number {
-  if (q.feeAmount === undefined) return 2;
+  if (sourceFee(q) === undefined && q.recipientAmount === undefined) return 2;
   return q.costPartial ? 1 : 0;
 }
 
 function byCost(a: RankableQuote, b: RankableQuote): number {
   const tierDiff = costTier(a.quote) - costTier(b.quote);
   if (tierDiff !== 0) return tierDiff;
-  return (a.quote.feeAmount ?? Infinity) - (b.quote.feeAmount ?? Infinity);
+  // For the same request, net destination amount captures both fees and FX.
+  const aNet = a.quote.recipientAmount !== undefined, bNet = b.quote.recipientAmount !== undefined;
+  if (aNet !== bNet) return aNet ? -1 : 1;
+  if (aNet && bNet) return b.quote.recipientAmount! - a.quote.recipientAmount!;
+  return (sourceFee(a.quote) ?? Infinity) - (sourceFee(b.quote) ?? Infinity);
 }
 
 function byRecipientAmount(a: RankableQuote, b: RankableQuote): number {
+  const completeA = a.quote.recipientAmount !== undefined && !a.quote.costPartial;
+  const completeB = b.quote.recipientAmount !== undefined && !b.quote.costPartial;
+  if (completeA !== completeB) return completeA ? -1 : 1;
   const aKnown = a.quote.recipientAmount !== undefined;
   const bKnown = b.quote.recipientAmount !== undefined;
   if (aKnown !== bKnown) return aKnown ? -1 : 1;
@@ -97,7 +112,7 @@ function rankQuotes(candidates: RankableQuote[], preset: RankingPreset): RankRes
 
   if (preset === "cheapest") {
     const sorted = [...candidates].sort(byCost);
-    return { ranked: sorted.map((c) => c.quote), ...rankingMetaFor(sorted[0], ["cost"]) };
+    return { ranked: sorted.map((c) => c.quote), ...rankingMetaFor(sorted[0], [sorted[0]?.quote.recipientAmount !== undefined ? "recipientAmount" : "cost"]) };
   }
   if (preset === "fastest") {
     const sorted = [...candidates].sort(byEta);
@@ -119,12 +134,12 @@ function rankQuotes(candidates: RankableQuote[], preset: RankingPreset): RankRes
   // candidate's average instead of being defaulted to a fabricated midpoint.
   const completeCostQuotes = candidates.filter((c) => INPUT_CHECKERS.cost!(c));
   const etaQuotes = candidates.filter((c) => INPUT_CHECKERS.eta!(c));
-  const maxFee = Math.max(1e-9, ...completeCostQuotes.map((c) => c.quote.feeAmount!));
+  const maxFee = Math.max(1e-9, ...completeCostQuotes.map((c) => sourceFee(c.quote)!));
   const maxEta = Math.max(1e-9, ...etaQuotes.map((c) => c.quote.estimatedArrivalMinutes!));
 
   const compositeOf = (c: RankableQuote): number => {
     const parts: number[] = [];
-    if (INPUT_CHECKERS.cost!(c)) parts.push(1 - c.quote.feeAmount! / maxFee);
+    if (INPUT_CHECKERS.cost!(c)) parts.push(1 - sourceFee(c.quote)! / maxFee);
     if (INPUT_CHECKERS.eta!(c)) parts.push(1 - c.quote.estimatedArrivalMinutes! / maxEta);
     if (c.healthOkRatio !== null) parts.push(c.healthOkRatio);
     return parts.length ? parts.reduce((sum, v) => sum + v, 0) / parts.length : -1;
@@ -154,6 +169,12 @@ export async function routeQuote(
       }
       try {
         const quote = await p.adapter.getQuote(p.credentials, request);
+        if (quote.providerSlug !== p.slug || quote.sourceAsset !== request.sourceAsset || quote.destinationCurrency !== request.destinationCurrency || quote.amount !== request.amount
+          || (request.destinationCountry && quote.destinationCountry && request.destinationCountry !== quote.destinationCountry)
+          || (request.sourceNetwork && quote.sourceNetwork && request.sourceNetwork !== quote.sourceNetwork)) throw new Error("Quote does not match the requested provider, amount or route.");
+        if (quote.quoteType === "historical") throw new Error("Historical observations cannot be selected as current quotes.");
+        if (quote.expiresAt && (!Number.isFinite(Date.parse(quote.expiresAt)) || Date.parse(quote.expiresAt) <= Date.now())) throw new Error("Quote has expired or has an invalid expiry; request a fresh quote.");
+        if ([quote.amount, quote.recipientAmount, quote.feeAmount, quote.estimatedArrivalMinutes].some(value => value !== undefined && (!Number.isFinite(value) || value < 0))) throw new Error("Quote contains an invalid amount, fee or delivery time.");
         attempts.push({ providerSlug: p.slug, providerName: p.name, outcome: "quoted", detail: "Quote received.", quote });
         candidates.push({ quote, healthOkRatio: p.healthOkRatio ?? null });
       } catch (error) {

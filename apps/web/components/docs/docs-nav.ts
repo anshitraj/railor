@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  CircleDollarSign,
   Code2,
   Compass,
   History,
@@ -29,6 +30,7 @@ export const DOCS_NAV: DocsGroup[] = [
     links: [
       { label: "Overview", href: "/docs", icon: BookOpen },
       { label: "Guides", href: "/docs/guides", icon: Compass },
+      { label: "Pricing & sources", href: "/docs/pricing", icon: CircleDollarSign },
       { label: "Payments", href: "/docs/payments", icon: Plug },
     ],
   },

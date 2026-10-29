@@ -1,4 +1,4 @@
-import type { MarketCoverage, PriceRow, PriceUnavailable } from "@railor/core";
+import type { MarketCoverage, MarketCoverageProvider, PriceRow, PriceUnavailable } from "@railor/core";
 
 export interface CapturedFee {
   providerSlug: string;
@@ -15,7 +15,7 @@ function sourceLink(value: string | null) {
 
 /** A fee statement can explain a gap, but never creates a numeric quote. */
 export function attachMarketPricingEvidence(coverage: MarketCoverage, currency: string, rows: PriceRow[], unavailable: PriceUnavailable[], captured: CapturedFee[]): MarketCoverage {
-  return { ...coverage, providers: coverage.providers.map(provider => {
+  const attach = (provider: MarketCoverageProvider) => {
     const price = rows.find(row => row.providerSlug.replace(/^market:/, "") === provider.providerSlug);
     const missing = unavailable.find(row => row.providerSlug === provider.providerSlug);
     const seen = new Set<string>();
@@ -28,6 +28,7 @@ export function attachMarketPricingEvidence(coverage: MarketCoverage, currency: 
     const pricingStatus = price
       ? { label: price.basis === "published" ? "Published estimate above" : price.basis === "market_estimate" ? "Market estimate above" : "Price reference above", reason: price.partial ? "Some fees or profile rules remain unconfirmed. See the price details above." : "See the amount, fee and collection time above." }
       : { label: feeEvidence.length ? "Captured fee information" : "Quote not available", reason: missing?.reason ?? "No public quote source is integrated for this request. Account pricing requires provider access." };
-    return { ...provider, feeEvidence, pricingStatus };
-  }) };
+    return { ...provider, feeEvidence, pricingStatus: (provider.discoverySources?.length || provider.currencyMatch === "unverified") && !price && !missing ? provider.pricingStatus ?? pricingStatus : pricingStatus };
+  };
+  return { ...coverage, providers: coverage.providers.map(attach), ...(coverage.allProviders ? { allProviders: coverage.allProviders.map(attach) } : {}) };
 }

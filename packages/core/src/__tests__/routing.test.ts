@@ -9,6 +9,7 @@ function quote(overrides: Partial<UnifiedQuote> & { providerSlug: string }): Uni
     sourceAsset: "USDC",
     destinationCurrency: "MXN",
     amount: 1000,
+    feeCurrency: "USDC",
     costPartial: false,
     quoteType: "live",
     accountContext: "customer_connected",
@@ -68,6 +69,24 @@ function failingProvider(slug: string, message: string): RoutableProvider {
 }
 
 describe("routeQuote", () => {
+  it("chooses net receipt over a smaller headline fee when complete payout amounts exist", async () => {
+    const result = await routeQuote([providerWithQuote("low-fee-bad-fx", { feeAmount: 1, recipientAmount: 17000 }), providerWithQuote("better-net", { feeAmount: 5, recipientAmount: 18000 })], BASE_REQUEST, "cheapest");
+    expect(result.selected?.providerSlug).toBe("better-net");
+  });
+  it("normalizes destination fees instead of comparing different currency units", async () => {
+    const result = await routeQuote([providerWithQuote("source-fee", { feeAmount: 5 }), providerWithQuote("destination-fee", { feeAmount: 40, feeCurrency: "MXN", exchangeRate: "20" })], BASE_REQUEST, "cheapest");
+    expect(result.selected?.providerSlug).toBe("destination-fee");
+  });
+  it("does not rank partial recipient amounts ahead of complete receipts", async () => {
+    const result = await routeQuote([providerWithQuote("partial", { recipientAmount: 20000, costPartial: true }), providerWithQuote("complete", { recipientAmount: 18000 })], BASE_REQUEST, "max_recipient_amount");
+    expect(result.selected?.providerSlug).toBe("complete");
+  });
+  it("rejects expired, invalid, mismatched and historical quotes before ranking", async () => {
+    const bad: Partial<UnifiedQuote>[] = [{ expiresAt: "2020-01-01" }, { expiresAt: "not-a-date" }, { amount: 500 }, { destinationCurrency: "INR" }, { sourceAsset: "USD" }, { recipientAmount: NaN }, { feeAmount: -5 }, { quoteType: "historical" }];
+    const result = await routeQuote(bad.map((q, i) => providerWithQuote(`invalid-${i}`, q)), BASE_REQUEST, "cheapest");
+    expect(result.selected).toBeNull();
+    expect(result.attempts.every(a => a.outcome === "failed")).toBe(true);
+  });
   it("never lets a partial-cost quote outrank a confirmed-total quote just because its known fee is smaller", async () => {
     const providers = [
       providerWithQuote("partial-co", { feeAmount: 5, costPartial: true }),

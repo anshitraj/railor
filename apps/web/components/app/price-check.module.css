@@ -159,3 +159,11 @@
 @media (prefers-reduced-motion: reduce) {
   .pageHeader nav a, .browserTabs button, .providerRow, .providerAction { transition: none; }
 }
+.providerRows[data-expanded="true"] { max-height: 520px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+.providerRows:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: -2px; }
+.providerAction:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+.tableNote a { display: inline-flex; align-items: center; gap: 3px; color: var(--color-orange-deep); }
+.helpLinks { display: flex; justify-content: flex-end; flex-wrap: wrap; align-items: center; gap: 20px; font-size: 11px; color: var(--color-muted); }
+.helpLinks a { display: inline-flex; align-items: center; gap: 5px; }
+.helpLinks a:hover { color: var(--color-orange-deep); }
+@media(max-width:600px){.providerRows[data-expanded="true"]{max-height:470px}.helpLinks{justify-content:flex-start;gap:12px;font-size:10px}}

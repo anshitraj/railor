@@ -1,0 +1,1119 @@
+{
+  "checkedAt": "2026-10-29",
+  "scope": "Official public website availability and pricing-link discovery. This is not verification of every route or quote.",
+  "providers": [
+    {
+      "slug": "1money",
+      "name": "1Money",
+      "website": "https://www.1money.com",
+      "checkedAt": "2026-10-29T15:43:18.266109+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.1money.com/pricing"
+      ]
+    },
+    {
+      "slug": "airwallex",
+      "name": "Airwallex",
+      "website": "https://www.airwallex.com",
+      "checkedAt": "2026-10-29T15:43:18.266109+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.airwallex.com/global/billing/subscription-management",
+        "https://www.airwallex.com/global/billing/usage-based-billing",
+        "https://www.airwallex.com/global/platform-api-and-embedded-finance/issuing",
+        "https://www.airwallex.com/en-au/pricing"
+      ]
+    },
+    {
+      "slug": "al-ansari-exchange",
+      "name": "Al Ansari Exchange",
+      "website": "https://alansariexchange.com",
+      "checkedAt": "2026-10-29T19:40:08.523774+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://alansariexchange.com/service/remittances/"
+      ]
+    },
+    {
+      "slug": "alchemy-pay",
+      "name": "Alchemy Pay",
+      "website": "https://alchemypay.org",
+      "checkedAt": "2026-10-29T15:43:18.266109+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "alfred",
+      "name": "Alfred",
+      "website": "https://alfredpay.io",
+      "checkedAt": "2026-10-29T15:43:18.267109+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "anchorage",
+      "name": "Anchorage Digital",
+      "website": "https://www.anchorage.com",
+      "checkedAt": "2026-10-29T15:43:18.267109+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "anclap",
+      "name": "Anclap",
+      "website": "https://www.anclap.com",
+      "checkedAt": "2026-10-29T15:43:18.268136+00:00",
+      "httpStatus": null,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "arq",
+      "name": "ARQ (formerly DolarApp)",
+      "website": "https://www.arqfinance.com",
+      "checkedAt": "2026-10-29T19:40:09.076490+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.arqfinance.com/es-MX/help/intercom/13901947",
+        "https://www.arqfinance.com/en-MX/help/articles/how-does-the-free-international-transfer-usd-or-eur-work-with-premium",
+        "https://www.arqfinance.com/en-MX/help/articles/how-to-send-a-bank-transfer"
+      ]
+    },
+    {
+      "slug": "aspora",
+      "name": "Aspora",
+      "website": "https://www.aspora.com",
+      "checkedAt": "2026-10-29T19:40:06.375096+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.aspora.com/help/us/transfers"
+      ]
+    },
+    {
+      "slug": "b2c2",
+      "name": "B2C2",
+      "website": "https://www.b2c2.com",
+      "checkedAt": "2026-10-29T15:43:18.372248+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "baanx",
+      "name": "Baanx",
+      "website": "https://www.baanx.com",
+      "checkedAt": "2026-10-29T15:43:18.515142+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "banking-circle",
+      "name": "Banking Circle",
+      "website": "https://www.bankingcircle.com",
+      "checkedAt": "2026-10-29T15:43:18.537881+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "banxa",
+      "name": "Banxa",
+      "website": "https://banxa.com",
+      "checkedAt": "2026-10-29T15:43:18.574167+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://support.banxa.com/en/support/solutions/articles/44002625876-how-does-eu-internet-ventures-b-v-euiv-set-the-price-of-cryptocurrency-"
+      ]
+    },
+    {
+      "slug": "bitgo",
+      "name": "BitGo",
+      "website": "https://www.bitgo.com",
+      "checkedAt": "2026-10-29T15:43:18.809010+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "bitso",
+      "name": "Bitso",
+      "website": "https://bitso.com",
+      "checkedAt": "2026-10-29T15:43:19.448582+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://bitso.com/fees"
+      ]
+    },
+    {
+      "slug": "bitso-juno",
+      "name": "Bitso / Juno",
+      "website": null,
+      "checkedAt": "2026-10-29T15:43:19.964414+00:00",
+      "httpStatus": null,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "blindpay",
+      "name": "BlindPay",
+      "website": null,
+      "checkedAt": "2026-10-29T15:43:19.964414+00:00",
+      "httpStatus": null,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "botim",
+      "name": "Botim Money",
+      "website": "https://botim.me",
+      "checkedAt": "2026-10-29T19:40:06.226426+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://botim.me/international-transfer/",
+        "https://www.astratech.ae/platform-terms/key-fact-statement"
+      ]
+    },
+    {
+      "slug": "brale",
+      "name": "Brale",
+      "website": "https://brale.xyz",
+      "checkedAt": "2026-10-29T15:43:19.964414+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://brale.xyz/pricing"
+      ]
+    },
+    {
+      "slug": "bridge",
+      "name": "Bridge",
+      "website": "https://bridge.xyz",
+      "checkedAt": "2026-10-29T15:43:20.153687+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "briskpe",
+      "name": "BriskPe",
+      "website": "https://www.briskpe.com",
+      "checkedAt": "2026-10-29T15:43:35.482993+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "bvnk",
+      "name": "BVNK",
+      "website": "https://www.bvnk.com",
+      "checkedAt": "2026-10-29T15:43:20.294449+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "careem-pay",
+      "name": "Careem Pay",
+      "website": "https://www.careem.com",
+      "checkedAt": "2026-10-29T19:40:06.301076+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.careem.com/en-AE/send-money-faqs/"
+      ]
+    },
+    {
+      "slug": "cashfree",
+      "name": "Cashfree Payments",
+      "website": "https://www.cashfree.com",
+      "checkedAt": "2026-10-29T15:43:20.535804+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.cashfree.com/payment-gateway-charges/"
+      ]
+    },
+    {
+      "slug": "cbw-bank",
+      "name": "CBW Bank",
+      "website": "https://www.cbw.bank",
+      "checkedAt": "2026-10-29T15:43:20.651976+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "checkout-com",
+      "name": "Checkout.com",
+      "website": "https://www.checkout.com",
+      "checkedAt": "2026-10-29T15:43:21.111209+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.checkout.com/pricing"
+      ]
+    },
+    {
+      "slug": "circle",
+      "name": "Circle",
+      "website": "https://www.circle.com",
+      "checkedAt": "2026-10-29T15:43:21.146951+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "clickpesa",
+      "name": "ClickPesa",
+      "website": "https://clickpesa.com",
+      "checkedAt": "2026-10-29T15:43:21.525836+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://clickpesa.com/payment-gateway/pricing/"
+      ]
+    },
+    {
+      "slug": "coinbase",
+      "name": "Coinbase",
+      "website": "https://www.coinbase.com",
+      "checkedAt": "2026-10-29T15:43:21.557155+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "coins-ph",
+      "name": "Coins.ph",
+      "website": "https://coins.ph",
+      "checkedAt": "2026-10-29T15:43:21.649993+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.coins.ph/en-ph/pro",
+        "https://www.coins.ph/en-ph/fees"
+      ]
+    },
+    {
+      "slug": "conduit",
+      "name": "Conduit",
+      "website": "https://conduitpay.com",
+      "checkedAt": "2026-10-29T15:43:21.884342+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "cowrie",
+      "name": "Cowrie Integrated Systems",
+      "website": "https://www.cowriesys.com",
+      "checkedAt": "2026-10-29T15:43:22.222411+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.cowriesys.com/solutions.html#fx-liquidity"
+      ]
+    },
+    {
+      "slug": "cross-river",
+      "name": "Cross River Bank",
+      "website": "https://www.crossriver.com",
+      "checkedAt": "2026-10-29T15:43:22.785161+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "crossmint",
+      "name": "Crossmint",
+      "website": null,
+      "checkedAt": "2026-10-29T15:43:22.966727+00:00",
+      "httpStatus": null,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "currencycloud",
+      "name": "Currencycloud",
+      "website": "https://www.currencycloud.com",
+      "checkedAt": "2026-10-29T15:43:22.966727+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "dashx",
+      "name": "DashX",
+      "website": "https://dashx.xyz",
+      "checkedAt": "2026-10-29T15:43:23.021736+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "dlocal",
+      "name": "dLocal",
+      "website": "https://dlocal.com",
+      "checkedAt": "2026-10-29T15:43:23.475333+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "dtcpay",
+      "name": "dtcpay",
+      "website": "https://www.dtcpay.com",
+      "checkedAt": "2026-10-29T15:43:23.571525+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "eand-money",
+      "name": "e& money",
+      "website": "https://www.eandmoney.com",
+      "checkedAt": "2026-10-29T19:40:07.611006+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.eandmoney.com/en/send-abroad.html",
+        "https://www.eandmoney.com/en/more/terms-conditions.html"
+      ]
+    },
+    {
+      "slug": "eco",
+      "name": "Eco",
+      "website": "https://eco.com",
+      "checkedAt": "2026-10-29T15:43:23.795894+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "episode-six",
+      "name": "Episode Six",
+      "website": "https://episodesix.com",
+      "checkedAt": "2026-10-29T15:43:24.078533+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "ethena",
+      "name": "Ethena",
+      "website": "https://ethena.fi",
+      "checkedAt": "2026-10-29T15:43:24.517875+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "fireblocks",
+      "name": "Fireblocks",
+      "website": "https://www.fireblocks.com",
+      "checkedAt": "2026-10-29T15:43:24.581894+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.fireblocks.com/pricing/",
+        "https://www.fireblocks.com/pricing"
+      ]
+    },
+    {
+      "slug": "flutterwave",
+      "name": "Flutterwave",
+      "website": "https://flutterwave.com",
+      "checkedAt": "2026-10-29T15:43:24.808654+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://flutterwave.com/us/pricing"
+      ]
+    },
+    {
+      "slug": "fomo-pay",
+      "name": "FOMO Pay",
+      "website": "https://www.fomopay.com",
+      "checkedAt": "2026-10-29T15:43:25.060904+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "fonbnk",
+      "name": "Fonbnk",
+      "website": "https://fonbnk.com",
+      "checkedAt": "2026-10-29T15:43:25.500943+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "fuze",
+      "name": "Fuze",
+      "website": "https://fuze.finance",
+      "checkedAt": "2026-10-29T15:43:25.773110+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "global66",
+      "name": "Global66",
+      "website": "https://www.global66.com",
+      "checkedAt": "2026-10-29T19:40:08.008680+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": [
+        "https://www.global66.com/enviar-dinero/MX/US/"
+      ]
+    },
+    {
+      "slug": "guardarian",
+      "name": "Guardarian",
+      "website": "https://guardarian.com",
+      "checkedAt": "2026-10-29T15:43:25.859144+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "highnote",
+      "name": "Highnote",
+      "website": "https://highnote.com",
+      "checkedAt": "2026-10-29T15:43:26.020774+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://highnote.com/pricing"
+      ]
+    },
+    {
+      "slug": "immersve",
+      "name": "Immersve",
+      "website": "https://immersve.com",
+      "checkedAt": "2026-10-29T15:43:26.039760+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://immersve.com/pricing"
+      ]
+    },
+    {
+      "slug": "infinity",
+      "name": "Infinity",
+      "website": "https://www.infinityapp.in",
+      "checkedAt": "2026-10-29T15:43:35.241830+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "karbon",
+      "name": "Karbon",
+      "website": "https://www.karboncard.com/faqs/what-are-the-charges-for-receving-an-inward-remittance",
+      "checkedAt": "2026-10-29T19:23:33.986616+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.karboncard.com/faqs/what-are-the-charges-for-receving-an-inward-remittance"
+      ]
+    },
+    {
+      "slug": "koywe",
+      "name": "Koywe",
+      "website": "https://www.koywe.com",
+      "checkedAt": "2026-10-29T15:43:26.290522+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "lirium",
+      "name": "Lirium",
+      "website": "https://www.lirium.com",
+      "checkedAt": "2026-10-29T15:43:26.718127+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "lulu-exchange",
+      "name": "LuLu Exchange",
+      "website": "https://luluexchange.com",
+      "checkedAt": "2026-10-29T19:40:08.860415+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://luluexchange.com/services/money-transfer/"
+      ]
+    },
+    {
+      "slug": "mastercard-move",
+      "name": "Mastercard Move",
+      "website": "https://www.mastercard.com/us/en/business/payments/mastercard-move.html",
+      "checkedAt": "2026-10-29T15:43:27.077562+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "mercuryo",
+      "name": "Mercuryo",
+      "website": "https://mercuryo.io",
+      "checkedAt": "2026-10-29T15:43:27.245069+00:00",
+      "httpStatus": null,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "mesh",
+      "name": "Mesh",
+      "website": "https://www.meshconnect.com",
+      "checkedAt": "2026-10-29T15:43:27.485901+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "mobee",
+      "name": "Mobee",
+      "website": "https://mobee.com/en",
+      "checkedAt": "2026-10-29T15:43:27.597071+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "monavate",
+      "name": "Monavate",
+      "website": "https://www.monavate.com",
+      "checkedAt": "2026-10-29T15:43:27.703800+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "moneygram",
+      "name": "MoneyGram",
+      "website": "https://www.moneygram.com",
+      "checkedAt": "2026-10-29T15:43:27.776330+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "moonpay",
+      "name": "MoonPay",
+      "website": "https://www.moonpay.com",
+      "checkedAt": "2026-10-29T15:43:27.919704+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "moorwand",
+      "name": "Moorwand",
+      "website": "https://moorwand.com",
+      "checkedAt": "2026-10-29T15:43:28.028197+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "mulya",
+      "name": "Mulya",
+      "website": "https://www.mulya.co",
+      "checkedAt": "2026-10-29T15:43:35.564142+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.mulya.co/#pricing"
+      ]
+    },
+    {
+      "slug": "mural-pay",
+      "name": "Mural Pay",
+      "website": "https://muralpay.com",
+      "checkedAt": "2026-10-29T15:43:28.139785+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "n-exchange",
+      "name": "n.exchange",
+      "website": "https://n.exchange",
+      "checkedAt": "2026-10-29T15:43:28.245019+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "nium",
+      "name": "Nium",
+      "website": "https://www.nium.com",
+      "checkedAt": "2026-10-29T15:43:28.426513+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "onafriq",
+      "name": "Onafriq",
+      "website": "https://onafriq.com",
+      "checkedAt": "2026-10-29T15:43:28.466649+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "opendue",
+      "name": "Due",
+      "website": "https://www.opendue.com",
+      "checkedAt": "2026-10-29T15:43:28.507844+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "openpayd",
+      "name": "OpenPayd",
+      "website": "https://www.openpayd.com",
+      "checkedAt": "2026-10-29T15:43:28.526548+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "parfin",
+      "name": "Parfin",
+      "website": "https://parfin.io",
+      "checkedAt": "2026-10-29T15:43:28.544487+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "paxos",
+      "name": "Paxos",
+      "website": "https://paxos.com",
+      "checkedAt": "2026-10-29T15:43:28.695327+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "paycaddy",
+      "name": "PayCaddy",
+      "website": "https://paycaddy.com",
+      "checkedAt": "2026-10-29T15:43:28.796397+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "payglocal",
+      "name": "PayGlocal",
+      "website": "https://payglocal.in",
+      "checkedAt": "2026-10-29T15:43:28.955382+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "payoneer",
+      "name": "Payoneer",
+      "website": "https://www.payoneer.com",
+      "checkedAt": "2026-10-29T15:43:29.037486+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.payoneer.com/pricing/"
+      ]
+    },
+    {
+      "slug": "paypal",
+      "name": "PayPal",
+      "website": "https://www.paypal.com/in",
+      "checkedAt": "2026-10-29T15:43:29.098089+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.paypal.com/in/business/paypal-business-fees"
+      ]
+    },
+    {
+      "slug": "payzoll",
+      "name": "PayZoll",
+      "website": "https://payzoll.finance",
+      "checkedAt": "2026-10-29T15:43:34.742902+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "peoples-group",
+      "name": "Peoples Group",
+      "website": "https://peoplesgroup.com",
+      "checkedAt": "2026-10-29T15:43:29.099089+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.peoplesgroup.com/personal/resources/account-fees"
+      ]
+    },
+    {
+      "slug": "pingpong",
+      "name": "PingPong",
+      "website": "https://in.pingpongx.com/",
+      "checkedAt": "2026-10-29T19:23:34.424871+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://in.pingpongx.com/"
+      ]
+    },
+    {
+      "slug": "pomelo-la",
+      "name": "Pomelo",
+      "website": "https://www.pomelo.la/en",
+      "checkedAt": "2026-10-29T15:43:29.276544+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "ramp-network",
+      "name": "Ramp Network",
+      "website": "https://ramp.network",
+      "checkedAt": "2026-10-29T15:43:29.431352+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "rapyd",
+      "name": "Rapyd",
+      "website": "https://www.rapyd.net",
+      "checkedAt": "2026-10-29T15:43:29.932336+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.rapyd.net/products/pricing/"
+      ]
+    },
+    {
+      "slug": "razorpay",
+      "name": "Razorpay",
+      "website": "https://razorpay.com",
+      "checkedAt": "2026-10-29T15:43:34.860718+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://razorpay.com/pricing/"
+      ]
+    },
+    {
+      "slug": "refrens",
+      "name": "Refrens",
+      "website": "https://www.refrens.com/receive-international-payments-india",
+      "checkedAt": "2026-10-29T19:23:34.039111+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.refrens.com/receive-international-payments-india"
+      ]
+    },
+    {
+      "slug": "remitly",
+      "name": "Remitly",
+      "website": "https://www.remitly.com",
+      "checkedAt": "2026-10-29T19:40:09.545757+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.remitly.com/us/en/money-transfer/send-money-to-india",
+        "https://news.remitly.com/company-and-product-news/remitly-on-whatsapp-just-got-an-upgrade/"
+      ]
+    },
+    {
+      "slug": "ripple",
+      "name": "Ripple",
+      "website": "https://ripple.com",
+      "checkedAt": "2026-10-29T15:43:30.470641+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "salt",
+      "name": "Salt",
+      "website": "https://www.salt.pe/international-payments",
+      "checkedAt": "2026-10-29T19:23:33.938305+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.salt.pe/international-payments"
+      ]
+    },
+    {
+      "slug": "scrypt",
+      "name": "SCRYPT",
+      "website": "https://scrypt.swiss",
+      "checkedAt": "2026-10-29T15:43:30.494846+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://scrypt.swiss/faq"
+      ]
+    },
+    {
+      "slug": "skydo",
+      "name": "Skydo",
+      "website": "https://www.skydo.com",
+      "checkedAt": "2026-10-29T15:43:30.704508+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.skydo.com/blog/how-to-reduce-swift-charges-india"
+      ]
+    },
+    {
+      "slug": "sphere",
+      "name": "Sphere",
+      "website": "https://www.spherepay.co",
+      "checkedAt": "2026-10-29T15:43:30.969098+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://spherepay.co/products/privatedesk"
+      ]
+    },
+    {
+      "slug": "stablecore",
+      "name": "Stablecore",
+      "website": "https://stablecore.com",
+      "checkedAt": "2026-10-29T15:43:31.328189+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "straitsx",
+      "name": "StraitsX",
+      "website": "https://www.straitsx.com",
+      "checkedAt": "2026-10-29T15:43:31.656568+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "stripe",
+      "name": "Stripe",
+      "website": "https://stripe.com",
+      "checkedAt": "2026-10-29T15:43:31.918345+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://stripe.com/in/pricing"
+      ]
+    },
+    {
+      "slug": "taptap-send",
+      "name": "Taptap Send",
+      "website": "https://www.taptapsend.com",
+      "checkedAt": "2026-10-29T19:40:08.707513+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://help.taptapsend.com/en/sending-countries/how-do-i-send-money-from-the-uae/uae-what-payment-methods-can-i-use",
+        "https://help.taptapsend.com/en/receiving-countries/how-can-i-send-money-to-india"
+      ]
+    },
+    {
+      "slug": "tazapay",
+      "name": "Tazapay",
+      "website": "https://tazapay.com",
+      "checkedAt": "2026-10-29T15:43:31.975039+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://tazapay.com/pricing"
+      ]
+    },
+    {
+      "slug": "tether",
+      "name": "Tether",
+      "website": "https://tether.to",
+      "checkedAt": "2026-10-29T15:43:32.646500+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "thredd",
+      "name": "Thredd",
+      "website": "https://www.thredd.ai",
+      "checkedAt": "2026-10-29T15:43:32.761570+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "thunes",
+      "name": "Thunes",
+      "website": "https://www.thunes.com",
+      "checkedAt": "2026-10-29T15:43:33.076160+00:00",
+      "httpStatus": 403,
+      "contentStatus": "unavailable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "transak",
+      "name": "Transak",
+      "website": "https://transak.com",
+      "checkedAt": "2026-10-29T15:43:33.184643+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "triple-a",
+      "name": "Triple-A",
+      "website": "https://www.triple-a.io",
+      "checkedAt": "2026-10-29T15:43:33.203076+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "unlimit",
+      "name": "Unlimit",
+      "website": "https://www.unlimit.com",
+      "checkedAt": "2026-10-29T15:43:33.551244+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "vibrant",
+      "name": "Vibrant",
+      "website": "https://vibrantapp.com",
+      "checkedAt": "2026-10-29T15:43:33.635611+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "visa-direct",
+      "name": "Visa Direct",
+      "website": "https://www.visa.com/en-us/products/visa-direct",
+      "checkedAt": "2026-10-29T15:43:33.819234+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "webbank",
+      "name": "WebBank",
+      "website": "https://webbank.com",
+      "checkedAt": "2026-10-29T15:43:33.984871+00:00",
+      "httpStatus": 200,
+      "contentStatus": "javascript_or_empty",
+      "pricingUrls": []
+    },
+    {
+      "slug": "winvesta",
+      "name": "Winvesta",
+      "website": "https://www.winvesta.in",
+      "checkedAt": "2026-10-29T15:43:35.374698+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.winvesta.in/investment-app-pricing"
+      ]
+    },
+    {
+      "slug": "wio",
+      "name": "Wio Bank",
+      "website": "https://wio.io",
+      "checkedAt": "2026-10-29T19:40:06.883885+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://wio.io/pay-and-get-paid",
+        "https://www.wio.io/personal-fees.pdf",
+        "https://desk.wio.io/support/solutions/articles/501000414617-wio-business-managing-transfers-beneficiaries-limits-payment-tracking-troubleshooting"
+      ]
+    },
+    {
+      "slug": "wise",
+      "name": "Wise",
+      "website": "https://wise.com",
+      "checkedAt": "2026-10-29T15:43:34.018551+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://wise.com/in/pricing/",
+        "https://wise.com/in/pricing/business"
+      ]
+    },
+    {
+      "slug": "xflow",
+      "name": "Xflow",
+      "website": "https://www.xflowpay.com",
+      "checkedAt": "2026-10-29T15:43:34.085130+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.xflowpay.com/pricing"
+      ]
+    },
+    {
+      "slug": "xoom",
+      "name": "Xoom",
+      "website": "https://www.xoom.com",
+      "checkedAt": "2026-10-29T19:40:08.952497+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://www.xoom.com/india/send-money?locale=en-us",
+        "https://www.xoom.com/legal/xoom-transfer-fees"
+      ]
+    },
+    {
+      "slug": "yellow-card",
+      "name": "Yellow Card",
+      "website": "https://yellowcard.io",
+      "checkedAt": "2026-10-29T15:43:34.095850+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": []
+    },
+    {
+      "slug": "zero-hash",
+      "name": "Zero Hash",
+      "website": "https://zerohash.com",
+      "checkedAt": "2026-10-29T15:43:34.469267+00:00",
+      "httpStatus": 200,
+      "contentStatus": "readable",
+      "pricingUrls": [
+        "https://zerohash.com/disclosures/pricing-and-fees"
+      ]
+    }
+  ]
+}

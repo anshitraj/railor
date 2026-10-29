@@ -21,6 +21,10 @@ export function PriceCheckHeader({ mode }: { mode: "app" | "public" }) {
   return <header className={styles.pageHeader}><div><span className={styles.eyebrow}>Price intelligence</span><h1>Price check</h1><p>Compare what arrives, what it costs, and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
 }
 
+export function PriceHelpLinks() {
+  return <nav className={styles.helpLinks} aria-label="Pricing documentation"><Link href="/docs/pricing#sources">How prices and sources work <ArrowRight size={12} /></Link><Link href="/docs/pricing#provider-coverage">Provider coverage & features <ArrowRight size={12} /></Link></nav>;
+}
+
 /** The left rail: where live quotes sit among the other ways to act on a price. */
 export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: string }) {
   return (

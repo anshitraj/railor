@@ -18,6 +18,7 @@ import {
   FileText,
   GitCompare,
   Globe2,
+  History,
   LayoutDashboard,
   Link2,
   ListChecks,
@@ -55,7 +56,7 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     { href: "/app/freelancer", label: "Freelancer", icon: FileText, stage: "beta" },
     { href: "/app/search", label: "Search & compare", icon: ScanSearch },
     { href: "/app/corridors", label: "Corridors", icon: Route },
-    { href: "/app/payments", label: "Payments", icon: Banknote, stage: "beta" },
+    { href: "/app/payments", label: "History", icon: History },
     { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
   ] },
   {

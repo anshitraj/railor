@@ -308,19 +308,19 @@ describe("price check", () => {
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 5000 }, 5000)).toMatchObject({ amount: 34.22 });
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 20000 }, 20000)).toMatchObject({ amount: 70.8 });
   });
-  it("uses PayZoll's USD minimum and threshold, without claiming partner fees are included", () => {
+  it("uses PayZoll's current 1% headline without an unverified minimum or included partner costs", () => {
     const p = PUBLISHED_PRICING.find(p => p.slug === "payzoll")!;
     const input = { sourceCurrency: "EUR", destinationCurrency: "INR", amount: 500 };
-    expect(p.fee(input, 550)).toMatchObject({ amount: 10, currency: "USD" });
-    expect(p.fee(input, 1000)).toMatchObject({ amount: 10 });
-    expect(p.fee(input, 1001)).toMatchObject({ amount: 10.01 });
-    expect(p.fee(input, null)).toBeNull();
+    expect(p.fee(input, 550)).toMatchObject({ amount: 5, currency: "EUR" });
+    expect(p.fee({ ...input, amount: 1001 }, 1001)).toMatchObject({ amount: 10.01 });
+    expect(p.fee(input, null)).toMatchObject({ amount: 5 });
     expect(p.partial).toBe(true);
   });
   it("does not display negative receiving amounts when published fees exceed the transfer", async () => {
     const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 5 }, { fetcher });
-    expect(result.rows.some(r => r.providerSlug === "payzoll" || r.providerSlug === "skydo")).toBe(false);
-    expect(result.unavailable.find(p => p.providerSlug === "payzoll")?.reason).toContain("minimum transaction size");
+    expect(result.rows.some(r => r.providerSlug === "skydo")).toBe(false);
+    expect(result.unavailable.find(p => p.providerSlug === "skydo")?.reason).toContain("minimum transaction size");
+    expect(result.rows.filter(row => row.recipientAmount !== null).every(row => row.recipientAmount! >= 0)).toBe(true);
   });
   it("keeps sandbox and Railor-account observations completely outside selectable/ranked prices", async () => {
     const quote = { providerSlug: "airwallex", sourceAsset: "USD", destinationCurrency: "INR", amount: 1000, recipientAmount: 999999, costPartial: true, quoteType: "indicative" as const, accountContext: "railor_network" as const, verificationType: "provider_reported" as const, observedAt: new Date().toISOString(), quotedAt: new Date().toISOString() };

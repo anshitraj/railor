@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "../../../lib/auth";
 import { loadPricePage, productionConnectedSlugs } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
-import { PriceCheckHeader, PriceLabelsCard } from "../../../components/app/price-panels";
+import { PriceCheckHeader, PriceHelpLinks } from "../../../components/app/price-panels";
 import { SwapQuote } from "../../../components/app/swap-quote";
-import { ProviderFeatureComparison } from "../../../components/app/provider-feature-comparison";
-import { PriceDisclosure } from "../../../components/app/price-disclosure";
 import styles from "../../../components/app/price-check.module.css";
 import { onboardingPriceProfile } from "../../../lib/onboarding";
 
@@ -32,8 +30,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           executable={page.executable}
           connected={connected}
         />
-      <PriceDisclosure title="How prices and sources work" description="Account quotes, published schedules, public references and evidence labels."><PriceLabelsCard mode="app" connectedAny={connected.some((s) => s === "wise" || s === "airwallex")} /></PriceDisclosure>
-      <PriceDisclosure title="Compare provider features" description="Explore coverage, capabilities and account requirements."><ProviderFeatureComparison /></PriceDisclosure>
+      <PriceHelpLinks />
     </div>
   );
 }

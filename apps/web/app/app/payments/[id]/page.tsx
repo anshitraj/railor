@@ -8,7 +8,7 @@ import { RoutePlanView } from "../../../../components/app/payments/route-plan-vi
 import { ProviderLogo } from "../../../../components/app/provider-logo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Payment" };
+export const metadata = { title: "History record" };
 
 const EXECUTOR_LABEL: Record<string, string> = { railor_sandbox: "Railor sandbox (simulated)", provider: "Your provider account" };
 
@@ -40,7 +40,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
   return (
     <div className="product-page space-y-6">
       <Link href={`/app/payments?mode=${payment.mode}`} className="product-quiet-link">
-        ← Payments
+        ← History
       </Link>
 
       <section className="product-dark p-6 sm:p-8">

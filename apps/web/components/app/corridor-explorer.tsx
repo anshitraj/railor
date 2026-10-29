@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Bookmark, Bell, Building2, SlidersHorizontal, ArrowRight, Map, Info } from "lucide-react";
+import { Flag, currencyFlagCode } from "@railor/ui";
+import { CurrencyLogo } from "../marketing/currency-logo";
+import { RouteOptionPicker } from "./route-option-picker";
+import styles from "./corridor-explorer.module.css";
 import {
   Button,
   Card,
@@ -198,6 +202,12 @@ export function CorridorExplorer({
   const [parsing, setParsing] = useState(false);
   const [searchError, setSearchError] = useState("");
   const skipNextFetch = useRef(false);
+  const [providerSearch, setProviderSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const filteredProviders = data.results.filter(result => `${result.provider.name} ${result.provider.slug}`.toLowerCase().includes(providerSearch.trim().toLowerCase()));
+  const visibleProviders = showAll ? filteredProviders : filteredProviders.slice(0, 5);
+  useEffect(() => { setSelectedSlug(null); setShowAll(false); }, [data]);
 
   useEffect(() => {
     if (first) {
@@ -256,13 +266,15 @@ export function CorridorExplorer({
     }
   };
 
-  const setField = (field: string, value: string) => setQuery((q) => ({ ...q, [field]: value }));
-  const clearField = (field: string) =>
+  const setField = (field: string, value: string) => { setSavedId(undefined); setMonitored(false); setQuery((q) => ({ ...q, [field]: value })); };
+  const clearField = (field: string) => {
+    setSavedId(undefined); setMonitored(false);
     setQuery((q) => {
       const next = { ...q };
       delete next[field];
       return next;
     });
+  };
 
   const save = () =>
     startTransition(async () => {
@@ -284,8 +296,8 @@ export function CorridorExplorer({
     });
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="workspace-heading flex flex-wrap items-end justify-between gap-4">
+    <div className={styles.explorer}>
+      <div className={styles.heading}>
         <div className="flex flex-col gap-1">
           <span className="product-eyebrow">Route intelligence</span>
           <h1 className="font-semibold tracking-tight">Corridor Explorer</h1>
@@ -295,17 +307,18 @@ export function CorridorExplorer({
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={save} disabled={pending}>
-            {savedId ? "Saved ✓" : "Save corridor"}
+            <Bookmark size={14} />{savedId ? "Saved ✓" : "Save corridor"}
           </Button>
           <Button size="sm" onClick={monitor} disabled={pending || monitored}>
-            {monitored ? "Monitoring ✓" : "Monitor"}
+            <Bell size={14} />{monitored ? "Monitoring ✓" : "Monitor"}
           </Button>
         </div>
       </div>
 
+      <section className={styles.builder}><h2>Describe a corridor or build it manually</h2>
       <form
         onSubmit={runNaturalSearch}
-        className="flex flex-col gap-2 rounded-[20px] border border-[var(--color-line-strong)] bg-white p-2 shadow-[var(--shadow-soft)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[var(--shadow-lift)] sm:flex-row sm:items-center sm:rounded-full sm:pl-5"
+        className={styles.naturalSearch}
       >
         <Search size={16} className="ml-2 hidden shrink-0 text-[var(--color-faint)] sm:block" aria-hidden />
         <input
@@ -326,7 +339,12 @@ export function CorridorExplorer({
         </p>
       ) : null}
 
-      <Card className="flex flex-col gap-4 p-5">
+      <div className={styles.manual}>
+        <p>Or set the route manually</p>
+        <div className={styles.filters}>{["entityCountry", "customerType", "destinationCountry", "sourceAsset", "destinationCurrency"].map(field => <div key={field}><label>{fieldLabels[field] ?? field}</label><RouteOptionPicker label={fieldLabels[field] ?? field} options={optionsByField[field] ?? []} value={String(query[field] ?? "")} onChange={value => value ? setField(field, value) : clearField(field)} placeholder="Any" renderMark={value => field.includes("Country") ? <Flag code={value} size={15} /> : field === "sourceAsset" ? <CurrencyLogo symbol={value} size={20} /> : field === "destinationCurrency" && currencyFlagCode(value) ? <Flag code={currencyFlagCode(value)!} size={15} /> : <Building2 size={16} />} /></div>)}</div>
+      </div>
+      <details className={styles.advanced}><summary><SlidersHorizontal size={14} />Advanced filters & route fields</summary>
+      <div className="flex flex-col gap-4 pt-4">
         <div className="flex flex-col gap-2">
           <SectionLabel>Route</SectionLabel>
           <InterpretationBar
@@ -344,7 +362,8 @@ export function CorridorExplorer({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-4">
+      </div></details>
+        <div className={styles.rankings}>
           <SectionLabel className="mr-1">Rank by</SectionLabel>
           {PRESETS.map((p) => (
             <Chip
@@ -388,66 +407,44 @@ export function CorridorExplorer({
             caption="This is the exact query behind the results below."
           />
         ) : null}
-      </Card>
+      </section>
 
+      <div className={styles.content}><div className={styles.main}>
+      <div className={styles.summary}>
       <CatalogRecommendation results={data.results} preset={data.preset ?? preset} />
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <Count value={data.providersChecked} label="providers checked" />
         <Count value={data.counts.supported} label="compatible" tone="ok" />
-        <Count value={data.counts.additional_requirements} label="need additional KYB" tone="warn" />
+        <Count value={data.counts.additional_requirements} label="additional requirements" tone="warn" />
         <Count value={data.counts.unavailable} label="unavailable" tone="bad" />
         <Count value={data.counts.unknown} label="insufficient data" />
         {loading ? <span className="text-[12px] text-[var(--color-muted)]">Re-evaluating…</span> : null}
       </div>
 
-      {data.countryContext ? (
-        <Card className="flex flex-col gap-2 p-5">
-          <SectionLabel>
-            {data.countryContext.countryName ?? data.countryContext.iso2} — regulatory context
-          </SectionLabel>
-          <div className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
-            {data.countryContext.cryptoStatus ? (
-              <p>
-                <span className="font-medium">Crypto: </span>
-                <span className="text-[var(--color-muted)]">{data.countryContext.cryptoStatus}</span>
-              </p>
-            ) : null}
-            {data.countryContext.stablecoinStatus ? (
-              <p>
-                <span className="font-medium">Stablecoins: </span>
-                <span className="text-[var(--color-muted)]">{data.countryContext.stablecoinStatus}</span>
-              </p>
-            ) : null}
-            {data.countryContext.instantPaymentSystem ? (
-              <p>
-                <span className="font-medium">Instant rail: </span>
-                <span className="text-[var(--color-muted)]">{data.countryContext.instantPaymentSystem}</span>
-              </p>
-            ) : null}
-            {data.countryContext.localPaymentRails.length ? (
-              <p>
-                <span className="font-medium">Local rails: </span>
-                <span className="text-[var(--color-muted)]">
-                  {data.countryContext.localPaymentRails.join(", ")}
-                </span>
-              </p>
-            ) : null}
-          </div>
-          <p className="text-[11px] text-[var(--color-faint)]">
-            Country-level research, not a per-provider statement — it never changes a verdict above, only
-            explains the market.
-          </p>
-        </Card>
-      ) : null}
+      </div>
 
-      {data.marketDiscovery ? <MarketDiscoveryPanel discovery={data.marketDiscovery} /> : null}
 
+      <section className={styles.results} aria-label="Corridor provider results" aria-busy={loading || parsing}>
+        <div className={styles.resultsHeading}><div><h2>Provider results ({visibleProviders.length} of {data.results.length})</h2><p>Evaluated against your selected route · evidence and availability</p></div><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search corridor providers" placeholder="Search providers" value={providerSearch} onChange={event => { setProviderSearch(event.target.value); setShowAll(false); }} /></label></div>
+        <div className={styles.tableHead} aria-hidden><span>Provider</span><span>Route verdict</span><span>Pricing</span><span>Evidence</span><span /></div>
+        <div className={styles.rows} data-expanded={showAll}>{visibleProviders.map(result => <div key={result.provider.slug} className={styles.row} data-selected={selectedSlug === result.provider.slug}>
+          <div className={styles.provider}><ProviderLogo slug={result.provider.slug} name={result.provider.name} size={25} /><strong>{result.provider.name}</strong></div>
+          <span className={styles.verdict} data-verdict={result.eligibility}>{result.routeConfirmation === "partially_confirmed" ? "Partial match" : result.eligibility === "supported" ? "Compatible" : result.eligibility === "additional_requirements" ? "Requirements" : result.eligibility === "unavailable" ? "Not supported" : "Insufficient data"}</span>
+          <span className={styles.price} title={result.facts.feeSummary}>{result.facts.feeSummary ?? "Not available"}</span>
+          <span className={styles.evidence}><i style={{ height: `${Math.max(4, result.confidence * 15)}px` }} />{Math.round(result.confidence * 100)}%<small>confidence</small></span>
+          <button type="button" aria-expanded={selectedSlug === result.provider.slug} aria-controls="corridor-provider-details" onClick={() => setSelectedSlug(selectedSlug === result.provider.slug ? null : result.provider.slug)}>{selectedSlug === result.provider.slug ? "Hide details" : "View details"}<ArrowRight size={12} /></button>
+        </div>)}</div>
+        {!filteredProviders.length && <p className={styles.noMatches}>No providers match your search.</p>}
+        {filteredProviders.length > 5 && <button type="button" className={styles.showAll} aria-expanded={showAll} onClick={() => setShowAll(value => !value)}>{showAll ? "Show fewer providers" : `Show all ${filteredProviders.length} providers`}</button>}
+      </section>
+      <div id="corridor-provider-details" className={styles.details}>
       {data.results.length ? (
         <div className="flex flex-col gap-2">
-          {data.results.map((result) => (
+          {data.results.filter(result => result.provider.slug === selectedSlug).map((result) => (
             <ResultRow
               key={result.provider.slug}
+              defaultOpen
               mark={<ProviderLogo slug={result.provider.slug} name={result.provider.name} size={36} />}
               name={result.provider.name}
               category={result.provider.category}
@@ -554,6 +551,55 @@ export function CorridorExplorer({
           onAction={() => setField("destinationCountry", "AE")}
         />
       )}
+      </div>
+      {data.marketDiscovery && <details className={styles.discovery}><summary>Fresh market discovery · {data.marketDiscovery.candidates.length} leads</summary><MarketDiscoveryPanel discovery={data.marketDiscovery} /></details>}
+      </div><aside className={styles.sidebar}>
+        <section className={styles.nextSteps}><h2><Info size={17} />Next steps</h2><ol><li>Review provider coverage and evidence.</li><li>Check the destination’s regulatory context.</li><li>Monitor this corridor for updates.</li></ol></section>
+        <section className={styles.context}><h2><Map size={17} />Market & regulatory context {data.countryContext && <Flag code={data.countryContext.iso2} size={15} />}</h2>
+      {data.countryContext ? (
+        <Card className="flex flex-col gap-2 p-5">
+          <SectionLabel>
+            {data.countryContext.countryName ?? data.countryContext.iso2} — regulatory context
+          </SectionLabel>
+          <div className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+            {data.countryContext.cryptoStatus ? (
+              <p>
+                <span className="font-medium">Crypto: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.cryptoStatus}</span>
+              </p>
+            ) : null}
+            {data.countryContext.stablecoinStatus ? (
+              <p>
+                <span className="font-medium">Stablecoins: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.stablecoinStatus}</span>
+              </p>
+            ) : null}
+            {data.countryContext.instantPaymentSystem ? (
+              <p>
+                <span className="font-medium">Instant rail: </span>
+                <span className="text-[var(--color-muted)]">{data.countryContext.instantPaymentSystem}</span>
+              </p>
+            ) : null}
+            {data.countryContext.localPaymentRails.length ? (
+              <p>
+                <span className="font-medium">Local rails: </span>
+                <span className="text-[var(--color-muted)]">
+                  {data.countryContext.localPaymentRails.join(", ")}
+                </span>
+              </p>
+            ) : null}
+          </div>
+          <p className="text-[11px] text-[var(--color-faint)]">
+            Country-level research, not a per-provider statement — it never changes a verdict above, only
+            explains the market.
+          </p>
+        </Card>
+      ) : null}
+
+{!data.countryContext && <p>Choose a destination country to see its available market research.</p>}
+        {data.countryContext && <div className={styles.regulatoryDetails}><details><summary>Onboarding & cross-border requirements</summary><ul>{[...data.countryContext.kycRequirements, ...data.countryContext.kybRequirements, ...data.countryContext.amlRequirements, ...data.countryContext.crossBorderRestrictions].map((item,index) => <li key={index}>{item}</li>)}</ul></details>{data.countryContext.lastResearchedAt && <small>Research updated {new Date(data.countryContext.lastResearchedAt).toLocaleDateString("en-GB", { timeZone: "UTC" })}</small>}</div>}
+        <Link href="/docs/pricing#routing">How routes and pricing are evaluated <ArrowRight size={12} /></Link></section>
+      </aside></div>
     </div>
   );
 }

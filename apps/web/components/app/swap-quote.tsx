@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow, RowWebCheck, WebCheckSummary } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
 import { RemittanceSurveyPanel } from "./remittance-survey-panel";
-import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from "../../lib/connection-navigation";
-import { BENEFICIARIES_AVAILABLE } from "../../lib/product-features";
+import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
+import { priceResponseMatches } from "../../lib/price-response";
 import styles from "./price-check.module.css";
 
 /**
@@ -222,7 +222,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const [amountText, setAmountText] = useState(String(initial.amount));
   const [market, setMarket] = useState(initial.market);
   const [context, setContext] = useState(initial.context);
-  const [result, setResult] = useState(initialResult);
+  const [response, setResult] = useState(initialResult);
   const [error, setError] = useState(initialError ?? "");
   const [loading, setLoading] = useState(false);
   // Both clocks start at the server's quote time so server and client render the same markup.
@@ -238,6 +238,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
   const amount = Number(amountText);
   const valid = Boolean(from && to && from !== to && amount > 0);
+  const result = priceResponseMatches(response, { from, to, amount, market, context }) ? response : null;
+  const contextCurrent = Boolean(result);
 
   const load = useCallback(async () => {
     if (!valid) return;
@@ -249,6 +251,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
       const body = (await res.json()) as PriceCheckResult & { error?: string };
+      if (controller.current !== ctl || ctl.signal.aborted) return;
       if (!res.ok) throw new Error(body.error ?? `Price check failed (HTTP ${res.status}).`);
       // Flash rows whose price moved since the last poll of the same request.
       const moves: Record<string, "up" | "down"> = {};
@@ -263,7 +266,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       setFetchedAt(Date.now());
       window.history.replaceState(null, "", `${basePath}?${q}`);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") {
+      if (!ctl.signal.aborted && controller.current === ctl && (e as Error).name !== "AbortError") {
         setError((e as Error).message);
         // A failure waits out the same cycle as a success — never a tight retry loop.
         setFetchedAt(Date.now());
@@ -281,6 +284,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       return;
     }
     previous.current = {};
+    controller.current?.abort();
     setPicked(null);
     const t = window.setTimeout(load, 380);
     return () => window.clearTimeout(t);
@@ -302,14 +306,15 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return () => window.clearTimeout(t);
   }, [flashes]);
 
-  const contextCurrent = result?.input.context && JSON.stringify(result.input.context) === JSON.stringify(context);
-  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported";
+  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now);
   const quotes = result?.rows.filter((r) => r.basis !== "market_estimate" && visible(r)) ?? [];
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
   const estimates = result?.rows.filter((r) => r.basis === "market_estimate" && visible(r)) ?? [];
   const excluded = result?.rows.filter((r) => r.profileAssessment?.status === "not_supported") ?? [];
   const best = quotes.find((r) => r.shortfall === 0) ?? null;
-  const selected = result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
+  const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => row.providerSlug.replace(/^market:/, "") === candidate.providerSlug));
+  const selectedCandidate = picked && !quotes.some((row) => row.providerSlug === picked) ? candidates.find((candidate) => candidate.providerSlug === picked) ?? null : null;
+  const selected = selectedCandidate ? null : result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
   const receive = useTween(selected?.recipientAmount ?? null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
@@ -321,41 +326,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     setTo(from);
   };
 
-  const cta = (() => {
-    if (!valid) return { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true as const };
-    if (!selected) return { label: loading ? "Fetching quotes…" : "No quote for this pair", disabled: true as const };
-    if (selected.basis === "published" && !ACCOUNT_QUOTE_SLUGS.has(selected.providerSlug) && selected.source.url) {
-      return { label: `View ${selected.providerName} published pricing`, href: selected.source.url, external: true as const };
-    }
-    if (context.direction === "receive" && selected.side === "payer") {
-      // Nobody opens an account with their sender's service: show how the sender pays.
-      const page = selected.profileAssessment?.sources[0]?.url ?? selected.source.url;
-      if (page) return { label: `How your sender pays with ${selected.providerName}`, href: page, external: true as const };
-    }
-    if (!contextCurrent || context.direction === "receive" || selected.profileAssessment?.status !== "documented" || !selected.profileAssessment.priceApplicable) {
-      return { label: `Account options for ${selected.providerName}`, href: providerConnectionPath(selected.providerSlug, mode) };
-    }
-    if (mode === "public") {
-      return { label: "Compare provider features", href: "#provider-features" };
-    }
-    if (selected.basis === "market_estimate") return { label: `Connection options for ${selected.providerName}`, href: providerConnectionPath(selected.providerSlug) };
-    const sendWith = (row: PriceRow, extra?: { secondary: { label: string; href: string; external?: boolean } }) => {
-      const params = new URLSearchParams({ from, to, amount: String(amount), provider: row.providerSlug });
-      return connected.includes(row.providerSlug)
-        ? BENEFICIARIES_AVAILABLE ? { label: `Send with ${row.providerName}`, href: `/app/payments/new?${params}`, ...extra } : { label: "Preview route", href: "/app/routing?tab=preview", ...extra }
-        : { label: `Connect ${row.providerName} for account pricing`, href: providerConnectionPath(row.providerSlug), secondary: extra?.secondary ?? { label: "Preview routing", href: "/app/routing?tab=preview" } };
-    };
-    if (executable.includes(selected.providerSlug)) return sendWith(selected);
-    // The best price may sit with a provider that has no API: say so, and offer the best one Railor can send through.
-    const alternative = quotes.find((r) => executable.includes(r.providerSlug));
-    const sourceKind = selected.basis === "live_public" ? "public pricing" : "published pricing";
-    const openIt = selected.source.url ? { label: `or view ${selected.providerName}'s ${sourceKind} ↗`, href: selected.source.url, external: true } : undefined;
-    if (alternative) {
-      const primary = sendWith(alternative, openIt ? { secondary: openIt } : undefined);
-      return { ...primary, label: `${primary.label} · ${money(alternative.recipientAmount)} ${to}` };
-    }
-    return openIt ? { label: `View ${selected.providerName}'s ${sourceKind}`, href: openIt.href, external: true } : { label: `${selected.providerName} isn't integrated for execution yet`, disabled: true as const };
-  })();
+  const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = {
+    label: !valid ? (from === to ? "Pick two different currencies" : "Enter an amount") : selected || selectedCandidate ? `Connect ${selected?.providerName ?? selectedCandidate?.providerName} · Coming soon` : loading ? "Fetching prices…" : "Select a provider",
+    disabled: true,
+  };
 
   const reducedMotion = useReducedMotion();
   return (
@@ -445,9 +419,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[12.5px] font-medium text-white/60">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
-                {selected ? (
+                {selected || selectedCandidate ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-white/55">
-                    {selected.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected.providerSlug} name={selected.providerName} src={selected.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected.providerName}</span>
+                    {selected?.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected?.providerSlug ?? selectedCandidate!.providerSlug} name={selected?.providerName ?? selectedCandidate!.providerName} src={selected?.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected?.providerName ?? selectedCandidate?.providerName}</span>
                   </span>
                 ) : null}
               </div>
@@ -498,12 +472,12 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               rel={"external" in cta && cta.external ? "noreferrer noopener" : undefined}
               className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-orange)] px-5 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_30px_-12px_rgba(233,90,44,.8)] transition hover:-translate-y-px hover:bg-[#ff6a3d]"
             >
-              {cta.label}
+              <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
               {"external" in cta && cta.external ? <ArrowUpRight size={16} /> : null}
             </Link>
           ) : (
             <button type="button" disabled className="mt-1 w-full rounded-full bg-white/[0.08] px-5 py-3.5 text-[15px] font-semibold text-white/45">
-              {cta.label}
+              <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
             </button>
           )}
           {"secondary" in cta && cta.secondary ? (
@@ -525,9 +499,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
         </div>
       </section>
       <PriceProviderBrowser
-        rows={quotes} selected={selected} best={best} onSelect={setPicked}
+        rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
-        action={{ label: cta.label, href: "href" in cta ? cta.href : undefined, external: "external" in cta ? cta.external : undefined }}
+        action={{ ...cta, disabled: true }}
         connection={selected && selected.side !== "payer" ? <ConnectionLink slug={selected.providerSlug} name={selected.providerName} mode={mode} connected={connected.includes(connectionProviderSlug(selected.providerSlug))} light /> : null}
         market={estimates.length ? <div className="product-dark p-3">{estimates.length ? (
             <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-white/10 px-1.5 py-1">
@@ -543,46 +517,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </details>
           ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
         history={result?.historicalPricing ? <div className="product-dark p-3">{result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}</div> : <p className={styles.contextEmpty}>No historical survey was returned for this pair.</p>}
-        coverage={result?.marketCoverage?.matched ? <div className="product-dark mt-3 p-3">{result?.marketCoverage?.matched ? (
-            <details open className="group rounded-2xl border border-white/10 px-1.5 py-1">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
-                <span>Business provider coverage · {result.marketCoverage.matched}</span>
-                <span className="text-right text-[11px] font-normal text-white/40">
-                  {result.marketCoverage.matched} of {result.marketCoverage.totalTracked} tracked payment providers list {to}
-                </span>
-              </summary>
-              <p className="px-2 pb-2 text-[11px] leading-snug text-white/45">
-                Captured fee statements are shown where available. Currency coverage does not confirm this exact {from} → {to} route or your account’s pricing.
-              </p>
-              <ul className="grid grid-cols-1 gap-1 pb-1">
-                {result.marketCoverage.providers.map((provider) => (
-                  <li key={provider.providerSlug} className="min-w-0 rounded-xl border border-white/10 p-3">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={24} />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[12.5px] font-semibold text-white">{provider.providerName}</span>
-                      <span className="truncate text-[10.5px] text-white/45">{provider.category}</span>
-                    </span>
-                    <span className={cn("shrink-0 rounded-md px-1.5 py-px text-[9.5px] font-bold uppercase tracking-wide", provider.currencyMatch === "both" ? "bg-emerald-400/15 text-emerald-300" : "bg-white/[0.08] text-white/55")}>
-                      {provider.currencyMatch === "both" ? `${from} + ${to}` : to}
-                    </span>
-                    {provider.websiteUrl ? (
-                      <a href={provider.websiteUrl} target="_blank" rel="noreferrer noopener" aria-label={`Open ${provider.providerName}`} className="grid size-7 shrink-0 place-items-center rounded-full text-white/40 transition hover:bg-white/[0.08] hover:text-white">
-                        <ArrowUpRight size={13} />
-                      </a>
-                    ) : null}
-                    {result.unavailable.some(entry => entry.providerSlug === provider.providerSlug && entry.connectable) || connected.includes(provider.providerSlug) ? <ConnectionLink slug={provider.providerSlug} name={provider.providerName} mode={mode} connected={connected.includes(provider.providerSlug)} /> : null}
-                    </div>
-                    {provider.pricingStatus ? <div className="mt-2 text-[11px] leading-relaxed"><p className="font-semibold text-white/75">{provider.pricingStatus.label}</p><p className="text-white/45">{provider.pricingStatus.reason}</p></div> : null}
-                    {provider.feeEvidence?.length ? <details className="mt-2 text-[11px]"><summary className="cursor-pointer font-semibold text-[#ffad8c]">View captured fees ({provider.feeEvidence.length})</summary><ul className="mt-2 space-y-3">{provider.feeEvidence.map((fee, index) => <li key={index} className="border-t border-white/10 pt-2"><p className="text-white/65">{fee.summary}</p><p className="mt-1 flex flex-wrap gap-2 text-[10px] text-white/40"><span>{fee.product}{fee.observedAt ? ` · Recorded ${fee.observedAt.slice(0, 10)}` : " · Collection date unavailable"}</span>{fee.sourceUrl ? <a href={fee.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">Source ↗</a> : null}</p></li>)}</ul><p className="mt-2 text-white/40">Provider fee statements; applicability to this amount and account is unconfirmed.</p></details> : null}
-                  </li>
-                ))}
-              </ul>
-              <Link href={mode === "app" ? "/app/providers" : "/providers?view=infrastructure"} className="mx-2 mb-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#ffad8c] hover:text-white">
-                Browse the full {result.marketCoverage.totalTracked}-provider payment market <ArrowUpRight size={12} />
-              </Link>
-            </details>
-          ) : null}</div> : <p className={styles.contextEmpty}>No broader currency coverage was returned for this setup.</p>}
+        coverage={null}
         webEvidence={selected?.webChecks?.length ? <div className="product-dark mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
       />
       <div className={styles.moreContext}>
@@ -662,11 +597,11 @@ function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; c
 
 function ConnectionLink({ slug, name, mode, connected, light = false }: { slug: string; name: string; mode: "app" | "public"; connected: boolean; light?: boolean }) {
   if (!ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
-  return <Link href={providerConnectionPath(slug, mode)} prefetch={false} aria-label={`${connected ? "Manage" : "Connect"} ${name}`}
-    title={`Open ${name}'s account connection options`}
+  return <button type="button" disabled aria-label={`Connect ${name} · Coming soon`}
+    title="Account connections and execution are coming soon. Existing quote integrations remain available."
     className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]"}>
-    {connected ? "Manage" : "Connect"}
-  </Link>;
+    <LockKeyhole size={11} className="mr-1 inline" />Coming soon
+  </button>;
 }
 
 function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row: PriceRow; best: boolean; selected: boolean; flash?: "up" | "down"; onPick: () => void; mode: "app" | "public"; connected: boolean }) {

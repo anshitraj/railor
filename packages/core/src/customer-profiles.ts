@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { indiaReceivingAssessment } from "./public-pricing/receiving-products.js";
 
 /** Account holder, not the overseas payer. Freelance income is commercial. */
 export const CustomerContext = z.object({
@@ -69,6 +70,8 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     };
   }
   // Export-collection evidence cannot establish eligibility for a personal account.
+  const receivingProduct = indiaReceivingAssessment(provider, context, request);
+  if (receivingProduct) return receivingProduct;
   if (context.profile === "personal") return intoIndia ? personalIntoIndia(provider, slug, request, unknown) : unknown;
   if (!["wise", "skydo"].includes(provider) || context.country !== "IN" || context.direction !== "receive") return unknown;
   const individualName = context.profile === "freelancer";

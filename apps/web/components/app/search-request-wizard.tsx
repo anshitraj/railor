@@ -11,6 +11,7 @@ import { CurrencyLogo } from "../marketing/currency-logo";
 import { NetworkLogo } from "../marketing/network-logo";
 import { missingIntentFields, type IntentDraft, type IntentOptions } from "./intent-builder";
 import styles from "./search-request-wizard.module.css";
+import { RouteOptionPicker } from "./route-option-picker";
 
 const steps = ["Sender", "Funding", "Recipient", "Review"];
 const endpoints = [
@@ -46,14 +47,8 @@ function OptionPicker({ label, options, value, onChange, kind, suggested = [] }:
     : kind === "currency" ? (currencyFlagCode(code) ? <Flag code={currencyFlagCode(code)!} size={19} /> : <CircleDollarSign size={21} />)
       : kind === "network" ? <NetworkLogo slug={code} size={24} /> : <CurrencyLogo symbol={code} size={24} />;
   return <div className={styles.field}>
-    <label htmlFor={id}>{label}</label><div className={styles.selectWrap}>
-      {value && <span className={styles.selectMark}>{mark(value)}</span>}
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} data-mark={Boolean(value)}>
-        <option value="">{kind === "network" ? "Any network" : `Choose ${kind}`}</option>
-        {value && !options.some((option) => option.value === value) && <option value={value}>{value}</option>}
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select><ChevronDown size={15} aria-hidden />
-    </div>
+    <span id={id}>{label}</span>
+    <RouteOptionPicker label={label} options={options} value={value} onChange={onChange} placeholder={kind === "network" ? "Any network" : `Choose ${kind}`} renderMark={mark} />
     {suggested.length > 0 && <div className={styles.quickChoices} aria-label={`${label} shortcuts`}>
       {suggested.filter((code) => options.some((option) => option.value === code)).map((code) => <button key={code} type="button" aria-pressed={value === code} onClick={() => onChange(code)}>
         {mark(code)}{kind === "country" ? options.find((option) => option.value === code)?.label : code}

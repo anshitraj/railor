@@ -2,6 +2,8 @@ import { wisePublicQuote } from "./payments/adapters/wise.js";
 import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
+import { skydoPublicFx } from "./public-pricing/skydo.js";
+import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
@@ -43,6 +45,7 @@ export interface PriceRow {
   feeAmount: number | null;
   feeCurrency: string | null;
   rate: number | null;
+  rateSource?: { label: string; url: string; observedAt: string };
   /** 1 − recipient ÷ (amount × reference rate): everything the route costs, fee and FX together. */
   totalCostPct: number | null;
   /** Complete rows can be ranked; partial ones are missing a cost component. */
@@ -100,22 +103,27 @@ export interface PriceCheckResult {
 }
 
 export interface MarketCoverageProvider {
+  /** Explicit directional product evidence; never inferred from a bag of currencies. */
+  routeMatch?: boolean;
+  discoverySources?: Array<{ label: string; url: string }>;
   providerSlug: string;
   providerName: string;
   websiteUrl: string | null;
   category: string;
-  currencyMatch: "both" | "destination";
+  currencyMatch: "both" | "destination" | "unverified";
   lastVerified: string | null;
   pricingStatus?: { label: string; reason: string };
   feeEvidence?: Array<{ summary: string; product: string; sourceUrl: string | null; observedAt: string | null }>;
 }
 
 export interface MarketCoverage {
-  /** Money-movement providers in the full maintained provider universe. */
+  /** Full maintained provider directory; some entries are infrastructure without a verified quote. */
   totalTracked: number;
   /** Providers whose catalogued currencies include the selected destination. */
   matched: number;
   providers: MarketCoverageProvider[];
+  /** Full catalog for discovery/search, including providers whose route is not confirmed. */
+  allProviders?: MarketCoverageProvider[];
 }
 
 export interface PlatformQuoteCheck {
@@ -147,19 +155,75 @@ interface PublishedSchedule {
   /** Null when the schedule applies; otherwise why it doesn't. */
   appliesTo(input: PriceCheckInput): string | null;
   /** Fee in USD or in the source currency, as the provider publishes it. */
-  fee(input: PriceCheckInput, amountUsd: number | null): { amount: number; currency: string; parts: string[] } | null;
+  fee(input: PriceCheckInput, amountUsd: number | null, referenceRate?: number | null): { amount: number; currency: string; parts: string[] } | null;
   notes: string[];
   /** Some published pages explicitly exclude partner/banking charges. */
   partial?: boolean;
 }
 
 const intoIndia = (input: PriceCheckInput) =>
-  input.destinationCurrency.toUpperCase() === "INR" && input.sourceCurrency.toUpperCase() !== "INR"
+  input.destinationCurrency.toUpperCase() === "INR" && input.sourceCurrency.toUpperCase() !== "INR" && (!input.destinationCountry || input.destinationCountry === "IN")
     ? null
     : "Published pricing covers money arriving in India (INR) only.";
 
+const commercialIntoIndia = (input: PriceCheckInput) => input.context?.country === "IN" && input.context.direction === "receive" && input.context.profile !== "personal" && input.context.purpose === "services" ? intoIndia(input) : "This published model requires an Indian commercial service-export recipient.";
+
 /** Read from each provider's own site on `observedAt`. Re-check before relying on them. */
 export const PUBLISHED_PRICING: PublishedSchedule[] = [
+  {
+    slug: "refrens", name: "Refrens · bank transfer", sourceUrl: "https://www.refrens.com/receive-international-payments-india", observedAt: "2026-10-30",
+    appliesTo: input => input.sourceCurrency === "USD" ? commercialIntoIndia(input) : "This USD model uses the published USD 60 cap; other currency caps need confirmation.",
+    fee: input => ({ amount: round(Math.min(input.amount * .015, 60)), currency: "USD", parts: ["1.5% standard bank/ACH/wire fee capped at USD 60; taxes included"] }),
+    partial: true,
+    notes: ["Published bank-transfer model only. Card payments have different fees. The provider describes additional FX conversion loss without an amount-specific rate; the displayed receipt is a reference before that unknown FX cost.", "Negotiated lower fees and current payment-product onboarding must be confirmed."],
+  },
+  {
+    slug: "salt", name: "Salt · inward remittance", sourceUrl: "https://www.salt.pe/international-payments", observedAt: "2026-10-30", appliesTo: commercialIntoIndia,
+    fee: input => ({ amount: round(input.amount * .0175), currency: input.sourceCurrency, parts: ["1.75% published fee including GST"] }),
+    partial: true,
+    notes: ["The public product page advertises no FX markup. Its calculator currently exposes no usable rate; current product availability and transaction terms have not been independently confirmed.", "Shown as a conditional published reference at the common FX rate, not a live quote or a complete-price recommendation."],
+  },
+  {
+    slug: "dashx", name: "DashX", sourceUrl: "https://dashx.xyz/tools/currency-converter", observedAt: "2026-10-29", appliesTo: commercialIntoIndia,
+    fee: input => ({ amount: round(input.amount * .003), currency: input.sourceCurrency, parts: ["0.30% published platform fee; tax inclusion unconfirmed"] }),
+    partial: true,
+    notes: ["The provider's public currency converter and official llms.txt publish a flat 0.30% fee and zero FX markup. This reference uses the common FX rate; it is not a locked DashX account quote.", "The homepage calculator's rate is not ingested as a live quote because it supplies no verified rate timestamp or complete tax breakdown.", "Taxes and account/partner conditions must be confirmed; this may be cheaper but cannot be certified as the lowest all-in price."],
+  },
+  {
+    slug: "mulya", name: "Mulya",
+    sourceUrl: "https://www.mulya.co/", observedAt: "2026-10-29", appliesTo: commercialIntoIndia,
+    fee: input => ({ amount: round(input.amount * .01), currency: input.sourceCurrency, parts: ["1% all-inclusive published fee; provider states no additional GST"] }),
+    notes: ["The provider advertises zero FX markup and free remittance documents. Modeled at the common reference rate, not a locked account quote.", "Confirm the supported collection method, payer country, account eligibility and settlement amount before receiving funds."],
+  },
+  {
+    slug: "infinity", name: "Infinity",
+    sourceUrl: "https://www.infinityapp.in/", observedAt: "2026-10-29",
+    appliesTo: commercialIntoIndia,
+    fee: (input, amountUsd) => amountUsd !== null && amountUsd <= 50_000 ? { amount: round(input.amount * .005), currency: input.sourceCurrency, parts: ["0.5% all-inclusive standard fee; GST included as stated by the provider"] } : null,
+    notes: ["Published standard bank-collection estimate at Railor's reference FX rate, not a locked Infinity quote.", "Provider states zero FX markup. Above USD 50,000, request custom pricing. Account, payer and transaction eligibility still apply.", "GST inclusion source: https://www.infinityapp.in/blog/international-payments-india-startup-founders"],
+  },
+  {
+    slug: "payglocal", name: "PayGlocal · bank collections",
+    sourceUrl: "https://payglocal.in/compare/payglocal-vs-skydo", observedAt: "2026-10-29",
+    appliesTo: commercialIntoIndia,
+    fee: (_input, amountUsd) => amountUsd === null ? null : { amount: round((amountUsd <= 2000 ? 10 : amountUsd <= 7500 ? 18 : amountUsd * .0025) * 1.18), currency: "USD", parts: [amountUsd <= 2000 ? "USD 10 through USD 2,000" : amountUsd <= 7500 ? "USD 18 through USD 7,500" : "0.25% above USD 7,500", "18% GST on the fee"] },
+    notes: ["Bank-transfer collection product, not card checkout. Published zero FX markup; illustrated at the common reference rate, not PayGlocal's executable quote.", "The headline 'from 0.25%' is not applied to small invoices: the published flat-fee slabs apply first."],
+  },
+  {
+    slug: "razorpay", name: "Razorpay · MoneySaver bank transfer",
+    sourceUrl: "https://razorpay.com/accept-international-payments/money-saver/", observedAt: "2026-10-29",
+    appliesTo: commercialIntoIndia,
+    fee: (input, _amountUsd, referenceRate) => referenceRate ? { amount: round((input.amount * referenceRate < 100_000 ? 1000 : input.amount * referenceRate * .01) * 1.18), currency: "INR", parts: ["INR 1,000 flat below INR 100,000; otherwise 1%", "18% GST on the fee"] } : null,
+    notes: ["MoneySaver's standard bank-transfer product, not Razorpay card processing or its 2% payment-link product.", "Minimum fee is in INR and is compared to the invoice's INR equivalent. Expired promotional fee waivers are excluded. Zero published FX markup is illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "winvesta", name: "Winvesta · standard collection plan",
+    sourceUrl: "https://www.winvesta.in/faqs/global-collections-account/what-are-the-charges-for-the-global-collections-account", observedAt: "2026-10-29",
+    appliesTo: input => input.sourceCurrency === "USD" ? commercialIntoIndia(input) : "This modeled standard plan currently covers USD collections only; other currency fixed fees differ.",
+    fee: (_input, amountUsd) => amountUsd !== null && amountUsd <= 2000 ? { amount: round((3 + amountUsd * .0099) * 1.18), currency: "USD", parts: ["USD 3 + 0.99%", "Assumes non-JPMC account: 18% GST"] } : null,
+    partial: true,
+    notes: ["Assumes standard pricing and total monthly USD receipts no higher than USD 2,000. Account type and monthly volume are unknown; higher tiers require custom pricing.", "JPMC accounts have different GST treatment. This is a conditional reference, not a complete account quote."],
+  },
   {
     slug: "xflow", name: "Xflow · Starter plan",
     sourceUrl: "https://www.xflowpay.com/pricing", observedAt: "2026-10-29",
@@ -186,18 +250,18 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
   {
     slug: "payzoll",
     name: "PayZoll",
-    sourceUrl: "https://payzoll.finance/payzoll-vs-skydo",
-    observedAt: "2026-10-07",
+    sourceUrl: "https://payzoll.finance/",
+    observedAt: "2026-10-29",
     appliesTo: intoIndia,
-    fee: (_input, amountUsd) => amountUsd === null ? null : ({ amount: amountUsd < 1000 ? 10 : round(amountUsd * 0.01), currency: "USD", parts: [amountUsd < 1000 ? "$10 below USD 1,000" : "1% from USD 1,000"] }),
+    fee: (input) => ({ amount: round(input.amount * .01), currency: input.sourceCurrency, parts: ["1% public headline fee; minimum, taxes and partner charges unconfirmed"] }),
     partial: true,
-    notes: ["Advertises 0% FX markup. Applicable banking, partner, conversion or corridor-specific charges may apply.", "Published schedule only — Railor has no PayZoll quote integration yet."],
+    notes: ["Official homepage advertises 1% and zero FX markup. The previously assumed USD 10 floor is not confirmed by the current page and is not applied.", "Tax inclusion, minimums and banking/partner charges are unconfirmed. The reference receive amount is before any additional charges and cannot be certified as the lowest total.", "Published fee reference only — no PayZoll account quote integration is used."],
   },
   {
     slug: "skydo",
     name: "Skydo",
     sourceUrl: "https://www.skydo.com/",
-    observedAt: "2026-10-07",
+    observedAt: "2026-10-29",
     appliesTo: intoIndia,
     fee: (_input, amountUsd) => {
       if (amountUsd === null) return null;
@@ -314,7 +378,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}:${input.destinationCountry ?? ""}`;
-  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic] = await Promise.all([
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
@@ -325,6 +389,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
           .catch(() => null),
     deps.platformQuotes ? deps.platformQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`revolut:GB:${pair}`, 60_000, () => revolutPublicReference(input, fetcher, now)).catch(() => null),
+    cache(`skydo-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => skydoPublicFx(input, fetcher, now)).catch(() => null),
+    cache(`mulya-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => mulyaPublicFx(input, fetcher, now)).catch(() => null),
   ]);
 
   for (const c of connected) {
@@ -343,10 +409,10 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     if (Number.isFinite(rate) && rate > 0) reference = { rate, source: "Wise's public rate (Wise quotes the mid-market rate)", observedAt: wisePublic.observedAt };
     if (!connectedSlugs.has("wise")) {
       rows.push(
-        fromQuote(wisePublic, "Wise", "live_public", {
+        fromQuote(input.sourceCurrency.toUpperCase() === "AED" ? { ...wisePublic, costPartial: true, costNote: "AED funding eligibility and complete transfer costs require confirmation." } : wisePublic, "Wise", "live_public", {
           delivery: wisePublic.deliveryLabel ?? null,
           source: { label: "Wise public quote", url: "https://wise.com/" },
-          notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`],
+          notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`, ...(input.sourceCurrency.toUpperCase() === "AED" ? ["Wise's AED funding guide limits sending AED to money already held in a Wise balance. This public reference does not confirm a UAE bank-funded transfer or its complete cost. https://wise.com/help/articles/2932360/guide-to-aed-transfers"] : [])],
         }),
       );
     }
@@ -359,17 +425,22 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     if (connectedSlugs.has(schedule.slug)) continue;
     const reason = schedule.appliesTo(input);
     if (reason) continue;
-    const fee = schedule.fee(input, amountUsd);
+    const rawFx = schedule.slug === "skydo" ? skydoFx : schedule.slug === "mulya" ? mulyaFx ? { ...mulyaFx, usdRate: usdRate ?? null } : null : null;
+    // A wildly inconsistent public widget must not manufacture a winning price.
+    const ownFx = rawFx && (!reference || Math.abs(rawFx.rate / reference.rate - 1) <= .05) ? rawFx : null;
+    const scheduleRate = ownFx?.rate ?? reference?.rate ?? null;
+    const scheduleUsdRate = ownFx?.usdRate ?? usdRate;
+    const fee = schedule.fee(input, scheduleUsdRate ? input.amount * scheduleUsdRate : null, scheduleRate);
     if (!fee) {
-      unavailable.push({ providerSlug: schedule.slug, providerName: schedule.name, reason: "Its fee slabs are in USD and no USD reference rate was available." });
+      unavailable.push({ providerSlug: schedule.slug, providerName: schedule.name, reason: "This amount requires a custom plan or a reference rate is missing. Check the provider's published plan and account terms." });
       continue;
     }
-    const feeInSource = fee.currency === input.sourceCurrency ? fee.amount : usdRate ? fee.amount / usdRate : null;
+    const feeInSource = fee.currency === input.sourceCurrency ? fee.amount : fee.currency === input.destinationCurrency && scheduleRate ? fee.amount / scheduleRate : fee.currency === "USD" && scheduleUsdRate ? fee.amount / scheduleUsdRate : null;
     if (feeInSource !== null && feeInSource >= input.amount) {
       unavailable.push({ providerSlug: schedule.slug, providerName: schedule.name, reason: "The published fee meets or exceeds this amount. Confirm the provider's minimum transaction size." });
       continue;
     }
-    const recipient = reference && feeInSource !== null ? round((input.amount - feeInSource) * reference.rate) : null;
+    const recipient = scheduleRate && feeInSource !== null ? round((input.amount - feeInSource) * scheduleRate) : null;
     rows.push({
       providerSlug: schedule.slug,
       providerName: schedule.name,
@@ -377,13 +448,14 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       recipientAmount: recipient,
       feeAmount: fee.amount,
       feeCurrency: fee.currency,
-      rate: reference?.rate ?? null,
+      rate: scheduleRate,
+      ...(ownFx ? { rateSource: { label: `${schedule.slug === "skydo" ? "Skydo" : "Mulya"} public calculator FX feed`, url: ownFx.source, observedAt: ownFx.observedAt } } : {}),
       totalCostPct: null,
       partial: schedule.partial ?? false,
       delivery: null,
       observedAt: new Date(`${schedule.observedAt}T00:00:00Z`).toISOString(),
       source: { label: `${schedule.name} pricing page`, url: schedule.sourceUrl },
-      notes: [`Fee: ${fee.parts.join(", ")}.`, reference ? "Illustrated at the reference rate; see the provider's pricing conditions below." : "No reference rate, so the amount received can't be computed.", ...schedule.notes],
+      notes: [`Fee: ${fee.parts.join(", ")}.`, ownFx ? `Uses ${schedule.slug === "skydo" ? "Skydo's timestamped" : "Mulya's retrieved"} public calculator FX observation from ${ownFx.observedAt}; this is indicative, not a locked account quote.${schedule.slug === "mulya" ? " Mulya's endpoint supplies no rate-publication timestamp; the date shown is when Railor retrieved it." : ""}` : reference ? "Illustrated at the common reference rate; the provider's own conversion rate may differ." : "No usable FX rate, so the amount received can't be computed.", ...schedule.notes],
     });
   }
 
