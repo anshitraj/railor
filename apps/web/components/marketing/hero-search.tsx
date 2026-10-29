@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { postSearch } from "../../lib/search-client";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -15,9 +15,10 @@ import {
   type Verdict,
 } from "@railor/ui";
 import { QueryConfirmation } from "./query-confirmation";
+import { LockedResults, type LockedResult } from "./locked-results";
 import { ProviderLogo } from "../app/provider-logo";
 
-interface SearchResponse {
+interface SearchBase {
   interpretation: {
     input: string;
     query: Record<string, string | number | undefined>;
@@ -31,26 +32,33 @@ interface SearchResponse {
     missing: string[];
   };
   providersChecked: number;
-  counts: Record<Verdict, number>;
-  results: Array<{
-    provider: { slug: string; name: string; category: string; isDemo?: boolean };
-    eligibility: Verdict;
-    confidence: number;
-    lastVerifiedAt: string | null;
-    reasons: Array<{ code: string; message: string; alsoTrue: string[]; wouldChange: string[] }>;
-    facts: Record<string, string | undefined>;
-    evidence: Array<{
-      sourceUrl: string;
-      sourceTitle: string;
-      sourceType: string;
-      retrievedAt: string;
-      lastVerifiedAt: string;
-      confidence: number;
-      rawExcerpt?: string;
-    }>;
-  }>;
-  authenticated: boolean;
 }
+
+interface FullResult {
+  provider: { slug: string; name: string; category: string; isDemo?: boolean };
+  eligibility: Verdict;
+  confidence: number;
+  lastVerifiedAt: string | null;
+  reasons: Array<{ code: string; message: string; alsoTrue: string[]; wouldChange: string[] }>;
+  facts: Record<string, string | undefined>;
+  evidence: Array<{
+    sourceUrl: string;
+    sourceTitle: string;
+    sourceType: string;
+    retrievedAt: string;
+    lastVerifiedAt: string;
+    confidence: number;
+    rawExcerpt?: string;
+  }>;
+}
+
+/**
+ * Logged in: the whole answer. Not logged in: who ranked first, locked, and no verdicts or counts at all
+ * (app/api/search/route.ts withholds them, so there is nothing here to read past the lock).
+ */
+type SearchResponse =
+  | (SearchBase & { authenticated: true; counts: Record<Verdict, number>; results: FullResult[] })
+  | (SearchBase & { authenticated: false; counts: null; results: LockedResult[] });
 
 const PLACEHOLDER = "Indian company → USDC on Base → AED business payout in UAE";
 
@@ -68,6 +76,13 @@ const PIPELINE = [
   "Comparing capabilities",
 ];
 
+/**
+ * A search that is slow is said to be slow, and one that is not answering is given up on, with a way to try
+ * again: "Checking…" never stays on the page for good.
+ */
+const SLOW_AFTER_MS = 6_000;
+const GIVE_UP_AFTER_MS = 25_000;
+
 export function HeroSearch({
   optionsByField,
   fieldLabels,
@@ -80,10 +95,15 @@ export function HeroSearch({
   const [stage, setStage] = useState(-1);
   const [data, setData] = useState<SearchResponse | null>(null);
   const [pending, setPending] = useState(false);
+  const [slow, setSlow] = useState(false);
   const [needsInput, setNeedsInput] = useState(false);
   const [searchError, setSearchError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const runIdRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  // Leaving the page ends a search still on its way.
+  useEffect(() => () => controllerRef.current?.abort(), []);
 
   /**
    * The pipeline states are tied to the real request: if the answer lands
@@ -96,15 +116,24 @@ export function HeroSearch({
     // stale run's own timer and eventual response must not touch state
     // anymore — only the most recent run is allowed to.
     const runId = ++runIdRef.current;
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setPending(true);
+    setSlow(false);
+    setSearchError("");
     setStage(0);
     setData(null);
     const ticker = window.setInterval(() => {
       if (runIdRef.current !== runId) return;
       setStage((s) => (s < PIPELINE.length - 1 ? s + 1 : s));
     }, 160);
+    const slowTimer = window.setTimeout(() => {
+      if (runIdRef.current === runId) setSlow(true);
+    }, SLOW_AFTER_MS);
+    const giveUp = window.setTimeout(() => controller.abort(), GIVE_UP_AFTER_MS);
     try {
-      const result = await postSearch<SearchResponse>({ input: text, query: overrides });
+      const result = await postSearch<SearchResponse>({ input: text, query: overrides }, { signal: controller.signal });
       if (runIdRef.current !== runId) return;
       if (result.ok) {
         setSearchError("");
@@ -115,8 +144,11 @@ export function HeroSearch({
       setStage(-1);
     } finally {
       window.clearInterval(ticker);
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(giveUp);
       if (runIdRef.current === runId) {
         setStage(-1);
+        setSlow(false);
         setPending(false);
       }
     }
@@ -171,9 +203,14 @@ export function HeroSearch({
       </form>
 
       {searchError ? (
-        <p role="alert" className="text-[13px] font-medium text-[var(--color-bad)]">
-          {searchError}
-        </p>
+        <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-[var(--color-bad)]">
+          <p>{searchError}</p>
+          {input.trim() ? (
+            <button type="button" onClick={() => void run(input)} className="underline underline-offset-2 hover:no-underline">
+              Try again
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       {needsInput ? (
@@ -232,6 +269,11 @@ export function HeroSearch({
               {i < stage ? <span className="text-[var(--color-ok)]">✓</span> : null}
             </li>
           ))}
+          {slow ? (
+            <li role="status" className="mt-1 border-t border-[var(--color-line)] pt-2 text-[12.5px] text-[var(--color-muted)]">
+              Still checking — the provider index is answering slowly right now.
+            </li>
+          ) : null}
         </motion.ul>
       ) : null}
 
@@ -249,64 +291,75 @@ export function HeroSearch({
             onChange={editToken}
           />
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-[var(--color-line)] py-3">
-            <Metric value={data.providersChecked} label="providers checked" />
-            <Metric value={data.counts.supported} label="appear compatible" tone="ok" />
-            <Metric
-              value={data.counts.additional_requirements}
-              label="need additional KYB"
-              tone="warn"
-            />
-            <Metric value={data.counts.unavailable} label="unavailable" tone="bad" />
-            {data.counts.unknown ? (
-              <Metric value={data.counts.unknown} label="insufficient data" />
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {data.results.map((result) => (
-              <ResultRow
-                key={result.provider.slug}
-                mark={<ProviderLogo slug={result.provider.slug} name={result.provider.name} size={36} />}
-                name={result.provider.name}
-                category={result.provider.category}
-                verdict={result.eligibility}
-                confidence={result.confidence}
-                lastVerifiedAt={result.lastVerifiedAt}
-                blurred={!data.authenticated}
-                onUnlock={continueToFull}
-                isDemo={result.provider.isDemo}
-                facts={Object.entries(result.facts)
-                  .filter(([, v]) => Boolean(v))
-                  .slice(0, 3)
-                  .map(([k, v]) => ({ label: prettyFact(k), value: String(v) }))}
-              >
-                <WhyPanel
-                  providerName={result.provider.name}
-                  verdict={result.eligibility}
-                  reasons={result.reasons}
-                  evidence={result.evidence}
-                  lastVerifiedAt={result.lastVerifiedAt}
+          {data.authenticated ? (
+            <>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-[var(--color-line)] py-3">
+                <Metric value={data.providersChecked} label="providers checked" />
+                <Metric value={data.counts.supported} label="appear compatible" tone="ok" />
+                <Metric
+                  value={data.counts.additional_requirements}
+                  label="need additional KYB"
+                  tone="warn"
                 />
-              </ResultRow>
-            ))}
-          </div>
-
-          {!data.authenticated ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-[14px] font-medium text-[var(--color-purple-deep)]">
-                  {data.counts.supported + data.counts.additional_requirements} providers could work
-                  — see fees, limits, requirements and sources.
-                </p>
-                <p className="text-[12.5px] text-[var(--color-ink-soft)]">
-                  Your question carries over. No forms before you see the answer.
-                </p>
+                <Metric value={data.counts.unavailable} label="unavailable" tone="bad" />
+                {data.counts.unknown ? (
+                  <Metric value={data.counts.unknown} label="insufficient data" />
+                ) : null}
               </div>
-              <Button onClick={continueToFull}>View full comparison</Button>
-            </div>
+
+              <div className="flex flex-col gap-2">
+                {data.results.map((result) => (
+                  <ResultRow
+                    key={result.provider.slug}
+                    mark={<ProviderLogo slug={result.provider.slug} name={result.provider.name} size={36} />}
+                    name={result.provider.name}
+                    category={result.provider.category}
+                    verdict={result.eligibility}
+                    confidence={result.confidence}
+                    lastVerifiedAt={result.lastVerifiedAt}
+                    isDemo={result.provider.isDemo}
+                    facts={Object.entries(result.facts)
+                      .filter(([, v]) => Boolean(v))
+                      .slice(0, 3)
+                      .map(([k, v]) => ({ label: prettyFact(k), value: String(v) }))}
+                  >
+                    <WhyPanel
+                      providerName={result.provider.name}
+                      verdict={result.eligibility}
+                      reasons={result.reasons}
+                      evidence={result.evidence}
+                      lastVerifiedAt={result.lastVerifiedAt}
+                    />
+                  </ResultRow>
+                ))}
+              </div>
+
+              <Button onClick={() => router.push("/app/corridors")}>Open in Corridor Explorer</Button>
+            </>
           ) : (
-            <Button onClick={() => router.push("/app/corridors")}>Open in Corridor Explorer</Button>
+            <>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-[var(--color-line)] py-3">
+                <Metric value={data.providersChecked} label="providers checked" />
+              </div>
+
+              {data.results.length ? (
+                <LockedResults results={data.results} onUnlock={continueToFull} />
+              ) : (
+                <p className="text-[13px] text-[var(--color-muted)]">
+                  No provider matched this exact request yet. Change one of the fields above to try again.
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-4">
+                <div className="flex flex-col gap-1">
+                  <p className="text-[14px] font-medium text-[var(--color-purple-deep)]">
+                    Log in to see the results: verdicts, fees, limits, requirements and sources.
+                  </p>
+                  <p className="text-[12.5px] text-[var(--color-ink-soft)]">Your question carries over.</p>
+                </div>
+                <Button onClick={continueToFull}>Log in</Button>
+              </div>
+            </>
           )}
         </motion.div>
       ) : null}

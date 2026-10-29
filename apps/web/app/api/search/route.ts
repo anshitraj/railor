@@ -23,9 +23,9 @@ const Body = z.object({
 /**
  * The public search endpoint.
  *
- * Anonymous visitors get the real interpretation, the real counts and two full
- * results - enough to know whether Railor has the answer - with the remaining
- * detail withheld rather than faked.
+ * Anonymous visitors get the real interpretation, how many providers were
+ * checked, and who ranked first (two providers, by name). The answer itself -
+ * verdicts, counts, fees, limits, evidence - is for people who are logged in.
  */
 export async function POST(request: Request) {
   if (!await consumeLimit("public-search", requestIdentity(request), 60, 60_000)) {
@@ -77,29 +77,22 @@ export async function POST(request: Request) {
     if (discoveryAllowed) marketDiscovery = await getCachedMarketDiscovery(query, session?.organization?.id);
   }
 
-  // Anonymous visitors see two previews, matching what the marketing copy
-  // promises ("Show 2 provider previews"). The name, category and verdict
-  // are real and unblurred — that's the hook. Everything that would let
-  // someone actually act (fees, limits, evidence, the full reasoning) is
-  // withheld server-side, not just hidden by CSS: the response never
-  // contains it, so it can't leak through devtools either.
+  // Anonymous visitors see two locked results: the page shows them behind a
+  // lock that says "Log in to see the results". Only who they are is sent -
+  // no verdict, confidence, counts, facts, evidence or reasoning - so the lock
+  // is not a blur over data the page already holds, and nothing leaks through
+  // devtools either.
   const results = authenticated
     ? result.results
     : result.results.slice(0, 2).map((r) => ({
-        ...r,
-        facts: { productLabel: r.facts.productLabel },
-        evidence: [],
-        reasons: [],
-        receivingMode: null,
-        routeConfirmation: null,
-        confirmedDimensions: [],
-        unconfirmedDimensions: [],
+        provider: { slug: r.provider.slug, name: r.provider.name, category: r.provider.category, isDemo: r.provider.isDemo },
+        locked: true as const,
       }));
 
   return NextResponse.json({
     interpretation: { ...interpretation, query },
     providersChecked: result.providersChecked,
-    counts: result.counts,
+    counts: authenticated ? result.counts : null,
     preset: result.preset,
     results,
     authenticated,
