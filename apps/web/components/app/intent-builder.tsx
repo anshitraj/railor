@@ -114,11 +114,13 @@ export function IntentBuilder({
   onChange,
   options,
   detectedEntity,
+  section = "all",
 }: {
   value: IntentDraft;
   onChange: (next: IntentDraft) => void;
   options: IntentOptions;
   detectedEntity?: string;
+  section?: "all" | "funding" | "destination" | "amount";
 }) {
   const set = <K extends keyof IntentDraft>(key: K, next: IntentDraft[K]) => onChange({ ...value, [key]: next });
   const inferredCurrency = value.destinationCountry ? options.currencyByCountry[value.destinationCountry] : undefined;
@@ -126,7 +128,7 @@ export function IntentBuilder({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-4 md:grid-cols-3">
+      {section === "all" || section === "funding" ? <div className="grid gap-4 md:grid-cols-3">
         <FieldBlock label="Funding type" className="md:col-span-1">
           <Segmented
             label="Funding type"
@@ -162,10 +164,10 @@ export function IntentBuilder({
             ]}
           />
         </FieldBlock>
-      </div>
+      </div> : null}
 
-      <div className="grid gap-5 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 md:grid-cols-2 sm:p-5">
-        <div className="flex flex-col gap-4">
+      {section !== "amount" ? <div className={`grid gap-5 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 sm:p-5 ${section === "all" ? "md:grid-cols-2" : ""}`}>
+        {section === "all" || section === "funding" ? <div className="flex flex-col gap-4">
           <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-orange-deep)]">From</p>
           <SmartPicker
             label="Entity country"
@@ -204,8 +206,8 @@ export function IntentBuilder({
               />
             </>
           )}
-        </div>
-        <div className="flex flex-col gap-4 md:border-l md:border-[var(--color-line)] md:pl-5">
+        </div> : null}
+        {section === "all" || section === "destination" ? <div className={`flex flex-col gap-4 ${section === "all" ? "md:border-l md:border-[var(--color-line)] md:pl-5" : ""}`}>
           <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-orange-deep)]">To</p>
           <SmartPicker
             label="Destination country"
@@ -239,10 +241,10 @@ export function IntentBuilder({
           <label className="block text-[12px] font-medium text-[var(--color-muted)]">Named rail <span className="font-normal">(optional)</span>
             <input className="product-field mt-1 w-full" value={value.namedRail} onChange={(event) => set("namedRail", event.target.value)} placeholder="e.g. SEPA_INSTANT" maxLength={80} />
           </label>
-        </div>
-      </div>
+        </div> : null}
+      </div> : null}
 
-      <div className="grid gap-2 md:max-w-md">
+      {section === "all" || section === "amount" ? <div className="grid gap-2 md:max-w-md">
         <NumberWithPresets
           label="Amount"
           value={value.amount}
@@ -254,7 +256,7 @@ export function IntentBuilder({
         <p className="border-l-2 border-[var(--color-orange)] pl-3 text-[11.5px] leading-relaxed text-[var(--color-muted)]">
           Amount is in {fundingUnit}. No currency conversion is applied to policy thresholds.
         </p>
-      </div>
+      </div> : null}
     </div>
   );
 }

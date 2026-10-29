@@ -1042,7 +1042,7 @@ export const DecisionEventRecord = z.object({
   organizationId: z.string(),
   kind: DecisionEventKind,
   detail: z.string(),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   createdAt: z.coerce.date(),
 });
 export type DecisionEventRecord = z.infer<typeof DecisionEventRecord>;

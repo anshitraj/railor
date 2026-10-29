@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Banknote, BookOpen, Link2, Shuffle, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Link2, Shuffle, Zap } from "lucide-react";
 import { cn } from "@railor/ui";
 
 const TOOLS = {
   app: [
     { href: "/app/prices", label: "Price check", icon: Zap },
-    { href: "/app/payments/new", label: "Send", icon: Banknote },
     { href: "/app/settings/connections", label: "Your accounts", icon: Link2 },
     { href: "/app/routing", label: "Routing", icon: Shuffle },
     { href: "/docs/payments", label: "API", icon: BookOpen },
@@ -49,10 +48,12 @@ const LABELS = [
   { tag: "Your account", tone: "bg-emerald-100 text-emerald-800", text: "Quote from your own connected account. Check fee completeness and validity before acting." },
   { tag: "Public reference", tone: "bg-sky-100 text-sky-800", text: "Panel checked every 20 seconds; source observations may be cached. See each price's collection time. Not a customer-specific executable quote." },
   { tag: "Railor account", tone: "bg-orange-100 text-orange-800", text: "Backend-managed quote observation, displayed separately. Sandbox means test data; fee coverage varies by provider." },
-  { tag: "Published", tone: "bg-amber-100 text-amber-800", text: "The provider's published fee schedule (PayZoll, Skydo) applied at the mid-market rate." },
+  { tag: "Published", tone: "bg-amber-100 text-amber-800", text: "The provider's published fee schedule applied at the displayed reference rate. Account and plan conditions apply." },
   { tag: "Estimate", tone: "bg-[var(--color-canvas)] text-[var(--color-muted)]", text: "Dated consumer prices Wise collects from banks and remittance apps. Context only." },
   { tag: "Historical sample", tone: "bg-amber-100 text-amber-800", text: "World Bank remittance fee surveys across 400 provider entries. Original amounts and dates are preserved; never ranked as current quotes." },
   { tag: "Market coverage", tone: "bg-violet-100 text-violet-800", text: "Providers in Railor's wider market catalog that list the destination currency. Coverage is not a quote or route guarantee." },
+  { tag: "Sender's service", tone: "bg-sky-100 text-sky-800", text: "When you receive: a service your sender pays. You only need your bank account; you don't sign up." },
+  { tag: "Google-checked", tone: "bg-emerald-100 text-emerald-800", text: "Railor asks Google Search whether each provider really does this route, reads the cited pages itself, and keeps a verdict only if the quoted sentence is on the page. A contradiction on the provider's own site removes the price." },
 ];
 
 /** The right rail: what each label means, and the one step that makes prices exact. */

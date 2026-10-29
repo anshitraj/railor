@@ -1,9 +1,10 @@
+.venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
 .env
 .env.*
-.venv
-__pycache__
-**/__pycache__
-.pytest_cache
-storage
-tests
-.railway
+storage/
+tests/
+.railway/
+*.log

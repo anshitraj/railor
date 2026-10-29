@@ -21,6 +21,7 @@ apps/worker/__pycache__
 **/__pycache__
 storage/snapshots
 .railor/
+.vercel/
 .railway/*
 !.railway/railway.ts
 !.railway/README.md
@@ -28,3 +29,5 @@ storage/snapshots
 .vscode/*
 !.vscode/extensions.json
 apps/worker/storage/
+.vercel
+.env*

@@ -16,7 +16,23 @@ python -m venv .venv && . .venv/Scripts/activate     # Windows
 pip install -e ".[crawl,dev]"
 ```
 
-Optional extras: `browser` (Playwright), `queue` (Redis + Celery).
+Optional extras: `browser` (Playwright), `crawl` (Scrapy), `gcs` (Cloud Storage),
+and `discovery` (Gemini). `uv.lock` pins the production container dependencies.
+
+## Google Cloud production deployment
+
+Use the repository-root [GCP setup guide](../../GCP_SETUP.md). Cloud Scheduler
+invokes a bounded Cloud Run Job every six hours. Raw snapshots go to a private
+Cloud Storage bucket, and the existing database stays in place.
+
+```bash
+python -m railor_worker.jobs --limit 100
+```
+
+The job uses a restricted database login, Secret Manager and the service's own
+Google identity; no downloaded service-account key is required. A PostgreSQL
+transaction lock prevents overlapping runs. Failures are recorded in Cloud Run
+and monitored; no web server, always-on VM or Redis queue is required.
 
 ## Database
 

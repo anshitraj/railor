@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
 import { getOrgPaymentSettings, getPlatformPaymentFlags, liveMoneyMovementEnabled, listPayments, paymentStats } from "@railor/core";
 import { getSession } from "../../../lib/auth";
 import { ProductEmpty, ProductHeader } from "../../../components/app/product-ui";
@@ -42,13 +41,6 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         description="Send payouts through your own connected provider accounts. Every payment is checked against your policy, routed across eligible providers, and tracked to settlement — funds never touch Railor."
         value={completedCount.toLocaleString("en-US")}
         valueLabel={`${completedCount === 1 ? "payment" : "payments"} settled · ${mode} · 30 days`}
-        action={
-          session.role !== "viewer" ? (
-            <Link href="/app/payments/new" className="inline-flex items-center gap-2 rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] font-bold text-white transition hover:bg-[var(--color-orange-deep)]">
-              <Plus size={15} /> New payment
-            </Link>
-          ) : undefined
-        }
       />
 
       {flags.paused ? (
@@ -73,9 +65,6 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         </div>
         <span className="text-[12.5px] text-[var(--color-muted)]">{openCount} open</span>
         <span className="flex-1" />
-        <Link href="/app/beneficiaries" className="text-[12.5px] font-semibold text-[var(--color-orange-deep)] underline underline-offset-2">
-          Beneficiaries
-        </Link>
         <Link href="/app/routing" className="text-[12.5px] font-semibold text-[var(--color-orange-deep)] underline underline-offset-2">
           Routing settings
         </Link>
@@ -140,8 +129,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         <ProductEmpty
           mark="→"
           title={status ? `No ${status.replaceAll("_", " ")} ${mode} payments` : `No ${mode} payments yet`}
-          description={mode === "test" ? "Create a test payment to see the full flow — policy check, routing, submission and settlement — without moving real money." : "Live payments appear here once your workspace is enabled and you send one."}
-          action={session.role !== "viewer" ? <Link href="/app/payments/new" className="product-quiet-link">Create a payment →</Link> : undefined}
+          description="New payments and beneficiaries are currently unavailable. Existing payment history remains here; you can compare prices and preview routes."
         />
       )}
     </div>

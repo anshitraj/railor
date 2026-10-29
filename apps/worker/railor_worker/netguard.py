@@ -47,7 +47,7 @@ def is_private_host(host: str) -> bool:
     return _is_private_ip(h)
 
 
-def assert_public_url(url: str) -> None:
+def _public_addresses(url: str) -> list[str]:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise BlockedURL(f"not an http(s) URL: {url[:120]}")
@@ -58,10 +58,18 @@ def assert_public_url(url: str) -> None:
         raise BlockedURL(f"private address: {host}")
     try:
         infos = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
+    except ValueError as exc:
+        raise BlockedURL("invalid URL port") from exc
     except socket.gaierror as exc:
         raise BlockedURL(f"unresolvable host {host}: {exc}") from exc
     if not infos or any(_is_private_ip(info[4][0]) for info in infos):
         raise BlockedURL(f"{host} resolves to a private address")
+    # Prefer IPv4 for hosts with dual-stack DNS; every returned address is public.
+    return sorted(set(info[4][0] for info in infos), key=lambda value: ipaddress.ip_address(value).version)
+
+
+def assert_public_url(url: str) -> None:
+    _public_addresses(url)
 
 
 @dataclass
@@ -90,10 +98,17 @@ def guarded_get(
 ) -> GuardedResponse:
     """GET with every hop checked; redirects followed manually (at most MAX_REDIRECTS)."""
     current = url
-    with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+    with httpx.Client(timeout=timeout, follow_redirects=False, trust_env=False) as client:
         for _ in range(MAX_REDIRECTS + 1):
-            assert_public_url(current)
-            with client.stream("GET", current, headers=headers or {}) as response:
+            # Connect to the checked IP itself. A second hostname lookup inside
+            # the HTTP client could otherwise rebind to cloud metadata/private IPs.
+            addresses = _public_addresses(current)
+            original = httpx.URL(current)
+            pinned = original.copy_with(host=addresses[0])
+            request_headers = httpx.Headers(headers or {})
+            request_headers["host"] = original.netloc.decode("ascii")
+            with client.stream("GET", pinned, headers=request_headers,
+                               extensions={"sni_hostname": original.raw_host.decode("ascii")}) as response:
                 if follow and response.status_code in (301, 302, 303, 307, 308) and response.headers.get("location"):
                     current = urljoin(current, response.headers["location"])
                     continue

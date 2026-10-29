@@ -3,6 +3,7 @@ import { ApiError } from "../../../lib/api-auth";
 import { parsePaymentIntentBody } from "../../../lib/decisions";
 import { paymentDeps } from "../../../lib/payments";
 import { jsonBody, v1Route } from "../../../lib/v1";
+import { assertBeneficiariesAvailable } from "../../../lib/beneficiary-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export const GET = v1Route("/v1/payments", "GET", async (context, request) => {
 });
 
 export const POST = v1Route("/v1/payments", "POST", async (context, request) => {
+  assertBeneficiariesAvailable();
   const body = await jsonBody(request);
   const intentRaw = (body.intent && typeof body.intent === "object" ? body.intent : body) as Record<string, unknown>;
   const intent = parsePaymentIntentBody(intentRaw);

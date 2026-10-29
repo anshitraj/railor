@@ -14,6 +14,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from collections.abc import Callable
 
 from . import db
 from .config import get_settings
@@ -153,9 +154,18 @@ def process_source(source: dict[str, Any]) -> SourceOutcome:
     return SourceOutcome(source["id"], source["url"], "updated", changes=len(changes))
 
 
-def run_due(limit: int = 25) -> list[SourceOutcome]:
+def run_due(limit: int = 25, *, should_stop: Callable[[], bool] = lambda: False) -> list[SourceOutcome]:
     outcomes: list[SourceOutcome] = []
     for source in db.due_sources(limit):
+        if should_stop():
+            break
         log.info("fetching %s", source["url"])
-        outcomes.append(process_source(source))
+        try:
+            outcomes.append(process_source(source))
+        except Exception as exc:
+            # One broken source must not starve every later source. Keep secrets
+            # out of the exception text emitted to cloud logs.
+            detail = f"pipeline_error: {type(exc).__name__}"
+            log.error("Source %s failed (%s)", source["id"], detail)
+            outcomes.append(SourceOutcome(source["id"], source["url"], "error", detail=detail))
     return outcomes

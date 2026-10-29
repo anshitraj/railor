@@ -1,7 +1,20 @@
-"""Private source snapshots in GCS, a Railway volume, or development storage."""
+"""Private source snapshots in GCS, a persistent disk, or development storage."""
 import os
 import re
 from pathlib import Path
+
+
+def validate_snapshot_storage(directory: Path) -> None:
+    """Fail before crawling if production snapshots would be ephemeral."""
+    if os.getenv("RAILOR_ENV") != "production" or os.getenv("GCS_SNAPSHOT_BUCKET", "").strip():
+        return
+    mount = (os.getenv("SNAPSHOT_VOLUME_MOUNT_PATH", "").strip()
+             or os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "").strip())
+    if (not mount or not Path(mount).is_absolute() or not Path(mount).is_dir()
+            or not directory.resolve().is_relative_to(Path(mount).resolve())):
+        raise RuntimeError(
+            "Production snapshots require GCS_SNAPSHOT_BUCKET or storage inside a mounted persistent disk"
+        )
 
 
 def store_snapshot(provider_slug: str, content_hash: str, body: str, directory: Path) -> str:
@@ -20,10 +33,7 @@ def store_snapshot(provider_slug: str, content_hash: str, body: str, directory: 
         except PreconditionFailed:
             pass  # Content-addressed object already exists; never overwrite it.
         return f"gs://{bucket_name}/{name}"
-    if os.getenv("RAILOR_ENV") == "production":
-        mount = os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "").strip()
-        if not mount or not Path(mount).is_dir() or not directory.resolve().is_relative_to(Path(mount).resolve()):
-            raise RuntimeError("Production snapshots require GCS_SNAPSHOT_BUCKET or storage inside a mounted Railway volume")
+    validate_snapshot_storage(directory)
     path = directory / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(body, encoding="utf-8")

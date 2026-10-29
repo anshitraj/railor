@@ -27,8 +27,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -e 'apps/worker[dev]'
-      - run: python -m pytest apps/worker/tests -q
+      - run: pip install uv==0.11.25
+      - run: uv run --project apps/worker --frozen --extra dev --extra gcs --extra discovery --extra crawl python -m pytest apps/worker/tests -q
   postgres-migration:
     runs-on: ubuntu-latest
     services:

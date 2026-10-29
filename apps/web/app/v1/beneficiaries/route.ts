@@ -1,5 +1,6 @@
 import { createBeneficiary, listBeneficiaries } from "@railor/core";
 import { camelTop, jsonBody, v1Route } from "../../../lib/v1";
+import { assertBeneficiariesAvailable } from "../../../lib/beneficiary-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ const serialize = (b: Awaited<ReturnType<typeof listBeneficiaries>>[number]) => 
 
 /** GET /v1/beneficiaries — account details are never returned, only a masked hint. */
 export const GET = v1Route("/v1/beneficiaries", "GET", async (context) => {
+  assertBeneficiariesAvailable();
   const rows = await listBeneficiaries(context.organizationId);
   return { body: { object: "list", data: rows.map(serialize), has_more: false } };
 });
@@ -31,6 +33,7 @@ export const GET = v1Route("/v1/beneficiaries", "GET", async (context) => {
  * deduplicated: re-posting the same account returns the existing beneficiary.
  */
 export const POST = v1Route("/v1/beneficiaries", "POST", async (context, request) => {
+  assertBeneficiariesAvailable();
   const body = camelTop(await jsonBody(request));
   const details = body.details && typeof body.details === "object" ? camelTop(body.details as Record<string, unknown>) : {};
   const { beneficiary, created } = await createBeneficiary(context.organizationId, null, { ...body, details });

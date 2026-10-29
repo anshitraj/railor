@@ -3,6 +3,7 @@ import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
 import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment } from "./customer-profiles.js";
+import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
 /**
  * Price check: "send X of A, how much B arrives, through whom?" Every number
@@ -17,7 +18,8 @@ import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment 
  *
  * Rows are ranked by what the recipient gets; a row whose cost is incomplete
  * (e.g. an FX quote without the transfer fee) is never ranked against
- * complete ones.
+ * complete ones. With a web-check dependency, what each row implies is also
+ * checked against Google Search (see web-check.ts) before ranking.
  */
 
 export type PriceBasis = "exact" | "live_public" | "published" | "market_estimate";
@@ -58,6 +60,15 @@ export interface PriceRow {
    */
   shortfall?: number | null;
   profileAssessment?: ProviderProfileAssessment;
+  /** The source's own cost coverage, before any profile rule: false for an FX-only figure. */
+  costComplete?: boolean;
+  /**
+   * When receiving: "payer" rows price a service the sender uses (the
+   * recipient only needs a bank account); "recipient" rows are an account the
+   * recipient holds. Unset when sending.
+   */
+  side?: "payer" | "recipient";
+  webChecks?: RowWebCheck[];
 }
 
 export interface PriceUnavailable {
@@ -84,6 +95,8 @@ export interface PriceCheckResult {
   marketCoverage?: MarketCoverage;
   /** Surveyed fees at their original amounts and dates, never current quotes or ranked prices. */
   historicalPricing?: RemittanceSurvey;
+  /** Google-grounded checks of the rows; absent when no web-check dependency was given. */
+  webCheck?: WebCheckSummary;
 }
 
 export interface MarketCoverageProvider {
@@ -120,6 +133,8 @@ export interface PriceCheckDeps {
   connectedQuotes?: (input: PriceCheckInput) => Promise<Array<{ providerSlug: string; providerName: string; quote?: UnifiedQuote; error?: string }>>;
   /** Providers the customer could connect for an exact price, with whether they're connected already. */
   connectable?: Array<{ slug: string; name: string; connected: boolean }>;
+  /** Known web checks for these claims, and which are still running. Must not wait for new checks. */
+  webChecks?: (claims: WebCheckClaim[]) => Promise<{ results: WebCheckResult[]; pending: ReadonlySet<string>; configured: boolean; paused?: boolean }>;
   fetcher?: typeof fetch;
   now?: Date;
 }
@@ -145,6 +160,29 @@ const intoIndia = (input: PriceCheckInput) =>
 
 /** Read from each provider's own site on `observedAt`. Re-check before relying on them. */
 export const PUBLISHED_PRICING: PublishedSchedule[] = [
+  {
+    slug: "xflow", name: "Xflow · Starter plan",
+    sourceUrl: "https://www.xflowpay.com/pricing", observedAt: "2026-10-29",
+    appliesTo: input => input.sourceCurrency === "USD" && input.destinationCurrency === "INR"
+      && (!input.destinationCountry || input.destinationCountry === "IN")
+      && (!input.context || (input.context.country === "IN" && input.context.direction === "receive" && input.context.profile !== "personal"))
+      ? null : "Starter pricing here covers USD collections for Indian business recipients only.",
+    fee: input => ({ amount: input.amount <= 2000 ? 12 : round(input.amount * .006), currency: "USD", parts: [input.amount <= 2000 ? "Starter: USD 12 up to USD 2,000" : "Starter: 0.6% above USD 2,000"] }),
+    partial: true,
+    notes: ["Assumes the Starter plan; Growth and negotiated plans differ. Fixed fees and variable FX markup are modelled as a source-currency deduction for illustration.", "This is a published estimate, not Xflow's locked withdrawal rate. Account eligibility, applicable taxes and banking charges must be confirmed."],
+  },
+  {
+    slug: "atlantic-money", name: "Atlantic Money",
+    sourceUrl: "https://atlantic.money/gb/en/business", observedAt: "2026-10-29",
+    appliesTo: input => input.sourceCurrency === "GBP" && input.amount <= 1_000_000
+      && ["EUR", "USD", "AUD", "CAD", "INR", "NOK", "SEK", "DKK", "PLN"].includes(input.destinationCurrency)
+      && input.context?.country === "GB" && input.context.direction === "send" && input.context.profile === "business"
+      && (!input.destinationCountry || ({ USD: ["US"], AUD: ["AU"], CAD: ["CA"], INR: ["IN"], NOK: ["NO"], SEK: ["SE"], DKK: ["DK"], PLN: ["PL"], EUR: ["DE", "FR", "ES", "IT", "NL", "BE", "PT", "IE", "AT", "FI", "GR", "LU", "EE", "LT", "LV", "SK", "SI", "MT", "CY", "HR"] } as Record<string, string[]>)[input.destinationCurrency]?.includes(input.destinationCountry))
+      ? null : "This schedule is for UK businesses sending GBP, up to GBP 1 million, in the listed payout currencies.",
+    fee: () => ({ amount: 3, currency: "GBP", parts: ["GBP 3 standard transfer fee"] }),
+    partial: true,
+    notes: ["Standard UK business pricing; express delivery, account approval and destination eligibility require confirmation.", "Illustrated with Railor's reference FX rate. Atlantic's executable institutional rate may differ; this is not an Atlantic quote."],
+  },
   {
     slug: "payzoll",
     name: "PayZoll",
@@ -275,7 +313,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
 
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
-  const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}`;
+  const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}:${input.destinationCountry ?? ""}`;
   const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
@@ -318,6 +356,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
 
   const amountUsd = usdRate ? input.amount * usdRate : null;
   for (const schedule of PUBLISHED_PRICING) {
+    if (connectedSlugs.has(schedule.slug)) continue;
     const reason = schedule.appliesTo(input);
     if (reason) continue;
     const fee = schedule.fee(input, amountUsd);
@@ -344,7 +383,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
       delivery: null,
       observedAt: new Date(`${schedule.observedAt}T00:00:00Z`).toISOString(),
       source: { label: `${schedule.name} pricing page`, url: schedule.sourceUrl },
-      notes: [`Fee: ${fee.parts.join(", ")}.`, reference ? "Converted at the reference rate — published as no FX markup." : "No reference rate, so the amount received can't be computed.", ...schedule.notes],
+      notes: [`Fee: ${fee.parts.join(", ")}.`, reference ? "Illustrated at the reference rate; see the provider's pricing conditions below." : "No reference rate, so the amount received can't be computed.", ...schedule.notes],
     });
   }
 
@@ -363,16 +402,30 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   }
 
   // Rank: prices a business can act on before market estimates; within each,
-  // complete rows by what arrives, then partial rows, then rows with no amount.
+  // complete rows by what arrives, then rows whose cost is complete but whose
+  // product is unconfirmed for this profile, then FX-only figures (their
+  // amount leaves a fee out, so it must not outrank a full price), then rows
+  // with no amount.
   const expected = reference ? input.amount * reference.rate : null;
+  const receiving = input.context?.direction === "receive";
   for (const row of rows) {
+    row.costComplete = !row.partial && row.recipientAmount !== null;
+    if (receiving) row.side = row.basis === "published" || row.basis === "exact" ? "recipient" : "payer";
     if (input.context) {
       row.profileAssessment = assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null });
-      if (!row.profileAssessment.priceApplicable) { row.partial = true; row.totalCostPct = null; }
+      if (!row.profileAssessment.priceApplicable) row.partial = true;
     }
-    if (!row.partial && row.recipientAmount !== null && expected) row.totalCostPct = round((1 - row.recipientAmount / expected) * 100, 2);
   }
-  const tier = (r: PriceRow) => (r.recipientAmount === null ? 2 : r.partial ? 1 : 0);
+  let webCheck: WebCheckSummary | undefined;
+  if (deps.webChecks) {
+    const claims = priceCheckClaims(input, rows);
+    const known = claims.length ? await deps.webChecks(claims).catch(() => null) : { results: [], pending: new Set<string>(), configured: true, paused: false };
+    if (known) webCheck = { ...applyWebChecks(rows, claims, known.results, known.pending), configured: known.configured, paused: known.paused ?? false };
+  }
+  for (const row of rows) {
+    row.totalCostPct = !row.partial && row.recipientAmount !== null && expected ? round((1 - row.recipientAmount / expected) * 100, 2) : null;
+  }
+  const tier = (r: PriceRow) => (r.recipientAmount === null ? 3 : !r.costComplete ? 2 : r.partial ? 1 : 0);
   const group = (r: PriceRow) => (r.basis === "market_estimate" ? 1 : 0);
   rows.sort((a, b) => group(a) - group(b) || tier(a) - tier(b) || (b.recipientAmount ?? 0) - (a.recipientAmount ?? 0) || basisOrder(a.basis) - basisOrder(b.basis));
   // Dated consumer estimates are context, never "the best price".
@@ -380,7 +433,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const best = rows.find((r) => tier(r) === 0 && group(r) === 0 && fits(r));
   for (const row of rows) row.shortfall = best && tier(row) === 0 && fits(row) ? round(best.recipientAmount! - row.recipientAmount!) : null;
 
-  return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes, historicalPricing: remittanceSurvey(input) };
+  return { input, reference, rows, unavailable, generatedAt: now.toISOString(), platformQuotes, historicalPricing: remittanceSurvey(input), ...(webCheck ? { webCheck } : {}) };
 }
 
 function basisOrder(b: PriceBasis) {

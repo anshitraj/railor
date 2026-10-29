@@ -4,7 +4,7 @@ const dbModule = await import("@railor/database");
 const { ensureMigrated, seedDemoData, getDb, organizations, organizationMembers, users, sessions, providers, providerProducts, providerRoutes, evidence } = dbModule;
 await ensureMigrated(); await seedDemoData(); const db = await getDb();
 const [org] = await db.insert(organizations).values({ name: "Browser Test Workspace", slug: "browser-test", entityCountry: "IN" }).returning();
-for (const [email, role, token, isAdmin] of [["owner@browser.test", "owner", "browser-test-owner", false], ["reviewer@browser.test", "admin", "browser-test-reviewer", false], ["operator@browser.test", "viewer", "browser-test-operator", true]] as const) {
+for (const [email, role, token, isAdmin] of [["owner@browser.test", "owner", "browser-test-owner", false], ["reviewer@browser.test", "admin", "browser-test-reviewer", false], ["operator@browser.test", "viewer", "browser-test-operator", true], ["viewer@browser.test", "viewer", "browser-test-viewer", false]] as const) {
   const [user] = await db.insert(users).values({ email, isAdmin }).returning();
   await db.insert(organizationMembers).values({ organizationId: org!.id, userId: user!.id, role });
   await db.insert(sessions).values({ token, userId: user!.id, expiresAt: new Date(Date.now() + 3600_000) });

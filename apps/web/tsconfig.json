@@ -22,10 +22,6 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".next-audit/types/**/*.ts",
-    ".next-debug/types/**/*.ts",
-    ".next-platform-dev/types/**/*.ts",
-    ".next-polish/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts"
   ],

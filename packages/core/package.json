@@ -18,6 +18,7 @@
     "test": "vitest run",
     "research-country": "tsx src/country-research/cli.ts",
     "research-provider": "tsx src/provider-research/cli.ts",
+    "web-check": "tsx src/web-check-cli.ts",
     "v5-1-exact-route-matrix": "tsx src/country-research/v5-1-exact-route-matrix.ts",
     "circle-cpn-route-import": "tsx src/provider-research/circle-cpn-route-import.ts"
   },
@@ -27,7 +28,7 @@
     "@railor/types": "workspace:*",
     "drizzle-orm": "^0.45.3",
     "iso-3166-1": "^2.1.1",
-    "zod": "^3.25.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

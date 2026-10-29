@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Plus, Users } from "lucide-react";
 import { Button, type PickerOption } from "@railor/ui";
 import { archiveBeneficiaryAction } from "../../../app/app/payments/actions";
 import { BeneficiaryForm, type BeneficiarySummary } from "./beneficiary-form";
@@ -14,15 +15,35 @@ export function BeneficiaryList({
   countries,
   currencies,
   canEdit,
+  kycComplete,
 }: {
   beneficiaries: BeneficiarySummary[];
   countries: PickerOption[];
   currencies: PickerOption[];
   canEdit: boolean;
+  kycComplete: boolean;
 }) {
   const [adding, setAdding] = useState(beneficiaries.length === 0);
   const [pending, start] = useTransition();
   const router = useRouter();
+  if (!kycComplete) return (
+    <div className="product-panel overflow-hidden">
+      <div className="flex flex-col gap-5 p-6 sm:p-8">
+        <div className="flex items-start gap-4">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--color-lavender)] text-[var(--color-orange-deep)]"><Users size={19} /></span>
+          <div>
+            <span className="product-index">KYC / KYB REQUIRED</span>
+            <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.03em]">Complete your workspace profile first</h2>
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[var(--color-muted)]">Saving bank or wallet details is disabled until every identity requirement is marked as available. This keeps recipient data out of an unverified workspace.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-5">
+          <Link href="/app/readiness" className="comparison-primary-action">Review KYC / KYB readiness <ArrowRight size={14} /></Link>
+          <span className="text-[12px] text-[var(--color-muted)]">Provider verification still applies after this profile is complete.</span>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="flex flex-col gap-4">
       {canEdit ? (

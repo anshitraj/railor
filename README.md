@@ -36,6 +36,10 @@ Sign-in uses magic links. In development (`AUTH_EMAIL_TRANSPORT=console`, the de
 
 For production email delivery through Resend SMTP, see [EMAIL_SIGNIN_SETUP.md](EMAIL_SIGNIN_SETUP.md).
 
+Production uses **Vercel for the Next.js app/API, the existing PostgreSQL database,
+and Google Cloud Run Jobs for ingestion**. See [GCP_SETUP.md](GCP_SETUP.md) for
+deployment, permissions, monitoring, verification and rollback.
+
 ---
 
 ## The 60-second demo
@@ -97,7 +101,7 @@ Next.js 15 · React 19 · TypeScript · Tailwind v4 · Motion · Drizzle ORM · 
 | Provider connections | Beta | Wise, Airwallex, Bridge, Circle (payouts) plus quote/test adapters for Nium, MoonPay, Paxos, Coinbase; sandbox and production slots, credentials encrypted at rest, live connection test, per-connection webhook URL |
 | Price check | Beta | Swap-style live quote card at `/app/prices` (with your connected accounts' exact quotes and a send hand-off) and public `/prices` (no account), re-quoted every 20s with a mid-market FX ticker; also `POST /v1/prices`. Every number labelled — your connected account's live quote (exact), Wise's live public quote, published schedules (PayZoll, Skydo), and optional dated market estimates from Wise's comparison feed. Public quotes are shared for 15–60s server-side and rate-limited per visitor |
 | Provider logos | Live | Each provider's own declared icon, fetched from its website once (SSRF-guarded), cached and served from Railor's origin; monogram fallback |
-| Payments + beneficiaries | Beta | Policy-checked, routed, idempotent payouts through the workspace's own provider accounts. Test mode runs end to end against provider sandboxes or Railor's deterministic simulator; live mode sits behind five gates. Bridge and Circle payout adapters are built from their public docs and need sandbox validation before live approval |
+| Payments + beneficiaries | Paused | Recipient creation and new payment creation/submission are disabled in both UI and APIs until verified account access is implemented. Historical payments remain available for inspection and reconciliation. Price comparison and route previews remain available |
 | Routing / orchestration | Beta | Eligibility + policy as hard gates, weighted scoring (health, reliability, cost, speed, limits, preference) with presets and an honest confidence figure, fallback only on a definitive rejection, route preview |
 | Outbound webhooks | Beta | `payment.*` events signed with `Railor-Signature`, retried with backoff for 24h |
 | Observed benchmarks | Not built | Schema exists; UI says so, with a working “Notify me” |
@@ -177,7 +181,8 @@ Test mode uses a provider's sandbox when connected, else Railor's simulator, who
 
 ```bash
 pnpm test                           # every package: engine, payments (routing, lifecycle, fallback, live gates, webhooks), web, SDK
-python apps/web/e2e/product_workflows.py   # browser flows on a disposable database, incl. an approved test payment settling
+python apps/web/e2e/agent_acceptance.py    # local TLS email, sign-in, onboarding, policy, Agent and decision acceptance
+python apps/web/e2e/production_release.py  # routing persistence, viewer permissions, paused payments and mobile layouts
 python apps/web/e2e/ui_audit.py     # whole-app audit: clicks every control as visitor/owner/reviewer/operator on a disposable database
 cd apps/worker && pytest            # normalization + diff rules
 ```

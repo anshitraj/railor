@@ -4,6 +4,7 @@ import { requireSession } from "../../../lib/auth";
 import { recentDecisionChoices } from "../../../lib/decisions";
 import { getIntentOptions } from "../../../lib/reference";
 import { AgentWorkbench } from "../../../components/app/workflow-forms";
+import { agentHistoryKey } from "../../../lib/agent-history";
 import { AgentConversation } from "../../../components/app/agent-conversation";
 
 export const dynamic = "force-dynamic";
@@ -21,18 +22,16 @@ export default async function AgentPage() {
   ]);
   const providers = providerInputs.filter((p) => !p.isDemo).map((p) => ({ slug: p.slug, name: p.name }));
   return (
-    <div className="product-page space-y-7">
+    <div>
       <AgentConversation
+        key={agentHistoryKey(org.id, session.user.id)}
+        historyScope={agentHistoryKey(org.id, session.user.id)}
         policies={policies.filter((p) => p.activeVersionId && p.status === "active").map((p) => ({ id: p.id, name: p.name }))}
         options={options}
         entityCountry={org.entityCountry ?? undefined}
         defaultEmail={session.user.email}
         canDecide={session.role !== "viewer"}
-      />
-      {session.role !== "viewer" ? <details className="agent-advanced">
-        <summary>Advanced tools · policy drafts and stored decisions</summary>
-        <div className="p-5 sm:p-7">
-        <AgentWorkbench
+        advancedTools={session.role !== "viewer" ? <AgentWorkbench
           policies={policies.filter((p) => p.activeVersionId).map((p) => ({ id: p.id, name: p.name }))}
           decisions={decisions}
           providers={providers}
@@ -40,8 +39,8 @@ export default async function AgentPage() {
           entityCountry={org.entityCountry ?? undefined}
           canEditPolicies={["owner", "admin"].includes(session.role ?? "")}
         />
-        </div>
-      </details> : null}
+        : null}
+      />
     </div>
   );
 }

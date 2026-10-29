@@ -19,6 +19,7 @@ import {
   updateRoutingSettings,
 } from "@railor/core";
 import { requireSession } from "../../../lib/auth";
+import { assertBeneficiariesAvailable } from "../../../lib/beneficiary-access";
 import { describePaymentError, paymentDeps } from "../../../lib/payments";
 
 type Result<T = undefined> = { ok: true; data?: T; href?: string } | { ok: false; error: string; code?: string; fields?: Record<string, string> };
@@ -45,6 +46,7 @@ async function run<T>(work: () => Promise<{ data?: T; href?: string }>): Promise
 export async function createBeneficiaryAction(raw: unknown) {
   return run(async () => {
     const who = await member();
+    assertBeneficiariesAvailable();
     const result = await createBeneficiary(who.org, who.session.user.id, raw);
     return { data: result };
   });
@@ -53,6 +55,7 @@ export async function createBeneficiaryAction(raw: unknown) {
 export async function archiveBeneficiaryAction(id: string) {
   return run(async () => {
     const who = await member();
+    assertBeneficiariesAvailable();
     await archiveBeneficiary(who.org, z.string().uuid().parse(id));
     return {};
   });
@@ -68,6 +71,7 @@ export async function previewRouteAction(raw: unknown) {
 export async function createPaymentAction(raw: unknown) {
   return run(async () => {
     const who = await member();
+    assertBeneficiariesAvailable();
     const { payment } = await createPayment(who.org, { userId: who.session.user.id, source: "user", role: who.session.role }, raw, paymentDeps(who.org));
     return { data: { id: payment.id, status: payment.status }, href: `/app/payments/${payment.id}` };
   });
@@ -76,6 +80,7 @@ export async function createPaymentAction(raw: unknown) {
 export async function submitPaymentAction(id: string) {
   return run(async () => {
     const who = await member();
+    assertBeneficiariesAvailable();
     const detail = await submitPayment(who.org, { userId: who.session.user.id, source: "user", role: who.session.role }, z.string().uuid().parse(id), paymentDeps(who.org));
     return { data: { status: detail.payment.status } };
   });

@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
 
-const Credentials = z.record(z.string().regex(/^[a-z0-9-]+$/), z.record(z.string().max(20000)));
+const Credentials = z.record(z.string().regex(/^[a-z0-9-]+$/), z.record(z.string(), z.string().max(20000)));
 function keyFrom(value: string): Buffer {
   if (!/^[a-fA-F0-9]{64}$/.test(value)) throw new Error("Vault key must be 32 random bytes encoded as hex");
   return Buffer.from(value, "hex");

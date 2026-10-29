@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 def _load_development_env(module_file: Path) -> None:
     # The source checkout and the Docker image have different directory depths.
-    # Railway injects variables directly; only load a file when one exists.
+    # Hosts such as Render inject variables directly; only load a file when one exists.
     for parent in module_file.resolve().parents:
         env_file = parent / ".env"
         if env_file.is_file():

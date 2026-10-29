@@ -1,12 +1,14 @@
 import "server-only";
+import { after } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { PAYOUT_ADAPTERS, comparePrices, getAdapter, CustomerContext, type PriceCheckInput } from "@railor/core";
+import { PAYOUT_ADAPTERS, comparePrices, getAdapter, priceWebChecks, waitForWebChecks, CustomerContext, type PriceCheckInput } from "@railor/core";
 import { evidence, fees, getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
 import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
+import { priceDestination } from "./price-destination";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -22,6 +24,8 @@ const ACCOUNT_PRICED = [
  * prices. Credentials are decrypted here and never leave the server.
  */
 export async function runPriceCheck(organizationId: string | null, input: PriceCheckInput) {
+  const options = await getIntentOptions();
+  input = { ...input, destinationCountry: priceDestination(input, options.currencyByCountry) };
   const db = await getDb();
   const rows = await db.select({ id: providers.id, slug: providers.slug, name: providers.name }).from(providers).where(inArray(providers.slug, ACCOUNT_PRICED.map((p) => p.slug)));
   const connected = new Map<string, Record<string, string>>();
@@ -40,6 +44,12 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   const nameOf = (slug: string) => rows.find((r) => r.slug === slug)?.name ?? ACCOUNT_PRICED.find((p) => p.slug === slug)?.name ?? slug;
 
   const result = await comparePrices(input, {
+    // Google-grounded checks of what each row implies; new checks run in the background.
+    webChecks: async (claims) => {
+      const checks = await priceWebChecks(claims);
+      if (checks.pending.size) after(() => waitForWebChecks());
+      return checks;
+    },
     platformQuotes: async (req) => getPlatformQuoteChecks({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount }),
     connectable: ACCOUNT_PRICED.filter((p) => input.context?.direction !== "receive" || p.slug === "xflow")
       .map((p) => ({ slug: p.slug, name: nameOf(p.slug), connected: connected.has(p.slug) })),
@@ -120,7 +130,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
     try {
       result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, amount, includeMarket: market, context });
     } catch (e) {
-      error = e instanceof Error ? e.message : "Price check failed.";
+      error = "Price comparison is temporarily unavailable. Please try again shortly.";
     }
   }
   return { currencies, initial: { from, to, amount, market, context }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };

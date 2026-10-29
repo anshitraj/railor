@@ -71,7 +71,6 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     title: "Move money",
     icon: Banknote,
     items: [
-      { href: "/app/beneficiaries", label: "Beneficiaries", icon: Users },
       { href: "/app/routing", label: "Routing", icon: Shuffle },
       { href: "/app/settings/connections", label: "Connections", icon: Link2 },
     ],

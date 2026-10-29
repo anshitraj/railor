@@ -27,16 +27,18 @@ const WISE_VERIFY = "https://wise.com/help/articles/6Kpm9pXlJW79OGAktSnHos/how-t
 const WISE_RECEIVE = "https://wise.com/help/articles/71lNXW0Ls3gEFhUH8PtodV/receiving-payments-for-indian-businesses";
 const WISE_FREELANCE = "https://wise.com/help/articles/65UX5SOb5YxtgZx0V2bSLw/providing-additional-payment-information-for-your-inr-transfer";
 const SKYDO_SIGNUP = "https://www.skydo.com/blog/how-to-sign-up-on-skydo";
+const WISE_SEND_INDIA = "https://wise.com/us/send-money/send-money-to-india";
+const WISE_INR_GUIDE = "https://wise.com/help/articles/2932151/guide-to-inr-transfers";
+const SKYDO_VS_REMITLY = "https://www.skydo.com/compare/skydo-vs-remitly";
+const PAYZOLL_AUDIENCE = "https://payzoll.finance/payzoll-vs-skydo";
+const REVOLUT_INDIA_RECEIVE = "https://help.revolut.com/en-IN/help/transfers/bank-transfer-basics/question-receiving-a-bank-transfer/";
 const BUSINESS_CURRENCIES = "USD GBP EUR SGD AUD NZD HUF CAD HKD TRY PHP AED BGN CHF CNY CZK DKK ILS JPY NOK PLN SEK UGX ZAR".split(" ");
 const FREELANCE_CURRENCIES = "EUR GBP USD AUD CAD NZD SGD HUF".split(" ");
 const SKYDO_LOCAL_CURRENCIES = "USD GBP AED CAD EUR AUD SGD".split(" ");
 
-/** Published product rules, never an assertion that the customer passed KYC. */
-export function assessCustomerProfile(slug: string, context: CustomerContext, request: {
-  sourceCurrency: string; destinationCurrency: string; amount: number;
-  amountUsd: number | null; referenceRate: number | null;
-}): ProviderProfileAssessment {
-  const unknown: ProviderProfileAssessment = {
+/** No verified rules yet: every field says so rather than guessing. */
+export function unconfirmedAssessment(): ProviderProfileAssessment {
+  return {
     status: "unconfirmed", reasons: ["No verified rules for this account holder, country and payment product yet."],
     verification: ["Confirm legal form, ownership checks and account-name requirements with the provider."],
     fees: "Account and purpose-specific fees are unconfirmed; the displayed price remains a reference.",
@@ -46,9 +48,28 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     documents: ["Provider confirmation required."], purpose: "Not verified for this purpose.",
     priceApplicable: false, sources: [], reviewedAt: null,
   };
+}
+
+/** Published product rules, never an assertion that the customer passed KYC. */
+export function assessCustomerProfile(slug: string, context: CustomerContext, request: {
+  sourceCurrency: string; destinationCurrency: string; amount: number;
+  amountUsd: number | null; referenceRate: number | null;
+}): ProviderProfileAssessment {
+  const unknown = unconfirmedAssessment();
   const provider = slug.replace(/^market:/, "");
+  const intoIndia = context.country === "IN" && context.direction === "receive" && request.destinationCurrency === "INR";
+  // Revolut's UK converter prices a sender who already banks with Revolut; nobody in India can receive into it.
+  if (provider === "revolut" && intoIndia) {
+    return {
+      ...unknown, status: "not_supported", priceApplicable: false, reviewedAt: "2026-10-08",
+      reasons: ["You can't receive this payment into Revolut. Revolut India accepts domestic UPI only (NEFT/IMPS/RTGS aren't supported), and standard Revolut accounts can't hold INR. This UK converter rate only applies if your sender already holds a Revolut UK account, and it leaves out Revolut's transfer fee."],
+      limits: "Revolut India: up to 25 UPI receipts or INR 400,000 a day, and INR 200,000 total balance.",
+      settlement: ["Revolut India receives UPI only — no international bank transfers."],
+      sources: [{ label: "Revolut India: how to receive money", url: REVOLUT_INDIA_RECEIVE }],
+    };
+  }
   // Export-collection evidence cannot establish eligibility for a personal account.
-  if (context.profile === "personal") return unknown;
+  if (context.profile === "personal") return intoIndia ? personalIntoIndia(provider, slug, request, unknown) : unknown;
   if (!["wise", "skydo"].includes(provider) || context.country !== "IN" || context.direction !== "receive") return unknown;
   const individualName = context.profile === "freelancer";
   const a: ProviderProfileAssessment = {
@@ -104,4 +125,50 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     a.priceApplicable = false;
   }
   return a;
+}
+
+/**
+ * Personal money into an Indian bank account: the sender picks a remittance
+ * service and the recipient only needs a bank account or UPI ID. Business
+ * export-collection products don't carry family or personal remittances.
+ */
+function personalIntoIndia(provider: string, slug: string, request: { amount: number; referenceRate: number | null }, unknown: ProviderProfileAssessment): ProviderProfileAssessment {
+  if (provider === "skydo" || provider === "payzoll") {
+    const skydo = provider === "skydo";
+    return {
+      ...unknown, status: "not_supported", priceApplicable: false, reviewedAt: "2026-10-08",
+      reasons: [skydo
+        ? "Skydo collects export and business income (FIRA, export purpose codes). Its own comparison sends personal money and family support to consumer remittance apps."
+        : "PayZoll lists SaaS companies, agencies, freelancers, global teams, exporters and international businesses. Personal or family money isn't a listed use."],
+      purpose: "Business or export income only.",
+      sources: [skydo ? { label: "Skydo vs Remitly: who each is for", url: SKYDO_VS_REMITLY } : { label: "Who PayZoll is for", url: PAYZOLL_AUDIENCE }],
+    };
+  }
+  if (provider === "wise" && slug === "wise") {
+    const inr = request.referenceRate === null ? null : request.amount * request.referenceRate;
+    const tooLarge = inr !== null && inr > 100_000_000;
+    return {
+      ...unknown, status: tooLarge ? "not_supported" : "documented", priceApplicable: !tooLarge, reviewedAt: "2026-10-08",
+      reasons: [tooLarge
+        ? "Wise caps transfers to a private individual in India at INR 100 million each."
+        : "Your sender pays Wise and Wise pays INR into your Indian bank account or UPI ID. You don't need a Wise account."],
+      verification: ["Your sender verifies their identity with Wise. You only share your account details."],
+      fees: "This public quote includes Wise's fee for the pay-in method shown. Card pay-ins cost more; your bank may charge on receipt.",
+      limits: "Up to INR 100 million per transfer to a private individual in India. Your sender's own Wise limits also apply.",
+      corridors: "Into Indian bank accounts (including NRE and NRO) or a UPI ID.",
+      settlement: ["Indian bank account (name, 5–20 digit account number, 11-character IFSC) or UPI ID. Usually 1 working day after conversion."],
+      documents: ["Your sender picks the payment purpose. Transfers to India for investment or charitable donation aren't allowed."],
+      purpose: "Personal transfers such as family support. Not investment or charitable donations.",
+      sources: [{ label: "Wise: send money to India", url: WISE_SEND_INDIA }, { label: "Wise guide to INR transfers", url: WISE_INR_GUIDE }],
+    };
+  }
+  if (slug.startsWith("market:")) {
+    // Consumer remittance services are the right product type; the price is still a dated estimate.
+    return {
+      ...unknown, priceApplicable: true,
+      reasons: ["A consumer remittance service your sender would use. Wise collected this price from the provider's own site; your sender's country and pay-in method change it."],
+      verification: ["Your sender signs up and verifies with this provider. You only need an Indian bank account or the payout method they offer."],
+    };
+  }
+  return unknown;
 }

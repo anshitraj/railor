@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, RefreshCw, Search, Tag } from "lucide-react";
-import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow } from "@railor/core";
+import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, RefreshCw, Search, ShieldCheck, Tag, TriangleAlert } from "lucide-react";
+import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow, RowWebCheck, WebCheckSummary } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
 import { RemittanceSurveyPanel } from "./remittance-survey-panel";
 import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from "../../lib/connection-navigation";
+import { BENEFICIARIES_AVAILABLE } from "../../lib/product-features";
 
 /**
  * A swap-style live quote: pick what you send and what they receive, and
@@ -20,6 +21,7 @@ import { connectionProviderSlug, priceSourceTime, providerConnectionPath } from 
  */
 
 const REFRESH_SECONDS = 20;
+const ACCOUNT_QUOTE_SLUGS = new Set(["wise", "airwallex", "xflow", "dlocal"]);
 const PRESETS = [
   { value: 100, label: "100" },
   { value: 1_000, label: "1K" },
@@ -318,6 +320,14 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const cta = (() => {
     if (!valid) return { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true as const };
     if (!selected) return { label: loading ? "Fetching quotes…" : "No quote for this pair", disabled: true as const };
+    if (selected.basis === "published" && !ACCOUNT_QUOTE_SLUGS.has(selected.providerSlug) && selected.source.url) {
+      return { label: `View ${selected.providerName} published pricing`, href: selected.source.url, external: true as const };
+    }
+    if (context.direction === "receive" && selected.side === "payer") {
+      // Nobody opens an account with their sender's service: show how the sender pays.
+      const page = selected.profileAssessment?.sources[0]?.url ?? selected.source.url;
+      if (page) return { label: `How your sender pays with ${selected.providerName}`, href: page, external: true as const };
+    }
     if (!contextCurrent || context.direction === "receive" || selected.profileAssessment?.status !== "documented" || !selected.profileAssessment.priceApplicable) {
       return { label: `Account options for ${selected.providerName}`, href: providerConnectionPath(selected.providerSlug, mode) };
     }
@@ -328,8 +338,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     const sendWith = (row: PriceRow, extra?: { secondary: { label: string; href: string; external?: boolean } }) => {
       const params = new URLSearchParams({ from, to, amount: String(amount), provider: row.providerSlug });
       return connected.includes(row.providerSlug)
-        ? { label: `Send with ${row.providerName}`, href: `/app/payments/new?${params}`, ...extra }
-        : { label: `Connect ${row.providerName} to send`, href: providerConnectionPath(row.providerSlug), secondary: extra?.secondary ?? { label: "or simulate it in test mode", href: `/app/payments/new?${params}` } };
+        ? BENEFICIARIES_AVAILABLE ? { label: `Send with ${row.providerName}`, href: `/app/payments/new?${params}`, ...extra } : { label: "Preview route", href: "/app/routing?tab=preview", ...extra }
+        : { label: `Connect ${row.providerName} for account pricing`, href: providerConnectionPath(row.providerSlug), secondary: extra?.secondary ?? { label: "Preview routing", href: "/app/routing?tab=preview" } };
     };
     if (executable.includes(selected.providerSlug)) return sendWith(selected);
     // The best price may sit with a provider that has no API: say so, and offer the best one Railor can send through.
@@ -387,7 +397,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             <div className="rounded-2xl border border-[#f5c451]/45 bg-white/[0.04] p-4 transition focus-within:border-[#f5c451]/80 focus-within:bg-white/[0.06]">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="swap-amount" className="text-[12.5px] font-medium text-white/60">
-                  {context.direction === "receive" ? "Your client sends" : "You send"}
+                  {context.direction === "receive" ? (context.profile === "personal" ? "Your sender sends" : "Your client sends") : "You send"}
                 </label>
                 <div className="flex gap-1">
                   {PRESETS.map((p) => (
@@ -432,7 +442,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <span className="text-[12.5px] font-medium text-white/60">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
                 {selected ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-white/55">
-                    via <ProviderLogo slug={selected.providerSlug} name={selected.providerName} src={selected.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected.providerName}</span>
+                    {selected.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected.providerSlug} name={selected.providerName} src={selected.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected.providerName}</span>
                   </span>
                 ) : null}
               </div>
@@ -512,7 +522,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <Tag size={15} className="text-[#ffad8c]" /> Provider prices
               <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/70">{quotes.length + estimates.length}</span>
             </h2>
-            <span className="text-[11.5px] text-white/45">checked {ago(now - fetchedAt)}</span>
+            <span className="text-right text-[11.5px] text-white/45">
+              checked {ago(now - fetchedAt)}
+              {result?.webCheck ? <WebCheckStatus summary={result.webCheck} /> : null}
+            </span>
           </div>
 
           <ol className="flex flex-col gap-1 rounded-2xl border border-white/10 p-1.5">
@@ -524,7 +537,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           </ol>
 
           {estimates.length ? (
-            <details className="group rounded-2xl border border-white/10 px-1.5 py-1">
+            <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-white/10 px-1.5 py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
                 Market estimates · {estimates.length}
                 <span className="text-[11px] font-normal text-white/40">consumer prices, collected by Wise · never ranked best</span>
@@ -594,8 +607,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               ))}
             </ul>
           ) : null}
-          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p><ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /></li>)}</ul></details> : null}
+          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}
           {selected?.profileAssessment ? <section aria-label="Selected provider profile requirements" className="rounded-xl border border-white/15 p-3 text-[12px] text-white/70"><h3 className="font-semibold text-white">{selected.providerName} · {selected.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</h3><p className="mt-2">{selected.profileAssessment.reasons.join(" ")}</p><dl className="mt-3 space-y-3">{[{ label: "KYC / KYB", value: selected.profileAssessment.verification.join(" ") }, { label: "Expected fees", value: selected.profileAssessment.fees }, { label: "Transfer limits", value: selected.profileAssessment.limits }, { label: "Available corridors", value: selected.profileAssessment.corridors }, { label: "Settlement methods", value: selected.profileAssessment.settlement.join(" ") }, { label: "Documents", value: selected.profileAssessment.documents.join(" ") }, { label: "Payment purpose", value: selected.profileAssessment.purpose }].map((item) => <div key={item.label}><dt className="font-semibold text-white/90">{item.label}</dt><dd className="mt-0.5 leading-relaxed">{item.value}</dd></div>)}</dl>{selected.profileAssessment.sources.length ? <div className="mt-3 flex flex-wrap gap-2">{selected.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}<p className="w-full text-[10px] text-white/45">Rules reviewed {selected.profileAssessment.reviewedAt}</p></div> : null}</section> : null}
+          {selected?.webChecks?.length ? <WebCheckDetails checks={selected.webChecks} /> : null}
           {selected ? (
             <details className="rounded-xl border border-white/10 px-3 py-2 text-[11.5px] text-white/55">
               <summary className="cursor-pointer">{selected.providerName} · {priceSourceTime(selected.observedAt, selected.basis)}</summary>
@@ -615,7 +629,59 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   );
 }
 
+function hostOf(url: string | null) {
+  try {
+    return url ? new URL(url).hostname.replace(/^www\./, "") : "";
+  } catch {
+    return "";
+  }
+}
+
+function WebCheckStatus({ summary }: { summary: WebCheckSummary }) {
+  if (!summary.configured) return null;
+  const text = summary.paused ? "Google check paused" : summary.pending ? `Google-checking ${summary.pending}…` : summary.checked ? `${summary.checked} Google-checked` : null;
+  return text ? <span className="block text-[10.5px] text-white/40">{text}</span> : null;
+}
+
+/** One chip per row: what Google found about the route this price implies. */
+function WebCheckBadge({ checks }: { checks?: RowWebCheck[] }) {
+  const check = checks?.[0];
+  if (!check) return null;
+  const chip = "inline-flex items-center gap-1 rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide";
+  if (check.state === "pending") return <span className={cn(chip, "bg-white/[0.06] text-white/50")}><LoaderCircle size={10} className="animate-spin" /> checking on Google</span>;
+  if (check.conflict) return <span title={check.quote ?? check.statement} className={cn(chip, "bg-amber-300/15 text-amber-200")}><TriangleAlert size={10} /> web check disagrees</span>;
+  if (check.state === "supported") return <span title={`“${check.quote}” — ${hostOf(check.sourceUrl)}`} className={cn(chip, "bg-emerald-400/15 text-emerald-300")}><ShieldCheck size={10} /> Google-checked</span>;
+  return null;
+}
+
+const CHECK_STATE: Record<RowWebCheck["state"], string> = {
+  supported: "Confirmed", contradicted: "Contradicted", unclear: "Not settled by the pages found", pending: "Checking with Google Search…", not_checked: "Not checked yet",
+};
+
+function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; compact?: boolean }) {
+  return (
+    <section aria-label="Google web check" className={cn("text-[11.5px] text-white/60", compact ? "mt-2" : "rounded-xl border border-white/10 p-3")}>
+      {!compact ? <h3 className="flex items-center gap-1.5 font-semibold text-white"><ShieldCheck size={13} className="text-emerald-300" /> Google web check</h3> : null}
+      <ul className={cn("space-y-2", !compact && "mt-2")}>
+        {checks.map((check) => (
+          <li key={check.statement}>
+            <p className="text-white/45">“{check.statement}”</p>
+            <p className={cn("mt-0.5 font-semibold", check.conflict ? "text-amber-200" : check.state === "supported" ? "text-emerald-300" : check.state === "contradicted" ? "text-red-200" : "text-white/55")}>
+              {CHECK_STATE[check.state]}{check.conflict ? " — disagrees with what Railor shows; flagged for review" : ""}
+              {check.official ? " · provider’s own site" : check.sourceUrl ? " · independent source" : ""}
+            </p>
+            {check.quote ? <blockquote className="mt-1 border-l-2 border-white/15 pl-2 text-white/70">{check.quote}</blockquote> : null}
+            {check.sourceUrl ? <a href={check.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block text-[#ffad8c] underline">{check.sourceTitle || hostOf(check.sourceUrl)} ↗</a> : null}
+            {check.checkedAt ? <span className="ml-2 text-[10px] text-white/35">checked {check.checkedAt.slice(0, 10)}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ConnectionLink({ slug, name, mode, connected }: { slug: string; name: string; mode: "app" | "public"; connected: boolean }) {
+  if (!ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
   return <Link href={providerConnectionPath(slug, mode)} prefetch={false} aria-label={`${connected ? "Manage" : "Connect"} ${name}`}
     title={`Open ${name}'s account connection options`}
     className="mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]">
@@ -642,6 +708,8 @@ function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row
               {tag.label}
             </span>
             {row.partial ? <span className="rounded-md bg-red-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-red-200">partial reference</span> : null}
+            {row.side === "payer" ? <span title="A service your sender pays. You only need your bank account." className="rounded-md bg-sky-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-sky-200">sender’s service</span> : null}
+            <WebCheckBadge checks={row.webChecks} />
           </span>
           <span className="truncate text-[11.5px] text-white/45">
             fee {row.feeAmount === null ? "—" : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`}
@@ -661,7 +729,8 @@ function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row
           ) : null}
         </span>
       </button>
-      <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected} />
+      {/* A sender's service has nothing for the recipient to connect. */}
+      {row.side === "payer" ? null : <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected} />}
     </li>
   );
 }

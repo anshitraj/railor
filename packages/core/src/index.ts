@@ -44,5 +44,7 @@ export * from "./logos.js";
 export * from "./pricing.js";
 export * from "./public-pricing/remittances.js";
 export * from "./customer-profiles.js";
+export * from "./web-check.js";
+export * from "./web-check-store.js";
 export * from "./freelancer.js";
 export * from "./invoice-extraction.js";

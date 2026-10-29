@@ -44,9 +44,25 @@ def _robots_for(origin: str) -> robotparser.RobotFileParser:
     parser = robotparser.RobotFileParser()
     parser.set_url(f"{origin}/robots.txt")
     try:
-        parser.read()
-    except Exception:  # An unreachable robots.txt is treated as "no rules stated".
-        parser.parse([])
+        # Robots files are untrusted URLs too: use the same redirect, private-IP,
+        # size and timeout guards as source pages. urllib's parser.read bypasses them.
+        result = guarded_get(
+            f"{origin}/robots.txt",
+            headers={"user-agent": get_settings().user_agent},
+            timeout=get_settings().request_timeout,
+            max_bytes=512_000,
+        )
+        if result.status in (401, 403) or result.status >= 500 or result.status == 429:
+            parser.parse(["User-agent: *", "Disallow: /"])
+        elif result.status == 404:
+            parser.parse([])
+        elif 200 <= result.status < 300:
+            parser.parse(result.text.splitlines())
+        else:
+            parser.parse(["User-agent: *", "Disallow: /"])
+    except Exception:
+        # A blocked/failed robots request never opens access to the source.
+        parser.parse(["User-agent: *", "Disallow: /"])
     return parser
 
 

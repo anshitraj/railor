@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -25,14 +25,14 @@
     "drizzle-orm": "^0.45.3",
     "lucide-react": "^0.460.0",
     "motion": "^12.0.0",
-    "next": "^15.5.26",
-    "nodemailer": "^10.0.12",
+    "next": "^15.5.28",
+    "nodemailer": "^10.3.0",
     "pg": "^8.13.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

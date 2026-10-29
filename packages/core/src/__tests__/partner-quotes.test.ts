@@ -79,6 +79,10 @@ it("never presents an expired connected quote as a current price", async () => {
       verificationType: "provider_reported", observedAt: "2026-10-08T09:59:00Z", quotedAt: "2026-10-08T09:59:00Z", expiresAt: "2026-10-08T09:59:30Z",
     } }],
   });
-  expect(result.rows.find(row => row.providerSlug === "xflow")).toBeUndefined();
+  // An independently published fee schedule may remain visible, but the expired
+  // account quote must never survive as an exact price or amount received.
+  expect(result.rows.find(row => row.providerSlug === "xflow" && row.basis === "exact")).toBeUndefined();
+  const published = result.rows.find(row => row.providerSlug === "xflow");
+  if (published) expect(published).toMatchObject({ basis: "published", recipientAmount: null, partial: true });
   expect(result.unavailable.find(row => row.providerSlug === "xflow")?.reason).toMatch(/expired/);
 });

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw, Send, ShieldAlert } from "lucide-react";
 import { Button } from "@railor/ui";
 import { cancelPaymentAction, reconcilePaymentAction, submitPaymentAction } from "../../../app/app/payments/actions";
+import { BENEFICIARIES_AVAILABLE, BENEFICIARIES_UNAVAILABLE_MESSAGE } from "../../../lib/product-features";
 
 const OPEN = new Set(["submitting", "awaiting_funds", "processing", "unknown"]);
 
@@ -59,7 +60,9 @@ export function PaymentActions({
 
   return (
     <div className="flex flex-col gap-3">
-      {status === "ready" && canSend ? (
+      {!BENEFICIARIES_AVAILABLE && ["ready", "requires_approval"].includes(status) ? <p className="text-sm text-[var(--color-muted)]">{BENEFICIARIES_UNAVAILABLE_MESSAGE}</p> : null}
+      {!BENEFICIARIES_AVAILABLE && status === "ready" && canSend ? <Button variant="secondary" disabled={pending} onClick={() => act(() => cancelPaymentAction(id))}>Cancel payment</Button> : null}
+      {BENEFICIARIES_AVAILABLE && status === "ready" && canSend ? (
         confirming ? (
           <div className="flex flex-col gap-3 rounded-xl border border-[var(--color-orange)]/40 bg-[var(--color-lavender)]/60 p-4">
             <p className="flex items-center gap-2 text-[14px] font-semibold">
@@ -92,16 +95,16 @@ export function PaymentActions({
         )
       ) : null}
 
-      {status === "ready" && !canSend ? <p className="text-[12.5px] text-[var(--color-muted)]">Only a workspace owner or admin can send live payments.</p> : null}
+      {BENEFICIARIES_AVAILABLE && status === "ready" && !canSend ? <p className="text-[12.5px] text-[var(--color-muted)]">Only a workspace owner or admin can send live payments.</p> : null}
 
       {status === "requires_approval" ? (
         <div className="flex flex-wrap items-center gap-2">
           <Link href={decisionId ? `/app/decisions/${decisionId}` : "/app/approvals"} className="rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] font-bold text-white hover:bg-[var(--color-orange-deep)]">
             Open the approval →
           </Link>
-          <Button variant="secondary" disabled={pending} onClick={() => act(() => submitPaymentAction(id))}>
+          {BENEFICIARIES_AVAILABLE ? <Button variant="secondary" disabled={pending} onClick={() => act(() => submitPaymentAction(id))}>
             I&apos;ve been approved — send
-          </Button>
+          </Button> : null}
           <Button variant="ghost" disabled={pending} onClick={() => act(() => cancelPaymentAction(id))}>
             Cancel
           </Button>

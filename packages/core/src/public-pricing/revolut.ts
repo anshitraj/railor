@@ -51,8 +51,11 @@ export async function revolutPublicReference(input: PriceCheckInput, fetcher: ty
     observedAt: new Date(quote.rate.timestamp).toISOString(),
     source: { label: "Revolut UK public FX converter", url: "https://www.revolut.com/currency-converter/" },
     notes: [
-      "UK Standard personal-plan FX reference. Bank-transfer fees are not included.",
+      "Revolut's UK Standard-plan conversion rate, for someone who already holds a Revolut UK account. Revolut's transfer fee is not included.",
       "A currency conversion amount, not a guaranteed bank payout or your business account's price.",
+      ...(destination === "INR" || source === "INR"
+        ? ["Revolut can send INR to Indian bank accounts, but standard Revolut accounts can't hold or receive INR, and Revolut India receives domestic UPI only."]
+        : []),
       "This observation does not establish eligibility for an India-registered business. Confirm pricing and eligibility with Revolut.",
     ],
   };

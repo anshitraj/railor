@@ -18,8 +18,21 @@ from .config import get_settings
 
 @contextmanager
 def connection() -> Iterator[psycopg.Connection]:
-    with psycopg.connect(get_settings().database_url, row_factory=dict_row) as conn:
+    with psycopg.connect(get_settings().database_url, row_factory=dict_row, connect_timeout=15) as conn:
         yield conn
+
+
+@contextmanager
+def crawl_lock() -> Iterator[bool]:
+    """Transaction-scoped lock also works through transaction-pooling proxies.
+
+    Hold this dedicated transaction until the bounded job ends. Closing it
+    releases the lock after errors or termination; no permanent lease remains.
+    """
+    with connection() as conn:
+        conn.execute("set local idle_in_transaction_session_timeout = '50min'")
+        row = conn.execute("select pg_try_advisory_xact_lock(1918986604, 1) as acquired").fetchone()
+        yield bool(row and row["acquired"])
 
 
 def due_sources(limit: int = 50) -> list[dict[str, Any]]:

@@ -5,6 +5,7 @@ import { consumeLimit, requestIdentity } from "../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 /**
  * GET /api/prices?from=USD&to=INR&amount=1000[&market=1] — the live quote
@@ -21,6 +22,6 @@ export async function GET(request: Request) {
   try {
     return NextResponse.json(await runPriceCheck(org, input));
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Price check failed." }, { status: 502 });
+    return NextResponse.json({ error: "Price comparison is temporarily unavailable. Please try again shortly." }, { status: 502 });
   }
 }

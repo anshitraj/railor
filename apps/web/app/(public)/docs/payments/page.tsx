@@ -3,6 +3,7 @@ import { Bullet, Bullets } from "../../../../components/docs/bullets";
 import { DocsHeader } from "../../../../components/docs/docs-header";
 import { getSession } from "../../../../lib/auth";
 import { getOrgTestKey } from "../../../../lib/org";
+import { BENEFICIARIES_UNAVAILABLE_MESSAGE } from "../../../../lib/product-features";
 
 export const metadata = { title: "Payments" };
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ const STATES: Array<[string, string]> = [
 const PRICE_BASES: Array<[string, string]> = [
   ["exact", "A live quote from your own connected account (Wise, Airwallex) — the price you'd actually pay."],
   ["live_public", "A live quote anyone can get from the provider's API (Wise's public quote). Your account's price can differ."],
-  ["published", "The provider's published fee schedule (PayZoll, Skydo), applied at the reference rate, with the date it was read and a link to it."],
+  ["published", "The provider's published fee schedule, applied at the displayed reference rate, with its plan conditions, review date and source link. It is not an executable quote."],
   ["market_estimate", "Consumer prices Wise's comparison feed collected from other providers' public sites, dated. Opt in with include_market."],
 ];
 
@@ -46,6 +47,7 @@ export default async function PaymentsDocs() {
       <DocsHeader eyebrow="Money movement" title="Payments" badge={<StageBadge stage="beta" />}>
         Railor sends payouts through the provider accounts <em>you</em> connect — Railor never holds funds. Every payment is evaluated against your active policy, routed across eligible providers, submitted with an idempotency key recorded before the call, and tracked to settlement by provider webhooks and reconciliation.
       </DocsHeader>
+      <p role="status" className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 text-sm">{BENEFICIARIES_UNAVAILABLE_MESSAGE} Beneficiary endpoints and payment create/submit currently return <code>403 beneficiaries_disabled</code>. Existing history, cancellation and reconciliation remain available.</p>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-[20px] font-semibold">Test mode and live mode</h2>

@@ -22,6 +22,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 from playwright.sync_api import sync_playwright, expect
 
@@ -94,21 +95,23 @@ class TLSProxy(BaseHTTPRequestHandler):
 https = ThreadingHTTPServer(("127.0.0.1", 0), TLSProxy)
 origin = f"https://127.0.0.1:{https.server_address[1]}"
 smtp = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Mailbox)
-threading.Thread(target=smtp.serve_forever, daemon=True).start()
 report = {"checks": [], "errors": [], "screenshots": [], "overflow": []}
 with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
     openssl = shutil.which("openssl") or "C:/Program Files/Git/usr/bin/openssl.exe"
     cert, key = str(Path(temp) / "cert.pem"), str(Path(temp) / "key.pem")
-    subprocess.run([openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", key, "-out", cert, "-days", "1", "-subj", "/CN=localhost"], check=True, capture_output=True)
+    subprocess.run([openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", key, "-out", cert, "-days", "1", "-subj", "/CN=localhost", "-addext", "subjectAltName=IP:127.0.0.1,DNS:localhost"], check=True, capture_output=True)
     tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     tls.load_cert_chain(cert, key)
     https.socket = tls.wrap_socket(https.socket, server_side=True)
+    smtp.socket = tls.wrap_socket(smtp.socket, server_side=True)
+    threading.Thread(target=smtp.serve_forever, daemon=True).start()
     threading.Thread(target=https.serve_forever, daemon=True).start()
     env = {key: value for key, value in os.environ.items() if not key.endswith(("API_KEY", "CLIENT_SECRET"))}
     env.update(DATABASE_URL="", PGLITE_DATA_DIR=str(Path(temp) / "db"), APP_ORIGIN=origin, NEXT_PUBLIC_APP_URL=origin,
-        RAILOR_NEXT_DIST_DIR=".next-polish", NEXT_TELEMETRY_DISABLED="1", RAILOR_ALLOW_EMBEDDED_DB="true",
-        RAILOR_REMOTE_LOGOS="off", RAILOR_LIVE_PAYMENTS="false", RAILOR_READ_CACHE_MS="0", AUTH_EMAIL_TRANSPORT="smtp",
-        SMTP_URL=f"smtp://127.0.0.1:{smtp.server_address[1]}", CREDENTIALS_ENCRYPTION_KEY=base64.b64encode(secrets.token_bytes(32)).decode())
+        RAILOR_NEXT_DIST_DIR=os.getenv("RAILOR_E2E_DIST_DIR", ".next-polish"), NEXT_TELEMETRY_DISABLED="1", RAILOR_ALLOW_EMBEDDED_DB="true",
+        RAILOR_REMOTE_LOGOS="off", RAILOR_LIVE_PAYMENTS="false", RAILOR_READ_CACHE_MS="0", AUTH_EMAIL_TRANSPORT="smtp", AUTH_FROM="Railor <no-reply@railor.test>",
+        SMTP_URL=f"smtps://127.0.0.1:{smtp.server_address[1]}", NODE_EXTRA_CA_CERTS=cert, CREDENTIALS_ENCRYPTION_KEY=base64.b64encode(secrets.token_bytes(32)).decode(),
+        GEMINI_API_KEY="", GOOGLE_API_KEY="", GOOGLE_GENAI_USE_VERTEXAI="false", TAVILY_API_KEY="", PARALLEL_API_KEY="", FIRECRAWL_API_KEY="", RESEND_API_KEY="")
     # Explicit empty values prevent repo dotenv from injecting real platform keys.
     for name in ["AIRWALLEX_PLATFORM_ENVIRONMENT", "AIRWALLEX_PLATFORM_CLIENT_ID", "AIRWALLEX_PLATFORM_API_KEY", "AIRWALLEX_SANDBOX_CLIENT_ID", "AIRWALLEX_SANDBOX_API_KEY", "airwallex_sandbox_client_id", "airwallex_sandbox_scoped_api"]:
         env[name] = ""
@@ -136,7 +139,11 @@ with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
             context.route("**/api/prices?*", lambda route: route.fulfill(status=200, json={"quotes": []}))
             page = context.new_page()
             page.set_default_timeout(20000)
-            page.on("pageerror", lambda error: report["errors"].append(str(error)))
+            def record_browser_error(error):
+                detail = f"{urllib.parse.urlsplit(page.url).path}: {error}"
+                report["errors"].append(detail)
+                print(detail, flush=True)
+            page.on("pageerror", record_browser_error)
 
             def capture(name):
                 for width in [1440, 768, 390]:
@@ -154,14 +161,15 @@ with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
 
             # A genuinely new account, including magic-link issuance and verification.
             page.goto(origin + "/login", wait_until="networkidle")
-            page.get_by_label("Work email", exact=True).fill("founder@fresh-acceptance.test")
+            page.get_by_label("Email address", exact=True).fill("founder@fresh-acceptance.test")
             page.get_by_role("button", name="Continue with email", exact=True).click()
             expect(page.get_by_text("Check your inbox", exact=True)).to_be_visible()
             message = BytesParser().parsebytes(inbox.get(timeout=10))
             body = " ".join(part.get_payload(decode=True).decode() for part in message.walk() if part.get_content_type() == "text/plain")
             link = re.search(re.escape(origin) + r"/auth/verify\?token=[\w-]+", body).group(0)
             page.goto(link, wait_until="networkidle")
-            expect(page.get_by_role("heading", name="What are you building?", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="How will you use Railor?", exact=True)).to_be_visible()
+            page.get_by_role("radio", name=re.compile("^Business ")).click()
             page.get_by_role("radio", name=re.compile("Treasury")).click()
             page.get_by_role("button", name="Continue", exact=True).click()
             expect(page.get_by_role("heading", name="Where is your company based?", exact=True)).to_be_visible()
@@ -189,6 +197,9 @@ with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
             capture("search-no-policy")
             page.get_by_role("link", name="Set up a policy", exact=False).click()
             page.get_by_label("Policy name", exact=True).fill("First production policy")
+            # The policy editor is progressive: review each default answer before saving.
+            for _ in range(6):
+                page.get_by_role("button", name="Continue", exact=True).click()
             page.get_by_role("button", name="Save draft", exact=True).click()
             expect(page).to_have_url(re.compile(r"/app/policies/[\w-]+$"))
             page.get_by_role("button", name="Activate this version", exact=True).click()
@@ -214,7 +225,7 @@ with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
             connect = page.get_by_role("button", name="Connect Atlas Test Rail", exact=True)
             connect.click()
             dialog = page.get_by_role("dialog")
-            expect(dialog).to_contain_text("connection is coming soon")
+            expect(dialog).to_contain_text("account connection is not available in Railor yet")
             for _ in range(5):
                 page.keyboard.press("Tab")
                 expect(dialog.locator(":focus")).to_have_count(1)
@@ -256,7 +267,7 @@ with tempfile.TemporaryDirectory(prefix="railor-browser-test-") as temp:
             expect(page.get_by_role("article", name="Harbor Test Rail comparison", exact=True).get_by_role("button", name="Record decision", exact=True)).to_have_count(0)
             capture("agent-policy-blocked")
             report["checks"].append("Why not provider -> deterministic denied reason; blocked provider cannot be selected")
-            page.get_by_role("button", name="New conversation", exact=True).click()
+            page.get_by_role("button", name="Start a new chat", exact=True).click()
             ask("Send USDC from Singapore to Mexico receiving MXN")
             expect(page.get_by_role("button", name="Confirm fields & search", exact=False)).to_be_disabled()
             expect(page.locator(".agent-request-fields")).to_contain_text("Still needed")

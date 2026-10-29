@@ -10,7 +10,20 @@ const assess = (slug = "wise", overrides: Partial<CustomerContext> = {}, amounts
 describe("account-holder product eligibility", () => {
   it("does not apply commercial receiving evidence to personal accounts", () => {
     expect(CustomerContext.parse({ ...context, profile: "personal", purpose: "personal" }).profile).toBe("personal");
-    for (const provider of ["wise", "skydo"]) expect(assess(provider, { profile: "personal" })).toMatchObject({ status: "unconfirmed", priceApplicable: false });
+    for (const provider of ["wise", "skydo"]) expect(assess(provider, { profile: "personal", country: "GB" })).toMatchObject({ status: "unconfirmed", priceApplicable: false });
+  });
+  it("prices personal money into India through the sender's service, not export products or Revolut", () => {
+    const personal = { profile: "personal", purpose: "personal" } as const;
+    expect(assess("wise", personal)).toMatchObject({ status: "documented", priceApplicable: true });
+    expect(assess("wise", personal).purpose).toContain("Not investment or charitable donations");
+    for (const provider of ["skydo", "payzoll"]) expect(assess(provider, personal)).toMatchObject({ status: "not_supported", priceApplicable: false });
+    expect(assess("market:remitly", personal)).toMatchObject({ status: "unconfirmed", priceApplicable: true });
+    for (const profile of ["personal", "freelancer", "business"] as const) {
+      expect(assess("revolut", { profile })).toMatchObject({ status: "not_supported", priceApplicable: false });
+      expect(assess("revolut", { profile }).sources[0]!.url).toContain("help.revolut.com/en-IN");
+    }
+    // Over Wise's INR 100 million cap for a private individual.
+    expect(assess("wise", personal, { amount: 2_000_000, referenceRate: 90 }).status).toBe("not_supported");
   });
   it("changes bank-name and document requirements for an individual freelancer, registered sole proprietor and company", () => {
     const freelance = assess("wise", { profile: "freelancer" });

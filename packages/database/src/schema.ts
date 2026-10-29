@@ -2213,6 +2213,30 @@ export const providerCandidates = pgTable("provider_candidates", {
   statusIdx: index("provider_candidates_status_idx").on(t.status, t.lastSeenAt),
 }));
 
+/**
+ * Google-grounded checks of what a price row implies ("Wise can pay INR into
+ * an Indian bank account"). A verdict counts only when its quote was found
+ * verbatim on a page Railor fetched itself. A cache with an expiry, not
+ * published data: a check can demote a price row, never publish a capability.
+ */
+export const webFactChecks = pgTable("web_fact_checks", {
+  key: text("key").primaryKey(),
+  providerSlug: text("provider_slug").notNull(),
+  kind: text("kind").$type<"corridor" | "profile">().notNull(),
+  statement: text("statement").notNull(),
+  verdict: text("verdict").$type<"supported" | "contradicted" | "unclear">().notNull(),
+  quote: text("quote"),
+  sourceUrl: text("source_url"),
+  sourceTitle: text("source_title"),
+  official: boolean("official").default(false).notNull(),
+  searchQueries: jsonb("search_queries").$type<string[]>().default([]).notNull(),
+  pages: jsonb("pages").$type<Array<{ url: string; title: string }>>().default([]).notNull(),
+  note: text("note"),
+  model: text("model").notNull(),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => ({ providerIdx: index("web_fact_checks_provider_idx").on(t.providerSlug, t.checkedAt) }));
+
 /** Saved market leads are tenant-private research, never executable route facts. */
 export const discoveryReviews = pgTable("discovery_reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
