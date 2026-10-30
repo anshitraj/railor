@@ -20,6 +20,12 @@ Fresh production checks confirmed:
   Cloud Scheduler is enabled every six hours; both failure and missing-execution
   alert policies and their notification channel are enabled.
 - The production JavaScript dependency audit reported zero known advisories.
+  A Python audit found eight advisories in Twisted, pulled in by the optional
+  Scrapy documentation spider. The scheduled HTTP job does not use that tool;
+  its production image now excludes the `crawl` extra. The optional lock was
+  also updated to Twisted 26.10.0. Auditing the deployed runtime's pinned
+  dependencies (`gcs` and `discovery`, without development or crawl extras)
+  reports zero known advisories. CI tests this same runtime dependency set.
 - Fresh isolated verification passed 810 JavaScript/TypeScript tests (SDK 13,
   core 490, connector 4, web 303), 55 worker tests and 3 Python SDK tests.
   Workspace type checking passed. Tests used disposable local databases and
@@ -46,6 +52,13 @@ Issues found and addressed in this release:
 4. `/privacy` and `/terms` now redirect to the existing legal pages.
 5. SDKs and fresh CLI configurations default to production, so an API key alone
    works. Explicit URLs still support localhost and other environments.
+
+Post-deployment checks confirmed API bearer headers reach both hosts without a
+redirect, HTML/OAuth requests canonicalize to `www`, both legal aliases resolve,
+and all 18 public-page/access-guard checks pass. Protected readiness remains
+`200`. Production browser checks found no page errors or horizontal overflow at
+1440, 768, 390 and 320 pixels, with five provider rows, selectable details and
+execution locked.
 
 Do not present every catalog entry as a working quoted route. Published tariffs
 can be partial, offers can expire, and private commercial prices still require

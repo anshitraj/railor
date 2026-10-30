@@ -35,6 +35,8 @@ The script uploads only `apps/worker`; `.gcloudignore` excludes environment file
 local storage and virtual environments. Cloud Build uses a separate build identity
 and the frozen `uv.lock`. The image runs as an unprivileged user and is deployed
 by digest. Docker Desktop is not required on the deployment machine.
+Only the `gcs` and `discovery` extras are installed. The scheduled HTTP ingestion
+job does not use the separate Scrapy documentation spider or its Twisted dependency.
 
 The first deployment creates the `railor_ingestion` PostgreSQL login. It can read
 the source registry and published capabilities, update crawl state, and insert

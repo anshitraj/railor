@@ -10,9 +10,9 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 RUN pip install --no-cache-dir uv==0.11.25 \
-    && uv sync --frozen --no-install-project --extra crawl --extra discovery --extra gcs --no-dev
+    && uv sync --frozen --no-install-project --extra discovery --extra gcs --no-dev
 COPY railor_worker ./railor_worker
-RUN uv sync --frozen --extra crawl --extra discovery --extra gcs --no-dev \
+RUN uv sync --frozen --extra discovery --extra gcs --no-dev \
     && useradd --create-home --uid 10001 railor
 
 USER railor

@@ -18,6 +18,8 @@ pip install -e ".[crawl,dev]"
 
 Optional extras: `browser` (Playwright), `crawl` (Scrapy), `gcs` (Cloud Storage),
 and `discovery` (Gemini). `uv.lock` pins the production container dependencies.
+The scheduled production image installs `gcs` and `discovery`. Scrapy's `crawl`
+extra is for the separate documentation spider and is not installed in that image.
 
 ## Google Cloud production deployment
 
