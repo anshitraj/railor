@@ -1,0 +1,1014 @@
+{
+  "checkedAt": "2026-10-29T22:12:19.231643+00:00",
+  "method": "Official pages checked through Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with an independent official web-reader fallback and a public calculator browser check. Each record identifies its retrieval method. Retrieval time is not the source publication date or proof of a complete quote. Summaries describe published components and limitations.",
+  "providers": [
+    {
+      "slug": "1money",
+      "name": "1Money",
+      "sourceUrl": "https://www.1money.com/pricing",
+      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Published US ACH fee: USD 0.55; SWIFT withdrawal: USD 25. Conversion spreads vary and are quoted at transaction time. A bank-rail fee alone does not price a currency conversion."
+    },
+    {
+      "slug": "airwallex",
+      "name": "Airwallex",
+      "sourceUrl": "https://www.airwallex.com/en-us/pricing",
+      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "US Business Account plan: FX markup 0.5% for major currencies and 1% for others; SWIFT USD 15–25. Platform API pricing is custom. Account region, payout rail and the provider interbank rate determine the actual quote."
+    },
+    {
+      "slug": "al-ansari-exchange",
+      "name": "Al Ansari Exchange",
+      "sourceUrl": "https://alansariexchange.com/service/remittances/",
+      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "alchemy-pay",
+      "name": "Alchemy Pay",
+      "sourceUrl": "https://alchemypay.org",
+      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "alfred",
+      "name": "Alfred",
+      "sourceUrl": "https://alfredpay.io",
+      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "anchorage",
+      "name": "Anchorage Digital",
+      "sourceUrl": "https://www.anchorage.com",
+      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "anclap",
+      "name": "Anclap",
+      "sourceUrl": "https://www.anclap.com",
+      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "arq",
+      "name": "ARQ (formerly DolarApp)",
+      "sourceUrl": "https://www.arqfinance.com/es-MX/help/intercom/13901947",
+      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "aspora",
+      "name": "Aspora",
+      "sourceUrl": "https://www.aspora.com/help/us/transfers",
+      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Official US help says the transfer fee is dynamic and shown in the app after entering the amount. The public first-transfer zero-fee offer is conditional; no standard FX rate is assumed."
+    },
+    {
+      "slug": "b2c2",
+      "name": "B2C2",
+      "sourceUrl": "https://www.b2c2.com",
+      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "baanx",
+      "name": "Baanx",
+      "sourceUrl": "https://www.baanx.com",
+      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "banking-circle",
+      "name": "Banking Circle",
+      "sourceUrl": "https://www.bankingcircle.com",
+      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "banxa",
+      "name": "Banxa",
+      "sourceUrl": "https://support.banxa.com/en/support/solutions/articles/44002625876-how-does-eu-internet-ventures-b-v-euiv-set-the-price-of-cryptocurrency-",
+      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Card/Apple Pay purchases have a published 1.99% processing fee. Network charges and variable Banxa/partner/recovery spreads are additional; zero processing fee on another method does not mean zero total cost."
+    },
+    {
+      "slug": "bitgo",
+      "name": "BitGo",
+      "sourceUrl": "https://www.bitgo.com",
+      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "bitso",
+      "name": "Bitso",
+      "sourceUrl": "https://bitso.com/fees",
+      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Exchange maker/taker fees vary with 30-day volume. These are crypto exchange fees, not a fiat MXN-to-USD bank-transfer quote. Bitso Business pricing requires its own terms."
+    },
+    {
+      "slug": "bitso-juno",
+      "name": "Bitso / Juno",
+      "sourceUrl": "https://bitso.com/business",
+      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Bitso Business offers commercial payment infrastructure. Retail Bitso crypto trading tariffs and similarly named Juno services are not substituted for this product’s commercial quote."
+    },
+    {
+      "slug": "blindpay",
+      "name": "BlindPay",
+      "sourceUrl": "https://blindpay.com/pricing",
+      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Published platform subscriptions depend on plan and billing interval. Subscription prices are separate from the FX rate, rail fees and amount-specific payout quote."
+    },
+    {
+      "slug": "botim",
+      "name": "Botim Money",
+      "sourceUrl": "https://botim.me/international-transfer/",
+      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "brale",
+      "name": "Brale",
+      "sourceUrl": "https://brale.xyz/pricing",
+      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "US bank rails: USD 0.25 ACH, USD 2 RTP and USD 20 wire; USDT conversion 0.05%. Network and program terms are separate. These USD components do not establish an international FX payout price."
+    },
+    {
+      "slug": "bridge",
+      "name": "Bridge",
+      "sourceUrl": "https://bridge.xyz",
+      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "briskpe",
+      "name": "BriskPe",
+      "sourceUrl": "https://www.briskpe.com",
+      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The public business page lists USD 16 through USD 2,000; USD 25 through USD 10,000; then 0.25%, with GST applicable. Marketplace and card products have different tariffs; a final FX quote is still needed."
+    },
+    {
+      "slug": "bvnk",
+      "name": "BVNK",
+      "sourceUrl": "https://www.bvnk.com",
+      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "careem-pay",
+      "name": "Careem Pay",
+      "sourceUrl": "https://www.careem.com/en-AE/send-money-faqs/",
+      "checkedAt": "2026-10-29T21:48:21.065Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The official transfer help directs customers to the app for exact fees. Destination, Careem Plus membership and transfer history change pricing; cashback is not a standard fee reduction."
+    },
+    {
+      "slug": "cashfree",
+      "name": "Cashfree Payments",
+      "sourceUrl": "https://www.cashfree.com/payment-gateway-charges/",
+      "checkedAt": "2026-10-29T21:48:21.065Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The public pricing page includes payment-gateway tariffs. Those card-processing fees do not price Global Collections bank receipts. Use the specific account’s collection and FX quote."
+    },
+    {
+      "slug": "cbw-bank",
+      "name": "CBW Bank",
+      "sourceUrl": "https://www.cbw.bank",
+      "checkedAt": "2026-10-29T21:48:21.065Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "checkout-com",
+      "name": "Checkout.com",
+      "sourceUrl": "https://www.checkout.com/pricing",
+      "checkedAt": "2026-10-29T21:48:21.065Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "circle",
+      "name": "Circle",
+      "sourceUrl": "https://www.circle.com",
+      "checkedAt": "2026-10-29T21:48:21.065Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "clickpesa",
+      "name": "ClickPesa",
+      "sourceUrl": "https://clickpesa.com/payment-gateway/pricing/",
+      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "coinbase",
+      "name": "Coinbase",
+      "sourceUrl": "https://www.coinbase.com",
+      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "coins-ph",
+      "name": "Coins.ph",
+      "sourceUrl": "https://www.coins.ph/en-ph/pro",
+      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "conduit",
+      "name": "Conduit",
+      "sourceUrl": "https://conduitpay.com",
+      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "cowrie",
+      "name": "Cowrie Integrated Systems",
+      "sourceUrl": "https://www.cowriesys.com/solutions.html#fx-liquidity",
+      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "cross-river",
+      "name": "Cross River Bank",
+      "sourceUrl": "https://www.crossriver.com",
+      "checkedAt": "2026-10-29T21:48:39.767Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "crossmint",
+      "name": "Crossmint",
+      "sourceUrl": "https://help.crossmint.com/articles/6270626721-pricing-disclosure",
+      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "EU disclosure publishes card processing ranges of 0.5–4.5%, possible non-USD/EUR currency conversion fees of 0.5–2%, and orchestration ranges of 0.03–0.40%. Partner, network and contract charges can apply. Ranges cannot produce a guaranteed route total."
+    },
+    {
+      "slug": "currencycloud",
+      "name": "Currencycloud",
+      "sourceUrl": "https://www.currencycloud.com",
+      "checkedAt": "2026-10-29T21:48:39.767Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "dashx",
+      "name": "DashX",
+      "sourceUrl": "https://dashx.xyz",
+      "checkedAt": "2026-10-29T21:48:39.767Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "dlocal",
+      "name": "dLocal",
+      "sourceUrl": "https://dlocal.com",
+      "checkedAt": "2026-10-29T21:48:39.767Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "dtcpay",
+      "name": "dtcpay",
+      "sourceUrl": "https://dtcpay.com/api/media/file/Virtual-Account-Fee-Schedule.pdf",
+      "checkedAt": "2026-10-29T22:11:15.649Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The official virtual-account schedule is dated 23 May 2024 and lists SGD 100 monthly maintenance at balances up to SGD 100,000. This historical account-service tariff is not a current transaction FX or payout quote."
+    },
+    {
+      "slug": "eand-money",
+      "name": "e& money",
+      "sourceUrl": "https://www.eandmoney.com/en/send-abroad.html",
+      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "eco",
+      "name": "Eco",
+      "sourceUrl": "https://eco.com",
+      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "episode-six",
+      "name": "Episode Six",
+      "sourceUrl": "https://episodesix.com",
+      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "ethena",
+      "name": "Ethena",
+      "sourceUrl": "https://ethena.fi",
+      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "fireblocks",
+      "name": "Fireblocks",
+      "sourceUrl": "https://www.fireblocks.com/pricing/",
+      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "flutterwave",
+      "name": "Flutterwave",
+      "sourceUrl": "https://flutterwave.com/us/pricing",
+      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "fomo-pay",
+      "name": "FOMO Pay",
+      "sourceUrl": "https://www.fomopay.com",
+      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "fonbnk",
+      "name": "Fonbnk",
+      "sourceUrl": "https://fonbnk.com",
+      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "fuze",
+      "name": "Fuze",
+      "sourceUrl": "https://fuze.finance",
+      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "global66",
+      "name": "Global66",
+      "sourceUrl": "https://www.global66.com/enviar-dinero/MX/US/",
+      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "guardarian",
+      "name": "Guardarian",
+      "sourceUrl": "https://guardarian.com",
+      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "highnote",
+      "name": "Highnote",
+      "sourceUrl": "https://highnote.com/pricing",
+      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "immersve",
+      "name": "Immersve",
+      "sourceUrl": "https://immersve.com/pricing",
+      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "infinity",
+      "name": "Infinity",
+      "sourceUrl": "https://www.infinityapp.in",
+      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "karbon",
+      "name": "Karbon",
+      "sourceUrl": "https://www.karboncard.com/faqs/what-are-the-charges-for-receving-an-inward-remittance",
+      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Official inward-remittance FAQ lists FX conversion, transfer fees, taxes and possible intermediary bank charges. The breakdown depends on sender country, currency and payment method."
+    },
+    {
+      "slug": "koywe",
+      "name": "Koywe",
+      "sourceUrl": "https://www.koywe.com",
+      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "lirium",
+      "name": "Lirium",
+      "sourceUrl": "https://www.lirium.com",
+      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "lulu-exchange",
+      "name": "LuLu Exchange",
+      "sourceUrl": "https://luluexchange.com/services/money-transfer/",
+      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mastercard-move",
+      "name": "Mastercard Move",
+      "sourceUrl": "https://www.mastercard.com/us/en/business/payments/mastercard-move.html",
+      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mercuryo",
+      "name": "Mercuryo",
+      "sourceUrl": "https://mercuryo.io",
+      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mesh",
+      "name": "Mesh",
+      "sourceUrl": "https://www.meshconnect.com",
+      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mobee",
+      "name": "Mobee",
+      "sourceUrl": "https://mobee.com/en/app/help-center/trading",
+      "checkedAt": "2026-10-29T22:11:15.649Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Official trading help lists IDR spot totals of 0.120% buy and 0.280% sell; non-IDR totals of 0.350%. Pair-specific rules, VIP tiers, withdrawals and execution price must also be checked. These crypto trading components do not price a fiat bank remittance."
+    },
+    {
+      "slug": "monavate",
+      "name": "Monavate",
+      "sourceUrl": "https://www.monavate.com",
+      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "moneygram",
+      "name": "MoneyGram",
+      "sourceUrl": "https://www.moneygram.com",
+      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "moonpay",
+      "name": "MoonPay",
+      "sourceUrl": "https://www.moonpay.com",
+      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "moorwand",
+      "name": "Moorwand",
+      "sourceUrl": "https://moorwand.com",
+      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mulya",
+      "name": "Mulya",
+      "sourceUrl": "https://www.mulya.co/#pricing",
+      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "mural-pay",
+      "name": "Mural Pay",
+      "sourceUrl": "https://muralpay.com",
+      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "n-exchange",
+      "name": "n.exchange",
+      "sourceUrl": "https://n.exchange",
+      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "nium",
+      "name": "Nium",
+      "sourceUrl": "https://www.nium.com",
+      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "onafriq",
+      "name": "Onafriq",
+      "sourceUrl": "https://onafriq.com",
+      "checkedAt": "2026-10-29T21:49:46.854Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "opendue",
+      "name": "Due",
+      "sourceUrl": "https://www.opendue.com",
+      "checkedAt": "2026-10-29T21:49:46.854Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "openpayd",
+      "name": "OpenPayd",
+      "sourceUrl": "https://www.openpayd.com/knowledge-base/how-is-your-pricing-structured/",
+      "checkedAt": "2026-10-29T22:12:19.231643+00:00",
+      "status": "readable",
+      "method": "official_web_reader",
+      "summary": "The official pricing FAQ states that pricing is completely bespoke. A commercial quote is required; old starting-from tariffs cannot establish a current account-specific total."
+    },
+    {
+      "slug": "parfin",
+      "name": "Parfin",
+      "sourceUrl": "https://parfin.io",
+      "checkedAt": "2026-10-29T21:49:46.854Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "paxos",
+      "name": "Paxos",
+      "sourceUrl": "https://paxos.com",
+      "checkedAt": "2026-10-29T21:49:46.854Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "paycaddy",
+      "name": "PayCaddy",
+      "sourceUrl": "https://paycaddy.com",
+      "checkedAt": "2026-10-29T21:49:56.842Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "payglocal",
+      "name": "PayGlocal",
+      "sourceUrl": "https://payglocal.in/compare/payglocal-vs-skydo",
+      "checkedAt": "2026-10-29T21:56:20.146Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "payoneer",
+      "name": "Payoneer",
+      "sourceUrl": "https://www.payoneer.com/pricing/",
+      "checkedAt": "2026-10-29T21:49:56.842Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The public fee table distinguishes receiving accounts, payment requests, card/ACH funding and withdrawals. A receiving fee alone does not include the account-specific USD-to-INR conversion and withdrawal cost."
+    },
+    {
+      "slug": "paypal",
+      "name": "PayPal",
+      "sourceUrl": "https://www.paypal.com/in/business/paypal-business-fees",
+      "checkedAt": "2026-10-29T21:49:56.842Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "India merchant payments list 4.40% plus a currency-specific fixed fee. Currency conversion has a separate markup. This merchant tariff is different from Xoom personal remittance."
+    },
+    {
+      "slug": "payzoll",
+      "name": "PayZoll",
+      "sourceUrl": "https://payzoll.finance",
+      "checkedAt": "2026-10-29T21:49:56.842Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Publishes a 1% transfer fee and no FX markup. Tax inclusion, applicable minimums and partner conditions are not established by the headline, so it remains a published fee reference."
+    },
+    {
+      "slug": "peoples-group",
+      "name": "Peoples Group",
+      "sourceUrl": "https://www.peoplesgroup.com/personal/resources/account-fees",
+      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "pingpong",
+      "name": "PingPong",
+      "sourceUrl": "https://in.pingpongx.com/",
+      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "pomelo-la",
+      "name": "Pomelo",
+      "sourceUrl": "https://www.pomelo.la/en",
+      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "ramp-network",
+      "name": "Ramp Network",
+      "sourceUrl": "https://ramp.network",
+      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "rapyd",
+      "name": "Rapyd",
+      "sourceUrl": "https://www.rapyd.net/products/pricing/",
+      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "razorpay",
+      "name": "Razorpay",
+      "sourceUrl": "https://razorpay.com/pricing/",
+      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "refrens",
+      "name": "Refrens",
+      "sourceUrl": "https://www.refrens.com/receive-international-payments-india",
+      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "remitly",
+      "name": "Remitly",
+      "sourceUrl": "https://www.remitly.com/us/en/money-transfer/send-money-to-india",
+      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "USD-to-INR welcome rates apply to new customers only, once per customer, on the first USD 6,000. Ongoing pricing depends on amount, funding and delivery method. Fresh comparison observations retain their original time."
+    },
+    {
+      "slug": "ripple",
+      "name": "Ripple",
+      "sourceUrl": "https://ripple.com",
+      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "salt",
+      "name": "Salt",
+      "sourceUrl": "https://www.salt.pe/international-payments",
+      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "scrypt",
+      "name": "SCRYPT",
+      "sourceUrl": "https://scrypt.swiss/faq",
+      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "skydo",
+      "name": "Skydo",
+      "sourceUrl": "https://www.skydo.com/blog/how-to-reduce-swift-charges-india",
+      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "sphere",
+      "name": "Sphere",
+      "sourceUrl": "https://spherepay.co/products/privatedesk",
+      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "stablecore",
+      "name": "Stablecore",
+      "sourceUrl": "https://stablecore.com",
+      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "straitsx",
+      "name": "StraitsX",
+      "sourceUrl": "https://www.straitsx.com",
+      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "stripe",
+      "name": "Stripe",
+      "sourceUrl": "https://stripe.com/in/pricing",
+      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "taptap-send",
+      "name": "Taptap Send",
+      "sourceUrl": "https://help.taptapsend.com/en/sending-countries/how-do-i-send-money-from-the-uae/uae-what-payment-methods-can-i-use",
+      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "UAE help says Taptap Send does not charge for card or bank funding, while issuers/banks can charge. The offered FX rate is still needed for the total transfer cost."
+    },
+    {
+      "slug": "tazapay",
+      "name": "Tazapay",
+      "sourceUrl": "https://support.tazapay.com/transaction-fees",
+      "checkedAt": "2026-10-29T22:11:15.649Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "For non-high-risk industries, official support lists APM transaction fees of 0.80–2.50% and card fees of 3.8% + USD 0.50. Local/wire settlement fees and Indian FIRC charges can be separate. The offered FX rate, product and tier boundaries still need confirmation."
+    },
+    {
+      "slug": "tether",
+      "name": "Tether",
+      "sourceUrl": "https://tether.to",
+      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "thredd",
+      "name": "Thredd",
+      "sourceUrl": "https://www.thredd.ai",
+      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "thunes",
+      "name": "Thunes",
+      "sourceUrl": "https://www.thunes.com",
+      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "transak",
+      "name": "Transak",
+      "sourceUrl": "https://transak.com",
+      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "triple-a",
+      "name": "Triple-A",
+      "sourceUrl": "https://www.triple-a.io",
+      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "unlimit",
+      "name": "Unlimit",
+      "sourceUrl": "https://www.unlimit.com",
+      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "vibrant",
+      "name": "Vibrant",
+      "sourceUrl": "https://vibrantapp.com",
+      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "visa-direct",
+      "name": "Visa Direct",
+      "sourceUrl": "https://www.visa.com/en-us/products/visa-direct",
+      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "webbank",
+      "name": "WebBank",
+      "sourceUrl": "https://webbank.com",
+      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "winvesta",
+      "name": "Winvesta",
+      "sourceUrl": "https://www.winvesta.in/faqs/global-collections-account/what-are-the-charges-for-the-global-collections-account",
+      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "wio",
+      "name": "Wio Bank",
+      "sourceUrl": "https://wio.io/pay-and-get-paid",
+      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "wise",
+      "name": "Wise",
+      "sourceUrl": "https://wise.com/in/pricing/",
+      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "xflow",
+      "name": "Xflow",
+      "sourceUrl": "https://www.xflowpay.com/pricing",
+      "checkedAt": "2026-10-29T21:56:20.146Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "Starter: USD 12 through USD 2,000, then 0.6%; Growth: USD 20 through USD 5,000, then 0.4%; large invoices use custom pricing. The FAQ distinguishes fixed fees and FX markup for GST/RCM treatment. Plan and tax eligibility affect the final total."
+    },
+    {
+      "slug": "xoom",
+      "name": "Xoom",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "checkedAt": "2026-10-29T21:51:23.609Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": "The US public calculator was checked for USD 1,000 to an Indian bank: INR 95,046 with USD 0 ACH funding fee, explicitly a first-transfer offer. Debit and credit cards have different fees. The captured observation expires from display after 24 hours."
+    },
+    {
+      "slug": "yellow-card",
+      "name": "Yellow Card",
+      "sourceUrl": "https://yellowcard.io",
+      "checkedAt": "2026-10-29T21:51:23.609Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    },
+    {
+      "slug": "zero-hash",
+      "name": "Zero Hash",
+      "sourceUrl": "https://zerohash.com/disclosures/pricing-and-fees",
+      "checkedAt": "2026-10-29T21:51:23.609Z",
+      "status": "readable",
+      "method": "parallel_extract",
+      "summary": null
+    }
+  ]
+}

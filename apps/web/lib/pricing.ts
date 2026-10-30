@@ -121,7 +121,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   // business quotes.
   const market = params.market === undefined ? true : params.market === "1";
   const context = readCustomerContext((key) => params[key], {
-    profile, country: entity || "IN", direction: profile !== "personal" && (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: profile === "personal" ? "personal" : "services",
+    profile, country: entity || "IN", direction: (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: profile === "personal" ? "personal" : "services",
   });
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;

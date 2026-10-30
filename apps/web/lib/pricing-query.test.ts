@@ -29,6 +29,14 @@ describe("price query customer context", () => {
 });
 
 describe("onboarding price defaults", () => {
+  it("defaults an Indian personal INR recipient to receiving, while preserving an explicit sending request", async () => {
+    mocks.options.mockResolvedValue({ currencies: [{ value: "USD", label: "USD" }, { value: "INR", label: "INR" }], currencyByCountry: { IN: "INR" } });
+    // Equal currencies isolate initialization from provider/network access.
+    const personal = await loadPricePage({ from: "INR", to: "INR" }, null, "IN", "personal");
+    expect(personal.initial.context).toEqual({ profile: "personal", country: "IN", direction: "receive", purpose: "personal" });
+    const explicit = await loadPricePage({ from: "INR", to: "INR", direction: "send" }, null, "IN", "personal");
+    expect(explicit.initial.context.direction).toBe("send");
+  });
   it("uses the saved profile and lets an explicit comparison override it", async () => {
     mocks.options.mockResolvedValue({ currencies: [{ value: "USD", label: "USD" }], currencyByCountry: { IN: "INR" } });
     // Equal currencies avoid a provider request while testing page initialization.

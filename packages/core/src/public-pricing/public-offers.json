@@ -1,0 +1,29 @@
+{
+  "scope": "Amount-specific public calculator observations. Conditional offers, never guaranteed or executable quotes. Expire from display after 24 hours; never rescale to another amount.",
+  "observations": [
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 1000.0,
+      "recipientAmount": 95046.0,
+      "feeAmount": 0.0,
+      "feeCurrency": "USD",
+      "rate": 95.0464,
+      "observedAt": "2026-10-29T21:51:50.091535+00:00",
+      "displayUntil": "2026-10-30T21:51:50.091535+00:00",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "First transfer only; provider eligibility and offer terms apply.",
+        "Bank-funded deposit. Debit and credit card fees are different.",
+        "Captured from the US public calculator; the amount is rounded to whole INR by Xoom. This observation is not a locked quote."
+      ]
+    }
+  ]
+}

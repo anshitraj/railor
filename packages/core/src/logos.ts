@@ -53,6 +53,9 @@ export const KNOWN_PROVIDER_SITES: Record<string, string> = {
   moonpay: "https://www.moonpay.com",
   coinbase: "https://www.coinbase.com",
   paxos: "https://paxos.com",
+  blindpay: "https://blindpay.com",
+  crossmint: "https://www.crossmint.com",
+  "bitso-juno": "https://bitso.com",
 };
 
 /**

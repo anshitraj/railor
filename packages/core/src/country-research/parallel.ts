@@ -174,14 +174,30 @@ export interface ParallelExtractResponse {
   failedResults: ParallelExtractFailure[];
 }
 
-/** Empty `urls` returns an empty result without a network call. Parallel caps this endpoint at 20 URLs per call — callers must batch beyond that themselves. */
-export async function parallelExtract(urls: string[], objective?: string): Promise<ParallelExtractResponse> {
+export interface ParallelExtractOptions {
+  /** Documented fetch-policy minimum is 600 seconds. */
+  maxAgeSeconds?: number;
+  disableCacheFallback?: boolean;
+}
+export function validateParallelExtractOptions(options: ParallelExtractOptions): void {
+  if (options.maxAgeSeconds !== undefined && (!Number.isInteger(options.maxAgeSeconds) || options.maxAgeSeconds < 600)) throw new Error("Parallel extract maxAgeSeconds must be an integer of at least 600.");
+}
+
+/** Empty `urls` returns an empty result without a network call. Parallel caps this endpoint at 20 URLs per call. */
+export async function parallelExtract(urls: string[], objective?: string, options: ParallelExtractOptions = {}): Promise<ParallelExtractResponse> {
   if (urls.length === 0) return { results: [], failedResults: [] };
   if (urls.length > 20) {
     throw new Error(`parallelExtract: Parallel's /v1/extract accepts at most 20 URLs per call, got ${urls.length}. Batch the caller instead of raising this limit.`);
   }
 
-  const raw = await parallelFetch("/v1/extract", { urls, objective: objective ?? null });
+  validateParallelExtractOptions(options);
+  const raw = await parallelFetch("/v1/extract", {
+    urls, objective: objective ?? null,
+    ...(options.maxAgeSeconds !== undefined || options.disableCacheFallback !== undefined ? { advanced_settings: { fetch_policy: {
+      ...(options.maxAgeSeconds !== undefined ? { max_age_seconds: options.maxAgeSeconds } : {}),
+      disable_cache_fallback: options.disableCacheFallback ?? true,
+    } } } : {}),
+  });
 
   const parsed = ExtractResponseSchema.safeParse(raw);
   if (!parsed.success) {

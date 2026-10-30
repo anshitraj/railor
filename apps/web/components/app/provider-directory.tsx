@@ -1,420 +1,146 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  ArrowDownToLine,
-  ArrowRight,
-  ArrowUpFromLine,
-  BadgeCheck,
-  Banknote,
-  Code2,
-  Coins,
-  CreditCard,
-  FlaskConical,
-  Globe2,
-  Inbox,
-  Landmark,
-  LayoutGrid,
-  Search,
-  Send,
-  Wallet,
-  Webhook,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronDown, Code2, FlaskConical, Globe2, Search, SlidersHorizontal, Webhook, X } from "lucide-react";
 import { EmptyState, Freshness, cn } from "@railor/ui";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { NetworkLogo } from "../marketing/network-logo";
 import { ProviderLogo } from "./provider-logo";
 
 export interface DirectoryProvider {
-  slug: string;
-  name: string;
-  category: string;
-  description: string;
-  products: string[];
-  assets: string[];
-  networks: string[];
-  countryCount: number;
-  currencyCount: number;
-  customerTypes: string[];
-  hasApi: boolean;
-  hasSandbox: boolean;
-  hasWebhooks: boolean;
-  headquartersCountry: string | null;
-  lastVerifiedAt: string | null;
+  slug: string; name: string; category: string; description: string;
+  products: string[]; assets: string[]; networks: string[];
+  countryCount: number; currencyCount: number; customerTypes: string[];
+  hasApi: boolean; hasSandbox: boolean; hasWebhooks: boolean;
+  headquartersCountry: string | null; lastVerifiedAt: string | null;
+  profileAvailable?: boolean; sourceUrl?: string; pricingSummary?: string;
 }
 
-const PRODUCTS: Record<string, { label: string; icon: LucideIcon }> = {
-  payout: { label: "Payouts", icon: Send },
-  collection: { label: "Collections", icon: Inbox },
-  off_ramp: { label: "Off-ramp", icon: ArrowUpFromLine },
-  on_ramp: { label: "On-ramp", icon: ArrowDownToLine },
-  wallet: { label: "Wallets", icon: Wallet },
-  virtual_account: { label: "Virtual accounts", icon: Banknote },
-  treasury: { label: "Treasury", icon: Landmark },
-  kyc_kyb: { label: "KYC / KYB", icon: BadgeCheck },
-  card_issuing: { label: "Card issuing", icon: CreditCard },
-  card_funding: { label: "Card funding", icon: CreditCard },
+const PRODUCTS: Record<string, string> = {
+  payout: "Payouts", collection: "Collections", off_ramp: "Off-ramp", on_ramp: "On-ramp",
+  wallet: "Wallets", virtual_account: "Virtual accounts", treasury: "Treasury",
+  kyc_kyb: "KYC / KYB", card_issuing: "Card issuing", card_funding: "Card funding",
 };
-
 type Sort = "name" | "coverage" | "fresh";
-const SORTS: Array<{ value: Sort; label: string }> = [
-  { value: "name", label: "A–Z" },
-  { value: "coverage", label: "Most countries" },
-  { value: "fresh", label: "Recently verified" },
-];
-const COLLAPSED = 8;
+const control = "min-h-11 w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange)]";
 
-/** Filters are one click each, never required; every option shows how many providers it matches. */
+/** Search first. Detailed evidence and technical filters are available on demand. */
 export function ProviderDirectory({ providers, basePath = "/app/providers" }: { providers: DirectoryProvider[]; basePath?: string }) {
   const reduce = useReducedMotion();
-  const [product, setProduct] = useState<string | null>(null);
-  const [asset, setAsset] = useState<string | null>(null);
-  const [network, setNetwork] = useState<string | null>(null);
-  const [customerType, setCustomerType] = useState<string | null>(null);
+  const [product, setProduct] = useState("");
+  const [asset, setAsset] = useState("");
+  const [network, setNetwork] = useState("");
+  const [customerType, setCustomerType] = useState("");
   const [apiOnly, setApiOnly] = useState(false);
   const [sandboxOnly, setSandboxOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("name");
-  const [moreAssets, setMoreAssets] = useState(false);
-  const [moreNetworks, setMoreNetworks] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [limit, setLimit] = useState(12);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  useEffect(() => setLimit(12), [query, product, asset, network, customerType, apiOnly, sandboxOnly, sort]);
 
-  // Counted against the full dataset so a number never shifts under a chip the user didn't touch.
-  const counts = useMemo(() => {
-    const count = (get: (p: DirectoryProvider) => string[]) => {
-      const map: Record<string, number> = {};
-      for (const p of providers) for (const v of get(p)) map[v] = (map[v] ?? 0) + 1;
-      return map;
+  const options = useMemo(() => {
+    const count = (get: (provider: DirectoryProvider) => string[]) => {
+      const values = new Map<string, number>();
+      for (const provider of providers) for (const value of new Set(get(provider))) values.set(value, (values.get(value) ?? 0) + 1);
+      return [...values.entries()].sort(([a], [b]) => a.localeCompare(b));
     };
-    return {
-      products: count((p) => p.products),
-      assets: count((p) => p.assets),
-      networks: count((p) => p.networks),
-      customerTypes: count((p) => p.customerTypes),
-      api: providers.filter((p) => p.hasApi).length,
-      sandbox: providers.filter((p) => p.hasSandbox).length,
-    };
+    return { products: count(p => p.products), assets: count(p => p.assets), networks: count(p => p.networks) };
   }, [providers]);
-  const byCount = (map: Record<string, number>) => Object.keys(map).sort((a, b) => map[b]! - map[a]! || a.localeCompare(b));
-  const products = byCount(counts.products);
-  const assets = byCount(counts.assets);
-  const networks = byCount(counts.networks);
-
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const rows = providers.filter(
-      (p) =>
-        (!product || p.products.includes(product)) &&
-        (!asset || p.assets.includes(asset)) &&
-        (!network || p.networks.includes(network)) &&
-        (!customerType || p.customerTypes.includes(customerType)) &&
-        (!apiOnly || p.hasApi) &&
-        (!sandboxOnly || p.hasSandbox) &&
-        (!q || `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(q)),
-    );
-    const time = (p: DirectoryProvider) => (p.lastVerifiedAt ? Date.parse(p.lastVerifiedAt) : 0);
-    return rows.sort((a, b) => (sort === "coverage" ? b.countryCount - a.countryCount : sort === "fresh" ? time(b) - time(a) : 0) || a.name.localeCompare(b.name));
-  }, [providers, product, asset, network, customerType, apiOnly, sandboxOnly, query, sort]);
-
-  const active: Array<{ label: string; clear: () => void }> = [
-    ...(product ? [{ label: PRODUCTS[product]?.label ?? product, clear: () => setProduct(null) }] : []),
-    ...(asset ? [{ label: asset, clear: () => setAsset(null) }] : []),
-    ...(network ? [{ label: network, clear: () => setNetwork(null) }] : []),
-    ...(customerType ? [{ label: customerType === "business" ? "Businesses" : "Individuals", clear: () => setCustomerType(null) }] : []),
+    const search = query.trim().toLowerCase();
+    return providers.filter(provider => (!product || provider.products.includes(product))
+      && (!asset || provider.assets.includes(asset)) && (!network || provider.networks.includes(network))
+      && (!customerType || provider.customerTypes.includes(customerType)) && (!apiOnly || provider.hasApi) && (!sandboxOnly || provider.hasSandbox)
+      && (!search || `${provider.name} ${provider.category} ${provider.description} ${provider.assets.join(" ")} ${provider.networks.join(" ")}`.toLowerCase().includes(search)))
+      .sort((a, b) => (sort === "coverage" ? b.countryCount - a.countryCount : sort === "fresh" ? (Date.parse(b.lastVerifiedAt ?? "") || 0) - (Date.parse(a.lastVerifiedAt ?? "") || 0) : 0) || a.name.localeCompare(b.name));
+  }, [providers, query, product, asset, network, customerType, apiOnly, sandboxOnly, sort]);
+  const active = [
+    ...(product ? [{ label: PRODUCTS[product] ?? product, clear: () => setProduct("") }] : []),
+    ...(asset ? [{ label: asset, clear: () => setAsset("") }] : []),
+    ...(network ? [{ label: network, clear: () => setNetwork("") }] : []),
+    ...(customerType ? [{ label: customerType === "business" ? "Businesses" : "Individuals", clear: () => setCustomerType("") }] : []),
     ...(apiOnly ? [{ label: "Has API", clear: () => setApiOnly(false) }] : []),
     ...(sandboxOnly ? [{ label: "Has sandbox", clear: () => setSandboxOnly(false) }] : []),
   ];
-  const clearAll = () => {
-    setProduct(null);
-    setAsset(null);
-    setNetwork(null);
-    setCustomerType(null);
-    setApiOnly(false);
-    setSandboxOnly(false);
-    setQuery("");
-  };
+  function clearAll() { setProduct(""); setAsset(""); setNetwork(""); setCustomerType(""); setApiOnly(false); setSandboxOnly(false); setQuery(""); }
+  const mapped = providers.filter(provider => provider.profileAvailable !== false).length;
+  const shown = filtered.slice(0, limit);
+  return <div className="space-y-6">
+    <header className="flex flex-wrap items-end justify-between gap-4">
+      <div className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[var(--color-orange-deep)]">Compare / Directory</p>
+        <h1 className="font-display text-[clamp(1.8rem,4vw,2.5rem)] font-semibold leading-tight tracking-[-.045em]">Find your next provider.</h1>
+        <p className="max-w-xl text-sm leading-relaxed text-[var(--color-muted)]">Explore payment infrastructure. Open a provider for pricing, coverage and source evidence.</p>
+      </div>
+      <p className="text-xs text-[var(--color-muted)]"><strong className="text-[var(--color-ink)]">{providers.length}</strong> providers{mapped < providers.length ? ` · ${mapped} mapped profiles` : " mapped"}</p>
+    </header>
 
-  return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-[clamp(1.9rem,4vw,2.8rem)] font-semibold leading-none tracking-[-0.045em]">Provider directory</h1>
-            <p className="text-[14.5px] text-[var(--color-muted)]">
-              <span className="font-semibold text-[var(--color-ink)] tabular">{providers.length}</span> providers mapped — every fact linked to its source. Filter by what you actually need.
-            </p>
-          </div>
-          <div className="inline-flex rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] p-1" role="group" aria-label="Sort providers">
-            {SORTS.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                aria-pressed={sort === s.value}
-                onClick={() => setSort(s.value)}
-                className={cn("rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition", sort === s.value ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <label className="flex items-center gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 shadow-[0_1px_0_rgba(28,27,25,.03)] transition focus-within:border-[var(--color-orange)] focus-within:shadow-[0_0_0_4px_rgba(233,90,44,.08)]">
-          <Search size={18} className="shrink-0 text-[var(--color-faint)]" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search providers — Wise, stablecoin payouts, India…"
-            aria-label="Search providers"
-            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[var(--color-faint)]"
-          />
-          {query ? (
-            <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="rounded-full p-1 text-[var(--color-faint)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]">
-              <X size={15} />
-            </button>
-          ) : null}
+    <section aria-label="Find providers" className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-[minmax(0,1fr)_170px_150px_auto]">
+        <label className="col-span-2 flex min-h-12 min-w-0 items-center gap-2.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 focus-within:ring-2 focus-within:ring-[var(--color-orange)] md:col-span-1">
+          <Search size={17} className="shrink-0 text-[var(--color-faint)]" />
+          <input type="search" value={query} onChange={event => setQuery(event.target.value)} aria-label="Search providers" placeholder="Search a provider or capability…" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+          {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="grid size-8 shrink-0 place-items-center rounded-lg hover:bg-[var(--color-canvas)]"><X size={14} /></button>}
         </label>
-
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Filter by product">
-          <ProductTab active={!product} onClick={() => setProduct(null)} icon={LayoutGrid} label="All products" count={providers.length} />
-          {products.map((p) => (
-            <ProductTab key={p} active={product === p} onClick={() => setProduct(product === p ? null : p)} icon={PRODUCTS[p]?.icon ?? LayoutGrid} label={PRODUCTS[p]?.label ?? p} count={counts.products[p]!} />
-          ))}
+        <select aria-label="Filter by product" value={product} onChange={event => setProduct(event.target.value)} className={control}><option value="">All products</option>{options.products.map(([value, count]) => <option key={value} value={value}>{PRODUCTS[value] ?? value} ({count})</option>)}</select>
+        <select aria-label="Sort providers" value={sort} onChange={event => setSort(event.target.value as Sort)} className={control}><option value="name">Name: A–Z</option><option value="coverage">Most countries</option><option value="fresh">Recently verified</option></select>
+        <button type="button" onClick={() => setFiltersOpen(value => !value)} aria-expanded={filtersOpen} aria-controls="provider-filters" className={cn(control, "col-span-2 flex items-center justify-center gap-2 md:col-span-1", filtersOpen && "border-[var(--color-ink)]")}><SlidersHorizontal size={15} />Filters{active.length > 0 && <span className="rounded-full bg-[var(--color-ink)] px-1.5 text-[10px] text-white">{active.length}</span>}</button>
+      </div>
+      <AnimatePresence initial={false}>{filtersOpen && <motion.div id="provider-filters" initial={reduce ? false : { opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0 : .16 }} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Filter label="Asset"><select aria-label="Filter by asset" value={asset} onChange={event => setAsset(event.target.value)} className={control}><option value="">Any asset</option>{options.assets.map(([value, count]) => <option key={value} value={value}>{value} ({count})</option>)}</select></Filter>
+          <Filter label="Network"><select aria-label="Filter by network" value={network} onChange={event => setNetwork(event.target.value)} className={control}><option value="">Any network</option>{options.networks.map(([value, count]) => <option key={value} value={value}>{value} ({count})</option>)}</select></Filter>
+          <Filter label="Customer"><select aria-label="Filter by customer" value={customerType} onChange={event => setCustomerType(event.target.value)} className={control}><option value="">Any customer</option><option value="business">Businesses</option><option value="individual">Individuals</option></select></Filter>
         </div>
-
-        <div className="grid gap-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:grid-cols-2">
-          <FacetGroup title="Assets" expanded={moreAssets} onToggle={() => setMoreAssets((v) => !v)} total={assets.length}>
-            {(moreAssets ? assets : assets.slice(0, COLLAPSED)).map((a) => (
-              <LogoChip key={a} active={asset === a} onClick={() => setAsset(asset === a ? null : a)} count={counts.assets[a]!} label={a} logo={<CurrencyLogo symbol={a} size={18} />} />
-            ))}
-          </FacetGroup>
-          <FacetGroup title="Networks" expanded={moreNetworks} onToggle={() => setMoreNetworks((v) => !v)} total={networks.length}>
-            {(moreNetworks ? networks : networks.slice(0, COLLAPSED)).map((n) => (
-              <LogoChip key={n} active={network === n} onClick={() => setNetwork(network === n ? null : n)} count={counts.networks[n]!} label={n} logo={<NetworkLogo slug={n} size={18} />} />
-            ))}
-          </FacetGroup>
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--color-line)] pt-3 lg:col-span-2">
-            <span className="mr-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--color-faint)]">Serves</span>
-            {["business", "individual"].map((c) => (
-              <LogoChip key={c} active={customerType === c} onClick={() => setCustomerType(customerType === c ? null : c)} count={counts.customerTypes[c] ?? 0} label={c === "business" ? "Businesses" : "Individuals"} />
-            ))}
-            <span className="mx-1 h-4 w-px bg-[var(--color-line)]" />
-            <LogoChip active={apiOnly} onClick={() => setApiOnly((v) => !v)} count={counts.api} label="Has API" logo={<Code2 size={14} />} />
-            <LogoChip active={sandboxOnly} onClick={() => setSandboxOnly((v) => !v)} count={counts.sandbox} label="Has sandbox" logo={<FlaskConical size={14} />} />
-          </div>
+        <div className="mt-3 flex flex-wrap gap-x-6 border-t border-[var(--color-line)] pt-2">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px]"><input type="checkbox" checked={apiOnly} onChange={event => setApiOnly(event.target.checked)} className="size-4 accent-[var(--color-ink)]" /><Code2 size={14} />Has API</label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px]"><input type="checkbox" checked={sandboxOnly} onChange={event => setSandboxOnly(event.target.checked)} className="size-4 accent-[var(--color-ink)]" /><FlaskConical size={14} />Has sandbox</label>
         </div>
+      </motion.div>}</AnimatePresence>
+      <div className="flex min-h-7 flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]" aria-live="polite">
+        <span>{filtered.length} {filtered.length === 1 ? "provider" : "providers"}{query ? ` matching “${query}”` : ""}</span>
+        {active.map(filter => <button key={filter.label} type="button" onClick={filter.clear} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-[var(--color-ink)] px-2.5 text-[11px] text-white" aria-label={`Remove ${filter.label} filter`}>{filter.label}<X size={11} /></button>)}
+        {(active.length > 0 || query) && <button type="button" onClick={clearAll} className="min-h-8 px-1 text-[var(--color-orange-deep)]">Reset</button>}
+      </div>
+    </section>
 
-        <div className="flex min-h-7 flex-wrap items-center gap-2 text-[12.5px]">
-          <span className="text-[var(--color-muted)]">
-            <span className="font-semibold text-[var(--color-ink)] tabular">{filtered.length}</span> of {providers.length} providers
-          </span>
-          <AnimatePresence initial={false}>
-            {active.map((f) => (
-              <motion.button
-                key={f.label}
-                type="button"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                onClick={f.clear}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-ink)] px-2.5 py-1 text-[12px] font-semibold text-white"
-              >
-                {f.label} <X size={12} />
-              </motion.button>
-            ))}
-          </AnimatePresence>
-          {active.length ? (
-            <button type="button" onClick={clearAll} className="font-semibold text-[var(--color-orange-deep)] underline-offset-4 hover:underline">
-              Clear all
-            </button>
-          ) : null}
-        </div>
-      </header>
+    {filtered.length ? <div className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
+      <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_150px_130px_115px] gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-5 py-3 text-[10px] font-medium uppercase tracking-[.1em] text-[var(--color-faint)] lg:grid"><span>Provider</span><span>Mapped coverage</span><span>Developers</span><span className="text-right">Explore</span></div>
+      <ul aria-label="Provider directory" className="divide-y divide-[var(--color-line)]">{shown.map(provider => <ProviderRow key={provider.slug} provider={provider} href={provider.profileAvailable === false ? `/docs/pricing#provider-${provider.slug}` : `${basePath}/${provider.slug}`} open={expanded === provider.slug} onToggle={() => setExpanded(value => value === provider.slug ? null : provider.slug)} />)}</ul>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-line)] px-4 py-2 text-xs text-[var(--color-muted)]"><span>Showing {shown.length} of {filtered.length}</span>{shown.length < filtered.length && <button type="button" onClick={() => setLimit(value => value + 24)} className="flex min-h-11 items-center gap-2 font-semibold text-[var(--color-ink)]">Show more providers<ChevronDown size={14} /></button>}{limit > 12 && <button type="button" onClick={() => setLimit(12)} className="min-h-11">Show fewer</button>}</div>
+    </div> : <EmptyState what="No matching providers" why="Try another name or remove a filter." actionLabel="Clear filters" onAction={clearAll} />}
+  </div>;
+}
 
-      {filtered.length ? (
-        <motion.div layout={!reduce} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <AnimatePresence mode="popLayout" initial={!reduce}>
-            {filtered.map((p, i) => (
-              <motion.div
-                key={p.slug}
-                layout={!reduce}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.3, delay: reduce ? 0 : Math.min(i, 11) * 0.03, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <ProviderCard provider={p} href={`${basePath}/${p.slug}`} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      ) : (
-        <EmptyState
-          what="No provider matches those filters"
-          why="Nothing in the mapped dataset satisfies every filter at once. Clearing the narrowest one usually brings results back."
-          actionLabel="Clear filters"
-          onAction={clearAll}
-        />
-      )}
+function Filter({ label, children }: { label: string; children: React.ReactNode }) { return <label className="space-y-1.5 text-xs text-[var(--color-muted)]"><span>{label}</span>{children}</label>; }
+
+function ProviderRow({ provider: p, href, open, onToggle }: { provider: DirectoryProvider; href: string; open: boolean; onToggle: () => void }) {
+  const reduce = useReducedMotion();
+  return <li>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 transition-colors hover:bg-[var(--color-paper)] sm:px-5 lg:grid-cols-[minmax(0,1fr)_150px_130px_115px]">
+      <div className="flex min-w-0 items-center gap-3"><ProviderLogo slug={p.slug} name={p.name} size={38} /><div className="min-w-0"><Link href={href} className="block truncate text-sm font-semibold tracking-tight hover:text-[var(--color-orange-deep)]">{p.name}</Link><p className="mt-1 truncate text-xs text-[var(--color-muted)]">{p.category}</p></div></div>
+      <div className="hidden text-xs lg:block">{p.countryCount ? <span className="flex items-center gap-1.5"><Globe2 size={13} className="text-[var(--color-faint)]" />{p.countryCount} {p.countryCount === 1 ? "country" : "countries"}</span> : <span className="text-[var(--color-faint)]">Not yet mapped</span>}{p.currencyCount > 0 && <span className="mt-1 block pl-5 text-[11px] text-[var(--color-muted)]">{p.currencyCount} currencies</span>}</div>
+      <div className="hidden text-xs text-[var(--color-muted)] lg:block">{p.hasApi ? <span className="inline-flex items-center gap-1.5 text-[var(--color-ink)]"><Code2 size={14} />API available</span> : "See profile"}{p.hasSandbox && <span className="mt-1 block text-[11px]">Sandbox available</span>}</div>
+      <div className="flex items-center justify-end gap-1"><Link href={href} aria-label={`View ${p.name}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-medium hover:bg-[var(--color-canvas)]">View<ArrowRight size={13} /></Link><button type="button" aria-label={`${open ? "Hide" : "Show"} ${p.name} details`} aria-expanded={open} aria-controls={`directory-${p.slug}`} onClick={onToggle} className="grid size-11 place-items-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-canvas)]"><ChevronDown size={15} className={cn("transition-transform", open && "rotate-180")} /></button></div>
     </div>
-  );
-}
-
-function ProviderCard({ provider: p, href }: { provider: DirectoryProvider; href: string }) {
-  const capabilities = [
-    { on: p.hasApi, icon: Code2, label: "API" },
-    { on: p.hasSandbox, icon: FlaskConical, label: "Sandbox" },
-    { on: p.hasWebhooks, icon: Webhook, label: "Webhooks" },
-  ];
-  return (
-    <Link
-      href={href}
-      className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-1 hover:border-[var(--color-line-strong)] hover:shadow-[0_22px_50px_-28px_rgba(28,27,25,.55)]"
-    >
-      <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-40 rounded-full bg-[radial-gradient(circle,rgba(233,90,44,.10),transparent_65%)] opacity-0 transition duration-300 group-hover:opacity-100" />
-      <div className="flex items-start gap-3">
-        <ProviderLogo slug={p.slug} name={p.name} size={44} className="transition duration-300 group-hover:scale-105" />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[16px] font-semibold tracking-tight">{p.name}</span>
-          <span className="truncate text-[12px] text-[var(--color-muted)]">{p.category}</span>
-        </div>
-        <div className="flex gap-1">
-          {capabilities.map((c) => (
-            <span
-              key={c.label}
-              title={`${c.label}: ${c.on ? "yes" : "not published"}`}
-              aria-label={`${c.label} ${c.on ? "available" : "not published"}`}
-              className={cn("grid size-7 place-items-center rounded-lg", c.on ? "bg-emerald-50 text-emerald-700" : "bg-[var(--color-canvas)] text-[var(--color-faint)] opacity-60")}
-            >
-              <c.icon size={13} />
-            </span>
-          ))}
-        </div>
+    <AnimatePresence initial={false}>{open && <motion.div id={`directory-${p.slug}`} initial={reduce ? false : { opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0 : .15 }} className="space-y-3 border-t border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-4 sm:px-5">
+      <p className="max-w-3xl text-[13px] leading-relaxed text-[var(--color-muted)]">{p.description}</p>
+      {p.pricingSummary && p.pricingSummary !== p.description && <p className="max-w-3xl text-[13px] leading-relaxed"><span className="font-medium">Pricing: </span>{p.pricingSummary}</p>}
+      <div className="flex flex-wrap gap-2">{p.products.map(product => <span key={product} className="rounded-md border border-[var(--color-line)] px-2 py-1 text-[11px] text-[var(--color-muted)]">{PRODUCTS[product] ?? product}</span>)}</div>
+      {(p.assets.length > 0 || p.networks.length > 0) && <div className="flex flex-wrap gap-x-5 gap-y-3">
+        {p.assets.length > 0 && <div className="flex flex-wrap items-center gap-2 text-[11px]"><span className="text-[var(--color-faint)]">Assets</span>{p.assets.map(asset => <span key={asset} className="inline-flex items-center gap-1.5"><CurrencyLogo symbol={asset} size={17} />{asset}</span>)}</div>}
+        {p.networks.length > 0 && <div className="flex flex-wrap items-center gap-2 text-[11px]"><span className="text-[var(--color-faint)]">Networks</span>{p.networks.map(network => <span key={network} className="inline-flex items-center gap-1.5"><NetworkLogo slug={network} size={17} />{network}</span>)}</div>}
+      </div>}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--color-muted)]">
+        {p.countryCount > 0 && <span>{p.countryCount} mapped countries · {p.currencyCount} currencies</span>}
+        {p.hasApi && <span className="inline-flex items-center gap-1.5"><Code2 size={13} />API</span>}{p.hasSandbox && <span className="inline-flex items-center gap-1.5"><FlaskConical size={13} />Sandbox</span>}{p.hasWebhooks && <span className="inline-flex items-center gap-1.5"><Webhook size={13} />Webhooks</span>}
+        {p.profileAvailable === false ? <span>Source research · route support needs confirmation</span> : <Freshness date={p.lastVerifiedAt} />}
+        {p.sourceUrl && <a href={p.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-8 items-center gap-1 text-[var(--color-orange-deep)]">Official pricing source<ArrowUpRight size={11} /></a>}
       </div>
-
-      <p className="line-clamp-2 text-[13px] leading-relaxed text-[var(--color-muted)]">{p.description}</p>
-
-      {p.countryCount === 0 && p.currencyCount === 0 ? (
-        // Unpublished is "not published", never zero: a provider with nothing confirmed must not read as "0 countries".
-        <p className="inline-flex items-center gap-1.5 text-[12.5px] text-[var(--color-muted)]">
-          <Globe2 size={14} className="text-[var(--color-faint)]" />
-          No confirmed coverage yet
-        </p>
-      ) : (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px]">
-          <span className="inline-flex items-center gap-1.5">
-            <Globe2 size={14} className="text-[var(--color-faint)]" />
-            <span className="font-semibold tabular">{p.countryCount}</span>
-            <span className="text-[var(--color-muted)]">{p.countryCount === 1 ? "country" : "countries"}</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Coins size={14} className="text-[var(--color-faint)]" />
-            <span className="font-semibold tabular">{p.currencyCount}</span>
-            <span className="text-[var(--color-muted)]">{p.currencyCount === 1 ? "currency" : "currencies"}</span>
-          </span>
-        </div>
-      )}
-
-      {p.assets.length || p.networks.length ? (
-        <div className="flex flex-wrap items-center gap-3">
-          {p.assets.length ? <LogoStack items={p.assets} render={(a) => <CurrencyLogo symbol={a} size={22} />} /> : null}
-          {p.networks.length ? <LogoStack items={p.networks} render={(n) => <NetworkLogo slug={n} size={22} />} /> : null}
-        </div>
-      ) : null}
-
-      {p.products.length ? (
-        <div className="flex flex-wrap gap-1.5">
-          {p.products.slice(0, 4).map((product) => {
-            const meta = PRODUCTS[product];
-            const Icon = meta?.icon ?? LayoutGrid;
-            return (
-              <span key={product} className="inline-flex items-center gap-1 rounded-full bg-[var(--color-canvas)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-ink-soft)]">
-                <Icon size={11} /> {meta?.label ?? product}
-              </span>
-            );
-          })}
-          {p.products.length > 4 ? <span className="px-1 text-[11px] text-[var(--color-faint)]">+{p.products.length - 4}</span> : null}
-        </div>
-      ) : null}
-
-      <div className="mt-auto flex items-center justify-between border-t border-[var(--color-line)] pt-3">
-        <Freshness date={p.lastVerifiedAt} />
-        <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--color-orange-deep)]">
-          View <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function LogoStack({ items, render }: { items: string[]; render: (item: string) => React.ReactNode }) {
-  const shown = items.slice(0, 5);
-  return (
-    <span className="flex items-center" title={items.join(", ")}>
-      <span className="flex -space-x-1.5">
-        {shown.map((item) => (
-          <span key={item} className="rounded-full ring-2 ring-[var(--color-surface)]">
-            {render(item)}
-          </span>
-        ))}
-      </span>
-      {items.length > shown.length ? <span className="ml-1.5 text-[11px] font-semibold text-[var(--color-faint)]">+{items.length - shown.length}</span> : null}
-    </span>
-  );
-}
-
-function ProductTab({ active, onClick, icon: Icon, label, count }: { active: boolean; onClick: () => void; icon: LucideIcon; label: string; count: number }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition",
-        active ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-white shadow-[0_8px_20px_-12px_rgba(28,27,25,.8)]" : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:-translate-y-px hover:border-[var(--color-line-strong)]",
-      )}
-    >
-      <Icon size={15} />
-      {label}
-      <span className={cn("rounded-full px-1.5 text-[11px] tabular", active ? "bg-white/20" : "bg-[var(--color-canvas)] text-[var(--color-faint)]")}>{count}</span>
-    </button>
-  );
-}
-
-function LogoChip({ active, onClick, count, label, logo }: { active: boolean; onClick: () => void; count: number; label: string; logo?: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-2.5 text-[12.5px] font-medium transition",
-        !logo && "pl-2.5",
-        active ? "border-[var(--color-orange)] bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line)] bg-[var(--color-paper)] text-[var(--color-ink-soft)] hover:border-[var(--color-line-strong)]",
-      )}
-    >
-      {logo}
-      <span className="capitalize">{label}</span>
-      <span className="tabular text-[10.5px] text-[var(--color-faint)]">{count}</span>
-    </button>
-  );
-}
-
-function FacetGroup({ title, expanded, onToggle, total, children }: { title: string; expanded: boolean; onToggle: () => void; total: number; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--color-faint)]">{title}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {children}
-        {total > COLLAPSED ? (
-          <button type="button" onClick={onToggle} className="rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--color-orange-deep)] hover:bg-[var(--color-lavender)]">
-            {expanded ? "Show fewer" : `+${total - COLLAPSED} more`}
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
+    </motion.div>}</AnimatePresence>
+  </li>;
 }

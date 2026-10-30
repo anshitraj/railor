@@ -15,7 +15,9 @@ import {
   ParallelNotConfiguredError,
   parallelExtract,
   parallelSearch,
+  validateParallelExtractOptions,
   type ParallelExtractResponse,
+  type ParallelExtractOptions,
   type ParallelSearchOptions,
   type ParallelSearchResponse,
 } from "./parallel.js";
@@ -162,11 +164,12 @@ export class PersistentParallelBudget {
     }
   }
 
-  async extract(urls: string[], objective?: string, context: Context = {}): Promise<ParallelExtractResponse> {
+  async extract(urls: string[], objective?: string, context: Context = {}, options?: ParallelExtractOptions): Promise<ParallelExtractResponse> {
+    if (options) validateParallelExtractOptions(options);
     const cost = urls.length * PARALLEL_COST_USD.extractPerUrl;
     const entry = await this.reserve("extract", "extract", urls.length, cost, context);
     try {
-      const result = await parallelExtract(urls, objective);
+      const result = options ? await parallelExtract(urls, objective, options) : await parallelExtract(urls, objective);
       await this.finalize(entry.id, cost, "committed", `${result.results.length} extracted; ${result.failedResults.length} failed`);
       return result;
     } catch (error) {

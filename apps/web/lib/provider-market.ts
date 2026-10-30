@@ -1,5 +1,6 @@
 import universe from "../../../RAILOR_PROVIDER_UNIVERSE.json";
 import sourceAudit from "../../../packages/core/src/public-pricing/provider-source-audit.json";
+import pricingReview from "../../../packages/core/src/public-pricing/provider-pricing-review.json";
 import type { MarketCoverage, PriceCheckInput } from "@railor/core";
 import { INDIA_RECEIVING_PRODUCTS } from "@railor/core";
 import { discoveredCoverage, DISCOVERED_PROVIDERS } from "./corridor-discovery";
@@ -92,5 +93,13 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
     pricingStatus: { label: "Route unconfirmed", reason: "A complete price and eligibility for this route have not been verified. Currency support in a catalog is not a transfer quote." },
   }).sort((a, b) => Number("routeMatch" in b && b.routeMatch) - Number("routeMatch" in a && a.routeMatch) || Number(a.currencyMatch === "unverified") - Number(b.currencyMatch === "unverified") || a.providerName.localeCompare(b.providerName));
   const destinationProviders = [...matched.filter(provider => !discovered.some(item => item.providerSlug === provider.providerSlug)), ...known];
-  return { totalTracked: catalog.size, matched: destinationProviders.length, providers: destinationProviders, allProviders };
+  const reviewed = (provider: MarketCoverage["providers"][number]) => {
+    const source = pricingReview.providers.find(entry => entry.slug === provider.providerSlug);
+    if (!source?.summary || source.status !== "readable") return provider;
+    return { ...provider,
+      feeEvidence: [...(provider.feeEvidence ?? []), { summary: source.summary, product: "Published pricing components", sourceUrl: source.sourceUrl, observedAt: source.checkedAt }],
+      discoverySources: [...(provider.discoverySources ?? []), ...(source.sourceUrl ? [{ label: "Official pricing source", url: source.sourceUrl }] : [])],
+    };
+  };
+  return { totalTracked: catalog.size, matched: destinationProviders.length, providers: destinationProviders.map(reviewed), allProviders: allProviders.map(reviewed) };
 }

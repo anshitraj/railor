@@ -19,7 +19,7 @@ export function attachMarketPricingEvidence(coverage: MarketCoverage, currency: 
     const price = rows.find(row => row.providerSlug.replace(/^market:/, "") === provider.providerSlug);
     const missing = unavailable.find(row => row.providerSlug === provider.providerSlug);
     const seen = new Set<string>();
-    const feeEvidence = captured.filter(fee => fee.providerSlug === provider.providerSlug && (!fee.destinationCurrency || fee.destinationCurrency === currency)).flatMap(fee => {
+    const feeEvidence = [...(provider.feeEvidence ?? []), ...captured.filter(fee => fee.providerSlug === provider.providerSlug && (!fee.destinationCurrency || fee.destinationCurrency === currency))].flatMap(fee => {
       const key = `${fee.product}:${fee.summary}`;
       if (seen.has(key)) return [];
       seen.add(key);

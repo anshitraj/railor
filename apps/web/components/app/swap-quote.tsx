@@ -14,6 +14,7 @@ import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-na
 import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { priceResponseMatches } from "../../lib/price-response";
+import { freshComparison, providerIdentity } from "../../lib/price-display";
 import styles from "./price-check.module.css";
 
 /**
@@ -306,13 +307,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return () => window.clearTimeout(t);
   }, [flashes]);
 
-  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now);
-  const quotes = result?.rows.filter((r) => r.basis !== "market_estimate" && visible(r)) ?? [];
+  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now) && (!r.publicOffer || Date.parse(r.publicOffer.displayUntil) > now);
+  const quotes = result?.rows.filter((r) => (r.basis !== "market_estimate" || (freshComparison(r, result.input, now) && !result.rows.some(offer => offer.publicOffer && visible(offer) && offer.providerSlug === providerIdentity(r.providerSlug)))) && visible(r)) ?? [];
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
-  const estimates = result?.rows.filter((r) => r.basis === "market_estimate" && visible(r)) ?? [];
+  const estimates = result?.rows.filter((r) => r.basis === "market_estimate" && !quotes.some(quote => quote.providerSlug === r.providerSlug) && visible(r)) ?? [];
   const excluded = result?.rows.filter((r) => r.profileAssessment?.status === "not_supported") ?? [];
   const best = quotes.find((r) => r.shortfall === 0) ?? null;
-  const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => row.providerSlug.replace(/^market:/, "") === candidate.providerSlug));
+  const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => providerIdentity(row.providerSlug) === candidate.providerSlug) && !quotes.some(row => providerIdentity(row.providerSlug) === candidate.providerSlug));
   const selectedCandidate = picked && !quotes.some((row) => row.providerSlug === picked) ? candidates.find((candidate) => candidate.providerSlug === picked) ?? null : null;
   const selected = selectedCandidate ? null : result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
   const receive = useTween(selected?.recipientAmount ?? null);
@@ -447,7 +448,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                       ≈ <span className={cn("font-semibold", selected.totalCostPct <= 0.5 ? "text-emerald-300" : selected.totalCostPct <= 1.5 ? "text-white/75" : "text-red-300")}>{selected.totalCostPct.toFixed(2)}%</span> all-in vs mid-market
                     </>
                   ) : selected?.partial ? (
-                    "Product-specific fees or eligibility not confirmed"
+                    selected.publicOffer ? "First transfer · US bank funded" : "Fee reference · check account conditions"
                   ) : (
                     " "
                   )}

@@ -4,6 +4,8 @@ import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
+import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
+import { publicOfferRows } from "./public-pricing/offers.js";
 import { CustomerContext, assessCustomerProfile, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
@@ -72,6 +74,13 @@ export interface PriceRow {
    */
   side?: "payer" | "recipient";
   webChecks?: RowWebCheck[];
+  /** Amount-checked public observation. Freshness never changes its source into an account quote. */
+  publicComparison?: {
+    amount: number; sourceCurrency: string; destinationCurrency: string;
+    sourceCountry: string | null; destinationCountry: string | null; freshUntil: string;
+  };
+  /** Conditional calculator capture; the display deadline is not a provider rate guarantee. */
+  publicOffer?: { kind: "first_transfer"; fundingMethod: string; payoutMethod: string; displayUntil: string };
 }
 
 export interface PriceUnavailable {
@@ -291,45 +300,11 @@ function round(n: number, dp = 2) {
   return Math.round(n * f) / f;
 }
 
-interface ComparisonProvider {
-  alias?: string;
-  name?: string;
-  type?: string;
-  logos?: { normal?: { svgUrl?: string | null; pngUrl?: string | null }; circle?: { svgUrl?: string | null } };
-  quotes?: Array<{ rate?: number; fee?: number; receivedAmount?: number; dateCollected?: string }>;
-}
-
 async function marketEstimates(input: PriceCheckInput, fetcher: typeof fetch): Promise<PriceRow[]> {
   const params = new URLSearchParams({ sourceCurrency: input.sourceCurrency.toUpperCase(), targetCurrency: input.destinationCurrency.toUpperCase(), sendAmount: String(input.amount) });
   const response = await fetcher(`https://api.wise.com/v4/comparisons/?${params}`, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) return [];
-  const body = (await response.json()) as { providers?: ComparisonProvider[] };
-  return (body.providers ?? [])
-    .filter((p) => p.alias && p.alias !== "wise" && p.quotes?.[0]?.receivedAmount)
-    .map((p) => {
-      const q = p.quotes![0]!;
-      // The square "mark" variant reads at icon size; the normal logo is a wide wordmark.
-      const logo = p.logos?.circle?.svgUrl ?? p.logos?.normal?.svgUrl ?? p.logos?.normal?.pngUrl ?? undefined;
-      return {
-        providerSlug: `market:${p.alias}`,
-        providerName: p.name ?? p.alias!,
-        logoUrl: logo ?? undefined,
-        basis: "market_estimate" as const,
-        recipientAmount: q.receivedAmount ?? null,
-        feeAmount: q.fee ?? null,
-        feeCurrency: input.sourceCurrency.toUpperCase(),
-        rate: q.rate ?? null,
-        totalCostPct: null,
-        partial: false,
-        delivery: null,
-        observedAt: q.dateCollected ?? "",
-        source: { label: "Wise comparison feed", url: "https://wise.com/gb/compare/" },
-        notes: [
-          `Collected by Wise from ${p.name ?? p.alias}'s public pricing${q.dateCollected ? ` on ${q.dateCollected.slice(0, 10)}` : ""}.`,
-          p.type === "bank" ? "Bank rate for consumers; business pricing may differ." : "Consumer pricing; business pricing may differ.",
-        ],
-      };
-    });
+  return comparisonRows(input, await response.json() as ComparisonFeed);
 }
 
 function fromQuote(q: UnifiedQuote, name: string, basis: PriceBasis, extra: { delivery?: string | null; notes?: string[]; source: PriceRow["source"] }): PriceRow {
@@ -400,6 +375,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
+  rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug)));
   if (revolutPublic && !connectedSlugs.has("revolut")) rows.push({ ...revolutPublic, notes: [...revolutPublic.notes] });
   else if (!revolutPublic && !connectedSlugs.has("revolut")) unavailable.push({ providerSlug: "revolut", providerName: "Revolut", reason: "No public UK FX reference for this request. Public pricing does not confirm business eligibility or total transfer cost." });
 
