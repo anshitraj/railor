@@ -144,6 +144,13 @@ console.log(sent.status, sent.selected_provider)`,
         <p className="text-[13px] text-[var(--color-muted)]">
           Rows are ranked by <code>recipient_amount</code>. A quote missing a cost component (Airwallex&apos;s FX quote has no transfer fee in it) is marked <code>cost_complete: false</code> and listed after complete ones; market estimates are listed last and never counted as the best price.
         </p>
+        <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">Supply <code>context</code> with <code>profile</code> (business, freelancer, sole_proprietor or personal), the account holder&apos;s two-letter <code>country</code>, <code>direction</code> (send or receive) and <code>purpose</code> (services, goods, salary or personal). This uses the same profile checks as the website. An older request without context remains an unscoped reference and receives no best-price claim.</p>
+        <pre className="overflow-x-auto rounded-xl border border-[var(--color-line)] p-4 text-[12px]"><code>{`{
+  "source_currency": "USD", "destination_currency": "INR", "amount": 1000,
+  "include_market": true,
+  "context": { "profile": "personal", "country": "IN", "direction": "receive", "purpose": "personal" }
+}`}</code></pre>
+        <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">Responses retain <code>profile_assessment</code>, <code>public_comparison</code> and <code>public_offer</code> metadata. Use <code>comparable</code> to identify complete estimates that fit the documented profile; consumer observations and conditional offers never become universal cheapest-price claims. Source time and expiry still apply.</p>
       </section>
 
       <section className="flex flex-col gap-3">

@@ -122,14 +122,22 @@ export function registerPaymentCommands(program: Command, getClient: () => Railo
     .requiredOption("--to <code>", "currency they receive, e.g. INR")
     .requiredOption("--amount <n>", "amount in the send currency")
     .option("--market", "include dated consumer estimates from Wise's comparison feed")
+    .option("--destination-country <code>", "recipient country (ISO two-letter code)")
+    .option("--profile <profile>", "business, freelancer, sole_proprietor or personal")
+    .option("--country <code>", "account holder country (ISO two-letter code)")
+    .option("--direction <direction>", "send or receive")
+    .option("--purpose <purpose>", "services, goods, salary or personal")
     .option("--json", "print raw JSON")
-    .action(async (flags: { from: string; to: string; amount: string; market?: boolean; json?: boolean }) => {
+    .action(async (flags: { from: string; to: string; amount: string; market?: boolean; json?: boolean; destinationCountry?: string; profile?: string; country?: string; direction?: string; purpose?: string }) => {
       try {
+        const contextValues = [flags.profile, flags.country, flags.direction, flags.purpose];
+        if (contextValues.some(Boolean) && !contextValues.every(Boolean)) throw new Error("Provide --profile, --country, --direction and --purpose together for a profile-specific comparison.");
+        const context = flags.profile ? { profile: flags.profile, country: flags.country!.toUpperCase(), direction: flags.direction, purpose: flags.purpose } : undefined;
         const result = await getClient().post<{
           reference: { rate: number; source: string } | null;
           data: Array<{ provider_name: string; basis: string; recipient_amount: number | null; fee_amount: number | null; fee_currency: string | null; total_cost_pct: number | null; cost_complete: boolean; shortfall_vs_best: number | null }>;
           unavailable: Array<{ provider_name: string; reason: string }>;
-        }>("/v1/prices", { source_currency: flags.from, destination_currency: flags.to, amount: Number(flags.amount), include_market: Boolean(flags.market) });
+        }>("/v1/prices", { source_currency: flags.from, destination_currency: flags.to, destination_country: flags.destinationCountry, amount: Number(flags.amount), include_market: Boolean(flags.market), context });
         if (flags.json) return printJson(result);
         const to = flags.to.toUpperCase();
         if (result.reference) console.log(dim(`reference 1 ${flags.from.toUpperCase()} = ${result.reference.rate} ${to} (${result.reference.source})`));

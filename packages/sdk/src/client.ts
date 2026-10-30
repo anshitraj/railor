@@ -21,7 +21,7 @@ import type {
 export interface RailorOptions {
   /** Defaults to `process.env.RAILOR_API_KEY`. Test keys start `rail_test_`, live keys `rail_live_`. */
   apiKey?: string;
-  /** Defaults to `process.env.RAILOR_API_URL`, then http://localhost:3000. */
+  /** Defaults to `process.env.RAILOR_API_URL`, then https://www.railor.xyz. Set explicitly for local development. */
   baseUrl?: string;
   /** Per-request timeout. Default 30s. */
   timeoutMs?: number;
@@ -75,7 +75,7 @@ export class Railor {
       );
     }
     this.apiKey = apiKey;
-    this.baseUrl = (options.baseUrl ?? env("RAILOR_API_URL") ?? "http://localhost:3000").replace(/\/+$/, "");
+    this.baseUrl = (options.baseUrl?.trim() || env("RAILOR_API_URL")?.trim() || "https://www.railor.xyz").replace(/\/+$/, "");
     this.timeoutMs = options.timeoutMs ?? 30_000;
     this.maxRetries = Math.max(0, options.maxRetries ?? 2);
     const f = options.fetch ?? globalThis.fetch;

@@ -17,6 +17,23 @@ function mockFetch(responses: Array<{ status?: number; body?: unknown; headers?:
 }
 
 describe("Railor SDK", () => {
+  it("works with just an API key against the production host", async () => {
+    vi.stubEnv("RAILOR_API_URL", "");
+    try {
+      const { impl, calls } = mockFetch([{ body: { object: "list", data: [] } }]);
+      const railor = new Railor({ apiKey: "rail_test_fixture", fetch: impl });
+      await railor.providers.list();
+      expect(calls[0]!.url).toBe("https://www.railor.xyz/v1/providers");
+      expect((calls[0]!.init.headers as Record<string, string>).authorization).toBe("Bearer rail_test_fixture");
+    } finally { vi.unstubAllEnvs(); }
+  });
+  it("preserves customer context in a price comparison request", async () => {
+    const { impl, calls } = mockFetch([{ body: { object: "price_check", comparison_scope: "profile_specific", data: [] } }]);
+    const railor = new Railor({ apiKey: "rail_test_fixture", baseUrl: "https://railor.test", fetch: impl });
+    const context = { profile: "personal", country: "IN", direction: "receive", purpose: "personal" } as const;
+    await railor.prices.check({ sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000, includeMarket: true, context });
+    expect(JSON.parse(String(calls[0]!.init.body))).toEqual({ source_currency: "USD", destination_currency: "INR", destination_country: "IN", amount: 1000, include_market: true, context });
+  });
   it("requires an API key", () => {
     expect(() => new Railor({ apiKey: "" })).toThrow(/No API key/);
   });

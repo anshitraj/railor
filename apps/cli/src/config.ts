@@ -43,6 +43,6 @@ export function resolveApiKey(flagValue?: string): string {
 
 export function resolveBaseUrl(flagValue?: string): string {
   return (
-    flagValue ?? process.env.RAILOR_API_URL ?? readConfig().baseUrl ?? "http://localhost:3000"
+    flagValue?.trim() || process.env.RAILOR_API_URL?.trim() || readConfig().baseUrl?.trim() || "https://www.railor.xyz"
   );
 }

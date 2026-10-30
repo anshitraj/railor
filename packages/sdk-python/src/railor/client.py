@@ -12,7 +12,7 @@ from .resources.eligibility import Eligibility
 from .resources.providers import Providers
 from .resources.watchlists import Watchlists
 
-DEFAULT_BASE_URL = "http://localhost:3000"
+DEFAULT_BASE_URL = "https://www.railor.xyz"
 
 
 class Railor:

@@ -68,6 +68,7 @@ class Prices:
         amount: float,
         destination_country: str | None = None,
         include_market: bool = False,
+        context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """POST /v1/prices — what arrives through each provider; every row carries its ``basis``."""
         return self._transport.post(
@@ -79,6 +80,7 @@ class Prices:
                     "amount": amount,
                     "destination_country": destination_country,
                     "include_market": include_market,
+                    "context": context,
                 }
             ),
         )

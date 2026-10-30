@@ -151,6 +151,13 @@ an atomic PostgreSQL UTC-day budget shared across instances. The cap defaults to
 200 checks/day, and API/billing/quota errors pause work. Verification failures
 never become supported claims or expose provider diagnostics in the product.
 
+Attach both `railor.xyz` and `www.railor.xyz` to the production project without a
+project-wide cross-host redirect. Middleware redirects web pages and OAuth starts
+to `APP_ORIGIN`, while `/v1` and other API endpoints stay on the caller's host.
+A blanket apex-to-www redirect causes fetch clients to drop `Authorization` and
+makes valid API keys appear missing. Verify both API hosts with an invalid audit
+key: each should return `invalid_api_key`, not `missing_api_key`.
+
 ## Pause and rollback
 
 Pause recurring ingestion without deleting data:

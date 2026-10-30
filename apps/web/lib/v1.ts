@@ -18,11 +18,19 @@ export function v1Route<P extends Record<string, string> = Record<string, string
   return async (request: Request, extra: { params: Promise<P> }) => {
     const started = Date.now();
     let context: ApiContext | null = null;
+    async function record(status: number) {
+      try { await recordUsage(context, endpoint, method, status, Date.now() - started); }
+      catch (error) {
+        // The allowance was already consumed atomically during authentication.
+        // A metrics outage must not obscure an operation that already completed.
+        console.error(JSON.stringify({ event: "api_usage_failed", endpoint, requestId: context?.requestId, errorType: error instanceof Error ? error.name : "UnknownError" }));
+      }
+    }
     try {
       context = await authenticate(request);
       const params = ((await extra?.params) ?? {}) as P;
       const { status = 200, body } = await handler(context, request, params);
-      await recordUsage(context, endpoint, method, status, Date.now() - started);
+      await record(status);
       return NextResponse.json(typeof body === "object" && body !== null ? { request_id: context.requestId, ...body } : body, { status });
     } catch (error) {
       const { status, code, message, fields } =
@@ -32,9 +40,9 @@ export function v1Route<P extends Record<string, string> = Record<string, string
             ? { status: error.status, code: error.code, message: error.message, fields: undefined }
             : error instanceof ZodError
               ? { status: 400, code: "invalid_request", message: error.issues[0]?.message ?? "Invalid request.", fields: Object.fromEntries(error.issues.map((i) => [i.path.join("."), i.message])) }
-              : { status: 500, code: "internal_error", message: "Something went wrong on Railor's side. Nothing was sent.", fields: undefined };
-      if (status === 500) console.error(error);
-      await recordUsage(context, endpoint, method, status, Date.now() - started);
+              : { status: 500, code: "internal_error", message: "Railor could not complete this request. Check its status before retrying.", fields: undefined };
+      if (status === 500) console.error(JSON.stringify({ event: "api_request_failed", endpoint, requestId: context?.requestId, errorType: error instanceof Error ? error.name : "UnknownError" }));
+      await record(status);
       return NextResponse.json({ object: "error", request_id: context?.requestId, error: { code, message, ...(fields ? { fields } : {}) } }, { status });
     }
   };

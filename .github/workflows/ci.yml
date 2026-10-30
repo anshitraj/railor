@@ -29,6 +29,7 @@ jobs:
           python-version: '3.12'
       - run: pip install uv==0.11.25
       - run: uv run --project apps/worker --frozen --extra dev --extra gcs --extra discovery --extra crawl python -m pytest apps/worker/tests -q
+      - run: uv run --project apps/worker --frozen --extra dev python -m unittest discover -s packages/sdk-python/tests -v
   postgres-migration:
     runs-on: ubuntu-latest
     services:

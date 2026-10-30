@@ -25,7 +25,7 @@ describe("hosted payment redirect", () => {
   it.each(["https://buy.stripe.com.evil.com/x", "http://buy.stripe.com/x", "https://evil.com@buy.stripe.com/x", "https://buy.stripe.com:8443/x"])("rejects %s", (url) => {
     vi.stubEnv("FOUNDING_PAYMENT_LINK", url); expect(() => paymentLink()).toThrow();
   });
-  it("accepts a configured provider URL", () => { vi.stubEnv("FOUNDING_PAYMENT_LINK", "https://buy.stripe.com/test"); expect(paymentLink()).toBe("https://buy.stripe.com/test"); });
+  it("accepts a configured provider URL with the default allowlist", () => { vi.stubEnv("PAYMENT_LINK_ALLOWED_HOSTS", undefined); vi.stubEnv("FOUNDING_PAYMENT_LINK", "https://buy.stripe.com/test"); expect(paymentLink()).toBe("https://buy.stripe.com/test"); });
 });
 describe("entitlement expiry", () => {
   const now = new Date("2026-09-05T12:00:00Z");

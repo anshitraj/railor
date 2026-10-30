@@ -158,6 +158,13 @@ export interface PriceCheckParams {
   destinationCountry?: string;
   /** Adds dated consumer prices from Wise's comparison feed, listed after actionable prices. */
   includeMarket?: boolean;
+  /** Account holder and purpose; required for a profile-specific comparison. */
+  context?: {
+    profile: "business" | "freelancer" | "sole_proprietor" | "personal";
+    country: string;
+    direction: "send" | "receive";
+    purpose: "services" | "goods" | "salary" | "personal";
+  };
 }
 
 /** exact = your connected account's live quote; live_public = a live public quote; published = the provider's fee schedule; market_estimate = collected consumer pricing. */

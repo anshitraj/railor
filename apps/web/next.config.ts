@@ -24,6 +24,12 @@ const config: NextConfig = {
   // Railor never uses next/image (logos are served by /api/logos), so the
   // image-optimization endpoint is pure attack surface: keep it off.
   images: { unoptimized: true },
+  async redirects() {
+    return [
+      { source: "/privacy", destination: "/legal/privacy", permanent: true },
+      { source: "/terms", destination: "/legal/terms", permanent: true },
+    ];
+  },
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
   // ensureMigrated() reads packages/database/drizzle/*.sql off disk at
   // runtime (drizzle-orm's migrator does a plain fs.readdir, not an import),

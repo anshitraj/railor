@@ -25,6 +25,19 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const mutating = !["GET", "HEAD", "OPTIONS"].includes(request.method);
   const api = path.startsWith("/api/") || path.startsWith("/v1/");
+  // Canonicalize pages and auth before issuing host-bound cookies. API requests
+  // stay on their original host: fetch drops bearer credentials across hosts.
+  if (process.env.VERCEL_ENV === "production" && (!api || path.startsWith("/api/auth/"))) {
+    try {
+      const canonical = new URL(appOrigin());
+      if (request.nextUrl.origin !== canonical.origin) {
+        canonical.pathname = path; canonical.search = request.nextUrl.search;
+        const response = NextResponse.redirect(canonical, 308);
+        if (path.startsWith("/api/auth/")) response.headers.set("Cache-Control", "private, no-store");
+        return response;
+      }
+    } catch { /* Readiness reports invalid configuration; same-origin requests remain usable. */ }
+  }
   if (mutating && api) {
     const length = request.headers.get("content-length");
     if (length && (!/^\d+$/.test(length) || Number(length) > 65_536)) {

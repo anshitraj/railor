@@ -7,6 +7,13 @@ Railor answers one question well: *which providers can serve this corridor, why,
 
 > It is better for Railor to say “unknown” than to confidently provide incorrect financial infrastructure information.
 
+**Current release:** early-access provider comparison and route intelligence for
+businesses, freelancers, developers and AI agents. Public references, published
+fee estimates and authorized account quotes retain their source and limitations.
+Creating recipients and executing new payments are paused. Railor does not promise
+complete live prices for every provider. Release checks and remaining operational
+limits are recorded in [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
+
 ---
 
 ## Quick start
@@ -45,10 +52,10 @@ deployment, permissions, monitoring, verification and rollback.
 ## The 60-second demo
 
 1. Open the homepage and click *“Indian company sending USDC to a UAE supplier who receives AED”*.
-2. Railor renders the interpreted query as editable chips, then the real breakdown: 15 providers checked, 2 compatible, 3 needing additional KYB, 10 unavailable.
+2. Railor renders the interpreted query and real provider results with eligibility, evidence and data gaps. Counts come from the selected dataset; the local seed is fictional and production excludes it.
 3. Two provider results are fully visible before any sign-up; the rest is withheld, not faked.
 4. *View full comparison* → sign in → the workspace is named from your email domain, and your question is carried through.
-5. Five guided onboarding questions with business, freelancer and personal choices, country/currency cards, saved progress and an answer review. Inferred countries are labelled **Detected** and remain editable.
+5. Three main onboarding questions cover profile, home country and target markets. API setup and additional preferences are optional; saved answers remain editable.
 6. *Open my workspace* → suggested corridors and a monitor reflect the selected customer type and markets. Price comparisons start with the saved account profile; coverage verdicts remain evidence-based.
 7. Open any result row for the reason, what is nonetheless true, what would change it, the evidence and the change history.
 8. *Copy as API call* in the Corridor Explorer → the developer portal already holds a `rail_test_…` key → the same answer over HTTP.
@@ -99,7 +106,7 @@ Next.js 15 · React 19 · TypeScript · Tailwind v4 · Motion · Drizzle ORM · 
 | Ingestion worker | Live | Proposes changes; never publishes directly |
 | Web discovery | Beta | Worker + `/admin/discovery`: Gemini with Google Search grounding finds pages, the worker fetches them itself, and a claim survives only if its quote is verbatim on the page and states the claim. Verified facts go to the review queue; new companies become provider candidates; named rails are verified against operator pages. Nothing is published without review |
 | Provider connections | Beta | Wise, Airwallex, Bridge, Circle (payouts) plus quote/test adapters for Nium, MoonPay, Paxos, Coinbase; sandbox and production slots, credentials encrypted at rest, live connection test, per-connection webhook URL |
-| Price check | Beta | Swap-style live quote card at `/app/prices` (with your connected accounts' exact quotes and a send hand-off) and public `/prices` (no account), re-quoted every 20s with a mid-market FX ticker; also `POST /v1/prices`. Every number labelled — your connected account's live quote (exact), Wise's live public quote, published schedules (PayZoll, Skydo), and optional dated market estimates from Wise's comparison feed. Public quotes are shared for 15–60s server-side and rate-limited per visitor |
+| Price check | Beta | Original dark converter at `/app/prices` and public `/prices`, refreshed every 20s with the FX ticker. Account quotes, published fee estimates, public comparisons and conditional offers retain separate labels and timestamps. Personal observations in the main list must pass a 24-hour freshness check. `POST /v1/prices` accepts customer context and returns eligibility and source metadata. Execution stays locked |
 | Provider logos | Live | Each provider's own declared icon, fetched from its website once (SSRF-guarded), cached and served from Railor's origin; monogram fallback |
 | Payments + beneficiaries | Paused | Recipient creation and new payment creation/submission are disabled in both UI and APIs until verified account access is implemented. Historical payments remain available for inspection and reconciliation. Price comparison and route previews remain available |
 | Routing / orchestration | Beta | Eligibility + policy as hard gates, weighted scoring (health, reliability, cost, speed, limits, preference) with presets and an honest confidence figure, fallback only on a definitive rejection, route preview |

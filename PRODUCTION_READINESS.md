@@ -1,4 +1,58 @@
-# Railor production verification — 29 October 2026
+# Railor production verification
+
+## Review — 31 October 2026
+
+Release scope is an early-access comparison and route-intelligence application
+for businesses, freelancers, developers and AI agents. This is a useful product
+to demonstrate and pitch. Payment execution, beneficiary creation, universal
+live provider pricing and an enterprise availability guarantee are outside the
+current verified scope.
+
+Fresh production checks confirmed:
+
+- The protected readiness endpoint returned `200` / `ready`.
+- Google OAuth starts with the canonical HTTPS callback, state cookie and
+  `openid email profile` scopes. The owner confirmed a real Google sign-in
+  reached the workspace during this review.
+- Public pages and authentication guards respond on the canonical `www` host.
+- The last five Cloud Run ingestion executions completed successfully. The most
+  recent processed 38 sources, updated 29 and queued 18 changes for review.
+  Cloud Scheduler is enabled every six hours; both failure and missing-execution
+  alert policies and their notification channel are enabled.
+- The production JavaScript dependency audit reported zero known advisories.
+- Fresh isolated verification passed 810 JavaScript/TypeScript tests (SDK 13,
+  core 490, connector 4, web 303), 55 worker tests and 3 Python SDK tests.
+  Workspace type checking passed. Tests used disposable local databases and
+  did not write to production.
+- Production price requests returned numeric, source-labelled observations for
+  personal USD/INR, freelancer USD/INR, business AED/INR and personal MXN/USD.
+  Several of those rows remain partial or have unconfirmed eligibility; numeric
+  coverage is not confirmation that a provider can serve a customer or that a
+  price is executable.
+
+Issues found and addressed in this release:
+
+1. The Vercel apex-to-www domain redirect stripped API bearer authentication.
+   Pages and OAuth now canonicalize in middleware; API hosts must both be served
+   directly. The domain-level redirect is removed only after that middleware is
+   deployed. Verify both hosts return `invalid_api_key` for an invalid test key.
+2. `/v1/prices` previously discarded customer context, unlike the website. It now
+   validates the complete profile and returns eligibility, quote conditions and
+   source timing. Legacy requests are explicitly unscoped and receive no best
+   price claim. TypeScript SDK, Python SDK and CLI support the same context.
+3. Failed usage logging could obscure a successful API operation or a useful
+   validation error. Usage metrics now fail independently; the atomic allowance
+   check remains mandatory. Internal errors no longer assert that nothing was sent.
+4. `/privacy` and `/terms` now redirect to the existing legal pages.
+5. SDKs and fresh CLI configurations default to production, so an API key alone
+   works. Explicit URLs still support localhost and other environments.
+
+Do not present every catalog entry as a working quoted route. Published tariffs
+can be partial, offers can expire, and private commercial prices still require
+authorized provider access. Ingestion queues facts for review; it does not silently
+approve provider eligibility. The older verification record below remains dated.
+
+## Verification record — 29 October 2026
 
 ## Deployment scope
 

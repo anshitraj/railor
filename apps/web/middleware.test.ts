@@ -6,6 +6,30 @@ afterEach(() => vi.unstubAllEnvs());
 
 const post = (url: string, headers: Record<string, string>) => middleware(new NextRequest(url, { method: "POST", headers }));
 
+describe("production canonical origin", () => {
+  it("redirects pages and OAuth starts to the configured origin, preserving path and query", () => {
+    vi.stubEnv("VERCEL_ENV", "production"); vi.stubEnv("APP_ORIGIN", "https://www.railor.xyz");
+    for (const path of ["/prices?from=USD&to=INR", "/api/auth/oauth/google?returnTo=%2Fapp"]) {
+      const response = middleware(new NextRequest(`https://railor.xyz${path}`));
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(`https://www.railor.xyz${path}`);
+    }
+  });
+  it("serves API and signed webhook traffic directly on either host so credentials survive", () => {
+    vi.stubEnv("VERCEL_ENV", "production"); vi.stubEnv("APP_ORIGIN", "https://www.railor.xyz");
+    for (const path of ["/v1/providers", "/v1/prices", "/api/mcp", "/api/connector/poll", "/api/internal/payments-reconcile", "/api/webhooks/providers/wise/test", "/api/health/ready"]) {
+      const response = middleware(new NextRequest(`https://railor.xyz${path}`, { headers: { authorization: "Bearer audit-test-key" } }));
+      expect(response.status).toBe(200); expect(response.headers.get("location")).toBeNull();
+    }
+  });
+  it("does not force a preview or local test onto production", () => {
+    vi.stubEnv("VERCEL_ENV", "preview"); vi.stubEnv("APP_ORIGIN", "https://www.railor.xyz");
+    expect(middleware(new NextRequest("https://preview.vercel.app/login")).status).toBe(200);
+    vi.stubEnv("VERCEL_ENV", "");
+    expect(middleware(new NextRequest("http://localhost:3000/login")).status).toBe(200);
+  });
+});
+
 describe("cookie API origin check", () => {
   it("accepts a same-origin browser call even when APP_ORIGIN is missing or malformed", () => {
     vi.stubEnv("NODE_ENV", "production"); vi.stubEnv("APP_ORIGIN", "");
