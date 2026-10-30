@@ -83,6 +83,7 @@ export default async function WelcomePage({
           countries={reference.countries}
           currencies={reference.currencies}
           seed={{
+            workspaceId: org.id,
             initialStep: org.onboardingCompletedAt ? 0 : org.onboardingStep,
             assumptions: org.assumptions ?? [],
             building: org.building ?? undefined,

@@ -19,11 +19,17 @@ export async function saveStep(step: number, answers: unknown) {
  * Builds the workspace from the answers: corridors, provider eligibility, an
  * armed monitor and a filtered change feed. The dashboard is never empty.
  */
-export async function finishOnboarding(answers: unknown, returnTo?: string) {
+export async function completeOnboarding(answers: unknown, returnTo?: string) {
   const session = await requireSession();
   if (!session.organization) throw new Error("Workspace unavailable");
   const parsed = OnboardingAnswers.parse(answers);
   await saveOnboarding(session.organization.id, parsed, 5);
   await materializeWorkspace(session.organization.id, session.user.id, parsed);
-  redirect(onboardingFinishPath(returnTo));
+  return { destination: onboardingFinishPath(returnTo) };
+}
+
+/** Existing server callers can still finish with a redirect. */
+export async function finishOnboarding(answers: unknown, returnTo?: string) {
+  const { destination } = await completeOnboarding(answers, returnTo);
+  redirect(destination);
 }
