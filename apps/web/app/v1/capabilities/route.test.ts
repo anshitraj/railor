@@ -1,20 +1,10 @@
 /** Route tests for GET /v1/capabilities — query validation, normalization and the list envelope. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockAuthenticate, mockListCapabilities, MockApiError } = vi.hoisted(() => {
-  class MockApiError extends Error {
-    constructor(
-      readonly status: number,
-      readonly code: string,
-      message: string,
-    ) {
-      super(message);
-    }
-  }
-  return { mockAuthenticate: vi.fn(), mockListCapabilities: vi.fn(), MockApiError };
-});
+const { mockAuthenticate, mockListCapabilities } = vi.hoisted(() => ({ mockAuthenticate: vi.fn(), mockListCapabilities: vi.fn() }));
 
-vi.mock("../../../lib/api-auth", () => ({ ApiError: MockApiError, authenticate: mockAuthenticate, recordUsage: vi.fn() }));
+vi.mock("server-only", () => ({}));
+vi.mock("../../../lib/api-auth", async original => ({ ...await original<typeof import("../../../lib/api-auth")>(), authenticate: mockAuthenticate, recordUsage: vi.fn() }));
 vi.mock("@railor/core", () => ({ listCapabilities: mockListCapabilities }));
 
 const { GET } = await import("./route");
@@ -39,6 +29,17 @@ describe("GET /v1/capabilities", () => {
     const body = await response.json();
     expect(body.error.message).toContain("destination_country");
     expect(mockListCapabilities).not.toHaveBeenCalled();
+  });
+
+  it("does not expose storage diagnostics as a caller validation error", async () => {
+    mockListCapabilities.mockRejectedValueOnce(new Error("private SQL and account details"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const response = await get(""); expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body).toMatchObject({ object: "error", request_id: "req_1", error: { code: "internal_error" } });
+      expect(JSON.stringify(body)).not.toContain("private SQL");
+    } finally { log.mockRestore(); }
   });
 
   it("returns a Stripe-shaped list with evidence on every row", async () => {

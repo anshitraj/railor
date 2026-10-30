@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, type ApiContext } from "../../../lib/api-auth";
 import { createWatchlist, listWatchlists, serializeWatchlist, WatchlistCreate } from "../../../lib/watchlists";
 
 export const runtime = "nodejs";
@@ -21,11 +21,10 @@ export async function GET(request: Request) {
       has_more: false,
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists", "GET", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }
@@ -65,11 +64,10 @@ export async function POST(request: Request) {
       { status },
     );
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists", "POST", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }

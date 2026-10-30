@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getActivePolicyVersion, getPolicy, getPolicyVersion, simulatePolicy } from "@railor/core";
 import { PolicyRules } from "@railor/types";
-import { ApiError, authenticate, recordUsage, snake, type ApiContext } from "../../../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, snake, type ApiContext } from "../../../../../lib/api-auth";
 import { parsePaymentIntentBody } from "../../../../../lib/decisions";
 
 export const runtime = "nodejs";
@@ -72,9 +72,8 @@ export async function POST(request: Request, { params }: Params) {
       data: snake(result as unknown as Record<string, unknown>),
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/policies/:id/simulate", "POST", status, Date.now() - started);
-    return NextResponse.json({ object: "error", error: { code, message: (error as Error).message } }, { status });
+    return NextResponse.json({ object: "error", request_id: context?.requestId, error: { code, message } }, { status });
   }
 }

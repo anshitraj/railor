@@ -2,6 +2,26 @@
 
 ## Review — 31 October 2026
 
+### Follow-up: first-request correctness
+
+- Developer examples now use the workspace's actual customer type and saved
+  route. Fiat funding is preserved; an unspecified receiving currency is not
+  replaced with AED, and currency preferences follow their destination market.
+- Snake-case source/receiving endpoint and named-rail fields now reach the route
+  engine instead of being silently discarded.
+- Usage recording is best effort across legacy API handlers as well as the
+  common wrapper. Authentication and atomic quotas remain mandatory. Unexpected
+  legacy API failures return a safe `500` and retain available request IDs, without exposing
+  database diagnostics as a caller validation error.
+- 323 web tests passed, including three isolated signup-to-first-request flows
+  for personal, freelancer and business accounts. Those tests use the real
+  sign-in handler, onboarding action, key authentication and corridor API against
+  a disposable database. They verify token reuse prevention, usage recording,
+  quota enforcement and key revocation. They do not send external email or
+  claim provider account-specific quote coverage.
+
+### Verified product scope
+
 Release scope is an early-access comparison and route-intelligence application
 for businesses, freelancers, developers and AI agents. This is a useful product
 to demonstrate and pitch. Payment execution, beneficiary creation, universal

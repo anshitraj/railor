@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, watchlists } from "@railor/database";
 import { getEntitlement } from "../../../../lib/entitlements";
-import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, type ApiContext } from "../../../../lib/api-auth";
 import {
   getOwnedWatchlist,
   listWatchlistAlerts,
@@ -36,11 +36,10 @@ export async function GET(request: Request, { params }: Params) {
       },
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists/:id", "GET", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }
@@ -87,11 +86,10 @@ export async function PATCH(request: Request, { params }: Params) {
       data: serializeWatchlist(updated ?? row),
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists/:id", "PATCH", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }
@@ -117,11 +115,10 @@ export async function DELETE(request: Request, { params }: Params) {
       deleted: true,
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists/:id", "DELETE", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }

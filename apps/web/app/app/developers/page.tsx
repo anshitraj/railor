@@ -13,6 +13,9 @@ import { createApiKey, getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
 import { WebhookEndpoints } from "../../../components/app/webhook-endpoints";
 import { listWebhookDeliveries, listWebhookEndpoints } from "@railor/core";
+import type { CorridorQuery } from "@railor/types";
+import { developerExampleQuery } from "../../../lib/developer-setup";
+import { appOrigin } from "../../../lib/security";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Developers" };
@@ -68,22 +71,14 @@ export default async function DevelopersPage() {
       }
     : null;
 
-  const corridorQuery = (corridors[0]?.query ?? {}) as Record<string, unknown>;
-  const exampleQuery = {
-    entity_country: corridorQuery.entityCountry ?? org.entityCountry ?? "IN",
-    destination_country: corridorQuery.destinationCountry ?? org.targetCountries?.[0] ?? "AE",
-    asset: corridorQuery.sourceAsset ?? "USDC",
-    destination_currency:
-      corridorQuery.destinationCurrency ?? org.settlementCurrencies?.[0] ?? "AED",
-    customer_type: "business",
-  };
+  const exampleQuery = developerExampleQuery(org, (corridors[0]?.query ?? {}) as Partial<CorridorQuery>);
 
   const [endpoints, deliveries] = await Promise.all([listWebhookEndpoints(org.id), listWebhookDeliveries(org.id, 30)]);
 
   return (
     <div className="flex flex-col gap-5">
     <DeveloperPortal
-      baseUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+      baseUrl={appOrigin()}
       exampleQuery={exampleQuery}
       canManage={canManage}
       keys={keys.map((k) => ({

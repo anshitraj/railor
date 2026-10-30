@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadChangeFeed, parseSince } from "@railor/core";
-import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, type ApiContext } from "../../../lib/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,11 +56,10 @@ export async function GET(request: Request) {
       has_more: feed.length === limit,
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/changes", "GET", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }

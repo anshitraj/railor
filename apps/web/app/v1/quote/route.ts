@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { RankingPreset } from "@railor/types";
 import { loadProviderInputs, routeQuote } from "@railor/core";
-import { ApiError, authenticate, recordUsage, snake, type ApiContext } from "../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, snake, type ApiContext } from "../../../lib/api-auth";
 import { getConnectableProviders, getConnectionCredentials } from "../../../lib/connections";
 import { getEntitlement } from "../../../lib/entitlements";
 import { consumeLimit } from "../../../lib/rate-limit";
@@ -85,9 +85,8 @@ export async function POST(request: Request) {
     await recordUsage(context, "/v1/quote", "POST", 200, Date.now() - started);
     return NextResponse.json(payload);
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/quote", "POST", status, Date.now() - started);
-    return NextResponse.json({ object: "error", error: { code, message: (error as Error).message } }, { status });
+    return NextResponse.json({ object: "error", request_id: context?.requestId, error: { code, message } }, { status });
   }
 }

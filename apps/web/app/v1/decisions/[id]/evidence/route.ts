@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { inArray } from "drizzle-orm";
 import { evidence as evidenceTable, getDb } from "@railor/database";
 import { loadDecision } from "@railor/core";
-import { ApiError, authenticate, recordUsage, snake, type ApiContext } from "../../../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, snake, type ApiContext } from "../../../../../lib/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,9 +32,8 @@ export async function GET(request: Request, { params }: Params) {
       data: rows.map((r) => snake(r as unknown as Record<string, unknown>)),
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/decisions/:id/evidence", "GET", status, Date.now() - started);
-    return NextResponse.json({ object: "error", error: { code, message: (error as Error).message } }, { status });
+    return NextResponse.json({ object: "error", request_id: context?.requestId, error: { code, message } }, { status });
   }
 }

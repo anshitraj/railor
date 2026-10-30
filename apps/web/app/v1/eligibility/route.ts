@@ -6,6 +6,7 @@ import {
   authenticate,
   camelQuery,
   recordUsage,
+  normalizeApiError,
   snake,
   type ApiContext,
 } from "../../../lib/api-auth";
@@ -129,11 +130,10 @@ export async function POST(request: Request) {
     await recordUsage(context, "/v1/eligibility", "POST", 200, Date.now() - started);
     return NextResponse.json(payload);
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/eligibility", "POST", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }

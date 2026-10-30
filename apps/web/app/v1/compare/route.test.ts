@@ -1,23 +1,14 @@
 /** Route-branching tests for POST /v1/compare — fully mocked, like the sibling decisions route test. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockAuthenticate, mockLoadProviderBySlug, MockApiError } = vi.hoisted(() => {
-  class MockApiError extends Error {
-    constructor(
-      readonly status: number,
-      readonly code: string,
-      message: string,
-    ) {
-      super(message);
-    }
-  }
-  return { mockAuthenticate: vi.fn(), mockLoadProviderBySlug: vi.fn(), MockApiError };
-});
+const { mockAuthenticate, mockLoadProviderBySlug } = vi.hoisted(() => ({ mockAuthenticate: vi.fn(), mockLoadProviderBySlug: vi.fn() }));
 
-vi.mock("../../../lib/api-auth", () => ({ ApiError: MockApiError, authenticate: mockAuthenticate, recordUsage: vi.fn() }));
+vi.mock("server-only", () => ({}));
+vi.mock("../../../lib/api-auth", async original => ({ ...await original<typeof import("../../../lib/api-auth")>(), authenticate: mockAuthenticate, recordUsage: vi.fn() }));
 vi.mock("@railor/core", () => ({ loadProviderBySlug: mockLoadProviderBySlug }));
 
 const { POST } = await import("./route");
+const { ApiError: MockApiError } = await import("../../../lib/api-auth");
 
 function provider(slug: string, destinations: string[], hasApi: boolean) {
   return {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPolicyVersion, revalidateDecision } from "@railor/core";
 import { RevalidationTrigger, type PolicyRules } from "@railor/types";
-import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../../../lib/api-auth";
+import { ApiError, authenticate, recordUsage, normalizeApiError, type ApiContext } from "../../../../../lib/api-auth";
 import { buildFetchQuote, serializeDecisionById } from "../../../../../lib/decisions";
 
 export const runtime = "nodejs";
@@ -64,9 +64,8 @@ export async function POST(request: Request, { params }: Params) {
       recommendation_changed: result.recommendationChanged,
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/decisions/:id/revalidate", "POST", status, Date.now() - started);
-    return NextResponse.json({ object: "error", error: { code, message: (error as Error).message } }, { status });
+    return NextResponse.json({ object: "error", request_id: context?.requestId, error: { code, message } }, { status });
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiError, authenticate, recordUsage, type ApiContext } from "../../../../../lib/api-auth";
+import { authenticate, recordUsage, normalizeApiError, type ApiContext } from "../../../../../lib/api-auth";
 import {
   getOwnedWatchlist,
   listWatchlistAlerts,
@@ -30,11 +30,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       has_more: rows.length === limit,
     });
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 400;
-    const code = error instanceof ApiError ? error.code : "invalid_request";
+    const { status, code, message } = normalizeApiError(error, context?.requestId);
     await recordUsage(context, "/v1/watchlists/:id/alerts", "GET", status, Date.now() - started);
     return NextResponse.json(
-      { object: "error", error: { code, message: (error as Error).message } },
+      { object: "error", request_id: context?.requestId, error: { code, message } },
       { status },
     );
   }

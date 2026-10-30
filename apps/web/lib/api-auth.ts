@@ -5,6 +5,7 @@ import { consumeApiAllowance } from "./entitlements";
 import { randomUUID } from "node:crypto";
 import { hashApiKey } from "./auth";
 import { checkBurstLimit } from "./rate-limit";
+import { ZodError } from "zod";
 
 export interface ApiContext {
   organizationId: string;
@@ -21,6 +22,15 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+}
+
+/** Public validation errors retain their meaning; unexpected diagnostics stay server-side. */
+export function normalizeApiError(error: unknown, requestId?: string) {
+  if (error instanceof ApiError) return { status: error.status, code: error.code, message: error.message };
+  if (error instanceof ZodError) return { status: 400, code: "invalid_request", message: error.issues[0]?.message ?? "Check the request fields." };
+  if (error instanceof SyntaxError) return { status: 400, code: "invalid_json", message: "Send a valid JSON object body." };
+  console.error(JSON.stringify({ event: "api_request_failed", requestId, errorType: error instanceof Error ? error.name : "UnknownError" }));
+  return { status: 500, code: "internal_error", message: "Railor could not complete this request. Check its status before retrying." };
 }
 
 /**
@@ -78,15 +88,17 @@ export async function recordUsage(
   latencyMs: number,
 ) {
   if (!context) return;
-  const db = await getDb();
-  await db.insert(apiUsage).values({
-    apiKeyId: context.keyId,
-    organizationId: context.organizationId,
-    endpoint,
-    method,
-    status,
-    latencyMs,
-  });
+  try {
+    const db = await getDb();
+    await db.insert(apiUsage).values({
+      apiKeyId: context.keyId, organizationId: context.organizationId,
+      endpoint, method, status, latencyMs,
+    });
+  } catch (error) {
+    // Authentication already consumed the allowance atomically. Analytics are
+    // best effort for both legacy handlers and v1Route; quota checks remain mandatory.
+    console.error(JSON.stringify({ event: "api_usage_failed", endpoint, requestId: context.requestId, errorType: error instanceof Error ? error.name : "UnknownError" }));
+  }
 }
 
 /** camelCase in the engine, snake_case on the wire — Stripe-shaped responses. */
@@ -117,6 +129,8 @@ export function camelQuery(body: Record<string, unknown>): Record<string, unknow
     entity_country: "entityCountry",
     customer_type: "customerType",
     source_country: "sourceCountry",
+    source_endpoint_type: "sourceEndpointType",
+    source_named_rail: "sourceNamedRail",
     source_currency: "sourceCurrency",
     destination_country: "destinationCountry",
     asset: "sourceAsset",
@@ -125,6 +139,8 @@ export function camelQuery(body: Record<string, unknown>): Record<string, unknow
     source_network: "sourceNetwork",
     destination_currency: "destinationCurrency",
     payment_method: "paymentMethod",
+    endpoint_type: "endpointType",
+    named_rail: "namedRail",
     amount_currency: "amountCurrency",
   };
   return Object.fromEntries(
