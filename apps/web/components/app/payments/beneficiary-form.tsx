@@ -151,7 +151,7 @@ export function BeneficiaryForm({
       <label className="flex flex-col gap-1 text-[12px] font-bold text-[var(--color-ink-soft)]">
         {holderType === "business" ? "Registered business name" : "Full legal name"}
         <input value={holderName} onChange={(e) => setHolderName(e.target.value)} className="product-field !mt-0 font-normal" autoComplete="off" />
-        {fields.holderName ? <span className="text-[11.5px] font-normal text-[var(--color-bad)]">{fields.holderName}</span> : null}
+        {fields.holderName ? <span className="text-[13px] font-normal text-[var(--color-bad)]">{fields.holderName}</span> : null}
       </label>
       {activeMethod === "crypto_address" ? (
         <FieldBlock label="Network">
@@ -183,7 +183,7 @@ export function BeneficiaryForm({
               spellCheck={false}
               className="product-field !mt-0 font-mono font-normal"
             />
-            {fields[`details.${f.key}`] ? <span className="text-[11.5px] font-normal text-[var(--color-bad)]">{fields[`details.${f.key}`]}</span> : null}
+            {fields[`details.${f.key}`] ? <span className="text-[13px] font-normal text-[var(--color-bad)]">{fields[`details.${f.key}`]}</span> : null}
           </label>
         ))}
         {activeMethod !== "crypto_address" ? (
@@ -193,7 +193,7 @@ export function BeneficiaryForm({
           </label>
         ) : null}
       </div>
-      <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+      <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
         Account details are checked (checksums, formats), encrypted at rest, and only decrypted inside a provider call. Railor shows a masked hint afterwards.
       </p>
       {error ? <p role="alert" className="text-[12.5px] text-[var(--color-bad)]">{error}</p> : null}

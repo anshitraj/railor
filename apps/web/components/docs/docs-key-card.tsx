@@ -53,16 +53,16 @@ export function DocsKeyCard({ apiKey }: { apiKey: string | null }) {
         <button
           type="button"
           onClick={copy}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] bg-white px-2.5 py-1 text-[11.5px] font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-line-strong)] hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] bg-white px-2.5 py-1 text-[13px] font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-line-strong)] hover:text-[var(--color-ink)]"
         >
           {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <code className="break-all rounded-lg bg-[var(--color-sand)] px-2.5 py-2 font-mono text-[11px] leading-relaxed text-[var(--color-ink-soft)]">
+      <code className="break-all rounded-lg bg-[var(--color-sand)] px-2.5 py-2 font-mono text-[12.5px] leading-relaxed text-[var(--color-ink-soft)]">
         {apiKey}
       </code>
-      <p className="text-[11.5px] leading-snug text-[var(--color-faint)]">
+      <p className="text-[13px] leading-snug text-[var(--color-faint)]">
         Snippets on these pages are rendered with it.
       </p>
     </div>

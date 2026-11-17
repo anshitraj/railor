@@ -187,7 +187,7 @@ export default async function PublicProviderProfile({
             <ul className="flex flex-col gap-2">
               {changes.slice(0, 6).map((c) => (
                 <li key={c.id} className="flex flex-col">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--color-purple)]">
+                  <span className="text-[12.5px] uppercase tracking-wide text-[var(--color-purple)]">
                     {CHANGE_KIND_LABEL[c.kind]}
                   </span>
                   <span className="text-[13px] leading-snug">{c.summary}</span>

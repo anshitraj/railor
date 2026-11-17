@@ -48,7 +48,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap items-center gap-2">
             <PaymentStatusBadge status={payment.status} />
             <ModeChip mode={payment.mode} />
-            <span className="font-mono text-[11px] text-white/50">{payment.id}</span>
+            <span className="font-mono text-[12.5px] text-white/50">{payment.id}</span>
           </div>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
             <p className="font-display text-[clamp(2rem,5vw,3.4rem)] font-semibold leading-none tracking-[-0.03em]">{formatAmount(payment.amount, payment.sourceCurrency)}</p>
@@ -85,7 +85,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
           <dl className="mt-3 grid gap-2 text-[13px] sm:grid-cols-2">
             {Object.entries(deposit).map(([k, v]) => (
               <div key={k} className="flex flex-col gap-0.5 rounded-lg bg-[var(--color-paper)] px-3 py-2">
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{k.replaceAll("_", " ")}</dt>
+                <dt className="text-[12.5px] text-[var(--color-faint)] font-semibold">{k.replaceAll("_", " ")}</dt>
                 <dd className="break-all font-mono text-[12.5px]">{String(v)}</dd>
               </div>
             ))}
@@ -138,17 +138,17 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
                 {attempts.map((a) => (
                   <li key={a.id} className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-[12.5px]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[11px] text-[var(--color-muted)]">#{a.attemptNumber}</span>
+                      <span className="font-mono text-[12.5px] text-[var(--color-muted)]">#{a.attemptNumber}</span>
                       <ProviderLogo slug={a.providerSlug} name={a.providerSlug} size={18} />
                       <span className="font-semibold">{a.providerSlug}</span>
                       <PaymentStatusBadge status={a.status === "accepted" ? "processing" : a.status === "rejected" ? "failed" : a.status} />
                     </div>
-                    <p className="mt-1 text-[11.5px] text-[var(--color-muted)]">
+                    <p className="mt-1 text-[13px] text-[var(--color-muted)]">
                       {EXECUTOR_LABEL[a.executor]} · {a.environment}
                       {a.providerStatus ? ` · provider says “${a.providerStatus}”` : ""}
                     </p>
-                    {a.errorMessage ? <p className="mt-1 text-[11.5px] text-[var(--color-bad)]">{a.errorMessage}</p> : null}
-                    <p className="mt-1 break-all font-mono text-[10.5px] text-[var(--color-faint)]">idempotency {a.idempotencyKey}</p>
+                    {a.errorMessage ? <p className="mt-1 text-[13px] text-[var(--color-bad)]">{a.errorMessage}</p> : null}
+                    <p className="mt-1 break-all font-mono text-[12.5px] text-[var(--color-faint)]">idempotency {a.idempotencyKey}</p>
                   </li>
                 ))}
               </ol>
@@ -176,7 +176,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
                 ) : null}
                 {typeof e.detail.reason === "string" ? <span className="text-[var(--color-muted)]"> · {e.detail.reason}</span> : null}
               </span>
-              <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[11px] text-[var(--color-muted)]">{e.source.replaceAll("_", " ")}</span>
+              <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[12.5px] text-[var(--color-muted)]">{e.source.replaceAll("_", " ")}</span>
             </li>
           ))}
         </ol>
@@ -188,7 +188,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
 function Item({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-[10.5px] uppercase tracking-[0.12em] text-white/45">{label}</dt>
+      <dt className="text-[12.5px] text-white/45 font-semibold">{label}</dt>
       <dd className={`break-all ${mono ? "font-mono text-[12px]" : ""}`}>{value}</dd>
     </div>
   );

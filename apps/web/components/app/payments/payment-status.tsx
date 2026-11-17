@@ -28,9 +28,9 @@ export function PaymentStatusBadge({ status }: { status: string }) {
 
 export function ModeChip({ mode }: { mode: string }) {
   return mode === "live" ? (
-    <span className="rounded-full bg-[var(--color-ink)] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white">Live</span>
+    <span className="rounded-full bg-[var(--color-ink)] px-2 py-0.5 text-[12.5px] font-bold text-white">Live</span>
   ) : (
-    <span className="rounded-full border border-dashed border-[var(--color-line-strong)] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-[var(--color-muted)]">Test</span>
+    <span className="rounded-full border border-dashed border-[var(--color-line-strong)] px-2 py-0.5 text-[12.5px] font-bold text-[var(--color-muted)]">Test</span>
   );
 }
 

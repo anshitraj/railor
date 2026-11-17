@@ -152,7 +152,7 @@ export function PaymentComposer({
         {steps.map((label, i) => (
           <li key={label} className="flex flex-1 flex-col gap-1.5">
             <span className={cn("h-1 rounded-full transition-colors duration-300", i <= step ? "bg-[var(--color-orange)]" : "bg-[var(--color-line)]")} />
-            <span className={cn("text-[11.5px] font-semibold", i === step ? "text-[var(--color-ink)]" : "text-[var(--color-faint)]")}>
+            <span className={cn("text-[13px] font-semibold", i === step ? "text-[var(--color-ink)]" : "text-[var(--color-faint)]")}>
               {i + 1}. {label}
             </span>
           </li>
@@ -174,7 +174,7 @@ export function PaymentComposer({
           </FieldBlock>
           {corridors.length ? (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">From a saved corridor</span>
+              <span className="text-[12.5px] text-[var(--color-faint)] font-semibold">From a saved corridor</span>
               {corridors.slice(0, 6).map((c) => (
                 <PresetChip key={c.id} active={false} onClick={() => setIntent((prev) => ({ ...draftFromPartial(c.query, entityCountry), amount: prev.amount }))}>
                   {c.label}
@@ -213,7 +213,7 @@ export function PaymentComposer({
                 >
                   <span className="text-[14px] font-semibold">{b.label}</span>
                   <span className="font-mono text-[12px] text-[var(--color-muted)]">{b.displayHint}</span>
-                  <span className="text-[11.5px] text-[var(--color-faint)]">{b.holderName}</span>
+                  <span className="text-[13px] text-[var(--color-faint)]">{b.holderName}</span>
                 </button>
               ))}
             </div>
@@ -334,7 +334,7 @@ export function PaymentComposer({
 function Summary({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</span>
+      <span className="text-[12.5px] text-[var(--color-faint)] font-semibold">{label}</span>
       <span className={cn("font-semibold", strong && "text-[var(--color-orange-deep)]")}>{value}</span>
     </div>
   );

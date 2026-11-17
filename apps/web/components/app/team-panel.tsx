@@ -97,13 +97,13 @@ export function TeamPanel({
           const editable = manage && !(m.role === "owner" && currentRole !== "owner");
           return (
             <li key={m.userId} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-sand)] text-[12px] font-bold uppercase text-[var(--color-ink-soft)]">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-sand)] text-[12px] font-bold text-[var(--color-ink-soft)]">
                 {(m.name || m.email).charAt(0)}
               </span>
               <span className="flex min-w-[160px] flex-1 flex-col">
                 <span className="text-[13.5px] font-medium text-[var(--color-ink)]">
                   {m.name || m.email}
-                  {self ? <span className="ml-1.5 text-[11px] font-normal text-[var(--color-muted)]">(you)</span> : null}
+                  {self ? <span className="ml-1.5 text-[12.5px] font-normal text-[var(--color-muted)]">(you)</span> : null}
                 </span>
                 {m.name ? <span className="text-[12px] text-[var(--color-muted)]">{m.email}</span> : null}
               </span>
@@ -121,7 +121,7 @@ export function TeamPanel({
                   />
                 </div>
               ) : (
-                <span title={ROLE_HINT[m.role]} className="rounded-full border border-[var(--color-line)] px-2.5 py-0.5 text-[11.5px] capitalize text-[var(--color-ink-soft)]">
+                <span title={ROLE_HINT[m.role]} className="rounded-full border border-[var(--color-line)] px-2.5 py-0.5 text-[13px] capitalize text-[var(--color-ink-soft)]">
                   {m.role}
                 </span>
               )}
@@ -211,13 +211,13 @@ export function TeamPanel({
 
       {invites.length ? (
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-faint)]">Pending invitations</p>
+          <p className="text-[12.5px] font-bold text-[var(--color-faint)]">Pending invitations</p>
           <ul className="flex flex-col divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)]">
             {invites.map((i) => (
               <li key={i.token} className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-[13px]">
                 <span className="min-w-[160px] flex-1 font-medium">{i.email}</span>
-                <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[11px] capitalize">{i.role}</span>
-                <span className="text-[11.5px] text-[var(--color-muted)]">expires {new Date(i.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
+                <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[12.5px] capitalize">{i.role}</span>
+                <span className="text-[13px] text-[var(--color-muted)]">expires {new Date(i.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
                 <CopyLink url={i.url} />
                 {manage ? (
                   <button
@@ -255,9 +255,9 @@ export function WorkspaceSwitcher({ workspaces, currentId }: { workspaces: Array
                   current ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)]" : "border-[var(--color-line)] hover:border-[var(--color-line-strong)] hover:bg-[var(--color-paper)]",
                 )}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold uppercase text-white">{w.name.charAt(0)}</span>
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold text-white">{w.name.charAt(0)}</span>
                 <span className="flex-1 text-[13.5px] font-medium">{w.name}</span>
-                <span className="text-[11.5px] capitalize text-[var(--color-muted)]">{current ? "Current" : w.role}</span>
+                <span className="text-[13px] capitalize text-[var(--color-muted)]">{current ? "Current" : w.role}</span>
               </button>
             </li>
           );

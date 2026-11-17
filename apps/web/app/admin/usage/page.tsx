@@ -32,7 +32,7 @@ export default async function UsagePage() {
         <SectionLabel>Provider connection requests</SectionLabel>
         <p className="text-[12px] text-[var(--color-muted)]">Use this demand to prioritize provider access and integration work. A request does not confirm a partnership.</p>
         {providerDemand.length ? <div className="overflow-x-auto"><table className="w-full text-left text-[13px]">
-          <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]"><tr><th className="pb-2">Provider</th><th className="pb-2">Requests</th><th className="pb-2">Workspaces</th><th className="pb-2">Latest</th></tr></thead>
+          <thead className="text-[12.5px] uppercase tracking-wide text-[var(--color-faint)]"><tr><th className="pb-2">Provider</th><th className="pb-2">Requests</th><th className="pb-2">Workspaces</th><th className="pb-2">Latest</th></tr></thead>
           <tbody>{providerDemand.map((row) => <tr key={row.provider ?? "unknown"} className="border-t border-[var(--color-line)]">
             <td className="py-2">{row.provider ?? "Unspecified"}</td><td className="tabular py-2">{row.requests}</td><td className="tabular py-2">{row.workspaces}</td><td className="py-2 text-[var(--color-muted)]">{row.latest ? relativeTime(row.latest) : "—"}</td>
           </tr>)}</tbody>
@@ -46,7 +46,7 @@ export default async function UsagePage() {
         {platformUsage.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-[13px]">
-              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+              <thead className="text-[12.5px] uppercase tracking-wide text-[var(--color-faint)]">
                 <tr>
                   <th className="pb-2">Workspace</th>
                   <th className="pb-2">Requests</th>
@@ -77,7 +77,7 @@ export default async function UsagePage() {
         {topDemand.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-[13px]">
-              <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+              <thead className="text-[12.5px] uppercase tracking-wide text-[var(--color-faint)]">
                 <tr>
                   <th className="pb-2">Corridor</th>
                   <th className="pb-2">Searches</th>
@@ -113,7 +113,7 @@ export default async function UsagePage() {
               <li key={row.feature} className="flex items-center gap-2 rounded-full border border-[var(--color-line)] px-3 py-1.5 text-[13px]">
                 <span className="font-medium">{row.feature}</span>
                 <span className="tabular text-[var(--color-orange-deep)]">{row.requests}</span>
-                <span className="text-[11px] text-[var(--color-faint)]">{row.latest ? relativeTime(row.latest) : ""}</span>
+                <span className="text-[12.5px] text-[var(--color-faint)]">{row.latest ? relativeTime(row.latest) : ""}</span>
               </li>
             ))}
           </ul>

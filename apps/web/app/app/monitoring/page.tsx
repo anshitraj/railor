@@ -38,9 +38,9 @@ export default async function MonitoringPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-[1fr_1.4fr]">
-        <Card className="space-y-3 p-5 lg:col-span-2"><h2 className="font-semibold">Decision revalidation</h2><p className="text-sm">Checks recent decisions against current policy, evidence, incidents and connection state. A changed decision gets a new audit record; approvals are never copied forward. Scheduled checks require the decision-monitor scheduler integration.</p>
-          {["owner", "admin"].includes(session.role ?? "") && <ControlButton command={{ action: "monitor_decisions" }}>Check up to 25 recent decisions now</ControlButton>}
-          <p className="text-sm">{affected.length ? "Flagged historical decisions (latest 20):" : "No flagged decisions."}</p>{affected.map((d) => <Link key={d.id} href={`/app/decisions/${d.id}`} className="flex items-center gap-2 text-sm hover:underline"><span className="product-mono text-[var(--color-muted)]">{d.id.slice(0, 8)}</span><span className="capitalize">{d.status.replaceAll("_", " ")}</span><span aria-hidden className="text-[var(--color-orange-deep)]">→</span></Link>)}
+        <Card className="space-y-3 p-5 lg:col-span-2"><h2 className="font-semibold">Recheck past rule checks</h2><p className="text-sm text-[var(--color-muted)]">Railor re-runs your recent rule checks against today’s rules, sources and provider status, and flags any result that would now be different. Past approvals are never carried over.</p>
+          {["owner", "admin"].includes(session.role ?? "") && <ControlButton command={{ action: "monitor_decisions" }}>Recheck the latest 25 now</ControlButton>}
+          <p className="text-sm">{affected.length ? "Results that changed (latest 20):" : "Nothing has changed since your last checks."}</p>{affected.map((d) => <Link key={d.id} href={`/app/decisions/${d.id}`} className="flex items-center gap-2 text-sm hover:underline"><span className="product-mono text-[var(--color-muted)]">{d.id.slice(0, 8)}</span><span className="capitalize">{d.status.replaceAll("_", " ")}</span><span aria-hidden className="text-[var(--color-orange-deep)]">→</span></Link>)}
           {checks.map((e) => <p key={e.id} className="text-sm">{e.createdAt.toISOString()} · <Link href={`/app/decisions/${String(e.data.nextDecisionId)}`} className="underline">View refreshed decision</Link></p>)}
         </Card>
         <Card className="flex flex-col gap-3 p-5">
@@ -58,12 +58,12 @@ export default async function MonitoringPage() {
                   key={w.id}
                   className="flex items-start gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] p-3"
                 >
-                  <span className="mt-0.5 rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
+                  <span className="mt-0.5 rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[12px] text-[var(--color-purple)] font-semibold">
                     {w.targetType}
                   </span>
                   <div className="flex flex-1 flex-col">
                     <span className="text-[13.5px] font-medium">{w.label}</span>
-                    <span className="text-[11.5px] text-[var(--color-muted)]">
+                    <span className="text-[13px] text-[var(--color-muted)]">
                       {w.kinds.map((k) => CHANGE_KIND_LABEL[k as keyof typeof CHANGE_KIND_LABEL] ?? k).join(" · ")}
                     </span>
                     <div className="mt-1.5">
@@ -116,7 +116,7 @@ export default async function MonitoringPage() {
                   className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-[var(--color-line)] p-3"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
+                    <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[12px] text-[var(--color-purple)] font-semibold">
                       {CHANGE_KIND_LABEL[change.kind]}
                     </span>
                     <Link

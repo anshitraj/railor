@@ -74,7 +74,7 @@ export function EvidencePopover({
             {evidence.map((e) => (
               <li key={e.sourceUrl} className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+                  <span className="text-[11px] text-[var(--color-muted)] font-semibold">
                     {VERIFICATION_LABEL[e.verificationType ?? "provider_reported"]} · {SOURCE_LABEL[e.sourceType] ?? e.sourceType}
                   </span>
                   <ConfidenceDot confidence={e.confidence} showValue />

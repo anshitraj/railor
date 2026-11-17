@@ -59,7 +59,7 @@ export function AccessRequestButton({ provider, providerName = provider, feature
             <div className="access-email"><Mail size={16} aria-hidden /><input id={`${titleId}-email`} type="email" autoComplete="email" required maxLength={320} value={email} aria-invalid={Boolean(error)} aria-describedby={error ? `${titleId}-error` : undefined} onChange={(event) => { setEmail(event.target.value); setError(""); }} placeholder="you@company.com" /></div>
             {error ? <p id={`${titleId}-error`} role="alert" className="text-xs text-[var(--color-bad)]">{error}</p> : null}
             <button className="comparison-primary-action w-full justify-center" type="submit" disabled={busy}>{busy ? "Saving request…" : connection ? "Request connection access" : "Request execution access"}<ArrowUpRight size={15} /></button>
-            <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">We store your workspace, provider and contact email. An access request does not connect an account or send money.</p>
+            <p className="text-[12.5px] leading-relaxed text-[var(--color-muted)]">We store your workspace, provider and contact email. An access request does not connect an account or send money.</p>
           </form>
         </>}
       </motion.div>

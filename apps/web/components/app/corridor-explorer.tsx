@@ -181,6 +181,7 @@ export function CorridorExplorer({
   fieldLabels,
   savedCorridorId,
   apiKey,
+  savedRoutes = [],
 }: {
   initial: SearchPayload;
   initialQuery: Query;
@@ -188,6 +189,8 @@ export function CorridorExplorer({
   fieldLabels: Record<string, string>;
   savedCorridorId?: string;
   apiKey?: string;
+  /** The workspace's saved routes, shown as one-tap shortcuts above the explorer. */
+  savedRoutes?: Array<{ id: string; label: string }>;
 }) {
   const [query, setQuery] = useState<Query>(initialQuery);
   const [preset, setPreset] = useState(initial.preset ?? "balanced");
@@ -300,22 +303,23 @@ export function CorridorExplorer({
       <div className={styles.heading}>
         <div className="flex flex-col gap-1">
           <span className="product-eyebrow">Route intelligence</span>
-          <h1 className="font-semibold tracking-tight">Corridor Explorer</h1>
-          <p className="text-[14px] text-[var(--color-muted)]">
-            Every mapped provider, evaluated against this route — with the reason attached.
+          <h1>{savedId ? "Your saved route" : "Explore a route"}</h1>
+          <p>
+            See which providers can serve this route, and why.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={save} disabled={pending}>
-            <Bookmark size={14} />{savedId ? "Saved ✓" : "Save corridor"}
+            <Bookmark size={14} />{savedId ? "Saved" : "Save route"}
           </Button>
           <Button size="sm" onClick={monitor} disabled={pending || monitored}>
-            <Bell size={14} />{monitored ? "Monitoring ✓" : "Monitor"}
+            <Bell size={14} />{monitored ? "Watching" : "Watch for changes"}
           </Button>
         </div>
       </div>
 
-      <section className={styles.builder}><h2>Describe a corridor or build it manually</h2>
+      {savedRoutes.length ? <nav aria-label="Saved routes" className="saved-routes"><span>Saved</span>{savedRoutes.map((route) => <a key={route.id} href={`/app/corridors?saved=${route.id}`} aria-current={route.id === savedId ? "page" : undefined}>{route.label}</a>)}<a href="/app/corridors" className="saved-routes-new">+ New route</a></nav> : null}
+      <section className={styles.builder}><h2>Choose a route</h2>
       <form
         onSubmit={runNaturalSearch}
         className={styles.naturalSearch}
@@ -324,7 +328,7 @@ export function CorridorExplorer({
         <input
           value={naturalInput}
           onChange={(e) => setNaturalInput(e.target.value)}
-          placeholder="Describe a different route — “USDT off-ramp to NGN for a Nigerian business”"
+          placeholder="Describe it — e.g. “USDT to NGN for a Nigerian business”"
           className="w-full flex-1 bg-transparent px-2 py-2.5 text-[14px] outline-none sm:px-0 sm:text-[15px]"
           aria-label="Describe a new route"
         />
@@ -340,10 +344,10 @@ export function CorridorExplorer({
       ) : null}
 
       <div className={styles.manual}>
-        <p>Or set the route manually</p>
+        <p>Or pick the details</p>
         <div className={styles.filters}>{["entityCountry", "customerType", "destinationCountry", "sourceAsset", "destinationCurrency"].map(field => <div key={field}><label>{fieldLabels[field] ?? field}</label><RouteOptionPicker label={fieldLabels[field] ?? field} options={optionsByField[field] ?? []} value={String(query[field] ?? "")} onChange={value => value ? setField(field, value) : clearField(field)} placeholder="Any" renderMark={value => field.includes("Country") ? <Flag code={value} size={15} /> : field === "sourceAsset" ? <CurrencyLogo symbol={value} size={20} /> : field === "destinationCurrency" && currencyFlagCode(value) ? <Flag code={currencyFlagCode(value)!} size={15} /> : <Building2 size={16} />} /></div>)}</div>
       </div>
-      <details className={styles.advanced}><summary><SlidersHorizontal size={14} />Advanced filters & route fields</summary>
+      <details className={styles.advanced}><summary><SlidersHorizontal size={14} />More filters</summary>
       <div className="flex flex-col gap-4 pt-4">
         <div className="flex flex-col gap-2">
           <SectionLabel>Route</SectionLabel>
@@ -364,7 +368,7 @@ export function CorridorExplorer({
 
       </div></details>
         <div className={styles.rankings}>
-          <SectionLabel className="mr-1">Rank by</SectionLabel>
+          <span className="mr-1 text-[13.5px] font-semibold text-[var(--color-ink-soft)]">Sort by</span>
           {PRESETS.map((p) => (
             <Chip
               key={p.value}
@@ -382,7 +386,7 @@ export function CorridorExplorer({
             onClick={() => setShowApi((v) => !v)}
             className="text-[12.5px] font-medium text-[var(--color-purple)]"
           >
-            {showApi ? "Hide API call" : "Copy as API call"}
+            {showApi ? "Hide API request" : "Show API request"}
           </button>
         </div>
 
@@ -426,11 +430,11 @@ export function CorridorExplorer({
 
 
       <section className={styles.results} aria-label="Corridor provider results" aria-busy={loading || parsing}>
-        <div className={styles.resultsHeading}><div><h2>Provider results ({visibleProviders.length} of {data.results.length})</h2><p>Evaluated against your selected route · evidence and availability</p></div><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search corridor providers" placeholder="Search providers" value={providerSearch} onChange={event => { setProviderSearch(event.target.value); setShowAll(false); }} /></label></div>
-        <div className={styles.tableHead} aria-hidden><span>Provider</span><span>Route verdict</span><span>Pricing</span><span>Evidence</span><span /></div>
+        <div className={styles.resultsHeading}><div><h2>Providers ({visibleProviders.length} of {data.results.length})</h2><p>Each one checked against this route, with its evidence</p></div><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search corridor providers" placeholder="Search providers" value={providerSearch} onChange={event => { setProviderSearch(event.target.value); setShowAll(false); }} /></label></div>
+        <div className={styles.tableHead} aria-hidden><span>Provider</span><span>Result</span><span>Fees</span><span>Confidence</span><span /></div>
         <div className={styles.rows} data-expanded={showAll}>{visibleProviders.map(result => <div key={result.provider.slug} className={styles.row} data-selected={selectedSlug === result.provider.slug}>
           <div className={styles.provider}><ProviderLogo slug={result.provider.slug} name={result.provider.name} size={25} /><strong>{result.provider.name}</strong></div>
-          <span className={styles.verdict} data-verdict={result.eligibility}>{result.routeConfirmation === "partially_confirmed" ? "Partial match" : result.eligibility === "supported" ? "Compatible" : result.eligibility === "additional_requirements" ? "Requirements" : result.eligibility === "unavailable" ? "Not supported" : "Insufficient data"}</span>
+          <span className={styles.verdict} data-verdict={result.eligibility}>{result.routeConfirmation === "partially_confirmed" ? "Partial match" : result.eligibility === "supported" ? "Compatible" : result.eligibility === "additional_requirements" ? "Needs checks" : result.eligibility === "unavailable" ? "Not supported" : "Not enough data"}</span>
           <span className={styles.price} title={result.facts.feeSummary}>{result.facts.feeSummary ?? "Not available"}</span>
           <span className={styles.evidence}><i style={{ height: `${Math.max(4, result.confidence * 15)}px` }} />{Math.round(result.confidence * 100)}%<small>confidence</small></span>
           <button type="button" aria-expanded={selectedSlug === result.provider.slug} aria-controls="corridor-provider-details" onClick={() => setSelectedSlug(selectedSlug === result.provider.slug ? null : result.provider.slug)}>{selectedSlug === result.provider.slug ? "Hide details" : "View details"}<ArrowRight size={12} /></button>
@@ -498,11 +502,11 @@ export function CorridorExplorer({
               {result.routeConfirmation ? (
                 <div className="flex flex-col gap-2 border-b border-[var(--color-line)] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-faint)]">
+                    <span className="text-[12.5px] font-bold text-[var(--color-faint)]">
                       Route confirmation
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      className={`rounded-full px-2 py-0.5 text-[12.5px] font-medium ${
                         ROUTE_CONFIRMATION_STYLE[result.routeConfirmation] ?? ROUTE_CONFIRMATION_STYLE.unknown
                       }`}
                     >
@@ -522,7 +526,7 @@ export function CorridorExplorer({
                     ))}
                   </div>
                   {result.routeConfirmation === "partially_confirmed" || result.routeConfirmation === "unconfirmed" ? (
-                    <p className="text-[11.5px] text-[var(--color-muted)]">
+                    <p className="text-[13px] text-[var(--color-muted)]">
                       Railor understood exactly what you asked for — the pieces above are real, individually-verified
                       facts. It has no single source proving they hold together as one route yet.
                     </p>
@@ -589,7 +593,7 @@ export function CorridorExplorer({
               </p>
             ) : null}
           </div>
-          <p className="text-[11px] text-[var(--color-faint)]">
+          <p className="text-[12.5px] text-[var(--color-faint)]">
             Country-level research, not a per-provider statement — it never changes a verdict above, only
             explains the market.
           </p>
@@ -632,11 +636,11 @@ function CatalogRecommendation({
 
   return (
     <Card className="flex flex-col gap-2 border-[var(--color-ok)]/25 p-4">
-      <SectionLabel>{winner.routeConfirmation === "confirmed" ? "Best verified match" : "Best eligible catalog match"}</SectionLabel>
+      <span className="text-[13px] font-semibold text-[var(--color-orange-deep)]">{winner.routeConfirmation === "confirmed" ? "Best match" : "Best possible match"}</span>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-[18px] font-semibold">{winner.provider.name}</p>
         <p className="text-[12px] text-[var(--color-muted)]">
-          {preset.replaceAll("_", " ")} score {winner.score}/100 · {Math.round(winner.rankingConfidence * 100)}% ranking coverage
+          Score {winner.score}/100
         </p>
       </div>
       <p className="text-[12.5px] text-[var(--color-muted)]">
@@ -655,14 +659,14 @@ function MarketDiscoveryPanel({ discovery }: { discovery: NonNullable<SearchPayl
           <h2 className="text-[18px] font-semibold">New rails and providers outside the verified catalog</h2>
           <p className="max-w-3xl text-[12.5px] text-[var(--color-muted)]">{discovery.triggerReason}</p>
         </div>
-        <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-1 text-[11px] font-medium text-[var(--color-purple-deep)]">
+        <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-1 text-[12.5px] font-medium text-[var(--color-purple-deep)]">
           Refreshed {new Date(discovery.generatedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC"}
         </span>
       </div>
 
       {discovery.recommendation ? (
         <div className="rounded-[14px] bg-[var(--color-lavender)] p-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-purple-deep)]">
+          <p className="text-[12.5px] font-bold text-[var(--color-purple-deep)]">
             {discovery.recommendation.label}
           </p>
           <p className="mt-1 text-[16px] font-semibold">{discovery.recommendation.candidateName}</p>
@@ -677,7 +681,7 @@ function MarketDiscoveryPanel({ discovery }: { discovery: NonNullable<SearchPayl
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold">{candidate.name}</h3>
-                  <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--color-faint)]">
+                  <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                     {candidate.category.replaceAll("_", " ")} · research required
                   </p>
                 </div>
@@ -692,7 +696,7 @@ function MarketDiscoveryPanel({ discovery }: { discovery: NonNullable<SearchPayl
               </div>
               {candidate.whyConsider.length ? (
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-faint)]">Why consider it</p>
+                  <p className="text-[12.5px] font-bold text-[var(--color-faint)]">Why consider it</p>
                   <ul className="mt-1 list-disc space-y-1 pl-4 text-[12px] text-[var(--color-muted)]">
                     {candidate.whyConsider.map((reason) => <li key={reason}>{reason}</li>)}
                   </ul>
@@ -712,7 +716,7 @@ function MarketDiscoveryPanel({ discovery }: { discovery: NonNullable<SearchPayl
         <p className="text-[13px] text-[var(--color-muted)]">No current source passed Railor’s citation checks for this exact direction.</p>
       )}
 
-      <p className="text-[11px] text-[var(--color-faint)]">{discovery.warnings.join(" ")}</p>
+      <p className="text-[12.5px] text-[var(--color-faint)]">{discovery.warnings.join(" ")}</p>
     </Card>
   );
 }

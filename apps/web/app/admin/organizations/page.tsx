@@ -56,7 +56,7 @@ export default async function AdminOrganizationsPage({ searchParams }: { searchP
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[13px] font-bold uppercase text-white">{o.name.charAt(0)}</span>
               <span className="flex min-w-[200px] flex-1 flex-col">
                 <span className="text-[14px] font-semibold">{o.name}</span>
-                <span className="text-[11.5px] text-[var(--color-muted)]">
+                <span className="text-[13px] text-[var(--color-muted)]">
                   {o.slug} · {o.emailDomain ?? "no domain"} · {o.entityCountry ?? "—"} · created {o.createdAt.toISOString().slice(0, 10)}
                 </span>
               </span>
@@ -64,7 +64,7 @@ export default async function AdminOrganizationsPage({ searchParams }: { searchP
               <Stat label="Plan" value={plan === "founding" ? "Founding" : "Free"} />
               <Stat label="Connections" value={`${cc?.production ?? 0} prod · ${cc?.sandbox ?? 0} sbx`} />
               <Stat label="Payments" value={`${pc?.live ?? 0} live · ${pc?.test ?? 0} test`} />
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${s?.liveEnabled ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>
+              <span className={`rounded-full px-2.5 py-1 text-[12.5px] font-bold uppercase ${s?.liveEnabled ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>
                 {s?.liveEnabled ? `Live · ≤${Number(s.maxPaymentAmount ?? 0).toLocaleString("en-US")}/payment` : "Live off"}
               </span>
               <OrgLiveEditor
@@ -87,7 +87,7 @@ export default async function AdminOrganizationsPage({ searchParams }: { searchP
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <span className="flex min-w-[90px] flex-col">
-      <span className="text-[10.5px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</span>
+      <span className="text-[12.5px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</span>
       <span className="text-[12.5px] font-semibold tabular">{value}</span>
     </span>
   );

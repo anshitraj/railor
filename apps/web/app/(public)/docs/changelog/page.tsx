@@ -50,7 +50,7 @@ export default function ChangelogPage() {
               {entry.version}
             </h2>
             {index === 0 ? (
-              <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--color-orange-deep)]">
+              <span className="rounded-full bg-[var(--color-lavender)] px-2.5 py-0.5 text-[12.5px] font-semibold text-[var(--color-orange-deep)]">
                 Latest
               </span>
             ) : null}

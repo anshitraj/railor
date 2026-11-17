@@ -110,7 +110,7 @@ export default async function StatusPage() {
               <li key={i.id} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] px-5 py-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[14px] font-semibold">{i.provider}</span>
-                  <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[11px] capitalize">{i.severity}</span>
+                  <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[12.5px] capitalize">{i.severity}</span>
                   <span className="text-[12px] capitalize text-[var(--color-muted)]">{i.status} · started {ago(i.startedAt)}</span>
                 </div>
                 <p className="mt-1 text-[13px] text-[var(--color-ink-soft)]">{i.title}</p>

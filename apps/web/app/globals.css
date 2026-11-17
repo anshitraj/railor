@@ -102,7 +102,7 @@
   .workspace-heading p { max-width: 64ch; margin-top: .65rem; font-size: .91rem; line-height: 1.65; }
   .workspace-heading .product-eyebrow { margin-bottom: .75rem; }
   .workspace-frame table, .admin-frame table { font-variant-numeric: tabular-nums; }
-  .workspace-frame th, .admin-frame th { background: var(--color-paper); font: 600 .67rem/1.5 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+  .workspace-frame th, .admin-frame th { background: var(--color-paper); color: var(--color-muted); font: 600 .8rem/1.5 var(--font-sans); }
   .workspace-frame tbody tr, .admin-frame tbody tr { transition: background-color .15s; }
   .workspace-frame tbody tr:hover, .admin-frame tbody tr:hover { background: var(--color-paper); }
 
@@ -736,3 +736,11 @@
 .workspace-frame .product-header { padding-top: 0; border-bottom-color: var(--color-line); }
 .workspace-frame .product-header h1 { font-weight: 650; letter-spacing: -.03em; }
 .workspace-frame .product-header p { font-size: .95rem; }
+
+/* Saved routes: one-tap shortcuts above the route explorer. */
+.saved-routes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.saved-routes > span { margin-right: 4px; color: var(--color-muted); font-size: 13.5px; font-weight: 600; }
+.saved-routes > a { display: inline-flex; height: 36px; align-items: center; padding: 0 14px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink-soft); font-size: 13.5px; font-weight: 550; transition: border-color .15s ease, color .15s ease; }
+.saved-routes > a:hover { border-color: var(--color-ink); color: var(--color-ink); }
+.saved-routes > a[aria-current="page"] { border-color: var(--color-ink); background: var(--color-ink); color: #fff; }
+.saved-routes > a.saved-routes-new { border-style: dashed; color: var(--color-muted); }

@@ -7,7 +7,7 @@ import { Card, Chip, Flag, SectionLabel } from "@railor/ui";
 // Keep the client bundle away from the @railor/core server barrel.
 import { MAP_HEIGHT, MAP_WIDTH, projectCountry } from "@railor/core/geo";
 import type { GlobalRoute } from "@railor/core/route-map";
-import { WORLD_LAND_PATHS } from "./world-land-paths";
+import { WORLD_DOTS_PATH } from "../marketing/world-dots";
 import styles from "./global-route-map.module.css";
 
 export interface MapCountry {
@@ -27,8 +27,6 @@ export interface GlobalRouteMapProps {
 
 const OVERVIEW_LIMIT = 18;
 const FOCUSED_LIMIT = 28;
-const GRATICULE_LNG = [-120, -60, 0, 60, 120];
-const GRATICULE_LAT = [60, 30, 0, -30];
 const routeKey = (route: GlobalRoute) => `${route.entityCountry}->${route.destinationCountry}`;
 
 function featuredRoutes(routes: GlobalRoute[], limit: number): GlobalRoute[] {
@@ -162,17 +160,16 @@ export function GlobalRouteMap({
     <div className="flex flex-col gap-5">
       <div className="workspace-heading flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <span className="product-eyebrow">Coverage atlas</span>
-          <h1 className="font-semibold tracking-tight">Global route map</h1>
-          <p className="text-[14px] text-[var(--color-muted)]">
-            Explore {routes.length} supported corridors across {providersChecked} mapped providers.
+          <h1 className="font-semibold tracking-tight">Route map</h1>
+          <p className="text-[15px] text-[var(--color-muted)]">
+            {routes.length} {routes.length === 1 ? "route" : "routes"} that {providersChecked} mapped providers can serve. Tap a country or a line to see who covers it.
           </p>
         </div>
       </div>
 
       <Card className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <SectionLabel className="mr-1 shrink-0">Rank by</SectionLabel>
+          <SectionLabel className="mr-1 shrink-0">Sort by</SectionLabel>
           {presets.map((option) => (
             <Link key={option.value} href={`/app/map?preset=${option.value}`} scroll={false}>
               <Chip active={preset === option.value} className="text-[13px]">{option.label}</Chip>
@@ -187,7 +184,7 @@ export function GlobalRouteMap({
             className="text-[13px]"
             title="Only routes where at least one provider publishes a fee Railor can compare"
           >
-            Comparable pricing only
+            Only routes with published fees
           </Chip>
           {focus ? (
             <Chip active onClick={() => { setFocus(null); setSelected(null); }} className="text-[13px]">
@@ -200,9 +197,9 @@ export function GlobalRouteMap({
       <Card className="overflow-hidden p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-line)] px-5 py-4">
           <div>
-            <p className="font-display text-[17px] font-semibold tracking-tight text-[var(--color-ink)]">Routes across the world</p>
-            <p className="mt-0.5 text-[12px] text-[var(--color-muted)]">
-              {showAll ? "All drawable corridors" : focus ? `Routes touching ${label(focus)}` : "A geographic overview of the strongest corridors"}
+            <p className="text-[17px] font-semibold tracking-tight text-[var(--color-ink)]">Routes across the world</p>
+            <p className="mt-0.5 text-[13.5px] text-[var(--color-muted)]">
+              {showAll ? "Every route" : focus ? `Routes touching ${label(focus)}` : "The best-covered routes"}
               <span className="mx-2 text-[var(--color-faint)]">·</span>
               {mapped.length} of {visible.length} shown
             </p>
@@ -210,7 +207,7 @@ export function GlobalRouteMap({
           <button
             type="button"
             onClick={() => setShowAll(!showAll)}
-            className="rounded-full border border-[var(--color-line-strong)] px-3.5 py-2 text-[12px] font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-orange)] hover:text-[var(--color-orange-deep)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-orange)]"
+            className="press rounded-full border border-[var(--color-line-strong)] px-4 py-2 text-[13.5px] font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-ink)]"
           >
             {showAll ? "Show overview" : "Show all routes"}
           </button>
@@ -224,13 +221,10 @@ export function GlobalRouteMap({
               role="group"
               aria-label={`Interactive world map showing ${mapped.length} of ${visible.length} payment corridors. Select a country marker to filter routes.`}
             >
-              <g className={styles.graticule} aria-hidden="true">
-                {GRATICULE_LNG.map((lng) => <line key={lng} x1={((lng + 180) / 360) * MAP_WIDTH} y1={0} x2={((lng + 180) / 360) * MAP_WIDTH} y2={MAP_HEIGHT} />)}
-                {GRATICULE_LAT.map((lat) => <line key={lat} x1={0} y1={((83 - lat) / 139) * MAP_HEIGHT} x2={MAP_WIDTH} y2={((83 - lat) / 139) * MAP_HEIGHT} />)}
-              </g>
-              <g className={styles.land} aria-hidden="true">
-                {WORLD_LAND_PATHS.map((path, index) => <path key={index} d={path} />)}
-              </g>
+              <defs>
+                <clipPath id="map-flag-round" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5" /></clipPath>
+              </defs>
+              <path d={WORLD_DOTS_PATH} className={styles.dots} aria-hidden="true" />
               <g fill="none">
                 {mapped.map((route) => {
                   const from = projectCountry(route.entityCountry);
@@ -284,31 +278,33 @@ export function GlobalRouteMap({
                       {active || endpoint ? <circle cx={node.point.x} cy={node.point.y} r={10} className={styles.markerHalo} /> : null}
                       <circle cx={node.point.x} cy={node.point.y} r={active || endpoint ? 5.5 : 3.5} className={styles.marker} />
                       {labeled.has(node.code) ? (
-                        <text x={node.point.x + 9} y={node.point.y - 8} className={styles.markerLabel}>{node.code}</text>
+                        <g className={styles.flagPin} aria-hidden="true">
+                          <circle cx={node.point.x} cy={node.point.y - 19} r={10.5} className={styles.flagRing} />
+                          <image href={`/flags/${node.code}.svg`} x={node.point.x - 9} y={node.point.y - 28} width={18} height={18} preserveAspectRatio="xMidYMid slice" clipPath="url(#map-flag-round)" />
+                        </g>
                       ) : null}
                     </g>
                   );
                 })}
               </g>
             </svg>
-            <span className={styles.mapStamp}>RAILOR <span aria-hidden>·</span> COVERAGE ATLAS</span>
           </div>
 
           <aside className="flex min-h-0 flex-col border-t border-[var(--color-line)] bg-[var(--color-paper)] lg:border-l lg:border-t-0" aria-label="Find a route">
             <div className="border-b border-[var(--color-line)] p-4">
-              <SectionLabel>Find a corridor</SectionLabel>
+              <SectionLabel>Find a route</SectionLabel>
               <div className="mt-2 flex items-center gap-2 rounded-xl border border-[var(--color-line-strong)] bg-white px-3 focus-within:border-[var(--color-orange)]">
                 <Search size={15} className="shrink-0 text-[var(--color-muted)]" aria-hidden />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Country or code"
-                  aria-label="Search corridors by country"
-                  className="h-10 w-full min-w-0 bg-transparent text-[13px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
+                  placeholder="Search a country"
+                  aria-label="Search routes by country"
+                  className="h-10 w-full min-w-0 bg-transparent text-[15px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
                 />
-                {query ? <button type="button" onClick={() => setQuery("")} aria-label="Clear corridor search"><X size={14} /></button> : null}
+                {query ? <button type="button" onClick={() => setQuery("")} aria-label="Clear route search"><X size={14} /></button> : null}
               </div>
-              <p className="mt-2 text-[11px] text-[var(--color-muted)]">{searchResults.length} matching routes · select one to locate it</p>
+              <p className="mt-2 text-[12.5px] text-[var(--color-muted)]">{searchResults.length} {searchResults.length === 1 ? "route" : "routes"} · tap one to see it on the map</p>
             </div>
             <div className="max-h-[330px] flex-1 overflow-y-auto p-2 lg:max-h-none">
               {searchResults.length ? searchResults.slice(0, 8).map((route) => (
@@ -319,21 +315,21 @@ export function GlobalRouteMap({
                   className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white focus-visible:outline-2 focus-visible:outline-[var(--color-orange)] ${selected === routeKey(route) ? "bg-white shadow-sm" : ""}`}
                 >
                   <span className="min-w-0">
-                    <span className="block truncate text-[12.5px] font-semibold text-[var(--color-ink)]">{label(route.entityCountry)} <span className="text-[var(--color-orange-deep)]">→</span> {label(route.destinationCountry)}</span>
-                    <span className="mt-0.5 block text-[11px] text-[var(--color-muted)]">{route.supported} supporting provider{route.supported === 1 ? "" : "s"}</span>
+                    <span className="block truncate text-[14px] font-semibold text-[var(--color-ink)]">{label(route.entityCountry)} <span className="text-[var(--color-orange-deep)]">→</span> {label(route.destinationCountry)}</span>
+                    <span className="mt-0.5 block text-[12.5px] text-[var(--color-muted)]">{route.supported} {route.supported === 1 ? "provider" : "providers"}</span>
                   </span>
                   <span className={`size-2 shrink-0 rounded-full ${route.cheapest ? "bg-[var(--color-orange)]" : "bg-[var(--color-line-strong)]"}`} aria-label={route.cheapest ? "Comparable fee available" : "No published comparable fee"} />
                 </button>
-              )) : <p className="px-3 py-6 text-center text-[12px] text-[var(--color-muted)]">No corridors match this search.</p>}
-              {searchResults.length > 8 ? <p className="px-3 py-2 text-[11px] text-[var(--color-muted)]">Refine your search to find more routes.</p> : null}
+              )) : <p className="px-3 py-6 text-center text-[13.5px] text-[var(--color-muted)]">No routes match this search.</p>}
+              {searchResults.length > 8 ? <p className="px-3 py-2 text-[12.5px] text-[var(--color-muted)]">Refine your search to find more routes.</p> : null}
             </div>
           </aside>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-[var(--color-line)] px-5 py-3 text-[11px] text-[var(--color-muted)]">
-          <span className="flex items-center gap-2"><span className="h-0.5 w-5 rounded-full bg-[var(--color-orange)]" /> Comparable fee</span>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-[var(--color-line)] px-5 py-3 text-[13px] text-[var(--color-muted)]">
+          <span className="flex items-center gap-2"><span className="h-0.5 w-5 rounded-full bg-[var(--color-orange)]" /> Published fee</span>
           <span className="flex items-center gap-2"><span className="h-0.5 w-5 rounded-full bg-[#8aa5a8]" /> No published fee</span>
-          <span>Choose a marker to focus a country, or search every route.</span>
+          <span>Tap a country to focus it, or search every route.</span>
           {undrawable > 0 ? <span className="text-[var(--color-warn)]">{undrawable} route{undrawable === 1 ? "" : "s"} lack map coordinates.</span> : null}
         </div>
       </Card>
@@ -351,36 +347,36 @@ export function GlobalRouteMap({
               </p>
               <p className="text-[13.5px] text-[var(--color-muted)]">
                 <span className="font-medium text-[var(--color-ink)]">{cheapestVisible.cheapest.provider.name}</span>{" "}
-                at <span className="tabular font-medium text-[var(--color-ink)]">{cheapestVisible.cheapest.feeBps} bps</span>
+                at <span className="tabular font-medium text-[var(--color-ink)]">{(cheapestVisible.cheapest.feeBps / 100).toFixed(2)}%</span>
                 {cheapestVisible.cheapest.feeSummary ? ` — ${cheapestVisible.cheapest.feeSummary}` : ""}
               </p>
-              <p className="text-[11.5px] text-[var(--color-faint)]">
-                Lowest published fee among providers that can serve the route. Unpublished fees are excluded.
+              <p className="text-[12.5px] text-[var(--color-muted)]">
+                Lowest published fee among providers that can serve the route. Unpublished fees aren’t counted.
               </p>
             </>
           ) : <p className="text-[13.5px] text-[var(--color-muted)]">No route in this view has a comparable published fee.</p>}
           {cheapestOverall?.cheapest && focus ? (
             <p className="border-t border-[var(--color-line)] pt-2 text-[12px] text-[var(--color-faint)]">
-              Cheapest anywhere: {label(cheapestOverall.entityCountry)} → {label(cheapestOverall.destinationCountry)} at {cheapestOverall.cheapest.feeBps} bps.
+              Cheapest anywhere: {label(cheapestOverall.entityCountry)} → {label(cheapestOverall.destinationCountry)} at {(cheapestOverall.cheapest.feeBps / 100).toFixed(2)}%.
             </p>
           ) : null}
         </Card>
 
         <Card className="flex flex-col gap-2 p-5">
-          <SectionLabel>{selectedRoute ? "Selected corridor" : "Corridor detail"}</SectionLabel>
+          <SectionLabel>{selectedRoute ? "Selected route" : "Route details"}</SectionLabel>
           {selectedRoute ? (
             <>
               <p className="text-[15px] font-medium">{label(selectedRoute.entityCountry)} → {label(selectedRoute.destinationCountry)}</p>
               <dl className="grid grid-cols-2 gap-2 text-[13px]">
                 <div><dt className="text-[var(--color-faint)]">Supported</dt><dd className="tabular">{selectedRoute.supported}</dd></div>
-                <div><dt className="text-[var(--color-faint)]">Needs requirements</dt><dd className="tabular">{selectedRoute.conditional}</dd></div>
-                <div><dt className="text-[var(--color-faint)]">Best ({preset})</dt><dd>{selectedRoute.best?.name ?? "—"}</dd></div>
-                <div><dt className="text-[var(--color-faint)]">Cheapest</dt><dd>{selectedRoute.cheapest ? `${selectedRoute.cheapest.provider.name} · ${selectedRoute.cheapest.feeBps} bps` : "—"}</dd></div>
+                <div><dt className="text-[var(--color-faint)]">Need extra checks</dt><dd className="tabular">{selectedRoute.conditional}</dd></div>
+                <div><dt className="text-[var(--color-faint)]">Best match</dt><dd>{selectedRoute.best?.name ?? "—"}</dd></div>
+                <div><dt className="text-[var(--color-faint)]">Cheapest</dt><dd>{selectedRoute.cheapest ? `${selectedRoute.cheapest.provider.name} · ${(selectedRoute.cheapest.feeBps / 100).toFixed(2)}%` : "—"}</dd></div>
               </dl>
               {!selectedRoute.cheapest && selectedRoute.cheapestUnknownReason ? <p className="text-[12px] text-[var(--color-warn)]">{selectedRoute.cheapestUnknownReason}</p> : null}
-              <Link href={`/app/corridors?entity=${selectedRoute.entityCountry}&to=${selectedRoute.destinationCountry}`} className="mt-1 text-[13px] font-medium text-[var(--color-purple)]">Open in corridor explorer →</Link>
+              <Link href={`/app/corridors?${new URLSearchParams({ route: JSON.stringify({ entityCountry: selectedRoute.entityCountry, destinationCountry: selectedRoute.destinationCountry, customerType: "business" }), preset })}`} className="press mt-2 inline-flex w-fit items-center rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13.5px] font-semibold text-white">See every provider for this route →</Link>
             </>
-          ) : <p className="text-[13.5px] text-[var(--color-muted)]">Select a line or find a corridor to inspect provider coverage and pricing.</p>}
+          ) : <p className="text-[13.5px] text-[var(--color-muted)]">Tap a line or search a route to see who covers it and what it costs.</p>}
         </Card>
       </div>
     </div>

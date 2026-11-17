@@ -92,7 +92,7 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
 function Fact({ label, value, good }: { label: string; value: string; good: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</span>
+      <span className="text-[12.5px] text-[var(--color-faint)] font-semibold">{label}</span>
       <span className={good ? "font-semibold text-[var(--color-ok)]" : "font-semibold text-[var(--color-ink-soft)]"}>{value}</span>
     </div>
   );

@@ -168,7 +168,7 @@ export function IntentBuilder({
 
       {section !== "amount" ? <div className={`grid gap-5 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 sm:p-5 ${section === "all" ? "md:grid-cols-2" : ""}`}>
         {section === "all" || section === "funding" ? <div className="flex flex-col gap-4">
-          <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-orange-deep)]">From</p>
+          <p className="text-[12.5px] font-semibold text-[var(--color-orange-deep)]">From</p>
           <SmartPicker
             label="Entity country"
             options={options.countries}
@@ -208,7 +208,7 @@ export function IntentBuilder({
           )}
         </div> : null}
         {section === "all" || section === "destination" ? <div className={`flex flex-col gap-4 ${section === "all" ? "md:border-l md:border-[var(--color-line)] md:pl-5" : ""}`}>
-          <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-orange-deep)]">To</p>
+          <p className="text-[12.5px] font-semibold text-[var(--color-orange-deep)]">To</p>
           <SmartPicker
             label="Destination country"
             options={options.countries}
@@ -253,7 +253,7 @@ export function IntentBuilder({
           suffix={fundingUnit}
           min={0.01}
         />
-        <p className="border-l-2 border-[var(--color-orange)] pl-3 text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+        <p className="border-l-2 border-[var(--color-orange)] pl-3 text-[13px] leading-relaxed text-[var(--color-muted)]">
           Amount is in {fundingUnit}. No currency conversion is applied to policy thresholds.
         </p>
       </div> : null}

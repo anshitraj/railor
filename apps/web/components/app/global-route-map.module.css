@@ -1,5 +1,5 @@
 .atlasScroll {
-  --map-ocean: #17282c;
+  --map-ocean: #151310;
   --map-land: #304248;
   --map-coast: #526369;
   --map-grid: #80969a;
@@ -16,7 +16,7 @@
   width: 100%;
   min-width: 680px;
   height: auto;
-  background: radial-gradient(ellipse at 45% 35%, #23383b 0%, var(--map-ocean) 75%);
+  background: var(--map-ocean);
 }
 
 .graticule {
@@ -105,3 +105,7 @@
 }
 
 .mapStamp span { color: var(--map-coral); }
+
+.dots { fill: none; stroke: rgb(250 246 239 / .2); stroke-width: 3.1; stroke-linecap: round; pointer-events: none; }
+.flagPin { pointer-events: none; }
+.flagRing { fill: #fff; filter: drop-shadow(0 2px 3px rgb(0 0 0 / .45)); }

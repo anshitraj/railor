@@ -62,7 +62,7 @@ export function ReviewQueue({ items }: { items: ReviewItem[] }) {
       {queue.map((item) => (
         <Card key={item.id} className="flex flex-col gap-3 p-5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
+            <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[12px] uppercase tracking-wide text-[var(--color-purple)]">
               {item.kind.replace(/_/g, " ")}
             </span>
             <span className="text-[14px] font-medium">{item.provider}</span>
@@ -123,7 +123,7 @@ function Field({
 }) {
   return (
     <div className="rounded-xl border border-[var(--color-line)] p-3">
-      <p className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">{label}</p>
+      <p className="text-[12px] uppercase tracking-wide text-[var(--color-faint)]">{label}</p>
       <p
         className={`text-[13.5px] ${highlight ? "font-medium text-[var(--color-purple)]" : "text-[var(--color-ink-soft)]"}`}
       >

@@ -38,7 +38,7 @@ export function DocsSidebar({ children }: { children?: React.ReactNode }) {
       >
         {DOCS_NAV.map((group) => (
           <div key={group.label} className="flex shrink-0 gap-1.5 lg:flex-col lg:gap-0.5">
-            <p className="hidden px-2.5 pb-1.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)] lg:block">
+            <p className="hidden px-2.5 pb-1.5 font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)] lg:block">
               {group.label}
             </p>
             {group.links.map((link) => {

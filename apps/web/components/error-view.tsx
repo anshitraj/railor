@@ -29,7 +29,7 @@ export function ErrorView({
           This page couldn&apos;t load. Try again in a moment. If you were submitting a payment, check its status before sending it again.
         </p>
         {error.digest ? (
-          <p className="font-mono text-[11.5px] text-[var(--color-faint)]">Reference: {error.digest}</p>
+          <p className="font-mono text-[13px] text-[var(--color-faint)]">Reference: {error.digest}</p>
         ) : null}
       </div>
       <div className="flex flex-wrap gap-2">

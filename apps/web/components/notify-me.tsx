@@ -72,7 +72,7 @@ export function NotifyMe({
         >
           {state === "sending" ? "…" : "Notify me"}
         </button>
-        {state === "error" ? <span className="text-[11.5px] text-[var(--color-bad)]">Couldn&apos;t save — try again.</span> : null}
+        {state === "error" ? <span className="text-[13px] text-[var(--color-bad)]">Couldn&apos;t save — try again.</span> : null}
       </form>
     );
   }
@@ -84,7 +84,7 @@ export function NotifyMe({
       onClick={() => (signedIn ? void submit() : setState("asking"))}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line-strong)] bg-[var(--color-surface)] font-semibold text-[var(--color-ink-soft)] transition hover:-translate-y-px hover:border-[var(--color-orange)] hover:text-[var(--color-orange-deep)] disabled:opacity-60",
-        compact ? "px-2 py-0.5 text-[11px]" : "px-3 py-1 text-[12px]",
+        compact ? "px-2 py-0.5 text-[12.5px]" : "px-3 py-1 text-[12px]",
         className,
       )}
     >

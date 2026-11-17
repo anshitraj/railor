@@ -101,7 +101,7 @@ function StatusChip({ stage }: { stage: Stage }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-bold uppercase leading-none tracking-[0.08em]",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-bold uppercase leading-none tracking-[0.08em]",
         status.chip,
       )}
     >
@@ -195,7 +195,7 @@ export default async function RoadmapPage() {
                     className="group flex flex-col items-center gap-1.5"
                   >
                     <span className={cn("h-2 w-full rounded-full transition group-hover:opacity-70", STATUS[stage.stage].segment)} />
-                    <span className="font-mono text-[10px] text-[var(--color-muted)] transition group-hover:text-[var(--color-ink)]">
+                    <span className="font-mono text-[12px] text-[var(--color-muted)] transition group-hover:text-[var(--color-ink)]">
                       {index + 1}
                     </span>
                   </a>

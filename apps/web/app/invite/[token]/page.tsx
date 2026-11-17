@@ -31,7 +31,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     const signedInAsInvitee = session?.user.email.toLowerCase() === invite.email;
     body = (
       <>
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Workspace invitation</p>
+        <p className="font-mono text-[12.5px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Workspace invitation</p>
         <h1 className="font-display text-[32px] font-medium leading-[1.02] tracking-[-0.03em]">
           Join <span className="text-[var(--color-orange)]">{invite.organizationName}</span> on Railor
         </h1>

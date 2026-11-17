@@ -101,7 +101,7 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
 
       {(oauth.google || oauth.github) && <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-[var(--color-line)]" />
-        <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">or</span>
+        <span className="text-[12.5px] uppercase tracking-wide text-[var(--color-faint)]">or</span>
         <span className="h-px flex-1 bg-[var(--color-line)]" />
       </div>}
 
@@ -114,7 +114,7 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
           </p>
           {devLink ? (
             <div className="flex flex-col gap-1 rounded-xl bg-[var(--color-lavender)] p-3">
-              <span className="text-[11px] uppercase tracking-wide text-[var(--color-purple)]">
+              <span className="text-[12.5px] uppercase tracking-wide text-[var(--color-purple)]">
                 Development transport
               </span>
               <a href={devLink} className="break-all text-[12.5px] text-[var(--color-purple-deep)] underline">
@@ -157,7 +157,7 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
         <span className="shrink-0 text-[13px] font-semibold text-[var(--color-orange-deep)] transition-transform group-hover:translate-x-0.5">View demo →</span>
       </a>}
 
-      <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+      <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
         By continuing, you agree to the{" "}
         <Link href="/legal/terms" className="underline">
           Terms

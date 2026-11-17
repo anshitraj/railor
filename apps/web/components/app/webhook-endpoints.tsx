@@ -96,22 +96,22 @@ export function WebhookEndpoints({ endpoints, deliveries, canManage }: { endpoin
         <ul className="flex flex-col divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)]">
           {endpoints.map((e) => (
             <li key={e.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5">
-              <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase", e.mode === "live" ? "bg-[var(--color-ink)] text-white" : "bg-[var(--color-sand)]")}>{e.mode}</span>
+              <span className={cn("rounded-full px-2 py-0.5 text-[12.5px] font-bold", e.mode === "live" ? "bg-[var(--color-ink)] text-white" : "bg-[var(--color-sand)]")}>{e.mode}</span>
               <span className="min-w-0 flex-1 truncate font-mono text-[12px]">{e.url}</span>
-              <span className="font-mono text-[11px] text-[var(--color-faint)]">{e.secretHint}</span>
-              {!e.enabled ? <span className="text-[11px] text-[var(--color-bad)]">disabled</span> : null}
+              <span className="font-mono text-[12.5px] text-[var(--color-faint)]">{e.secretHint}</span>
+              {!e.enabled ? <span className="text-[12.5px] text-[var(--color-bad)]">disabled</span> : null}
               {canManage ? (
                 <span className="flex gap-1">
-                  <button type="button" disabled={pending} onClick={() => act(e.id, "test")} className="rounded-full px-2 py-1 text-[11.5px] hover:bg-[var(--color-sand)]">
+                  <button type="button" disabled={pending} onClick={() => act(e.id, "test")} className="rounded-full px-2 py-1 text-[13px] hover:bg-[var(--color-sand)]">
                     Send test
                   </button>
-                  <button type="button" disabled={pending} onClick={() => act(e.id, e.enabled ? "disable" : "enable")} className="rounded-full px-2 py-1 text-[11.5px] hover:bg-[var(--color-sand)]">
+                  <button type="button" disabled={pending} onClick={() => act(e.id, e.enabled ? "disable" : "enable")} className="rounded-full px-2 py-1 text-[13px] hover:bg-[var(--color-sand)]">
                     {e.enabled ? "Disable" : "Enable"}
                   </button>
-                  <button type="button" disabled={pending} onClick={() => window.confirm("Roll the signing secret? The old one stops verifying immediately.") && act(e.id, "roll")} className="rounded-full px-2 py-1 text-[11.5px] hover:bg-[var(--color-sand)]">
+                  <button type="button" disabled={pending} onClick={() => window.confirm("Roll the signing secret? The old one stops verifying immediately.") && act(e.id, "roll")} className="rounded-full px-2 py-1 text-[13px] hover:bg-[var(--color-sand)]">
                     Roll secret
                   </button>
-                  <button type="button" disabled={pending} onClick={() => window.confirm("Delete this endpoint?") && act(e.id, "delete")} className="rounded-full px-2 py-1 text-[11.5px] text-[var(--color-muted)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]">
+                  <button type="button" disabled={pending} onClick={() => window.confirm("Delete this endpoint?") && act(e.id, "delete")} className="rounded-full px-2 py-1 text-[13px] text-[var(--color-muted)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]">
                     Delete
                   </button>
                 </span>
@@ -181,7 +181,7 @@ export function WebhookEndpoints({ endpoints, deliveries, canManage }: { endpoin
                   {d.lastStatusCode ? ` · HTTP ${d.lastStatusCode}` : ""}
                   {d.lastError && d.status !== "delivered" ? ` · ${d.lastError}` : ""}
                 </span>
-                <time className="ml-auto font-mono text-[11px] text-[var(--color-faint)]">{d.createdAt.slice(0, 19).replace("T", " ")}</time>
+                <time className="ml-auto font-mono text-[12.5px] text-[var(--color-faint)]">{d.createdAt.slice(0, 19).replace("T", " ")}</time>
               </li>
             ))}
           </ul>

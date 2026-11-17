@@ -74,7 +74,7 @@ export function PriceLabelsCard({ mode, connectedAny }: { mode: "app" | "public"
         <ul className="mt-3 flex flex-col gap-2.5">
           {LABELS.map((l) => (
             <li key={l.tag} className="flex flex-col gap-1">
-              <span className={cn("w-fit rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide", l.tone)}>{l.tag}</span>
+              <span className={cn("w-fit rounded-md px-1.5 py-px text-[12px] font-bold", l.tone)}>{l.tag}</span>
               <span className="text-[12px] leading-snug text-[var(--color-muted)]">{l.text}</span>
             </li>
           ))}

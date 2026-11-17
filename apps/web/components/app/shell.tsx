@@ -258,12 +258,12 @@ export function AppShell({
             href="/app/settings"
             className="mb-2 flex items-center gap-2.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-2.5 py-2 transition hover:border-[var(--color-line-strong)]"
           >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold uppercase text-white">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold text-white">
               {orgName.trim().charAt(0) || "R"}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-semibold">{orgName}</span>
-              <span className="block truncate text-[11px] text-[var(--color-muted)]">{userEmail}</span>
+              <span className="block truncate text-[12.5px] text-[var(--color-muted)]">{userEmail}</span>
             </span>
           </Link>
         ) : null}

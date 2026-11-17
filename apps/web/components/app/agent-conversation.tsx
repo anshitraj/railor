@@ -229,7 +229,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   return <div className={styles.workspace} ref={workspace}>
     <section className={styles.conversation} aria-label="Conversation with Railor">
       <header className={styles.toolbar}>
-        <div className={styles.identity}><RailorMark size={30} /><span>Railor Agent<small>Evidence behind every answer</small></span></div>
+        <div className={styles.identity}><RailorMark size={30} /><span>Railor Agent<small>Answers with sources</small></span></div>
         <div className={styles.toolbarActions}>
           {advancedTools ? <button className={styles.iconButton} type="button" onClick={() => setToolsOpen(true)} aria-label="Open advanced tools" title="Advanced tools"><SlidersHorizontal size={15} /></button> : null}
           <button className={styles.iconButton} type="button" disabled={pending} onClick={newChat} aria-label="Start a new chat" title="New chat"><Plus size={15} /><span>New chat</span></button>
@@ -245,8 +245,8 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           </div>{previewMessageId === message.id ? comparison : null}</Fragment>)}</div>
         </> : <div className={styles.welcome}>
           <div className={styles.welcomeMark} aria-hidden="true"><RailorMark size={54} /></div>
-          <h1>Ask anything.</h1><p>A clearer path for your money. Compare providers, explore a route, or understand the evidence.</p>
-          <span className={styles.suggestionLabel}>A few places to start</span>
+          <h1>Ask anything.</h1><p>Describe a payment in your own words. The agent checks providers and shows the reasons behind every answer.</p>
+          <span className={styles.suggestionLabel}>Try one of these</span>
           <AgentStarters onChoose={(value) => { setText(value); composer.current?.focus(); }} />
           {!policies.length ? <div className={styles.policyNotice}><div><ShieldCheck size={18} /><p><strong>Start with your route</strong>Explore provider coverage now. Company rules are optional team setup.</p></div><Link href="/app/policies">Team rules <ArrowRight size={13} /></Link></div> : null}
         </div>}
@@ -261,7 +261,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           <textarea id="agent-message" ref={composer} rows={1} maxLength={2000} value={text} disabled={pending} onChange={(event) => setText(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(text); } }}
             placeholder={messages.length ? "Ask a follow-up, or describe another movement…" : "Ask anything about moving money…"} />
-          <div className={styles.composerBottom}><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Evidence-led assistance"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
+          <div className={styles.composerBottom}><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Answers with sources"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
         </form>
         <p className={styles.composerHint}><span>Enter to send · Shift + Enter for a new line</span><span>A decision is recorded only when you choose a provider.</span></p>
       </div>

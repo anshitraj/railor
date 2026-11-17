@@ -86,7 +86,7 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-faint)]">Confidence</span>
+          <span className="mr-1 text-[12.5px] font-bold text-[var(--color-faint)]">Confidence</span>
           <FilterChip href={hrefWith(current, { band: undefined })} active={!band}>
             All <span className="tabular opacity-60">{scored.length}</span>
           </FilterChip>
@@ -97,7 +97,7 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-faint)]">Source</span>
+          <span className="mr-1 text-[12.5px] font-bold text-[var(--color-faint)]">Source</span>
           <FilterChip href={hrefWith(current, { type: undefined })} active={!type}>
             Any
           </FilterChip>
@@ -143,15 +143,15 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
                     ) : (
                       <span className="text-[14px] font-semibold">Country research</span>
                     )}
-                    {providerIsDemo ? <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-muted)]">demo</span> : null}
-                    <span className="rounded-full bg-[var(--color-sand)] px-2 py-0.5 text-[11px] text-[var(--color-ink-soft)]">{TYPE_LABEL[e.sourceType] ?? e.sourceType}</span>
+                    {providerIsDemo ? <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[12px] text-[var(--color-muted)] font-semibold">demo</span> : null}
+                    <span className="rounded-full bg-[var(--color-sand)] px-2 py-0.5 text-[12.5px] text-[var(--color-ink-soft)]">{TYPE_LABEL[e.sourceType] ?? e.sourceType}</span>
                   </div>
                   <a href={e.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-1 block truncate text-[13px] text-[var(--color-ink-soft)] hover:text-[var(--color-orange-deep)] hover:underline">
                     {e.sourceTitle} <span className="text-[var(--color-faint)]">↗ {host}</span>
                   </a>
                   {e.rawExcerpt ? (
                     <details className="mt-1.5">
-                      <summary className="cursor-pointer text-[11.5px] font-semibold text-[var(--color-muted)]">Excerpt</summary>
+                      <summary className="cursor-pointer text-[13px] font-semibold text-[var(--color-muted)]">Excerpt</summary>
                       <blockquote className="mt-1.5 border-l-2 border-[var(--color-orange)] pl-3 text-[12.5px] leading-relaxed text-[var(--color-ink-soft)]">{e.rawExcerpt}</blockquote>
                     </details>
                   ) : null}

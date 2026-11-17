@@ -63,7 +63,7 @@ export default async function ApiDocs() {
           {ENDPOINTS.map((endpoint) => (
             <div key={`${endpoint.method} ${endpoint.path}`} className="flex flex-wrap items-center gap-3 p-4">
               <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                className={`rounded-full px-2 py-0.5 text-[12.5px] font-medium ${
                   endpoint.method === "GET"
                     ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]"
                     : "bg-[var(--color-lavender)] text-[var(--color-purple)]"

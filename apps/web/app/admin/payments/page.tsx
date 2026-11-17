@@ -81,10 +81,10 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
               </span>
               <span className="text-[var(--color-muted)]">· {payment.selectedProvider ?? "no provider yet"}</span>
               <span className="min-w-0 flex-1 truncate text-right text-[12px] text-[var(--color-muted)]">{organizationName}</span>
-              <time className="font-mono text-[11px] text-[var(--color-faint)]">{payment.createdAt.toISOString().slice(0, 16).replace("T", " ")}</time>
+              <time className="font-mono text-[12.5px] text-[var(--color-faint)]">{payment.createdAt.toISOString().slice(0, 16).replace("T", " ")}</time>
             </div>
             {payment.failureMessage ? <p className="mt-1 text-[12px] text-[var(--color-bad)]">{payment.failureMessage}</p> : null}
-            <p className="mt-1 break-all font-mono text-[10.5px] text-[var(--color-faint)]">
+            <p className="mt-1 break-all font-mono text-[12.5px] text-[var(--color-faint)]">
               {payment.id}
               {payment.providerReference ? ` · ref ${payment.providerReference}` : ""}
             </p>

@@ -286,7 +286,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 aria-pressed={market}
                 onClick={() => setMarket((m) => !m)}
                 title="Add consumer prices collected by Wise's comparison feed"
-                className={cn("rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition", market ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line-strong)] text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
+                className={cn("rounded-full border px-2.5 py-1 text-[13px] font-semibold transition", market ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line-strong)] text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
               >
                 {market ? "Market estimates on" : "+ Market estimates"}
               </button>
@@ -321,7 +321,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                       key={p.value}
                       type="button"
                       onClick={() => setAmountText(String(p.value))}
-                      className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-bold transition", amount === p.value ? "bg-[var(--color-ink)] text-[#fff]" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
+                      className={cn("rounded-md px-1.5 py-0.5 text-[12.5px] font-bold transition", amount === p.value ? "bg-[var(--color-ink)] text-[#fff]" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
                     >
                       {p.label}
                     </button>
@@ -444,7 +444,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-[var(--color-line)] px-1.5 py-1">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-[var(--color-ink-soft)]">
                 Market estimates · {estimates.length}
-                <span className="text-[11px] font-normal text-[var(--color-faint)]">consumer prices, collected by Wise · never ranked best</span>
+                <span className="text-[12.5px] font-normal text-[var(--color-faint)]">consumer prices, collected by Wise · never ranked best</span>
               </summary>
               <ol className="flex flex-col gap-1 pb-1">
                 {estimates.map((row) => (
@@ -467,7 +467,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   <ProviderLogo slug={u.providerSlug} name={u.providerName} size={26} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-[13px] font-semibold text-[var(--color-ink)]">{u.providerName}</span>
-                    <span className="text-[11.5px] text-[var(--color-muted)]">{u.reason}</span>
+                    <span className="text-[13px] text-[var(--color-muted)]">{u.reason}</span>
                   </span>
                   <ConnectionLink slug={u.providerSlug} name={u.providerName} mode={mode} connected={connected.includes(u.providerSlug)} />
                 </li>
@@ -492,14 +492,14 @@ function hostOf(url: string | null) {
 function WebCheckStatus({ summary, light = false }: { summary: WebCheckSummary; light?: boolean }) {
   if (!summary.configured) return null;
   const text = summary.paused ? "Google check paused" : summary.pending ? `Google-checking ${summary.pending}…` : summary.checked ? `${summary.checked} Google-checked` : null;
-  return text ? <span className={light ? styles.webSummary : "block text-[10.5px] text-[var(--color-faint)]"}>{text}</span> : null;
+  return text ? <span className={light ? styles.webSummary : "block text-[12.5px] text-[var(--color-faint)]"}>{text}</span> : null;
 }
 
 /** One chip per row: what Google found about the route this price implies. */
 function WebCheckBadge({ checks }: { checks?: RowWebCheck[] }) {
   const check = checks?.[0];
   if (!check) return null;
-  const chip = "inline-flex items-center gap-1 rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide";
+  const chip = "inline-flex items-center gap-1 rounded-md px-1.5 py-px text-[12px] font-bold";
   if (check.state === "pending") return <span className={cn(chip, "bg-[var(--color-canvas)] text-[var(--color-muted)]")}><LoaderCircle size={10} className="animate-spin" /> checking on Google</span>;
   if (check.conflict) return <span title={check.quote ?? check.statement} className={cn(chip, "bg-[var(--color-warn-bg)] text-[var(--color-warn)]")}><TriangleAlert size={10} /> web check disagrees</span>;
   if (check.state === "supported") return <span title={`“${check.quote}” — ${hostOf(check.sourceUrl)}`} className={cn(chip, "bg-[var(--color-ok-bg)] text-[var(--color-ok)]")}><ShieldCheck size={10} /> Google-checked</span>;
@@ -512,7 +512,7 @@ const CHECK_STATE: Record<RowWebCheck["state"], string> = {
 
 function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; compact?: boolean }) {
   return (
-    <section aria-label="Google web check" className={cn("text-[11.5px] text-[var(--color-muted)]", compact ? "mt-2" : "rounded-xl border border-[var(--color-line)] p-3")}>
+    <section aria-label="Google web check" className={cn("text-[13px] text-[var(--color-muted)]", compact ? "mt-2" : "rounded-xl border border-[var(--color-line)] p-3")}>
       {!compact ? <h3 className="flex items-center gap-1.5 font-semibold text-[var(--color-ink)]"><ShieldCheck size={13} className="text-[var(--color-ok)]" /> Google web check</h3> : null}
       <ul className={cn("space-y-2", !compact && "mt-2")}>
         {checks.map((check) => (
@@ -524,7 +524,7 @@ function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; c
             </p>
             {check.quote ? <blockquote className="mt-1 border-l-2 border-[var(--color-line)] pl-2 text-[var(--color-ink-soft)]">{check.quote}</blockquote> : null}
             {check.sourceUrl ? <a href={check.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block text-[var(--color-orange-deep)] underline">{check.sourceTitle || hostOf(check.sourceUrl)} ↗</a> : null}
-            {check.checkedAt ? <span className="ml-2 text-[10px] text-[var(--color-faint)]">checked {check.checkedAt.slice(0, 10)}</span> : null}
+            {check.checkedAt ? <span className="ml-2 text-[12px] text-[var(--color-faint)]">checked {check.checkedAt.slice(0, 10)}</span> : null}
           </li>
         ))}
       </ul>
@@ -537,7 +537,7 @@ function ConnectionLink({ slug, name, mode, connected, light = false }: { slug: 
   if (mode === "public" || !ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
   return <button type="button" disabled aria-label={`Connect ${name} · Coming soon`}
     title="Account connections and execution are coming soon. Existing quote integrations remain available."
-    className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-[var(--color-line)] px-2 py-1.5 text-[10.5px] font-semibold text-[var(--color-orange-deep)] transition hover:border-[var(--color-orange)]/50 hover:bg-[var(--color-canvas)]"}>
+    className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-[var(--color-line)] px-2 py-1.5 text-[12.5px] font-semibold text-[var(--color-orange-deep)] transition hover:border-[var(--color-orange)]/50 hover:bg-[var(--color-canvas)]"}>
     <LockKeyhole size={11} className="mr-1 inline" />Coming soon
   </button>;
 }
@@ -556,26 +556,26 @@ function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="text-[13.5px] font-semibold text-[var(--color-ink)]">{row.providerName}</span>
-            {best ? <span className="rounded-md bg-[var(--color-orange)] px-1.5 py-px text-[10.5px] font-bold text-[#fff]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
-            <span title={tag.hint} className={cn("rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide", tag.cls)}>
+            {best ? <span className="rounded-md bg-[var(--color-orange)] px-1.5 py-px text-[12.5px] font-bold text-[#fff]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
+            <span title={tag.hint} className={cn("rounded-md px-1.5 py-px text-[12px] font-bold", tag.cls)}>
               {tag.label}
             </span>
-            {row.partial ? <span className="rounded-md bg-[var(--color-bad-bg)] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-[var(--color-bad)]">partial reference</span> : null}
-            {row.side === "payer" ? <span title="A service your sender pays. You only need your bank account." className="rounded-md bg-[#e8f1ff] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-[#1b4a85]">sender’s service</span> : null}
+            {row.partial ? <span className="rounded-md bg-[var(--color-bad-bg)] px-1.5 py-px text-[12px] font-bold text-[var(--color-bad)]">partial reference</span> : null}
+            {row.side === "payer" ? <span title="A service your sender pays. You only need your bank account." className="rounded-md bg-[#e8f1ff] px-1.5 py-px text-[12px] font-bold text-[#1b4a85]">sender’s service</span> : null}
             <WebCheckBadge checks={row.webChecks} />
           </span>
-          <span className="truncate text-[11.5px] text-[var(--color-muted)]">
+          <span className="truncate text-[13px] text-[var(--color-muted)]">
             fee {row.feeAmount === null ? "—" : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`}
             {row.delivery ? ` · ${row.delivery}` : ""}
             {row.totalCostPct !== null ? ` · ${row.totalCostPct.toFixed(2)}% all-in` : ""}
           </span>
-          {row.profileAssessment ? <span className={cn("text-[10px]", row.profileAssessment.status === "documented" ? "text-[var(--color-ok)]" : "text-[var(--color-warn)]")}>{row.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</span> : null}
-          <span className="truncate text-[10px] text-[var(--color-faint)]" title={priceSourceTime(row.observedAt, row.basis)}>{priceSourceTime(row.observedAt, row.basis)}</span>
+          {row.profileAssessment ? <span className={cn("text-[12px]", row.profileAssessment.status === "documented" ? "text-[var(--color-ok)]" : "text-[var(--color-warn)]")}>{row.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</span> : null}
+          <span className="truncate text-[12px] text-[var(--color-faint)]" title={priceSourceTime(row.observedAt, row.basis)}>{priceSourceTime(row.observedAt, row.basis)}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end">
           <span className={cn("text-[14px] font-semibold tabular text-[var(--color-ink)]", flash === "up" && "railor-flash-up", flash === "down" && "railor-flash-down")}>{money(row.recipientAmount)}</span>
           {row.shortfall ? (
-            <span className={cn("text-[10.5px] font-semibold tabular", row.shortfall > 0 ? "text-[var(--color-bad)]" : "text-[var(--color-ok)]")}>
+            <span className={cn("text-[12.5px] font-semibold tabular", row.shortfall > 0 ? "text-[var(--color-bad)]" : "text-[var(--color-ok)]")}>
               {row.shortfall > 0 ? "−" : "+"}
               {money(Math.abs(row.shortfall))}
             </span>

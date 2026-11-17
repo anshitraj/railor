@@ -62,7 +62,7 @@ export function StageBadge({ stage, className }: { stage: Stage; className?: str
   return (
     <span
       className={cn(
-        "rounded-full border border-[var(--color-line)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+        "rounded-full border border-[var(--color-line)] px-1.5 py-0.5 text-[10px] font-medium",
         stage === "soon" ? "text-[var(--color-faint)]" : "text-[var(--color-purple)]",
         stage === "beta" && "bg-[var(--color-lavender)]",
         className,

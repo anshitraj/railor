@@ -18,15 +18,15 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <ul className="divide-y divide-[var(--color-line)] overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
         {rows.map((entry) => (
           <li key={entry.id} className="grid gap-1 px-4 py-3 text-[13px] sm:grid-cols-[170px_minmax(0,1fr)_minmax(0,1.3fr)] sm:items-start">
-            <time className="font-mono text-[11.5px] text-[var(--color-muted)]">{entry.createdAt.toISOString().slice(0, 19).replace("T", " ")}</time>
+            <time className="font-mono text-[13px] text-[var(--color-muted)]">{entry.createdAt.toISOString().slice(0, 19).replace("T", " ")}</time>
             <span>
               <span className="font-semibold">{entry.action}</span>
-              <span className="block text-[11.5px] text-[var(--color-muted)]">
+              <span className="block text-[13px] text-[var(--color-muted)]">
                 {entry.actorEmail ?? "system"}
                 {entry.organizationName ? ` · ${entry.organizationName}` : ""}
               </span>
             </span>
-            <span className="break-all font-mono text-[11.5px] text-[var(--color-ink-soft)]">
+            <span className="break-all font-mono text-[13px] text-[var(--color-ink-soft)]">
               {entry.target ?? ""}
               {entry.metadata && Object.keys(entry.metadata).length ? <span className="block text-[var(--color-muted)]">{JSON.stringify(entry.metadata).slice(0, 240)}</span> : null}
             </span>

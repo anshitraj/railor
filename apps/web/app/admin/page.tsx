@@ -66,7 +66,7 @@ export default async function AdminOverview() {
             <span className="flex flex-col gap-1">
               <span className="font-display text-[30px] font-semibold leading-none tracking-[-0.03em] tabular">{t.value.toLocaleString("en-US")}</span>
               <span className="text-[13px] text-[var(--color-ink-soft)]">{t.label}</span>
-              <span className="text-[11px] text-[var(--color-faint)]">{t.hint}</span>
+              <span className="text-[12.5px] text-[var(--color-faint)]">{t.hint}</span>
             </span>
             {t.series ? <span className="hidden xl:block"><Sparkline values={t.series} label={`${t.label} per day, 14 days`} width={90} height={30} /></span> : null}
           </Link>
@@ -127,7 +127,7 @@ export default async function AdminOverview() {
                   <span className="font-semibold tabular">{formatAmount(payment.amount, payment.sourceCurrency)}</span>
                   <span className="text-[var(--color-muted)]">→ {payment.destinationCurrency}</span>
                   <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">{organizationName}</span>
-                  <time className="font-mono text-[11px] text-[var(--color-faint)]">{payment.createdAt.toISOString().slice(5, 16).replace("T", " ")}</time>
+                  <time className="font-mono text-[12.5px] text-[var(--color-faint)]">{payment.createdAt.toISOString().slice(5, 16).replace("T", " ")}</time>
                 </li>
               ))}
             </ul>
@@ -159,7 +159,7 @@ async function RecentSignups() {
             <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold uppercase text-white">{o.name.charAt(0)}</span>
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-semibold">{o.name}</span>
-              <span className="block text-[11.5px] text-[var(--color-muted)]">
+              <span className="block text-[13px] text-[var(--color-muted)]">
                 {o.entityCountry ?? "—"} · {o.createdAt.toISOString().slice(0, 10)}
               </span>
             </span>

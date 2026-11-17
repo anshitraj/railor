@@ -5,12 +5,12 @@ import { interpretRules, searchCorridors } from "@railor/core";
 import { CorridorQuery, RankingPreset } from "@railor/types";
 import { parseExploreRoute } from "../../../lib/explore-route";
 import { getSession } from "../../../lib/auth";
-import { getOrgTestKey, getSatisfiedRequirements } from "../../../lib/org";
+import { getOrgTestKey, getSatisfiedRequirements, getSavedCorridors } from "../../../lib/org";
 import { FIELD_LABELS, getReferenceOptions, optionsByField } from "../../../lib/reference";
 import { CorridorExplorer } from "../../../components/app/corridor-explorer";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Corridors" };
+export const metadata = { title: "Routes" };
 
 export default async function CorridorsPage({
   searchParams,
@@ -53,10 +53,11 @@ export default async function CorridorsPage({
     });
   }
 
-  const [reference, satisfied, apiKey] = await Promise.all([
+  const [reference, satisfied, apiKey, saved] = await Promise.all([
     getReferenceOptions(),
     getSatisfiedRequirements(org.id),
     getOrgTestKey(org.id),
+    getSavedCorridors(org.id),
   ]);
 
   const requestedPreset = RankingPreset.safeParse(params.preset);
@@ -76,8 +77,11 @@ export default async function CorridorsPage({
 
   return (
     <CorridorExplorer
+      // A different saved route or explored route is a different page: start from fresh state.
+      key={savedId ?? (typeof params.route === "string" ? params.route : typeof params.q === "string" ? params.q : "default")}
       initialQuery={query as Record<string, string | number | undefined>}
       savedCorridorId={savedId}
+      savedRoutes={saved.map((corridor) => ({ id: corridor.id, label: corridor.label }))}
       apiKey={apiKey ?? undefined}
       optionsByField={optionsByField(reference)}
       fieldLabels={FIELD_LABELS}

@@ -49,13 +49,13 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
         <div className="mb-4 flex items-center gap-2 px-2">
           <Link href="/admin" aria-label="Railor operations overview" className="flex items-center gap-2.5"><RailorMark size={28} />
           <span className="font-display text-[21px] font-bold tracking-[-0.03em]">Railor</span></Link>
-          <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-[var(--color-accent-light)]">Ops</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[12px] font-semibold uppercase tracking-wide text-[var(--color-accent-light)]">Ops</span>
           <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="ml-auto md:hidden">
             <X size={17} />
           </button>
         </div>
         {alerts.paused ? (
-          <div className="mb-3 rounded-lg bg-[var(--color-bad)] px-3 py-2 text-[11.5px] font-semibold">Payments paused platform-wide</div>
+          <div className="mb-3 rounded-lg bg-[var(--color-bad)] px-3 py-2 text-[13px] font-semibold">Payments paused platform-wide</div>
         ) : null}
         <nav aria-label="Operations" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
           {NAV.map((item) => {
@@ -70,12 +70,12 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
               >
                 <item.icon size={16} aria-hidden className={active ? "text-[var(--color-accent-light)]" : undefined} />
                 <span className="flex-1">{item.label}</span>
-                {badge[item.href] ? <span className="rounded-full bg-[var(--color-orange)] px-1.5 text-[11px] font-bold tabular">{badge[item.href]}</span> : null}
+                {badge[item.href] ? <span className="rounded-full bg-[var(--color-orange)] px-1.5 text-[12.5px] font-bold tabular">{badge[item.href]}</span> : null}
               </Link>
             );
           })}
         </nav>
-        <div className="mt-3 border-t border-white/10 pt-3 text-[11.5px] text-white/65">
+        <div className="mt-3 border-t border-white/10 pt-3 text-[13px] text-white/65">
           <p className="truncate">{email}</p>
           <Link href="/app" className="mt-1 inline-flex items-center gap-1 text-white/70 hover:text-white">
             <FileClock size={12} /> Back to workspace
@@ -105,7 +105,7 @@ export function AdminHeader({ title, description, action }: { title: string; des
   return (
     <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-strong)] pb-5">
       <div className="max-w-2xl">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Railor operations</p>
+        <p className="font-mono text-[12.5px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Railor operations</p>
         <h1 className="mt-2 font-display text-[clamp(1.8rem,3.5vw,2.6rem)] font-semibold leading-none tracking-[-0.03em]">{title}</h1>
         <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--color-muted)]">{description}</p>
       </div>

@@ -79,7 +79,7 @@ export default async function CoveragePage() {
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
-const TH = "border-b border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]";
+const TH = "border-b border-[var(--color-line)] bg-[var(--color-paper)] px-4 py-3 text-left text-[12.5px] font-semibold uppercase tracking-wide text-[var(--color-muted)]";
 const TD = "border-b border-[var(--color-line)] px-4 py-3 align-middle";
 
 function UnansweredDemand({ gaps }: { gaps: TopCoverageGap[] }) {
@@ -120,7 +120,7 @@ function UnansweredDemand({ gaps }: { gaps: TopCoverageGap[] }) {
                 <tr key={gap.id} className="transition hover:bg-[var(--color-paper)]">
                   <td className={TD}>
                     <span className="font-medium">{corridorLabel(gap.query)}</span>
-                    <span className="mt-0.5 block text-[11.5px] text-[var(--color-muted)] sm:hidden">
+                    <span className="mt-0.5 block text-[13px] text-[var(--color-muted)] sm:hidden">
                       {gap.providerName} · {DATE.format(lastAsked)}
                     </span>
                   </td>

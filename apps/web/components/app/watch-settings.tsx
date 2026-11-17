@@ -55,7 +55,7 @@ export function WatchSettings({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="inline-flex w-fit items-center gap-1 text-[11.5px] font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
+        className="inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-[var(--color-muted)] transition hover:text-[var(--color-ink)]"
       >
         {state.digest === "instant" ? "Instant" : state.digest === "daily" ? "Daily digest" : "Weekly digest"} · {state.channelEmail ? "email on" : "dashboard only"}
         <ChevronDown size={13} className={cn("transition-transform", open && "rotate-180")} />

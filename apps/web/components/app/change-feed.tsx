@@ -71,7 +71,7 @@ function Confidence({ value }: { value: number }) {
           className={cn("absolute inset-y-0 left-0 rounded-full", pct >= 90 ? "bg-emerald-500" : pct >= 70 ? "bg-amber-500" : "bg-stone-400")}
         />
       </span>
-      <span className="tabular text-[11px] font-semibold text-[var(--color-muted)]">{pct}%</span>
+      <span className="tabular text-[12.5px] font-semibold text-[var(--color-muted)]">{pct}%</span>
     </span>
   );
 }
@@ -95,7 +95,7 @@ function Stat({ label, value, tone, delay }: { label: string; value: number; ton
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="flex flex-col gap-1 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3"
     >
-      <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--color-faint)]">{label}</span>
+      <span className="text-[12.5px] font-semibold text-[var(--color-faint)]">{label}</span>
       <span className={cn("font-display text-[28px] font-semibold leading-none tabular", tone)}>{value}</span>
     </motion.div>
   );
@@ -177,7 +177,7 @@ export function ChangeFeed({ items, providerBase, now, providersMonitored }: { i
         <div className="flex flex-col gap-7">
           {groups.map((group) => (
             <section key={group.day} className="flex flex-col gap-3">
-              <h2 className="sticky top-2 z-10 w-fit rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)]/90 px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.1em] text-[var(--color-muted)] backdrop-blur">
+              <h2 className="sticky top-2 z-10 w-fit rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)]/90 px-3 py-1 text-[13px] font-bold text-[var(--color-muted)] backdrop-blur">
                 {group.day}
               </h2>
               <ol className="relative flex flex-col gap-3 pl-11 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-gradient-to-b before:from-[var(--color-line-strong)] before:to-transparent">
@@ -209,14 +209,14 @@ export function ChangeFeed({ items, providerBase, now, providersMonitored }: { i
                               <ProviderLogo slug={item.providerSlug} name={item.providerName} size={30} />
                               <span className="truncate text-[15px] font-semibold transition group-hover:text-[var(--color-orange-deep)]">{item.providerName}</span>
                             </Link>
-                            <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ring-1", style.tone, style.ring)}>{item.label}</span>
+                            <span className={cn("rounded-full px-2 py-0.5 text-[12.5px] font-bold ring-1", style.tone, style.ring)}>{item.label}</span>
                             <span className="flex-1" />
                             {item.status === "pending" ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[12.5px] font-bold text-amber-700">
                                 <span className="size-1.5 animate-pulse rounded-full bg-amber-500" /> Awaiting review
                               </span>
                             ) : (
-                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-emerald-700">Reviewed</span>
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[12.5px] font-bold text-emerald-700">Reviewed</span>
                             )}
                             <time dateTime={item.detectedAt} className="text-[12px] tabular text-[var(--color-faint)]">
                               {ago(item.detectedAt, nowMs)}
@@ -226,11 +226,11 @@ export function ChangeFeed({ items, providerBase, now, providersMonitored }: { i
                           <Diff previous={item.previous} current={item.current} />
                           <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-dashed border-[var(--color-line)] pt-3">
                             <Confidence value={item.confidence} />
-                            <span className="font-mono text-[11px] text-[var(--color-faint)]">{item.field}</span>
+                            <span className="font-mono text-[12.5px] text-[var(--color-faint)]">{item.field}</span>
                             {Object.values(item.affects).length ? (
                               <span className="flex flex-wrap gap-1">
                                 {Object.values(item.affects).slice(0, 5).map((v) => (
-                                  <span key={v} className="rounded-md bg-[var(--color-canvas)] px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-[var(--color-ink-soft)]">
+                                  <span key={v} className="rounded-md bg-[var(--color-canvas)] px-1.5 py-0.5 font-mono text-[12.5px] font-semibold text-[var(--color-ink-soft)]">
                                     {v}
                                   </span>
                                 ))}
@@ -266,7 +266,7 @@ function FilterChip({ active, onClick, label, count, icon: Icon, dot }: { active
     >
       {Icon ? <Icon size={13} className={active ? "text-white" : ""} /> : dot ? <span className={cn("size-1.5 rounded-full", dot)} /> : null}
       {label}
-      <span className={cn("rounded-full px-1.5 text-[10.5px] tabular", active ? "bg-white/20" : "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>{count}</span>
+      <span className={cn("rounded-full px-1.5 text-[12.5px] tabular", active ? "bg-white/20" : "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>{count}</span>
     </button>
   );
 }

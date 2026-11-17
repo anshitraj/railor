@@ -46,14 +46,14 @@ export function CountryResearchPanel({ rows }: { rows: CountryResearchRow[] }) {
         <li key={row.iso2} className="flex flex-col gap-1 border-b border-[var(--color-line)] pb-2 last:border-0">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium">{row.name}</span>
-            <span className="text-[11px] text-[var(--color-faint)]">{row.iso2}</span>
+            <span className="text-[12.5px] text-[var(--color-faint)]">{row.iso2}</span>
             <span className="flex-1" />
-            {row.status ? <span className="text-[11px] text-[var(--color-muted)]">{row.status}</span> : null}
+            {row.status ? <span className="text-[12.5px] text-[var(--color-muted)]">{row.status}</span> : null}
             <button
               type="button"
               disabled={pending}
               onClick={() => refresh(row.iso2)}
-              className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[11px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] disabled:opacity-50"
+              className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12.5px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] disabled:opacity-50"
             >
               {pending && runningCode === row.iso2 ? "Researching…" : "Refresh"}
             </button>
@@ -61,10 +61,10 @@ export function CountryResearchPanel({ rows }: { rows: CountryResearchRow[] }) {
           <div className="flex items-center gap-2">
             <Freshness date={row.lastResearchedAt} prefix="Researched" />
             {row.sourcesUsed !== null ? (
-              <span className="text-[11px] text-[var(--color-faint)]">· {row.sourcesUsed} sources</span>
+              <span className="text-[12.5px] text-[var(--color-faint)]">· {row.sourcesUsed} sources</span>
             ) : null}
           </div>
-          {results[row.iso2] ? <span className="text-[11px] text-[var(--color-muted)]">{results[row.iso2]}</span> : null}
+          {results[row.iso2] ? <span className="text-[12.5px] text-[var(--color-muted)]">{results[row.iso2]}</span> : null}
         </li>
       ))}
     </ul>

@@ -72,7 +72,7 @@ export function BeneficiaryList({
                 <span className="text-[14px] font-semibold">{b.label}</span>
                 <span className="text-[12px] text-[var(--color-muted)]">{b.holderName}</span>
               </span>
-              <span className="rounded-full bg-[var(--color-sand)] px-2 py-0.5 text-[11px] font-semibold">{METHOD_LABEL[b.method] ?? b.method}</span>
+              <span className="rounded-full bg-[var(--color-sand)] px-2 py-0.5 text-[12.5px] font-semibold">{METHOD_LABEL[b.method] ?? b.method}</span>
               <span className="font-mono text-[12.5px] text-[var(--color-ink-soft)]">{b.displayHint}</span>
               <span className="text-[12.5px] text-[var(--color-muted)]">
                 {b.currency} · {b.country}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+
+import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Chip, EmptyState, Freshness, SectionLabel, cn } from "@railor/ui";
 import type { CompareTable } from "../../lib/compare";
@@ -93,7 +94,7 @@ export function CompareBoard({
 
       {link ? (
         <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] bg-[var(--color-lavender)] p-3">
-          <span className="text-[12px] uppercase tracking-wide text-[var(--color-purple)]">
+          <span className="text-[12px] text-[var(--color-purple)] font-semibold">
             Public read-only link
           </span>
           <code className="flex-1 break-all text-[12.5px]">{link}</code>
@@ -121,7 +122,7 @@ export function CompareBoard({
           <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">
             <thead>
               <tr className="border-b border-[var(--color-line)]">
-                <th className="sticky left-0 z-10 bg-white p-4 text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <th className="sticky left-0 z-10 bg-white p-4 text-[13px] font-semibold text-[var(--color-muted)]">
                   Capability
                 </th>
                 {table.providers.map((p) => (
@@ -129,7 +130,7 @@ export function CompareBoard({
                     <div className="flex flex-col gap-0.5">
                       <ProviderLogo slug={p.slug} name={p.name} size={30} className="mb-1.5" />
                       <span className="text-[14px] font-medium">{p.name}</span>
-                      <span className="text-[11px] text-[var(--color-muted)]">{p.category}</span>
+                      <span className="text-[12.5px] text-[var(--color-muted)]">{p.category}</span>
                       <Freshness date={p.verifiedAt} />
                     </div>
                   </th>
@@ -138,11 +139,11 @@ export function CompareBoard({
             </thead>
             <tbody>
               {grouped.map(([group, rows]) => (
-                <>
-                  <tr key={group} className="bg-[var(--color-canvas)]">
+                <Fragment key={group}>
+                  <tr className="bg-[var(--color-canvas)]">
                     <td
                       colSpan={table.providers.length + 1}
-                      className="px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--color-muted)]"
+                      className="px-4 py-2 text-[13px] font-semibold text-[var(--color-ink-soft)]"
                     >
                       {group}
                     </td>
@@ -162,7 +163,7 @@ export function CompareBoard({
                       ))}
                     </tr>
                   ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

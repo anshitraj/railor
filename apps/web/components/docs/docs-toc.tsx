@@ -90,7 +90,7 @@ export function DocsToc({ articleId }: { articleId: string }) {
 
   return (
     <nav aria-label="On this page" className="sticky top-20 hidden self-start xl:block">
-      <p className="mb-3 font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)]">
+      <p className="mb-3 font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)]">
         On this page
       </p>
       <ul className="flex flex-col border-l border-[var(--color-line)]">

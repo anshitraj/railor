@@ -14,7 +14,7 @@ export function UsageMaintenance() {
 
   return (
     <div className="flex items-center gap-2">
-      {result ? <span className="text-[11px] text-[var(--color-muted)]">{result}</span> : null}
+      {result ? <span className="text-[12.5px] text-[var(--color-muted)]">{result}</span> : null}
       <button
         type="button"
         disabled={pending}
@@ -24,7 +24,7 @@ export function UsageMaintenance() {
             setResult(`rolled up ${res.rollup.rowsWritten} rows · pruned ${res.pruned.deleted}`);
           })
         }
-        className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[11px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] disabled:opacity-50"
+        className="rounded-full border border-[var(--color-line)] px-2.5 py-1 text-[12.5px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] disabled:opacity-50"
       >
         {pending ? "Running…" : "Run rollup now"}
       </button>

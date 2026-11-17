@@ -70,7 +70,7 @@ export function FxTicker({ className = "" }: { className?: string }) {
               </span>
               <span className="tabular text-[var(--color-ink-soft)]">{r.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })}</span>
               {Math.abs(move) >= 0.005 ? (
-                <span className={cn("tabular text-[11px] font-semibold", move > 0 ? "text-[var(--color-ok)]" : "text-[var(--color-bad)]")} title="Change since you opened this page">
+                <span className={cn("tabular text-[12.5px] font-semibold", move > 0 ? "text-[var(--color-ok)]" : "text-[var(--color-bad)]")} title="Change since you opened this page">
                   {move > 0 ? "▲" : "▼"} {Math.abs(move).toFixed(2)}%
                 </span>
               ) : null}

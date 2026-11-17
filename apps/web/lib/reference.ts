@@ -90,15 +90,15 @@ export async function getReferenceOptions(): Promise<ReferenceOptions> {
 }
 
 export const FIELD_LABELS: Record<string, string> = {
-  entityCountry: "Entity jurisdiction",
+  entityCountry: "Company country",
   customerType: "Customer type",
   sourceCountry: "Source country",
   destinationCountry: "Destination country",
-  sourceAsset: "Asset",
+  sourceAsset: "Paying with",
   sourceNetwork: "Network",
-  destinationCurrency: "Destination currency",
-  paymentMethod: "Rail",
-  /** Deliberately distinct from `paymentMethod`'s label ("Rail") — this is the specific named one. */
+  destinationCurrency: "Arrives as",
+  paymentMethod: "Payment rail",
+  /** Deliberately distinct from `paymentMethod`'s label ("Payment rail") — this is the specific named one. */
   namedRail: "Named rail",
   sourceNamedRail: "Source named rail",
   product: "Product",

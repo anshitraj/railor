@@ -192,7 +192,7 @@ export default async function ProviderProfile({
             <SectionLabel>Corridors</SectionLabel>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-left text-[13px]">
-                <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <thead className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                   <tr>
                     <th className="pb-2">Destination</th>
                     <th className="pb-2">Currency</th>
@@ -264,7 +264,7 @@ export default async function ProviderProfile({
             <SectionLabel>Receiving endpoints — how money actually lands</SectionLabel>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-left text-[13px]">
-                <thead className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                <thead className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                   <tr>
                     <th className="pb-2">Country</th>
                     <th className="pb-2">Incoming</th>
@@ -286,14 +286,14 @@ export default async function ProviderProfile({
                           : "—"}
                       </td>
                       <td className="py-2">
-                        <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-purple)]">
+                        <span className="rounded-full bg-[var(--color-lavender)] px-2 py-0.5 text-[12.5px] font-medium text-[var(--color-purple)]">
                           {STABLECOIN_MODE_LABEL[r.endpoint.stablecoinMode] ?? r.endpoint.stablecoinMode}
                         </span>
                       </td>
                       <td className="py-2 text-[var(--color-muted)]">
                         {[r.namedRailName, r.endpoint.settlementEstimate].filter(Boolean).join(" · ") || "—"}
                         {r.endpoint.complianceDocs ? (
-                          <span className="block text-[11px] text-[var(--color-faint)]">
+                          <span className="block text-[12.5px] text-[var(--color-faint)]">
                             Docs: {r.endpoint.complianceDocs}
                           </span>
                         ) : null}
@@ -455,7 +455,7 @@ export default async function ProviderProfile({
                   >
                     {s.title} ↗
                   </a>
-                  <span className="text-[11px] text-[var(--color-faint)]">
+                  <span className="text-[12.5px] text-[var(--color-faint)]">
                     {s.sourceType.replace(/_/g, " ")} · every {s.crawlFrequencyHours}h ·{" "}
                     {CONFIDENCE_BAND_LABEL[confidenceBand(0.95, s.lastCheckedAt ?? undefined)]}
                   </span>
@@ -470,11 +470,11 @@ export default async function ProviderProfile({
               <ul className="flex flex-col gap-3">
                 {changes.map((c) => (
                   <li key={c.id} className="flex flex-col gap-0.5">
-                    <span className="text-[11px] uppercase tracking-wide text-[var(--color-purple)]">
+                    <span className="text-[12.5px] text-[var(--color-purple)] font-semibold">
                       {CHANGE_KIND_LABEL[c.kind]}
                     </span>
                     <span className="text-[13px] leading-snug">{c.summary}</span>
-                    <span className="text-[11px] text-[var(--color-faint)]">
+                    <span className="text-[12.5px] text-[var(--color-faint)]">
                       {c.previousValue && c.currentValue
                         ? `${c.previousValue} → ${c.currentValue} · `
                         : ""}
@@ -500,7 +500,7 @@ export default async function ProviderProfile({
             {observed ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                  <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                     Success rate
                   </p>
                   <p className="tabular text-[18px] font-semibold">
@@ -508,14 +508,14 @@ export default async function ProviderProfile({
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                  <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                     Sample size
                   </p>
                   <p className="tabular text-[18px] font-semibold">{observed.sampleSize}</p>
                 </div>
                 {observed.p50SettlementMs !== null ? (
                   <div>
-                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                    <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                       P50 settlement
                     </p>
                     <p className="tabular text-[18px] font-semibold">
@@ -525,7 +525,7 @@ export default async function ProviderProfile({
                 ) : null}
                 {observed.p95SettlementMs !== null ? (
                   <div>
-                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+                    <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                       P95 settlement
                     </p>
                     <p className="tabular text-[18px] font-semibold">
@@ -533,7 +533,7 @@ export default async function ProviderProfile({
                     </p>
                   </div>
                 ) : null}
-                <p className="col-span-2 text-[11px] text-[var(--color-faint)]">
+                <p className="col-span-2 text-[12.5px] text-[var(--color-faint)]">
                   {provider.isDemo ? "Demo sample · " : ""}
                   {observed.lastObservedAt ? (
                     <Freshness date={observed.lastObservedAt} prefix="Last observed" />
@@ -562,7 +562,7 @@ export default async function ProviderProfile({
                   <li key={c.kind} className="flex items-center gap-2 text-[13px]">
                     <span className="flex-1">{c.label}</span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                      className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${
                         CONFORMANCE_STATUS_STYLE[c.status] ?? CONFORMANCE_STATUS_STYLE.not_tested
                       }`}
                     >
@@ -577,7 +577,7 @@ export default async function ProviderProfile({
               </p>
             )}
             <div className="border-t border-[var(--color-line)] pt-3">
-              <p className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+              <p className="text-[12.5px] text-[var(--color-faint)] font-semibold">
                 Incidents, last 30 days
               </p>
               {incidents.length ? (
@@ -585,7 +585,7 @@ export default async function ProviderProfile({
                   {incidents.map((i) => (
                     <li key={i.id} className="text-[13px]">
                       <span className="font-medium">{i.title}</span>
-                      <span className="ml-2 text-[11px] text-[var(--color-muted)]">
+                      <span className="ml-2 text-[12.5px] text-[var(--color-muted)]">
                         {i.severity} · {i.status}
                       </span>
                     </li>

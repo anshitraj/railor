@@ -159,7 +159,7 @@ export function SmartPicker({
               <OptionMark option={option} render={renderMark} />
               {option?.label ?? v}
               {detected === v ? (
-                <span className="ml-1 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-purple)]">
+                <span className="ml-1 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] text-[var(--color-purple)] font-semibold">
                   Detected
                 </span>
               ) : null}
@@ -221,7 +221,7 @@ export function SmartPicker({
 
       {suggestions.length ? (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">
+          <span className="text-[11px] text-[var(--color-faint)] font-semibold">
             {detected ? "Suggested" : "Common"}
           </span>
           {suggestions.map((o) => (

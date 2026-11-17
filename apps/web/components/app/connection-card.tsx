@@ -67,7 +67,7 @@ function CopyUrl({ url }: { url: string }) {
           window.prompt("Copy this webhook URL", url);
         }
       }}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-2 py-1 font-mono text-[11px] text-[var(--color-ink-soft)] hover:border-[var(--color-line-strong)]"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] px-2 py-1 font-mono text-[12.5px] text-[var(--color-ink-soft)] hover:border-[var(--color-line-strong)]"
       title="Register this URL as the webhook endpoint in the provider's dashboard"
     >
       {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -144,13 +144,13 @@ export function ConnectionCard({
           {connections.map((c) => (
             <li key={c.id} className="flex flex-col gap-2 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide", c.environment === "production" ? "bg-[var(--color-ink)] text-white" : "bg-[var(--color-sand)] text-[var(--color-ink-soft)]")}>
+                <span className={cn("rounded-full px-2 py-0.5 text-[12.5px] font-bold", c.environment === "production" ? "bg-[var(--color-ink)] text-white" : "bg-[var(--color-sand)] text-[var(--color-ink-soft)]")}>
                   {c.environment}
                 </span>
-                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", STATUS_TONE[c.status] ?? "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>
+                <span className={cn("rounded-full px-2 py-0.5 text-[12.5px] font-medium", STATUS_TONE[c.status] ?? "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>
                   {c.status === "connected" ? "Connected" : c.status === "error" ? "Check failed" : c.status}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--color-muted)]">
+                <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--color-muted)]">
                   {c.lastCheckDetail}
                   {c.lastCheckedAt ? ` · checked ${new Date(c.lastCheckedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC` : ""}
                 </span>
@@ -165,7 +165,7 @@ export function ConnectionCard({
                           setDetail({ ok: r.ok, text: r.detail ?? "" });
                         })
                       }
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11.5px] text-[var(--color-muted)] hover:bg-[var(--color-sand)]"
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[13px] text-[var(--color-muted)] hover:bg-[var(--color-sand)]"
                     >
                       <RefreshCw size={12} /> Test
                     </button>
@@ -180,7 +180,7 @@ export function ConnectionCard({
                           });
                         }
                       }}
-                      className="rounded-full px-2 py-1 text-[11.5px] text-[var(--color-muted)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]"
+                      className="rounded-full px-2 py-1 text-[13px] text-[var(--color-muted)] hover:bg-[var(--color-bad-bg)] hover:text-[var(--color-bad)]"
                     >
                       Disconnect
                     </button>
@@ -188,7 +188,7 @@ export function ConnectionCard({
                 ) : null}
               </div>
               {c.webhookUrl && c.status === "connected" ? (
-                <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-[var(--color-muted)]">
+                <div className="flex flex-wrap items-center gap-2 text-[13px] text-[var(--color-muted)]">
                   <span>Status webhook:</span>
                   <CopyUrl url={c.webhookUrl} />
                 </div>
@@ -236,7 +236,7 @@ export function ConnectionCard({
                 )}
               </label>
             ))}
-            <p className="text-[11.5px] leading-relaxed text-[var(--color-muted)]">
+            <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
               Credentials are tested live against {name}&apos;s {environment} API, then stored encrypted. They are never shown again or sent to your browser.
             </p>
             <div className="flex gap-2">
@@ -274,7 +274,7 @@ export function ConnectionCard({
 
 function Capability({ on, label }: { on: boolean; label: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]", on ? "border-[var(--color-ok)]/30 bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "border-[var(--color-line)] text-[var(--color-faint)] line-through")}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12.5px]", on ? "border-[var(--color-ok)]/30 bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "border-[var(--color-line)] text-[var(--color-faint)] line-through")}>
       {on ? <Check size={11} /> : null}
       {label}
     </span>

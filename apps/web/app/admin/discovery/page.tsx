@@ -56,7 +56,7 @@ export default async function AdminDiscoveryPage() {
         <dl className="grid content-start gap-3 text-[12.5px]">
           <div className="rounded-xl bg-[var(--color-paper)] p-3">
             <dt className="text-[var(--color-faint)]">Worker</dt>
-            <dd className="mt-1 font-mono text-[11.5px]">python -m railor_worker.cli discover-queue</dd>
+            <dd className="mt-1 font-mono text-[13px]">python -m railor_worker.cli discover-queue</dd>
             <dd className="mt-1 text-[var(--color-muted)]">{lastRun ? `last picked up a job ${lastRun.toISOString().slice(0, 16).replace("T", " ")} UTC` : "has not run a job yet — schedule it every few minutes"}</dd>
           </div>
           <div className="rounded-xl bg-[var(--color-paper)] p-3">
@@ -64,7 +64,7 @@ export default async function AdminDiscoveryPage() {
             <dd className="mt-1 text-[18px] font-semibold tabular">
               {railStats?.verified ?? 0} <span className="text-[13px] font-normal text-[var(--color-muted)]">of {railStats?.total ?? 0}</span>
             </dd>
-            <dd className="mt-1 font-mono text-[11.5px]">python -m railor_worker.cli discover-rails</dd>
+            <dd className="mt-1 font-mono text-[13px]">python -m railor_worker.cli discover-rails</dd>
           </div>
           <div className="rounded-xl bg-[var(--color-paper)] p-3">
             <dt className="text-[var(--color-faint)]">Candidates awaiting review</dt>
@@ -88,8 +88,8 @@ export default async function AdminDiscoveryPage() {
                       <a href={c.websiteUrl} target="_blank" rel="noreferrer noopener" className="font-mono text-[12px] text-[var(--color-muted)] underline decoration-dotted">
                         {c.domain}
                       </a>
-                      <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase ${c.status === "pending" ? "bg-amber-50 text-amber-700" : c.status === "approved" ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>{c.status}</span>
-                      <span className="text-[11.5px] text-[var(--color-faint)]">
+                      <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-bold uppercase ${c.status === "pending" ? "bg-amber-50 text-amber-700" : c.status === "approved" ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>{c.status}</span>
+                      <span className="text-[13px] text-[var(--color-faint)]">
                         {c.evidence.length} verified quote{c.evidence.length === 1 ? "" : "s"} · {official} from its own site
                       </span>
                     </div>
@@ -98,12 +98,12 @@ export default async function AdminDiscoveryPage() {
                         <li key={e.hash} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-2 text-[12.5px]">
                           <p className="font-medium">{e.statement}</p>
                           <p className="mt-1 text-[12px] italic text-[var(--color-muted)]">“{e.quote}”</p>
-                          <a href={e.url} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block max-w-full truncate text-[11px] text-[var(--color-faint)] underline decoration-dotted">
+                          <a href={e.url} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block max-w-full truncate text-[12.5px] text-[var(--color-faint)] underline decoration-dotted">
                             {e.official ? "Official page" : "Third-party page"} · {e.url}
                           </a>
                         </li>
                       ))}
-                      {c.evidence.length > 5 ? <li className="text-[11.5px] text-[var(--color-faint)]">+{c.evidence.length - 5} more</li> : null}
+                      {c.evidence.length > 5 ? <li className="text-[13px] text-[var(--color-faint)]">+{c.evidence.length - 5} more</li> : null}
                     </ul>
                   </div>
                   {c.status === "pending" ? (
@@ -138,7 +138,7 @@ export default async function AdminDiscoveryPage() {
               const s = j.summary as { pages_fetched?: number; claims_verified?: number; claims_rejected?: number; change_events?: number; candidates?: number };
               return (
                 <li key={j.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-[12.5px]">
-                  <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase ${STATUS_TONE[j.status] ?? ""}`}>{j.status}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-bold uppercase ${STATUS_TONE[j.status] ?? ""}`}>{j.status}</span>
                   <span className="font-semibold">{describe(j.kind, j.query)}</span>
                   <span className="flex-1" />
                   {j.status === "done" || j.status === "failed" ? (
@@ -147,7 +147,7 @@ export default async function AdminDiscoveryPage() {
                     </span>
                   ) : null}
                   {j.error ? <span className="w-full text-[var(--color-bad)]">{j.error}</span> : null}
-                  <time className="font-mono text-[11px] text-[var(--color-faint)]">{j.createdAt.toISOString().slice(0, 16).replace("T", " ")}</time>
+                  <time className="font-mono text-[12.5px] text-[var(--color-faint)]">{j.createdAt.toISOString().slice(0, 16).replace("T", " ")}</time>
                 </li>
               );
             })}

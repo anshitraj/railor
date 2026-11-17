@@ -294,13 +294,13 @@ function SimulationResult({ result, providers }: { result: SimulationSummary; pr
     >
       <dl className="grid gap-2 sm:grid-cols-2">
         <div>
-          <dt className="text-[11px] uppercase tracking-[0.1em] text-[var(--color-muted)]">Current version</dt>
+          <dt className="text-[12.5px] text-[var(--color-muted)] font-semibold">Current version</dt>
           <dd>
             {nameOf(result.recommendedProviderA)} · {result.allowedUnderA.length} allowed / {result.blockedUnderA.length} blocked
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] uppercase tracking-[0.1em] text-[var(--color-muted)]">This draft</dt>
+          <dt className="text-[12.5px] text-[var(--color-muted)] font-semibold">This draft</dt>
           <dd>
             {nameOf(result.recommendedProviderB)} · {result.allowedUnderB.length} allowed / {result.blockedUnderB.length} blocked
           </dd>

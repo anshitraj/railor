@@ -83,7 +83,7 @@ export function InterpretationBar({
               <ConfidenceDot confidence={token.confidence} />
               {token.label}
               {inferred ? (
-                <span className="ml-1 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--color-muted)]">
+                <span className="ml-1 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] font-semibold">
                   Inferred
                 </span>
               ) : null}

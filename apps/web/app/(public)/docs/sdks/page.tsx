@@ -132,7 +132,7 @@ for row in railor.capabilities.list_all(destination_country="AE"):
         <h2 className="text-[20px] font-semibold">Methods</h2>
         <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white">
           <table className="w-full min-w-[560px] text-left text-[13px]">
-            <thead className="border-b border-[var(--color-line)] text-[11px] uppercase tracking-[0.1em] text-[var(--color-muted)]">
+            <thead className="border-b border-[var(--color-line)] text-[12.5px] uppercase tracking-[0.1em] text-[var(--color-muted)]">
               <tr>
                 <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-2"><TechnologyLogo name="TypeScript" size={20} /> TypeScript</span></th>
                 <th className="px-4 py-2.5 font-medium"><span className="inline-flex items-center gap-2"><TechnologyLogo name="Python" size={20} /> Python</span></th>

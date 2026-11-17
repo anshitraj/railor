@@ -25,7 +25,7 @@ export function FieldBlock({
     <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       <span className="text-[12px] font-bold text-[var(--color-ink-soft)]">{label}</span>
       {children}
-      {hint ? <span className="text-[11.5px] leading-snug text-[var(--color-muted)]">{hint}</span> : null}
+      {hint ? <span className="text-[13px] leading-snug text-[var(--color-muted)]">{hint}</span> : null}
     </div>
   );
 }
@@ -94,7 +94,7 @@ export function Segmented<T extends string>({
             ) : null}
             <span className={cn("relative font-semibold", size === "sm" ? "text-[12.5px]" : "text-[13.5px]")}>{option.label}</span>
             {option.hint && size === "md" ? (
-              <span className="relative text-[11.5px] leading-snug text-[var(--color-muted)]">{option.hint}</span>
+              <span className="relative text-[13px] leading-snug text-[var(--color-muted)]">{option.hint}</span>
             ) : null}
           </button>
         );
@@ -142,7 +142,7 @@ export function NumberWithPresets({
           placeholder={offLabel ?? "—"}
           className="product-field !mt-0 min-w-0 flex-1"
         />
-        {suffix ? <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--color-muted)]">{suffix}</span> : null}
+        {suffix ? <span className="shrink-0 text-[12.5px] text-[var(--color-muted)] font-semibold">{suffix}</span> : null}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {offLabel ? (
@@ -239,7 +239,7 @@ export function Toggle({
           {label}
         </label>
         {hint ? (
-          <span id={`${id}-hint`} className="text-[11.5px] font-normal leading-snug text-[var(--color-muted)]">
+          <span id={`${id}-hint`} className="text-[13px] font-normal leading-snug text-[var(--color-muted)]">
             {hint}
           </span>
         ) : null}
@@ -277,8 +277,8 @@ export function ResultNotice({
       {children ? <div className="mt-2 text-[12.5px] leading-relaxed text-[var(--color-ink-soft)]">{children}</div> : null}
       {raw !== undefined ? (
         <details className="mt-3 border-t border-[var(--color-line)] pt-2">
-          <summary className="cursor-pointer text-[11.5px] font-semibold text-[var(--color-muted)]">Raw response</summary>
-          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(raw, null, 2)}</pre>
+          <summary className="cursor-pointer text-[13px] font-semibold text-[var(--color-muted)]">Raw response</summary>
+          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap text-[12.5px]">{JSON.stringify(raw, null, 2)}</pre>
         </details>
       ) : null}
     </motion.div>

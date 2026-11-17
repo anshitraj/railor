@@ -41,7 +41,7 @@ function PagerLink({ page, direction }: { page: DocsLink; direction: "prev" | "n
         {isNext ? <ArrowRight size={16} aria-hidden /> : <ArrowLeft size={16} aria-hidden />}
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)]">
+        <span className="font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-faint)]">
           {isNext ? "Next" : "Previous"}
         </span>
         <span className="truncate font-display text-[16px] font-semibold tracking-[-0.02em] text-[var(--color-ink)]">

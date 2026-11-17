@@ -85,7 +85,7 @@ export function ResultRow({
             <span className="flex items-center gap-1.5">
               <span className="text-[15px] font-medium text-[var(--color-ink)]">{name}</span>
               {isDemo ? (
-                <span className="rounded-full border border-[var(--color-line-strong)] bg-[var(--color-lavender)] px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-[var(--color-purple)]">
+                <span className="rounded-full border border-[var(--color-line-strong)] bg-[var(--color-lavender)] px-1.5 py-px text-[9px] font-semibold text-[var(--color-purple)]">
                   Demo
                 </span>
               ) : null}
@@ -106,7 +106,7 @@ export function ResultRow({
               {facts.length ? (
                 facts.map((f) => (
                   <span key={f.label} className="flex min-w-[110px] flex-col">
-                    <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">
+                    <span className="text-[10px] text-[var(--color-faint)] font-semibold">
                       {f.label}
                     </span>
                     <span className="tabular text-[13px] text-[var(--color-ink-soft)]">{f.value}</span>
@@ -114,7 +114,7 @@ export function ResultRow({
                 ))
               ) : (
                 <span className="flex min-w-[110px] flex-col">
-                  <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">Fees</span>
+                  <span className="text-[10px] text-[var(--color-faint)] font-semibold">Fees</span>
                   <span className="tabular text-[13px] text-[var(--color-ink-soft)]">0.00% · 000</span>
                 </span>
               )}
@@ -128,7 +128,7 @@ export function ResultRow({
           <div className="flex flex-1 flex-wrap gap-x-6 gap-y-1">
             {facts.map((f) => (
               <span key={f.label} className="flex min-w-[110px] flex-col">
-                <span className="text-[10px] uppercase tracking-wide text-[var(--color-faint)]">
+                <span className="text-[10px] text-[var(--color-faint)] font-semibold">
                   {f.label}
                 </span>
                 <span className="tabular text-[13px] text-[var(--color-ink-soft)]">{f.value}</span>

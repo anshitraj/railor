@@ -57,8 +57,8 @@ export default async function AdminProvidersPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <ProviderLogo slug={p.slug} name={p.name} size={28} />
                   <h2 className="text-[16px] font-semibold">{p.name}</h2>
-                  <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase ${approved ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>{approved ? "Live approved" : "Sandbox only"}</span>
-                  <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[11px]">{adapter.verification.replaceAll("_", " ")}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[12.5px] font-bold uppercase ${approved ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>{approved ? "Live approved" : "Sandbox only"}</span>
+                  <span className="rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[12.5px]">{adapter.verification.replaceAll("_", " ")}</span>
                 </div>
                 <p className="text-[12.5px] text-[var(--color-muted)]">Methods: {adapter.supportedMethods.join(", ")} · webhooks {adapter.verifyWebhook ? "verified by signature" : "not used (polling)"}</p>
                 <dl className="mt-1 grid grid-cols-2 gap-3 text-[12.5px] sm:grid-cols-4">
@@ -86,7 +86,7 @@ export default async function AdminProvidersPage() {
 function Fact({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex flex-col">
-      <dt className="text-[10.5px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</dt>
+      <dt className="text-[12.5px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{label}</dt>
       <dd className="font-semibold tabular">{value}</dd>
     </div>
   );

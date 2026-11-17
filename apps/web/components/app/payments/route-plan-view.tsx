@@ -23,8 +23,8 @@ function RouteBadge({ slug, index, selectedProvider, outcomes }: { slug: string;
   if (selectedProvider === slug) return <span className="product-badge" data-tone="good">executed</span>;
   const outcome = outcomes?.[slug];
   if (outcome) return <span className="product-badge" data-tone={outcome === "unknown" ? "warn" : "bad"}>{outcome}</span>;
-  if (selectedProvider || (outcomes && Object.keys(outcomes).length)) return <span className="text-[11px] text-[var(--color-muted)]">not tried</span>;
-  return index === 0 ? <span className="product-badge" data-tone="neutral">first choice</span> : <span className="text-[11px] text-[var(--color-muted)]">fallback</span>;
+  if (selectedProvider || (outcomes && Object.keys(outcomes).length)) return <span className="text-[12.5px] text-[var(--color-muted)]">not tried</span>;
+  return index === 0 ? <span className="product-badge" data-tone="neutral">first choice</span> : <span className="text-[12.5px] text-[var(--color-muted)]">fallback</span>;
 }
 
 export function RoutePlanView({
@@ -55,13 +55,13 @@ export function RoutePlanView({
               className={`rounded-xl border px-4 py-3 ${selectedProvider === c.providerSlug ? "border-[var(--color-orange)] bg-[var(--color-lavender)]/50" : "border-[var(--color-line)] bg-[var(--color-surface)]"}`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--color-ink)] font-mono text-[11px] font-bold text-white">{index + 1}</span>
+                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--color-ink)] font-mono text-[12.5px] font-bold text-white">{index + 1}</span>
                 <ProviderLogo slug={c.providerSlug} name={c.providerName} size={22} />
                 <span className="text-[14px] font-semibold">{c.providerName}</span>
                 <RouteBadge slug={c.providerSlug} index={index} selectedProvider={selectedProvider} outcomes={outcomes} />
                 <span className="flex-1" />
                 <span className="font-mono text-[12px] tabular text-[var(--color-ink-soft)]">score {c.score.toFixed(2)}</span>
-                <span className="font-mono text-[11px] tabular text-[var(--color-muted)]" title="Share of the scoring weight Railor had real data for">conf {Math.round(c.confidence * 100)}%</span>
+                <span className="font-mono text-[12.5px] tabular text-[var(--color-muted)]" title="Share of the scoring weight Railor had real data for">conf {Math.round(c.confidence * 100)}%</span>
               </div>
               <p className="mt-1 text-[12px] text-[var(--color-muted)]">
                 {executorLabel(c.executor.kind, "environment" in c.executor ? c.executor.environment : undefined)}
@@ -69,7 +69,7 @@ export function RoutePlanView({
               </p>
               {!compact ? (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-[11.5px] font-semibold text-[var(--color-muted)]">Why this score</summary>
+                  <summary className="cursor-pointer text-[13px] font-semibold text-[var(--color-muted)]">Why this score</summary>
                   <ul className="mt-2 grid gap-1 sm:grid-cols-2">
                     {(Object.entries(c.dimensions) as Array<[RouteDimension, { score: number | null; weight: number; detail: string }]>).map(([key, d]) => (
                       <li key={key} className="flex items-start gap-2 text-[12px]">

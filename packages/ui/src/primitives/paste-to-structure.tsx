@@ -76,7 +76,7 @@ export function PasteToStructure({
 
       {items ? (
         <div className="flex flex-col gap-3 border-t border-[var(--color-line)] pt-3">
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+          <p className="text-[11px] text-[var(--color-muted)] font-semibold">
             Railor read this as — remove anything wrong
           </p>
           {items.length ? (

@@ -60,20 +60,20 @@ export default async function ReviewPage() {
               <li key={source.id} className="flex flex-col gap-0.5 border-b border-[var(--color-line)] pb-2 last:border-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-medium">{providerName}</span>
-                  <span className="text-[11px] text-[var(--color-muted)]">{source.sourceType.replace(/_/g, " ")}</span>
+                  <span className="text-[12.5px] text-[var(--color-muted)]">{source.sourceType.replace(/_/g, " ")}</span>
                   <span className="flex-1" />
-                  {source.failureCount > 0 ? <span className="text-[11px] text-[var(--color-bad)]">{source.failureCount} failures</span> : null}
+                  {source.failureCount > 0 ? <span className="text-[12.5px] text-[var(--color-bad)]">{source.failureCount} failures</span> : null}
                 </div>
                 <a href={source.url} target="_blank" rel="noreferrer noopener" className="truncate text-[12px] text-[var(--color-muted)] hover:text-[var(--color-purple)]">
                   {source.url}
                 </a>
                 <div className="flex items-center gap-2">
                   <Freshness date={source.lastCheckedAt} prefix="Checked" />
-                  <span className="text-[11px] text-[var(--color-faint)]">
+                  <span className="text-[12.5px] text-[var(--color-faint)]">
                     every {source.crawlFrequencyHours}h{source.requiresJs ? " · requires JS" : ""}
                   </span>
                 </div>
-                {source.lastError ? <span className="text-[11px] text-[var(--color-bad)]">{source.lastError}</span> : null}
+                {source.lastError ? <span className="text-[12.5px] text-[var(--color-bad)]">{source.lastError}</span> : null}
               </li>
             ))}
           </ul>

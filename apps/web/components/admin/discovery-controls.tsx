@@ -53,7 +53,7 @@ export function DiscoveryQueueForm({ countries, currencies, providers }: { count
             className={cn("flex flex-col items-start gap-0.5 rounded-xl border p-3 text-left transition", kind === k.value ? "border-[var(--color-orange)] bg-[var(--color-lavender)]" : "border-[var(--color-line)] hover:border-[var(--color-line-strong)]")}
           >
             <span className="text-[13.5px] font-semibold">{k.label}</span>
-            <span className="text-[11.5px] text-[var(--color-muted)]">{k.hint}</span>
+            <span className="text-[13px] text-[var(--color-muted)]">{k.hint}</span>
           </button>
         ))}
       </div>

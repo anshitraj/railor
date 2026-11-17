@@ -162,7 +162,7 @@ export function ConnectorRegistration() {
                 Hide token
               </Button>
             </div>
-            <pre className="overflow-x-auto rounded-lg bg-[var(--color-ink)] p-3 text-[11.5px] text-white">
+            <pre className="overflow-x-auto rounded-lg bg-[var(--color-ink)] p-3 text-[13px] text-white">
 {`RAILOR_CONNECTOR_ID=${credential.id} \\
 RAILOR_CONNECTOR_TOKEN=<token> \\
 pnpm --filter @railor/connector start`}
@@ -356,7 +356,7 @@ export function AgentWorkbench({
                 />
               </label>
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] uppercase tracking-wide text-[var(--color-faint)]">Examples</span>
+                <span className="text-[12.5px] text-[var(--color-faint)] font-semibold">Examples</span>
                 {EXAMPLES[kind].map((example) => (
                   <PresetChip key={example} active={text === example} onClick={() => setText(example)}>
                     {example}

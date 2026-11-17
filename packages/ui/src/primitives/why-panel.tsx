@@ -74,7 +74,7 @@ export function WhyPanel({
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">Reason</p>
+          <p className="text-[11px] text-[var(--color-muted)] font-semibold">Reason</p>
           {reasons.map((r) => (
             <p key={r.code + r.message} className="text-[14px] leading-relaxed text-[var(--color-ink)]">
               {r.message}
@@ -84,7 +84,7 @@ export function WhyPanel({
 
         {outstandingRequirements.length ? (
           <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-warn-bg)]/50 p-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-warn)]">
+            <p className="text-[11px] text-[var(--color-warn)] font-semibold">
               Outstanding for your organization
             </p>
             <ul className="mt-1.5 flex flex-col gap-1">
@@ -99,7 +99,7 @@ export function WhyPanel({
 
         {alsoTrue.length ? (
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+            <p className="text-[11px] text-[var(--color-muted)] font-semibold">
               Also true
             </p>
             <ul className="mt-1.5 flex flex-col gap-1">
@@ -114,7 +114,7 @@ export function WhyPanel({
 
         {wouldChange.length ? (
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+            <p className="text-[11px] text-[var(--color-muted)] font-semibold">
               What would change this
             </p>
             <ul className="mt-1.5 flex flex-col gap-1">
@@ -130,7 +130,7 @@ export function WhyPanel({
 
       <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">Evidence</p>
+          <p className="text-[11px] text-[var(--color-muted)] font-semibold">Evidence</p>
           <EvidencePopover evidence={evidence} />
         </div>
         <ul className="flex flex-col gap-2">
@@ -155,7 +155,7 @@ export function WhyPanel({
         </ul>
 
         <div className="border-t border-[var(--color-line)] pt-3">
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+          <p className="text-[11px] text-[var(--color-muted)] font-semibold">
             Last verified
           </p>
           <Freshness date={lastVerifiedAt} prefix="" />
@@ -163,7 +163,7 @@ export function WhyPanel({
 
         {rankingConfidence !== undefined ? (
           <div className="border-t border-[var(--color-line)] pt-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+            <p className="text-[11px] text-[var(--color-muted)] font-semibold">
               Ranking confidence
             </p>
             <p className="text-[13px] text-[var(--color-ink-soft)]">
@@ -180,7 +180,7 @@ export function WhyPanel({
 
         {history.length ? (
           <div className="border-t border-[var(--color-line)] pt-3">
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
+            <p className="text-[11px] text-[var(--color-muted)] font-semibold">
               Change history
             </p>
             <ul className="mt-2 flex flex-col gap-2">

@@ -54,7 +54,7 @@ function matches(row: CoverageRow, { region, depth, query }: Filters): boolean {
 }
 
 const TH =
-  "sticky top-16 z-10 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)] md:px-4";
+  "sticky top-16 z-10 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-3 text-left text-[12.5px] font-semibold uppercase tracking-wide text-[var(--color-muted)] md:px-4";
 const TD = "border-b border-[var(--color-line)] px-3 py-3 align-middle md:px-4";
 
 /**
@@ -103,7 +103,7 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
                   : "border-[var(--color-line)] bg-[var(--color-surface)] enabled:hover:-translate-y-px enabled:hover:border-[var(--color-line-strong)]",
               )}
             >
-              <span className={cn("text-[10.5px] font-semibold uppercase tracking-[0.12em]", active ? "text-white/65" : "text-[var(--color-muted)]")}>
+              <span className={cn("text-[12.5px] font-semibold uppercase tracking-[0.12em]", active ? "text-white/65" : "text-[var(--color-muted)]")}>
                 {tile.label}
               </span>
               <span className={cn("font-display text-[28px] font-semibold leading-none tabular", active ? "text-white" : tile.tone)}>{count}</span>
@@ -217,13 +217,13 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
                       >
                         <span
                           aria-hidden
-                          className="grid h-6 w-8 shrink-0 place-items-center rounded-md bg-[var(--color-sand)] font-mono text-[10.5px] font-semibold text-[var(--color-ink-soft)]"
+                          className="grid h-6 w-8 shrink-0 place-items-center rounded-md bg-[var(--color-sand)] font-mono text-[12.5px] font-semibold text-[var(--color-ink-soft)]"
                         >
                           {row.code}
                         </span>
                         <span className="flex min-w-0 flex-col">
                           <span className="leading-snug">{row.name}</span>
-                          <span className="text-[11.5px] font-normal text-[var(--color-muted)] md:hidden">{row.region}</span>
+                          <span className="text-[13px] font-normal text-[var(--color-muted)] md:hidden">{row.region}</span>
                         </span>
                         <ArrowUpRight
                           size={13}
@@ -244,7 +244,7 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
                             />
                           ) : null}
                         </span>
-                        <span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", level.chip)}>
+                        <span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide", level.chip)}>
                           {level.label}
                         </span>
                       </div>
@@ -258,7 +258,7 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
                           {row.currencies.map((currency) => (
                             <span
                               key={currency}
-                              className="rounded-md bg-[var(--color-canvas)] px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-[var(--color-ink-soft)]"
+                              className="rounded-md bg-[var(--color-canvas)] px-1.5 py-0.5 font-mono text-[12.5px] font-semibold text-[var(--color-ink-soft)]"
                             >
                               {currency}
                             </span>
@@ -294,7 +294,7 @@ function RegionChip({ active, label, count, onClick }: { active: boolean; label:
       )}
     >
       {label}
-      <span className={cn("rounded-full px-1.5 text-[10.5px] tabular", active ? "bg-white/20" : "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>{count}</span>
+      <span className={cn("rounded-full px-1.5 text-[12.5px] tabular", active ? "bg-white/20" : "bg-[var(--color-canvas)] text-[var(--color-muted)]")}>{count}</span>
     </button>
   );
 }
