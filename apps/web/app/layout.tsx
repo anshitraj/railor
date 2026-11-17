@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import { PageMotion } from "../components/page-motion";
+import { Toaster } from "../components/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f5f3ee",
+  themeColor: "#f6f3ed",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
         {children}
         <Suspense fallback={null}><PageMotion /></Suspense>
+        <Toaster />
       </body>
     </html>
   );

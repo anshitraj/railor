@@ -1,40 +1,42 @@
 /**
  * Railor design tokens.
  *
- * Railor orange is a directional marker: it picks out the live route and the
- * next action without drowning the operational data in decorative colour.
+ * Warm paper surfaces, near-black ink, and one orange that marks the live
+ * route and the next action. Type is Inter with optical sizing, so large
+ * headlines get the display cut and body copy stays open and easy to read.
  */
 @theme {
-  --color-canvas: #f5f3ee;
-  --color-surface: #fffdfa;
-  --color-paper: #fcfaf5;
-  --color-sand: #eae5db;
-  --color-lavender: #fff0e9;
-  --color-lavender-deep: #ffe0d0;
+  --color-canvas: #f6f3ed;
+  --color-surface: #fffefb;
+  --color-paper: #fbf9f5;
+  --color-sand: #eee8de;
+  --color-lavender: #fff1ea;
+  --color-lavender-deep: #ffe2d3;
 
   --color-orange: #e9562a;
   --color-action: #c84420;
   --color-brand: #5a0124;
-  --color-on-dark: #faf4ea;
+  --color-on-dark: #faf6ef;
   --color-accent-light: #ffad8c;
   --color-orange-deep: #b83d1c;
   --color-purple: #c84420;
   --color-purple-deep: #b83d1c;
   --color-violet: #c96a4e;
   --color-lime: #b98a37;
+  --color-gold: #d9a441;
 
-  --color-ink: #1c1b19;
-  --color-ink-soft: #45413c;
-  --color-muted: #68635b;
-  --color-faint: #777168;
+  --color-ink: #151310;
+  --color-ink-soft: #3e3a34;
+  --color-muted: #66615a;
+  --color-faint: #767067;
 
-  --color-line: rgb(28 27 25 / 0.10);
-  --color-line-strong: rgb(28 27 25 / 0.22);
+  --color-line: rgb(21 19 16 / 0.09);
+  --color-line-strong: rgb(21 19 16 / 0.18);
 
-  --color-ok: #20713d;
-  --color-ok-bg: #eefbf1;
-  --color-warn: #90611c;
-  --color-warn-bg: #fdf6e6;
+  --color-ok: #1d6f3b;
+  --color-ok-bg: #ecf8f0;
+  --color-warn: #8a5c17;
+  --color-warn-bg: #fdf5e4;
   --color-bad: #b32e2e;
   --color-bad-bg: #fdeeee;
   --color-unknown: #6b7280;
@@ -43,13 +45,17 @@
   --radius-card: 18px;
   --radius-panel: 28px;
 
-  --shadow-soft: 0 1px 2px rgb(28 27 25 / 0.04), 0 10px 26px -14px rgb(28 27 25 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(28 27 25 / 0.05), 0 20px 46px -20px rgb(28 27 25 / 0.26);
-  --shadow-panel: 0 40px 80px -40px rgb(38 29 23 / 0.4);
+  --shadow-soft: 0 1px 2px rgb(21 19 16 / 0.04), 0 8px 24px -14px rgb(21 19 16 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(21 19 16 / 0.05), 0 22px 48px -22px rgb(21 19 16 / 0.28);
+  --shadow-panel: 0 1px 1px rgb(21 19 16 / 0.04), 0 12px 24px -12px rgb(21 19 16 / 0.12), 0 48px 96px -40px rgb(38 29 23 / 0.32);
 
-  --font-sans: "Manrope", "Helvetica Neue", sans-serif;
-  --font-display: "Space Grotesk", "Helvetica Neue", sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Motion: strong ease-out for things entering or responding, ease-in-out for things moving on screen. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
 }

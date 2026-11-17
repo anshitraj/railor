@@ -51,7 +51,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
             <span className="font-mono text-[11px] text-white/50">{payment.id}</span>
           </div>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-            <p className="font-display text-[clamp(2rem,5vw,3.4rem)] font-semibold leading-none tracking-[-0.05em]">{formatAmount(payment.amount, payment.sourceCurrency)}</p>
+            <p className="font-display text-[clamp(2rem,5vw,3.4rem)] font-semibold leading-none tracking-[-0.03em]">{formatAmount(payment.amount, payment.sourceCurrency)}</p>
             <p className="pb-1 text-[15px] text-white/70">
               → {beneficiary?.label ?? "beneficiary"} · {payment.destinationCurrency} · {payment.destinationCountry}
             </p>

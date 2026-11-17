@@ -13,8 +13,11 @@ import { RemittanceSurveyPanel } from "./remittance-survey-panel";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
+import { providerSite } from "../../lib/provider-sites";
+import { CurrencyPicker } from "../price/currency-picker";
 import { priceResponseMatches } from "../../lib/price-response";
-import { freshComparison, providerIdentity } from "../../lib/price-display";
+import { providerIdentity } from "../../lib/price-display";
+import { priceView } from "../../lib/price-view";
 import styles from "./price-check.module.css";
 
 /**
@@ -35,10 +38,10 @@ const PRESETS = [
 ];
 
 const BASIS: Record<PriceBasis, { label: string; cls: string; hint: string }> = {
-  exact: { label: "Your account", cls: "bg-emerald-400/15 text-emerald-300", hint: "A live quote from your connected account; check whether fees and total debit are complete." },
-  live_public: { label: "Public reference", cls: "bg-sky-400/15 text-sky-300", hint: "A public API observation, not your business's executable quote. Your account's price can differ." },
-  published: { label: "Published", cls: "bg-amber-300/15 text-amber-200", hint: "The provider's published fee schedule at the mid-market rate — not a quote." },
-  market_estimate: { label: "Estimate", cls: "bg-white/10 text-white/60", hint: "Consumer pricing collected by Wise from the provider's site, dated." },
+  exact: { label: "Your account", cls: "bg-[var(--color-ok-bg)] text-[var(--color-ok)]", hint: "A live quote from your connected account; check whether fees and total debit are complete." },
+  live_public: { label: "Public reference", cls: "bg-[#e8f1ff] text-[#1b4a85]", hint: "A public API observation, not your business's executable quote. Your account's price can differ." },
+  published: { label: "Published", cls: "bg-[var(--color-warn-bg)] text-[var(--color-warn)]", hint: "The provider's published fee schedule at the mid-market rate — not a quote." },
+  market_estimate: { label: "Estimate", cls: "bg-[var(--color-canvas)] text-[var(--color-muted)]", hint: "Consumer pricing collected by Wise from the provider's site, dated." },
 };
 
 function money(n: number | null | undefined) {
@@ -80,7 +83,7 @@ function CurrencyBadge({ code, symbol, flag, size = 26 }: { code: string; symbol
   // The issuing country's flag, round like a token logo; the symbol circle is only the fallback.
   if (flag) {
     return (
-      <span className="inline-flex shrink-0 rounded-full ring-2 ring-black/25" style={{ width: size, height: size }}>
+      <span className="inline-flex shrink-0 rounded-full ring-1 ring-black/10" style={{ width: size, height: size }}>
         <Flag code={flag} size={size} round />
       </span>
     );
@@ -90,82 +93,10 @@ function CurrencyBadge({ code, symbol, flag, size = 26 }: { code: string; symbol
     <span
       aria-hidden
       style={{ width: size, height: size, background: fallbackFill(code, 3), fontSize: size * (glyph.length > 1 ? 0.34 : 0.5) }}
-      className="inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white ring-2 ring-black/25"
+      className="inline-flex shrink-0 items-center justify-center rounded-full font-bold text-[var(--color-ink)] ring-1 ring-black/10"
     >
       {glyph}
     </span>
-  );
-}
-
-function CurrencySelect({ label, value, options, onChange }: { label: string; value: string; options: PickerOption[]; onChange: (code: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", esc);
-    };
-  }, [open]);
-  const selected = options.find((o) => o.value === value);
-  const list = options.filter((o) => !query || `${o.value} ${o.label}`.toLowerCase().includes(query.toLowerCase())).slice(0, 80);
-  return (
-    <div ref={box} className="relative">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={`${label}: ${value}`}
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] py-1.5 pl-1.5 pr-3 text-[15px] font-semibold text-white transition hover:bg-white/[0.12]"
-      >
-        <CurrencyBadge code={value} symbol={selected?.emoji} flag={selected?.flag} />
-        {value}
-        <ChevronDown size={15} className={cn("text-white/60 transition-transform", open && "rotate-180")} />
-      </button>
-      {open ? (
-        <div className="absolute right-0 z-30 mt-2 w-[min(300px,80vw)] rounded-2xl border border-white/10 bg-[#1b1a18] p-2 shadow-[0_18px_50px_rgba(0,0,0,.45)]">
-          <label className="flex items-center gap-2 rounded-xl bg-white/[0.06] px-3 py-2 text-white/60">
-            <Search size={14} />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search currency"
-              aria-label="Search currency"
-              className="min-w-0 flex-1 bg-transparent text-[13.5px] text-white outline-none placeholder:text-white/40"
-            />
-          </label>
-          <ul role="listbox" aria-label={label} className="mt-1.5 max-h-72 overflow-y-auto">
-            {list.map((o) => (
-              <li key={o.value}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={o.value === value}
-                  onClick={() => {
-                    onChange(o.value);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                  className={cn("flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13.5px] transition hover:bg-white/[0.07]", o.value === value && "bg-white/[0.08]")}
-                >
-                  <CurrencyBadge code={o.value} symbol={o.emoji} flag={o.flag} size={24} />
-                  <span className="font-semibold text-white">{o.value}</span>
-                  <span className="truncate text-white/50">{o.label.split(" — ")[1] ?? ""}</span>
-                </button>
-              </li>
-            ))}
-            {!list.length ? <li className="px-3 py-4 text-[12.5px] text-white/50">No currency matches.</li> : null}
-          </ul>
-        </div>
-      ) : null}
-    </div>
   );
 }
 
@@ -189,10 +120,10 @@ function RefreshRing({ elapsed, loading, onClick }: { elapsed: number; loading: 
   const r = 11;
   const c = 2 * Math.PI * r;
   return (
-    <button type="button" onClick={onClick} aria-label="Refresh quotes now" title={`Refreshes every ${REFRESH_SECONDS}s`} className="relative grid size-9 place-items-center rounded-full text-white/70 transition hover:bg-white/[0.08] hover:text-white">
+    <button type="button" onClick={onClick} aria-label="Refresh quotes now" title={`Refreshes every ${REFRESH_SECONDS}s`} className="relative grid size-9 place-items-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]">
       <svg viewBox="0 0 28 28" className="absolute inset-0 size-9 -rotate-90" aria-hidden>
-        <circle cx="14" cy="14" r={r} fill="none" stroke="rgb(255 255 255 / .1)" strokeWidth="2" />
-        <circle cx="14" cy="14" r={r} fill="none" stroke="#ffad8c" strokeWidth="2" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, elapsed / REFRESH_SECONDS))} className="transition-[stroke-dashoffset] duration-1000 ease-linear" />
+        <circle cx="14" cy="14" r={r} fill="none" stroke="rgb(21 19 16 / .1)" strokeWidth="2" />
+        <circle cx="14" cy="14" r={r} fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, elapsed / REFRESH_SECONDS))} className="transition-[stroke-dashoffset] duration-1000 ease-linear" />
       </svg>
       <RefreshCw size={14} className={cn(loading && "animate-spin")} />
     </button>
@@ -308,11 +239,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   }, [flashes]);
 
   const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now) && (!r.publicOffer || Date.parse(r.publicOffer.displayUntil) > now);
-  const quotes = result?.rows.filter((r) => (r.basis !== "market_estimate" || (freshComparison(r, result.input, now) && !result.rows.some(offer => offer.publicOffer && visible(offer) && offer.providerSlug === providerIdentity(r.providerSlug)))) && visible(r)) ?? [];
+  const { quotes, estimates, excluded, best } = priceView(result, now);
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
-  const estimates = result?.rows.filter((r) => r.basis === "market_estimate" && !quotes.some(quote => quote.providerSlug === r.providerSlug) && visible(r)) ?? [];
-  const excluded = result?.rows.filter((r) => r.profileAssessment?.status === "not_supported") ?? [];
-  const best = quotes.find((r) => r.shortfall === 0) ?? null;
   const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => providerIdentity(row.providerSlug) === candidate.providerSlug) && !quotes.some(row => providerIdentity(row.providerSlug) === candidate.providerSlug));
   const selectedCandidate = picked && !quotes.some((row) => row.providerSlug === picked) ? candidates.find((candidate) => candidate.providerSlug === picked) ?? null : null;
   const selected = selectedCandidate ? null : result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
@@ -327,20 +255,28 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     setTo(from);
   };
 
-  const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = {
-    label: !valid ? (from === to ? "Pick two different currencies" : "Enter an amount") : selected || selectedCandidate ? `Connect ${selected?.providerName ?? selectedCandidate?.providerName} · Coming soon` : loading ? "Fetching prices…" : "Select a provider",
-    disabled: true,
-  };
+  // A working next step: the chosen provider's own site, or the page its price came from.
+  const chosenSlug = selected?.providerSlug ?? selectedCandidate?.providerSlug ?? null;
+  const chosenName = (selected?.providerName ?? selectedCandidate?.providerName ?? "").split(" · ")[0];
+  const site = chosenSlug ? providerSite(chosenSlug) : null;
+  const sourceUrl = selected?.source?.url && /^https:\/\//.test(selected.source.url) ? selected.source.url : null;
+  const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = !valid
+    ? { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true }
+    : site
+      ? { label: `Go to ${chosenName}`, href: site, external: true, ...(sourceUrl && !sourceUrl.startsWith(site) ? { secondary: { label: "See where this price came from", href: sourceUrl, external: true } } : {}) }
+      : sourceUrl
+        ? { label: `See ${chosenName}’s pricing`, href: sourceUrl, external: true }
+        : { label: loading ? "Fetching prices…" : chosenName ? `${chosenName} has no public site link yet` : "Select a provider", disabled: true };
 
   const reducedMotion = useReducedMotion();
   return (
     <div className={styles.comparisonLayout}>
-      <section className="product-dark p-3 sm:p-4" aria-label="Price comparison">
+      <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2 px-1">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1 text-[12px] font-semibold text-[#ffad8c]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
               <span className="relative flex size-2">
-                <span className="relative inline-flex size-2 rounded-full bg-[#ffad8c]" />
+                <span className="relative inline-flex size-2 rounded-full bg-[#22a35a]" />
               </span>
               Price observations
             </span>
@@ -350,7 +286,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 aria-pressed={market}
                 onClick={() => setMarket((m) => !m)}
                 title="Add consumer prices collected by Wise's comparison feed"
-                className={cn("rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition", market ? "border-[#ffad8c]/50 bg-[#ffad8c]/10 text-[#ffad8c]" : "border-white/10 text-white/60 hover:text-white")}
+                className={cn("rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition", market ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line-strong)] text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
               >
                 {market ? "Market estimates on" : "+ Market estimates"}
               </button>
@@ -359,13 +295,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           </div>
 
           <div role="group" aria-label="Account type" className="flex flex-wrap items-center justify-between gap-2 px-1 py-1">
-            <span className="text-[12px] font-medium text-white/60">I’m {context.direction === "receive" ? "receiving" : "sending"} as</span>
-            <div className="inline-flex rounded-full border border-white/15 bg-white/[0.03] p-1">
+            <span className="text-[12px] font-medium text-[var(--color-muted)]">I’m {context.direction === "receive" ? "receiving" : "sending"} as</span>
+            <div className="inline-flex rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] p-1">
               {([{ value: "business", label: "Business" }, { value: "freelancer", label: "Freelancer" }, { value: "personal", label: "Personal" }] as const).map((option) => {
                 const active = context.profile === option.value || (option.value === "freelancer" && context.profile === "sole_proprietor");
                 return <button key={option.value} type="button" aria-pressed={active}
                   onClick={() => setContext((c) => ({ ...c, profile: option.value, purpose: option.value === "personal" ? "personal" : c.purpose === "personal" ? "services" : c.purpose }))}
-                  className={cn("rounded-full px-3 py-1.5 text-[12px] font-semibold transition", active ? "bg-[#ffad8c]/15 text-[#ffad8c]" : "text-white/60 hover:text-white")}>
+                  className={cn("rounded-full px-3 py-1.5 text-[12px] font-semibold transition", active ? "bg-[var(--color-ink)] text-[#fff]" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}>
                   {option.label}
                 </button>;
               })}
@@ -374,9 +310,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           </div>
 
           <div className="relative flex flex-col gap-1.5">
-            <div className="rounded-2xl border border-[#f5c451]/45 bg-white/[0.04] p-4 transition focus-within:border-[#f5c451]/80 focus-within:bg-white/[0.06]">
+            <div className="rounded-2xl border border-transparent bg-[var(--color-canvas)] p-4 transition focus-within:border-[var(--color-ink)]">
               <div className="flex items-center justify-between gap-2">
-                <label htmlFor="swap-amount" className="text-[12.5px] font-medium text-white/60">
+                <label htmlFor="swap-amount" className="text-[12.5px] font-medium text-[var(--color-muted)]">
                   {context.direction === "receive" ? (context.profile === "personal" ? "Your sender sends" : "Your client sends") : "You send"}
                 </label>
                 <div className="flex gap-1">
@@ -385,7 +321,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                       key={p.value}
                       type="button"
                       onClick={() => setAmountText(String(p.value))}
-                      className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-bold transition", amount === p.value ? "text-[#f5c451]" : "text-white/45 hover:text-white")}
+                      className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-bold transition", amount === p.value ? "bg-[var(--color-ink)] text-[#fff]" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
                     >
                       {p.label}
                     </button>
@@ -399,30 +335,30 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   autoComplete="off"
                   value={amountText}
                   onChange={(e) => setAmountText(e.target.value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 12))}
-                  className="min-w-0 flex-1 bg-transparent font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight text-white outline-none placeholder:text-white/25"
+                  className="min-w-0 flex-1 bg-transparent font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
                   placeholder="0"
                 />
                 <QuickPicks options={currencies} exclude={[from, to]} onPick={setFrom} />
-                <CurrencySelect label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setFrom(c))} />
+                <CurrencyPicker label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setFrom(c))} />
               </div>
-              <p className="mt-2 text-[12px] text-white/45">{midValue !== null ? `≈ ${money(midValue)} ${to} at the mid-market rate` : " "}</p>
+              <p className="mt-2 text-[12px] text-[var(--color-muted)]">{midValue !== null ? `≈ ${money(midValue)} ${to} at the mid-market rate` : " "}</p>
             </div>
 
             <button
               type="button"
               onClick={swap}
               aria-label="Swap currencies"
-              className="absolute left-1/2 top-1/2 z-10 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-[#22211f] bg-[#34322e] text-white/80 transition hover:rotate-180 hover:text-white"
+              className="absolute left-1/2 top-1/2 z-10 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-[var(--color-surface)] bg-[var(--color-ink)] text-[#fff] transition hover:bg-[#2a2722]"
             >
               <motion.span initial={false} animate={{ rotate: (from > to) === (initial.from > initial.to) ? 0 : 180 }} transition={{ duration: reducedMotion ? 0 : .2 }}><ArrowDownUp size={15} /></motion.span>
             </button>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[12.5px] font-medium text-white/60">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
+                <span className="text-[12.5px] font-medium text-[var(--color-muted)]">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
                 {selected || selectedCandidate ? (
-                  <span className="inline-flex items-center gap-1.5 text-[12px] text-white/55">
-                    {selected?.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected?.providerSlug ?? selectedCandidate!.providerSlug} name={selected?.providerName ?? selectedCandidate!.providerName} src={selected?.logoUrl} size={16} /> <span className="font-semibold text-white/80">{selected?.providerName ?? selectedCandidate?.providerName}</span>
+                  <span className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
+                    {selected?.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected?.providerSlug ?? selectedCandidate!.providerSlug} name={selected?.providerName ?? selectedCandidate!.providerName} src={selected?.logoUrl} size={16} /> <span className="font-semibold text-[var(--color-ink-soft)]">{selected?.providerName ?? selectedCandidate?.providerName}</span>
                   </span>
                 ) : null}
               </div>
@@ -430,22 +366,22 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <output
                   aria-live="polite"
                   className={cn(
-                    "min-w-0 flex-1 truncate font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight tabular text-white",
+                    "min-w-0 flex-1 truncate font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight tabular text-[var(--color-ink)]",
                     selected && flashes[selected.providerSlug] === "up" && "railor-flash-up",
                     selected && flashes[selected.providerSlug] === "down" && "railor-flash-down",
-                    loading && !result && "animate-pulse text-white/30",
+                    loading && !result && "animate-pulse text-[var(--color-faint)]",
                   )}
                 >
                   {receive === null ? (loading ? "…" : "—") : money(receive)}
                 </output>
                 <QuickPicks options={currencies} exclude={[from, to]} onPick={setTo} />
-                <CurrencySelect label="Receive currency" value={to} options={currencies} onChange={(c) => (c === from ? swap() : setTo(c))} />
+                <CurrencyPicker label="Receive currency" value={to} options={currencies} onChange={(c) => (c === from ? swap() : setTo(c))} />
               </div>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12px] text-white/45">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[var(--color-muted)]">
                 <span>
                   {selected?.totalCostPct !== null && selected?.totalCostPct !== undefined ? (
                     <>
-                      ≈ <span className={cn("font-semibold", selected.totalCostPct <= 0.5 ? "text-emerald-300" : selected.totalCostPct <= 1.5 ? "text-white/75" : "text-red-300")}>{selected.totalCostPct.toFixed(2)}%</span> all-in vs mid-market
+                      ≈ <span className={cn("font-semibold", selected.totalCostPct <= 0.5 ? "text-[var(--color-ok)]" : selected.totalCostPct <= 1.5 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{selected.totalCostPct.toFixed(2)}%</span> all-in vs mid-market
                     </>
                   ) : selected?.partial ? (
                     selected.publicOffer ? "First transfer · US bank funded" : "Fee reference · check account conditions"
@@ -459,7 +395,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           </div>
 
           {rate !== null ? (
-            <button type="button" onClick={() => setInverted((v) => !v)} className="inline-flex w-fit items-center gap-1.5 px-1 text-[12px] text-white/55 transition hover:text-white" title="Flip the rate">
+            <button type="button" onClick={() => setInverted((v) => !v)} className="inline-flex w-fit items-center gap-1.5 px-1 text-[12px] text-[var(--color-muted)] transition hover:text-[var(--color-ink)]" title="Flip the rate">
               <Info size={13} />
               {inverted ? `1 ${to} ≈ ${rateText(1 / rate)} ${from}` : `1 ${from} ≈ ${rateText(rate)} ${to}`}
               <ArrowLeftRight size={12} />
@@ -471,13 +407,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               href={cta.href}
               target={"external" in cta && cta.external ? "_blank" : undefined}
               rel={"external" in cta && cta.external ? "noreferrer noopener" : undefined}
-              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-orange)] px-5 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_30px_-12px_rgba(233,90,44,.8)] transition hover:-translate-y-px hover:bg-[#ff6a3d]"
+              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-orange)] px-5 py-3.5 text-[15px] font-bold text-[#fff] shadow-[0_10px_30px_-12px_rgba(233,90,44,.8)] transition hover:bg-[#d94c22]"
             >
-              <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
+              {cta.label}
               {"external" in cta && cta.external ? <ArrowUpRight size={16} /> : null}
             </Link>
           ) : (
-            <button type="button" disabled className="mt-1 w-full rounded-full bg-white/[0.08] px-5 py-3.5 text-[15px] font-semibold text-white/45">
+            <button type="button" disabled className="mt-1 w-full rounded-full bg-[var(--color-canvas)] px-5 py-3.5 text-[15px] font-semibold text-[var(--color-muted)]">
               <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
             </button>
           )}
@@ -486,13 +422,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               href={cta.secondary.href}
               target={"external" in cta.secondary && cta.secondary.external ? "_blank" : undefined}
               rel={"external" in cta.secondary && cta.secondary.external ? "noreferrer noopener" : undefined}
-              className="-mt-1 text-center text-[12px] font-semibold text-white/55 underline decoration-dotted underline-offset-4 hover:text-white"
+              className="-mt-1 text-center text-[12px] font-semibold text-[var(--color-muted)] underline decoration-dotted underline-offset-4 hover:text-[var(--color-ink)]"
             >
               {cta.secondary.label}
             </Link>
           ) : null}
           {error ? (
-            <p role="alert" className="rounded-xl bg-red-400/10 px-3 py-2 text-[12.5px] text-red-200">
+            <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">
               {error}
             </p>
           ) : null}
@@ -502,13 +438,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
-        action={{ ...cta, disabled: true }}
+        action={cta}
         connection={selected && selected.side !== "payer" ? <ConnectionLink slug={selected.providerSlug} name={selected.providerName} mode={mode} connected={connected.includes(connectionProviderSlug(selected.providerSlug))} light /> : null}
-        market={estimates.length ? <div className="product-dark p-3">{estimates.length ? (
-            <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-white/10 px-1.5 py-1">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-white/70">
+        market={estimates.length ? <div className="price-surface p-3">{estimates.length ? (
+            <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-[var(--color-line)] px-1.5 py-1">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-[var(--color-ink-soft)]">
                 Market estimates · {estimates.length}
-                <span className="text-[11px] font-normal text-white/40">consumer prices, collected by Wise · never ranked best</span>
+                <span className="text-[11px] font-normal text-[var(--color-faint)]">consumer prices, collected by Wise · never ranked best</span>
               </summary>
               <ol className="flex flex-col gap-1 pb-1">
                 {estimates.map((row) => (
@@ -517,28 +453,28 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </ol>
             </details>
           ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
-        history={result?.historicalPricing ? <div className="product-dark p-3">{result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}</div> : <p className={styles.contextEmpty}>No historical survey was returned for this pair.</p>}
+        history={result?.historicalPricing ? <div className="price-surface p-3">{result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}</div> : <p className={styles.contextEmpty}>No historical survey was returned for this pair.</p>}
         coverage={null}
-        webEvidence={selected?.webChecks?.length ? <div className="product-dark mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
+        webEvidence={selected?.webChecks?.length ? <div className="price-surface mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
       />
       <div className={styles.moreContext}>
         {result?.webCheck ? <WebCheckStatus summary={result.webCheck} light /> : null}
         {(result?.platformQuotes?.length ?? 0) > 0 && <PriceDisclosure title="Railor account observations" description="Backend account observations; kept separate from your customer price."><PlatformQuotePanel checks={result?.platformQuotes ?? []} now={now} /></PriceDisclosure>}
-        {(unavailable.length > 0 || excluded.length > 0) && <PriceDisclosure title="Unavailable providers & profile exclusions" description={String(unavailable.length + excluded.length) + " providers need more information or do not meet the documented rules."}><div className="product-dark p-4">{unavailable.length ? (
+        {(unavailable.length > 0 || excluded.length > 0) && <PriceDisclosure title="Unavailable providers & profile exclusions" description={String(unavailable.length + excluded.length) + " providers need more information or do not meet the documented rules."}><div className="price-surface p-4">{unavailable.length ? (
             <ul className="flex flex-col gap-1">
               {unavailable.map((u) => (
-                <li key={u.providerSlug} className="flex items-center gap-3 rounded-2xl border border-dashed border-white/15 px-3 py-2.5">
+                <li key={u.providerSlug} className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--color-line)] px-3 py-2.5">
                   <ProviderLogo slug={u.providerSlug} name={u.providerName} size={26} />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-[13px] font-semibold text-white">{u.providerName}</span>
-                    <span className="text-[11.5px] text-white/50">{u.reason}</span>
+                    <span className="text-[13px] font-semibold text-[var(--color-ink)]">{u.providerName}</span>
+                    <span className="text-[11.5px] text-[var(--color-muted)]">{u.reason}</span>
                   </span>
                   <ConnectionLink slug={u.providerSlug} name={u.providerName} mode={mode} connected={connected.includes(u.providerSlug)} />
                 </li>
               ))}
             </ul>
           ) : null}
-          {excluded.length ? <details className="rounded-xl border border-red-300/20 p-3 text-[12px] text-white/70"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[#ffad8c] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}</div></PriceDisclosure>}
+          {excluded.length ? <details className="rounded-xl border border-[var(--color-bad)]/20 p-3 text-[12px] text-[var(--color-ink-soft)]"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[var(--color-orange-deep)] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}</div></PriceDisclosure>}
         <p className={styles.priceFootnote}>Sources and price basis are labelled separately. Mid-market reference: {result?.reference?.source ?? "not available"}. Published schedules are estimates, not guaranteed payout amounts. Additional banking or corridor fees may apply.</p>
       </div>
     </div>
@@ -556,7 +492,7 @@ function hostOf(url: string | null) {
 function WebCheckStatus({ summary, light = false }: { summary: WebCheckSummary; light?: boolean }) {
   if (!summary.configured) return null;
   const text = summary.paused ? "Google check paused" : summary.pending ? `Google-checking ${summary.pending}…` : summary.checked ? `${summary.checked} Google-checked` : null;
-  return text ? <span className={light ? styles.webSummary : "block text-[10.5px] text-white/40"}>{text}</span> : null;
+  return text ? <span className={light ? styles.webSummary : "block text-[10.5px] text-[var(--color-faint)]"}>{text}</span> : null;
 }
 
 /** One chip per row: what Google found about the route this price implies. */
@@ -564,9 +500,9 @@ function WebCheckBadge({ checks }: { checks?: RowWebCheck[] }) {
   const check = checks?.[0];
   if (!check) return null;
   const chip = "inline-flex items-center gap-1 rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide";
-  if (check.state === "pending") return <span className={cn(chip, "bg-white/[0.06] text-white/50")}><LoaderCircle size={10} className="animate-spin" /> checking on Google</span>;
-  if (check.conflict) return <span title={check.quote ?? check.statement} className={cn(chip, "bg-amber-300/15 text-amber-200")}><TriangleAlert size={10} /> web check disagrees</span>;
-  if (check.state === "supported") return <span title={`“${check.quote}” — ${hostOf(check.sourceUrl)}`} className={cn(chip, "bg-emerald-400/15 text-emerald-300")}><ShieldCheck size={10} /> Google-checked</span>;
+  if (check.state === "pending") return <span className={cn(chip, "bg-[var(--color-canvas)] text-[var(--color-muted)]")}><LoaderCircle size={10} className="animate-spin" /> checking on Google</span>;
+  if (check.conflict) return <span title={check.quote ?? check.statement} className={cn(chip, "bg-[var(--color-warn-bg)] text-[var(--color-warn)]")}><TriangleAlert size={10} /> web check disagrees</span>;
+  if (check.state === "supported") return <span title={`“${check.quote}” — ${hostOf(check.sourceUrl)}`} className={cn(chip, "bg-[var(--color-ok-bg)] text-[var(--color-ok)]")}><ShieldCheck size={10} /> Google-checked</span>;
   return null;
 }
 
@@ -576,19 +512,19 @@ const CHECK_STATE: Record<RowWebCheck["state"], string> = {
 
 function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; compact?: boolean }) {
   return (
-    <section aria-label="Google web check" className={cn("text-[11.5px] text-white/60", compact ? "mt-2" : "rounded-xl border border-white/10 p-3")}>
-      {!compact ? <h3 className="flex items-center gap-1.5 font-semibold text-white"><ShieldCheck size={13} className="text-emerald-300" /> Google web check</h3> : null}
+    <section aria-label="Google web check" className={cn("text-[11.5px] text-[var(--color-muted)]", compact ? "mt-2" : "rounded-xl border border-[var(--color-line)] p-3")}>
+      {!compact ? <h3 className="flex items-center gap-1.5 font-semibold text-[var(--color-ink)]"><ShieldCheck size={13} className="text-[var(--color-ok)]" /> Google web check</h3> : null}
       <ul className={cn("space-y-2", !compact && "mt-2")}>
         {checks.map((check) => (
           <li key={check.statement}>
-            <p className="text-white/45">“{check.statement}”</p>
-            <p className={cn("mt-0.5 font-semibold", check.conflict ? "text-amber-200" : check.state === "supported" ? "text-emerald-300" : check.state === "contradicted" ? "text-red-200" : "text-white/55")}>
+            <p className="text-[var(--color-muted)]">“{check.statement}”</p>
+            <p className={cn("mt-0.5 font-semibold", check.conflict ? "text-[var(--color-warn)]" : check.state === "supported" ? "text-[var(--color-ok)]" : check.state === "contradicted" ? "text-[var(--color-bad)]" : "text-[var(--color-muted)]")}>
               {CHECK_STATE[check.state]}{check.conflict ? " — disagrees with what Railor shows; flagged for review" : ""}
               {check.official ? " · provider’s own site" : check.sourceUrl ? " · independent source" : ""}
             </p>
-            {check.quote ? <blockquote className="mt-1 border-l-2 border-white/15 pl-2 text-white/70">{check.quote}</blockquote> : null}
-            {check.sourceUrl ? <a href={check.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block text-[#ffad8c] underline">{check.sourceTitle || hostOf(check.sourceUrl)} ↗</a> : null}
-            {check.checkedAt ? <span className="ml-2 text-[10px] text-white/35">checked {check.checkedAt.slice(0, 10)}</span> : null}
+            {check.quote ? <blockquote className="mt-1 border-l-2 border-[var(--color-line)] pl-2 text-[var(--color-ink-soft)]">{check.quote}</blockquote> : null}
+            {check.sourceUrl ? <a href={check.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-1 inline-block text-[var(--color-orange-deep)] underline">{check.sourceTitle || hostOf(check.sourceUrl)} ↗</a> : null}
+            {check.checkedAt ? <span className="ml-2 text-[10px] text-[var(--color-faint)]">checked {check.checkedAt.slice(0, 10)}</span> : null}
           </li>
         ))}
       </ul>
@@ -597,10 +533,11 @@ function WebCheckDetails({ checks, compact = false }: { checks: RowWebCheck[]; c
 }
 
 function ConnectionLink({ slug, name, mode, connected, light = false }: { slug: string; name: string; mode: "app" | "public"; connected: boolean; light?: boolean }) {
-  if (!ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
+  // Account connections aren't open yet: the public page shows nothing rather than a dead button.
+  if (mode === "public" || !ACCOUNT_QUOTE_SLUGS.has(connectionProviderSlug(slug))) return null;
   return <button type="button" disabled aria-label={`Connect ${name} · Coming soon`}
     title="Account connections and execution are coming soon. Existing quote integrations remain available."
-    className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-white/15 px-2 py-1.5 text-[10.5px] font-semibold text-[#ffad8c] transition hover:border-[#ffad8c]/60 hover:bg-white/[0.07]"}>
+    className={light ? styles.accountLink : "mr-2 inline-flex shrink-0 items-center rounded-full border border-[var(--color-line)] px-2 py-1.5 text-[10.5px] font-semibold text-[var(--color-orange-deep)] transition hover:border-[var(--color-orange)]/50 hover:bg-[var(--color-canvas)]"}>
     <LockKeyhole size={11} className="mr-1 inline" />Coming soon
   </button>;
 }
@@ -608,7 +545,7 @@ function ConnectionLink({ slug, name, mode, connected, light = false }: { slug: 
 function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row: PriceRow; best: boolean; selected: boolean; flash?: "up" | "down"; onPick: () => void; mode: "app" | "public"; connected: boolean }) {
   const tag = BASIS[row.basis];
   return (
-    <li className={cn("flex items-center rounded-xl border transition", selected ? "border-[#f5c451]/60 bg-[#f5c451]/[0.07]" : "border-transparent hover:bg-white/[0.05]")}>
+    <li className={cn("flex items-center rounded-xl border transition", selected ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)]" : "border-transparent hover:bg-[var(--color-canvas)]")}>
       <button
         type="button"
         onClick={onPick}
@@ -618,27 +555,27 @@ function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row
         <ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} size={28} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[13.5px] font-semibold text-white">{row.providerName}</span>
-            {best ? <span className="rounded-md bg-[#f5c451] px-1.5 py-px text-[10.5px] font-bold text-[#2a2410]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
+            <span className="text-[13.5px] font-semibold text-[var(--color-ink)]">{row.providerName}</span>
+            {best ? <span className="rounded-md bg-[var(--color-orange)] px-1.5 py-px text-[10.5px] font-bold text-[#fff]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
             <span title={tag.hint} className={cn("rounded-md px-1.5 py-px text-[10px] font-bold uppercase tracking-wide", tag.cls)}>
               {tag.label}
             </span>
-            {row.partial ? <span className="rounded-md bg-red-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-red-200">partial reference</span> : null}
-            {row.side === "payer" ? <span title="A service your sender pays. You only need your bank account." className="rounded-md bg-sky-400/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-sky-200">sender’s service</span> : null}
+            {row.partial ? <span className="rounded-md bg-[var(--color-bad-bg)] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-[var(--color-bad)]">partial reference</span> : null}
+            {row.side === "payer" ? <span title="A service your sender pays. You only need your bank account." className="rounded-md bg-[#e8f1ff] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-[#1b4a85]">sender’s service</span> : null}
             <WebCheckBadge checks={row.webChecks} />
           </span>
-          <span className="truncate text-[11.5px] text-white/45">
+          <span className="truncate text-[11.5px] text-[var(--color-muted)]">
             fee {row.feeAmount === null ? "—" : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`}
             {row.delivery ? ` · ${row.delivery}` : ""}
             {row.totalCostPct !== null ? ` · ${row.totalCostPct.toFixed(2)}% all-in` : ""}
           </span>
-          {row.profileAssessment ? <span className={cn("text-[10px]", row.profileAssessment.status === "documented" ? "text-emerald-300" : "text-amber-200/70")}>{row.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</span> : null}
-          <span className="truncate text-[10px] text-white/35" title={priceSourceTime(row.observedAt, row.basis)}>{priceSourceTime(row.observedAt, row.basis)}</span>
+          {row.profileAssessment ? <span className={cn("text-[10px]", row.profileAssessment.status === "documented" ? "text-[var(--color-ok)]" : "text-[var(--color-warn)]")}>{row.profileAssessment.status === "documented" ? "Documented profile match" : "Profile unconfirmed"}</span> : null}
+          <span className="truncate text-[10px] text-[var(--color-faint)]" title={priceSourceTime(row.observedAt, row.basis)}>{priceSourceTime(row.observedAt, row.basis)}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end">
-          <span className={cn("text-[14px] font-semibold tabular text-white", flash === "up" && "railor-flash-up", flash === "down" && "railor-flash-down")}>{money(row.recipientAmount)}</span>
+          <span className={cn("text-[14px] font-semibold tabular text-[var(--color-ink)]", flash === "up" && "railor-flash-up", flash === "down" && "railor-flash-down")}>{money(row.recipientAmount)}</span>
           {row.shortfall ? (
-            <span className={cn("text-[10.5px] font-semibold tabular", row.shortfall > 0 ? "text-red-300/80" : "text-emerald-300/80")}>
+            <span className={cn("text-[10.5px] font-semibold tabular", row.shortfall > 0 ? "text-[var(--color-bad)]" : "text-[var(--color-ok)]")}>
               {row.shortfall > 0 ? "−" : "+"}
               {money(Math.abs(row.shortfall))}
             </span>

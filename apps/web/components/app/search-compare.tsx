@@ -13,11 +13,13 @@ import { SearchRequestWizard } from "./search-request-wizard";
 import type { SavedSetupPolicy } from "../../lib/workspace-policy-setup";
 import { exploreRouteHref } from "../../lib/explore-route";
 
-export function SearchCompare({ policies, options, entityCountry, canDecide, defaultEmail, savedPolicy = null, canEditPolicies = false }: {
+export function SearchCompare({ policies, options, entityCountry, canDecide, defaultEmail, savedPolicy = null, canEditPolicies = false, prefill }: {
   policies: Array<{ id: string; name: string }>; options: IntentOptions; entityCountry: string; canDecide: boolean; defaultEmail?: string;
   savedPolicy?: SavedSetupPolicy | null; canEditPolicies?: boolean;
+  /** A question carried over from the public site, with whatever Railor understood of it. */
+  prefill?: { text: string; draft: Partial<IntentDraft> };
 }) {
-  const [intent, setIntent] = useState<IntentDraft>(() => defaultIntentDraft(entityCountry));
+  const [intent, setIntent] = useState<IntentDraft>(() => ({ ...defaultIntentDraft(entityCountry), ...prefill?.draft }));
   const [preference, setPreference] = useState<RankingPreset>("balanced");
   const [policyId, setPolicyId] = useState(policies[0]?.id ?? "");
   const [preview, setPreview] = useState<SearchPreviewResult | null>(null);
@@ -56,6 +58,7 @@ export function SearchCompare({ policies, options, entityCountry, canDecide, def
     <header className="search-intro"><div><p className="product-eyebrow">Search & compare</p><h1 style={{ fontSize: "clamp(30px, 3vw, 42px)" }}>Find your route.</h1>
       <p>A few simple choices. Explore coverage and compare providers. Team rules are optional.</p></div>
       <Link className="search-agent-link" href="/app/agent"><Bot size={20} /><span><strong>Prefer to describe it?</strong><small>Ask the Railor Agent</small></span><ArrowRight size={17} /></Link></header>
+    {prefill ? <p role="status" className="search-carried"><strong>From your search:</strong> “{prefill.text}”. {Object.keys(prefill.draft).length ? "We filled in what we understood — check each step, then compare." : "Pick the details below to compare routes."}</p> : null}
     <SearchRequestWizard value={intent} onChange={(next) => { setIntent(next); setPreview(null); setError(""); }} options={options}
       policies={policies} policyId={policyId} onPolicyChange={(next) => { setPolicyId(next); setPreview(null); setError(""); }}
       preference={preference} onPreferenceChange={(next) => { setPreference(next); setPreview(null); setError(""); }}

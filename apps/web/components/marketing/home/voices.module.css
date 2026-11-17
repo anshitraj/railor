@@ -1,0 +1,26 @@
+.grid { display: grid; gap: 14px; }
+.card { position: relative; display: flex; flex-direction: column; gap: 18px; padding: 28px; border: 1px solid var(--color-line); border-radius: 28px; background: var(--color-surface); transition: transform .25s var(--ease-out), box-shadow .25s ease; }
+.card:nth-child(2) { background: var(--color-ink); color: var(--color-on-dark); }
+.mark { color: var(--color-orange); }
+.quote { flex: 1; color: var(--color-ink); font-size: 18px; font-weight: 550; letter-spacing: -.01em; line-height: 1.5; }
+.card:nth-child(2) .quote { color: #fff; }
+.person { display: flex; align-items: center; gap: 12px; }
+.person strong { display: block; color: var(--color-ink); font-size: 14.5px; font-weight: 650; }
+.person small { display: block; color: var(--color-muted); font-size: 13px; }
+.card:nth-child(2) .person strong { color: #fff; }
+.card:nth-child(2) .person small { color: rgb(250 246 239 / .6); }
+.avatar { display: grid; width: 44px; height: 44px; flex: none; place-items: center; border-radius: 50%; color: #3a2905; font-size: 14px; font-weight: 700; box-shadow: 0 0 0 3px var(--color-surface), 0 6px 14px -8px rgb(21 19 16 / .4); }
+.card:nth-child(2) .avatar { box-shadow: 0 0 0 3px var(--color-ink); }
+.avatar[data-tone="gold"] { background: #f7d77f; }
+.avatar[data-tone="sky"] { background: #cfe3ff; color: #123a6b; }
+.avatar[data-tone="green"] { background: #d5f3de; color: #11542a; }
+.avatar[data-tone="orange"] { background: #ffd2bf; color: #7a2a10; }
+.sample { position: absolute; top: 14px; right: 14px; padding: 3px 8px; border: 1px dashed var(--color-line-strong); border-radius: 999px; color: var(--color-muted); font-size: 11px; font-weight: 650; }
+.card:nth-child(2) .sample { border-color: rgb(255 255 255 / .3); color: rgb(250 246 239 / .7); }
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card:nth-child(2) { transform: translateY(-14px) rotate(-.6deg); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { box-shadow: var(--shadow-lift); }
+}

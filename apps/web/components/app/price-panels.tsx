@@ -18,7 +18,7 @@ const TOOLS = {
 };
 
 export function PriceCheckHeader({ mode }: { mode: "app" | "public" }) {
-  return <header className={styles.pageHeader}><div><span className={styles.eyebrow}>Price intelligence</span><h1>Price check</h1><p>Compare what arrives, what it costs, and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
+  return <header className={styles.pageHeader}><div><h1>Compare prices</h1><p>See what arrives, what it costs and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
 }
 
 export function PriceHelpLinks() {
@@ -30,7 +30,7 @@ export function PriceToolsNav({ mode, title }: { mode: "app" | "public"; title: 
   return (
     <nav aria-label="Price tools" className="flex flex-col gap-3">
       <span className="product-eyebrow mb-1">Price intelligence</span>
-      <h1 className="font-display text-[26px] font-semibold leading-none tracking-[-0.04em]">{title}</h1>
+      <h1 className="font-display text-[26px] font-semibold leading-none tracking-[-0.03em]">{title}</h1>
       <ul className="flex gap-1 overflow-x-auto lg:flex-col">
         {TOOLS[mode].map((t, i) => (
           <li key={t.href}>

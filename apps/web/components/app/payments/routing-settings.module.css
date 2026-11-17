@@ -1,6 +1,6 @@
 .shell, .tester { overflow: hidden; border: 1px solid var(--color-line); border-radius: 22px; background: var(--color-surface); box-shadow: var(--shadow-soft); }
 .workspace { display: grid; gap: 18px; }
-.pageHeading h1 { font: 500 34px/1.15 var(--font-display); letter-spacing: -.05em; }
+.pageHeading h1 { font: 500 34px/1.15 var(--font-display); letter-spacing: -.028em; }
 .pageHeading p { margin-top: 8px; color: var(--color-muted); font-size: 13px; line-height: 1.7; }
 .profileBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--color-line); background: var(--color-paper); }
 .profileStatus { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--color-ink); font-size: 12px; }
@@ -13,7 +13,7 @@
 .steps li span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--color-line); font-size: 10px; }
 .steps li[aria-current="step"] { color: var(--color-orange-deep); font-weight: 700; }
 .steps li[aria-current="step"] span { background: var(--color-action); color: var(--color-on-dark); border-color: transparent; }
-.stepTitle { font: 500 24px/1.25 var(--font-display); letter-spacing: -.04em; }
+.stepTitle { font: 500 24px/1.25 var(--font-display); letter-spacing: -.028em; }
 .actions { flex-wrap: wrap; }
 .fields { display: grid; gap: 20px; min-width: 0; }
 .fields:disabled { opacity: .7; }
@@ -36,7 +36,7 @@
 .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; padding: 26px 30px; border-bottom: 1px solid var(--color-line); background: linear-gradient(125deg, var(--color-surface), var(--color-lavender)); }
 .heroCopy { max-width: 720px; }
 .eyebrow, .sectionKicker { color: var(--color-orange-deep); font: 600 10px/1.4 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
-.hero h2 { margin-top: 7px; color: var(--color-ink); font: 500 clamp(25px, 3vw, 38px)/1.05 var(--font-display); letter-spacing: -.055em; }
+.hero h2 { margin-top: 7px; color: var(--color-ink); font: 500 clamp(25px, 3vw, 38px)/1.05 var(--font-display); letter-spacing: -.028em; }
 .hero p { max-width: 64ch; margin-top: 10px; color: var(--color-muted); font-size: 12px; line-height: 1.7; }
 .heroStatus, .testerBadge { display: inline-flex; align-items: center; gap: 10px; min-width: 150px; padding: 13px 14px; border-left: 2px solid var(--color-orange); background: var(--color-surface); }
 .heroStatus strong, .testerBadge span { display: block; color: var(--color-ink); font: 600 13px/1.3 var(--font-display); }

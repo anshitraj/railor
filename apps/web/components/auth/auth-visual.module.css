@@ -1,0 +1,20 @@
+.visual { position: relative; width: min(400px, 100%); margin: 8px auto 0; animation: rise .7s var(--ease-out) .1s both; }
+.card { padding: 16px; border-radius: 26px; background: var(--color-surface); box-shadow: 0 0 0 1px rgb(21 19 16 / .06), 0 40px 80px -40px rgb(60 35 15 / .5); }
+.row { display: flex; align-items: center; gap: 10px; }
+.flags { display: inline-flex; }
+.flags img + img { margin-left: -8px; box-shadow: 0 0 0 3px var(--color-surface); }
+.pair { flex: 1; color: var(--color-ink); font-size: 15px; font-weight: 650; }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 12.5px; font-weight: 550; }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: #22a35a; box-shadow: 0 0 0 3px rgb(34 163 90 / .16); }
+.best { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--color-orange) 38%, transparent); border-radius: 18px; background: color-mix(in srgb, var(--color-lavender) 70%, var(--color-surface)); }
+.best strong { display: block; color: var(--color-ink); font-size: 15px; font-weight: 650; }
+.best small { color: var(--color-muted); font-size: 12px; }
+.amount { color: var(--color-ink); font-size: 22px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.list { display: grid; gap: 6px; margin-top: 8px; }
+.list li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 14px; background: var(--color-canvas); color: var(--color-ink); font-size: 14px; font-weight: 600; }
+.list em { padding: 1px 8px; border-radius: 999px; background: var(--color-surface); color: var(--color-muted); font-size: 11.5px; font-style: normal; font-weight: 650; }
+.rule { display: flex; width: fit-content; align-items: center; gap: 8px; margin: 14px auto 0; padding: 10px 14px; border-radius: 999px; background: var(--color-ink); color: #fff; font-size: 13.5px; font-weight: 600; box-shadow: 0 16px 30px -18px rgb(21 19 16 / .6); animation: rise .6s var(--ease-out) .35s both; }
+.rule svg:first-child { color: var(--color-accent-light); }
+.rule svg:last-child { color: #4ade80; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .visual, .rule { animation: none; } }

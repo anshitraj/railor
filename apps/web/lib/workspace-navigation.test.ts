@@ -4,7 +4,7 @@ import { exploreRouteHref, parseExploreRoute } from "./explore-route";
 import { setupSnippet } from "./developer-setup";
 
 describe("simpler workspace journeys", () => {
-  it.each([["/app", "Overview"], ["/app/providers/wise", "Compare"], ["/app/freelancer", "Compare"], ["/app/search", "Compare"], ["/app/connectors", "Developers"], ["/app/settings/connections", "Developers"], ["/app/decisions/one", "History"], ["/app/approvals", "History"], ["/app/policies", "Settings"], ["/app/monitoring", "Settings"]])("groups %s under %s", (path, area) => expect(workspaceArea(path)).toBe(area));
+  it.each([["/app", "Home"], ["/app/prices", "Prices"], ["/app/freelancer", "Prices"], ["/app/providers/wise", "Routes"], ["/app/search", "Routes"], ["/app/connectors", "Developers"], ["/app/settings/connections", "Developers"], ["/app/decisions/one", "Rules"], ["/app/approvals", "Rules"], ["/app/policies", "Rules"], ["/app/monitoring", "Activity"], ["/app/payments/new", "Activity"], ["/app/agent", "Agent"], ["/app/settings", "Settings"]])("groups %s under %s", (path, area) => expect(workspaceArea(path)).toBe(area));
   it("keeps exact funding, network, amount and receiving details in read-only exploration", () => {
     const input = { sourceEntityCountry: "IN", sourceEntityType: "individual", beneficiaryType: "business", sourceAsset: "USDC", sourceNetwork: "base", destinationCountry: "AE", destinationCurrency: "AED", amount: 1234.56, endpointType: "bank_account", namedRail: "test-rail", preference: "cheapest" };
     const url = new URL(exploreRouteHref(input, "cheapest"), "https://railor.invalid");

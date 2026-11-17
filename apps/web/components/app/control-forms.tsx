@@ -168,22 +168,22 @@ export function PolicyEditor({
 
   return <Card className={styles.wizard}>
     <header className={styles.header}>
-      <div><span className="product-index">{policyId ? "POLICY / NEW VERSION" : "POLICY / GUIDED SETUP"}</span><h2>{policyId ? "Create a new version" : "Create policy"}</h2><p>One question at a time. Choose your rules, then review your draft.</p></div>
-      <span className="product-badge" data-tone="warn">Draft only</span>
+      <div><h2>{policyId ? "Update these rules" : "Create your company rules"}</h2><p>A few quick questions. Nothing takes effect until you review and turn it on.</p></div>
+      <span className="product-badge" data-tone="neutral">Draft</span>
     </header>
     <div className={styles.progress} role="progressbar" aria-label="Policy setup progress" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={position + 1} aria-valuetext={`Question ${position + 1} of ${steps.length}: ${stage}`}><span style={{ width: `${((position + 1) / steps.length) * 100}%` }} /></div>
     <div className={styles.layout}>
       <aside className={styles.sidebar} aria-label="Setup stages">
-        <ol>{stages.map((item, index) => <li key={item} className={styles.stage} aria-current={stage === item ? "step" : undefined} data-complete={stages.indexOf(stage) > index}><span>{stages.indexOf(stage) > index ? <Check size={13} aria-hidden="true" /> : String(index + 1).padStart(2, "0")}</span>{item}</li>)}</ol>
-        <p className={styles.sidebarNote}><ShieldCheck size={20} aria-hidden="true" />Your answers become a draft.<br />Extra questions appear only when you choose custom rules.</p>
+        <ol>{stages.map((item, index) => <li key={item} className={styles.stage} aria-current={stage === item ? "step" : undefined} data-complete={stages.indexOf(stage) > index}><span>{stages.indexOf(stage) > index ? <Check size={13} aria-hidden="true" /> : index + 1}</span>{item}</li>)}</ol>
+        <p className={styles.sidebarNote}><ShieldCheck size={20} aria-hidden="true" />Saved as a draft until you turn it on.</p>
       </aside>
       <div className={styles.body}>
         <section key={step} className={styles.question} aria-labelledby={`${nameId}-question`}>
-          <span className={styles.eyebrow}>Question {String(position + 1).padStart(2, "0")} of {String(steps.length).padStart(2, "0")} / {stage}</span>
+          <span className={styles.eyebrow}>Step {position + 1} of {steps.length} · {stage}</span>
           <h3 id={`${nameId}-question`} ref={heading} tabIndex={-1}>{title}</h3>
           <p className={styles.hint}>{hint}</p>
           {step === "name" && <>
-            <div className={styles.nameField}><label htmlFor={nameId}>Policy name</label><input id={nameId} autoComplete="off" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Team payment policy" /></div>
+            <div className={styles.nameField}><label htmlFor={nameId}>Name</label><input id={nameId} autoComplete="off" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Team payment policy" /></div>
             <div className={styles.examples}><span>Try:</span>{["Production policy", "Supplier payments", "Treasury policy"].map((example) => <button type="button" key={example} onClick={() => setName(example)}>{example}</button>)}</div>
           </>}
           {step === "checks" && <PolicyChoices label={title} value={profile} onChange={chooseProfile} options={[

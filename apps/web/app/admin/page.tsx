@@ -64,7 +64,7 @@ export default async function AdminOverview() {
         {tiles.map((t) => (
           <Link key={t.label} href={t.href} className="flex items-end justify-between gap-3 bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-paper)]">
             <span className="flex flex-col gap-1">
-              <span className="font-display text-[30px] font-semibold leading-none tracking-[-0.04em] tabular">{t.value.toLocaleString("en-US")}</span>
+              <span className="font-display text-[30px] font-semibold leading-none tracking-[-0.03em] tabular">{t.value.toLocaleString("en-US")}</span>
               <span className="text-[13px] text-[var(--color-ink-soft)]">{t.label}</span>
               <span className="text-[11px] text-[var(--color-faint)]">{t.hint}</span>
             </span>

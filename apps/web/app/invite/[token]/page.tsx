@@ -16,7 +16,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   if (!invite || invite.state !== "pending") {
     body = (
       <>
-        <h1 className="font-display text-[30px] font-medium leading-tight tracking-[-0.04em]">
+        <h1 className="font-display text-[30px] font-medium leading-tight tracking-[-0.03em]">
           {invite?.state === "accepted" ? "This invitation was already used." : "This invitation has expired."}
         </h1>
         <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">
@@ -32,7 +32,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     body = (
       <>
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Workspace invitation</p>
-        <h1 className="font-display text-[32px] font-medium leading-[1.02] tracking-[-0.045em]">
+        <h1 className="font-display text-[32px] font-medium leading-[1.02] tracking-[-0.03em]">
           Join <span className="text-[var(--color-orange)]">{invite.organizationName}</span> on Railor
         </h1>
         <p className="text-[14px] leading-relaxed text-[var(--color-muted)]">
@@ -72,7 +72,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
       <div className="railor-rise relative flex w-full max-w-[480px] flex-col gap-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-surface)] p-7 shadow-[var(--shadow-panel)] sm:p-9">
         <Link href="/" className="mb-2 flex w-fit items-center gap-2">
           <RailorMark size={28} />
-          <span className="font-display text-[18px] font-bold tracking-[-0.05em]">Railor</span>
+          <span className="font-display text-[18px] font-bold tracking-[-0.03em]">Railor</span>
         </Link>
         {body}
       </div>

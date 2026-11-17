@@ -52,69 +52,60 @@ interface NavItem {
   exact?: boolean;
 }
 
+/** Every workspace page, grouped by area — used by the command palette and the breadcrumb. */
 export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items: NavItem[] }> = [
   { title: null, items: [
-    { href: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
-    { href: "/app/prices", label: "Price check", icon: Calculator },
-    { href: "/app/freelancer", label: "Freelancer", icon: FileText, stage: "beta" },
-    { href: "/app/search", label: "Search & compare", icon: ScanSearch },
-    { href: "/app/corridors", label: "Corridors", icon: Route },
-    { href: "/app/payments", label: "History", icon: History },
+    { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
     { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
   ] },
-  {
-    title: "Infrastructure",
-    icon: Globe2,
-    items: [
-      { href: "/app/map", label: "Route map", icon: Globe2 },
-      { href: "/app/providers", label: "Providers", icon: Warehouse },
-      { href: "/app/compare", label: "Compare", icon: GitCompare },
-    ],
-  },
-  {
-    title: "Move money",
-    icon: Banknote,
-    items: [
-      { href: "/app/routing", label: "Routing", icon: Shuffle },
-      { href: "/app/settings/connections", label: "Connections", icon: Link2 },
-    ],
-  },
-  {
-    title: "Controls",
-    icon: ListChecks,
-    items: [
+  { title: "Prices", icon: Calculator, items: [
+    { href: "/app/prices", label: "Price check", icon: Calculator },
+    { href: "/app/freelancer", label: "Get paid · invoices", icon: FileText, stage: "beta" },
+  ] },
+  { title: "Routes", icon: Route, items: [
+    { href: "/app/search", label: "Find a route", icon: ScanSearch },
+    { href: "/app/corridors", label: "Saved routes", icon: Route },
+    { href: "/app/providers", label: "Providers", icon: Warehouse },
+    { href: "/app/compare", label: "Compare providers", icon: GitCompare },
+    { href: "/app/map", label: "Route map", icon: Globe2 },
+  ] },
+  { title: "Rules", icon: ListChecks, items: [
+    { href: "/app/policies", label: "Company rules", icon: ListChecks },
     { href: "/app/decisions", label: "Rule checks", icon: Scale },
     { href: "/app/approvals", label: "Team reviews", icon: BadgeCheck },
-    { href: "/app/policies", label: "Company rules", icon: ListChecks },
-    ],
-  },
-  {
-    title: "Monitor",
-    icon: Radar,
-    items: [
-      { href: "/app/monitoring", label: "Monitoring", icon: Radar },
-      { href: "/app/changes", label: "Changes", icon: Activity },
-      { href: "/app/evidence", label: "Evidence", icon: FileCheck2 },
-      { href: "/app/discovery", label: "Discovery review", icon: ScanSearch },
-    ],
-  },
-  {
-    title: "Build",
-    icon: Code2,
-    items: [
-      { href: "/app/connectors", label: "Connectors", icon: Plug, stage: "beta" },
-      { href: "/app/developers", label: "Developers", icon: Code2 },
-    ],
-  },
+  ] },
+  { title: "Activity", icon: Activity, items: [
+    { href: "/app/payments", label: "Payments", icon: History },
+    { href: "/app/changes", label: "Changes", icon: Activity },
+    { href: "/app/monitoring", label: "Monitoring", icon: Radar },
+    { href: "/app/evidence", label: "Evidence", icon: FileCheck2 },
+    { href: "/app/routing", label: "Routing", icon: Shuffle },
+  ] },
+  { title: "Developers", icon: Code2, items: [
+    { href: "/app/developers", label: "API & AI tools", icon: Code2 },
+    { href: "/app/settings/connections", label: "Provider accounts", icon: Link2 },
+    { href: "/app/connectors", label: "Self-hosted runtime", icon: Plug, stage: "beta" },
+  ] },
 ];
 
+/** The sidebar: six places, named for what you do there. */
 const PRIMARY_NAV = [{ title: null, items: [
-  { href: "/app", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/app/prices", label: "Compare", icon: GitCompare },
-  { href: "/app/agent", label: "Agent", icon: Bot },
-  { href: "/app/payments", label: "History", icon: History },
+  { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
+  { href: "/app/prices", label: "Prices", icon: Calculator },
+  { href: "/app/search", label: "Routes", icon: Route },
+  { href: "/app/policies", label: "Rules", icon: ListChecks },
+  { href: "/app/payments", label: "Activity", icon: Activity },
   { href: "/app/developers", label: "Developers", icon: Code2 },
+  { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" as const },
 ] }] as typeof NAV_GROUPS;
+
+/** Phones get the four most-used places plus a way to everything else. */
+const MOBILE_NAV: NavItem[] = [
+  { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
+  { href: "/app/prices", label: "Prices", icon: Calculator },
+  { href: "/app/search", label: "Routes", icon: Route },
+  { href: "/app/payments", label: "Activity", icon: Activity },
+];
 
 function isActive(pathname: string, item: NavItem) {
   if (item.exact) return pathname === item.href;
@@ -249,7 +240,7 @@ export function AppShell({
           <Link href="/app" aria-label="Railor overview" className="flex flex-1 items-center gap-2.5">
             <RailorMark size={28} />
             {!collapsed ? (
-              <span className="font-display text-[21px] font-bold tracking-[-0.05em]">Railor</span>
+              <span className="font-display text-[21px] font-bold tracking-[-0.03em]">Railor</span>
             ) : null}
           </Link>
           <button
@@ -429,13 +420,17 @@ export function AppShell({
         </main>
       </div>
       <nav aria-label="Mobile navigation" hidden={mobileOpen || keyboard.open} className={mobileStyles.bottomNav}>
-        {PRIMARY_NAV[0]!.items.map(item => {
+        {MOBILE_NAV.map(item => {
           const active = workspaceArea(pathname) === item.label;
           return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={mobileStyles.item}>
             <span className={mobileStyles.icon}><item.icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden /></span>
             <span>{item.label}</span>
           </Link>;
         })}
+        <button type="button" onClick={() => { setCollapsed(false); setMobileOpen(true); }} aria-label="More: rules, developers, agent and settings" className={mobileStyles.item}>
+          <span className={mobileStyles.icon}><Menu size={20} strokeWidth={1.8} aria-hidden /></span>
+          <span>More</span>
+        </button>
       </nav>
     </div>
   );

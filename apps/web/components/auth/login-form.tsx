@@ -7,6 +7,8 @@ import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 interface Props {
   returnTo: string;
+  /** "start" when the visitor came from a Get started button. */
+  intent?: string;
   oauth: { google: boolean; github: boolean };
   demoAvailable: boolean;
   savedQuery?: string;
@@ -34,7 +36,7 @@ const ERROR_MESSAGE: Record<string, string> = {
 /**
  * Sign-in is one field. Only available OAuth methods are shown.
  */
-export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialError, initialEmail }: Props) {
+export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, initialError, initialEmail }: Props) {
   const [email, setEmail] = useState(initialEmail ?? "");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
     initialError ? "error" : "idle",
@@ -73,14 +75,15 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
   };
 
   return (
-    <div className="railor-rise flex w-full max-w-[420px] flex-col gap-6">
+    <div className="railor-rise flex w-full max-w-[400px] flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <span className="product-eyebrow mb-2">Welcome to Railor</span>
-        <h1 className="font-display text-[36px] font-semibold leading-tight tracking-[-0.045em]">Your rails. One workspace.</h1>
-        <p className="text-[14px] text-[var(--color-muted)]">
+        <h1 className="text-[clamp(30px,4vw,38px)] font-[650] leading-[1.08] tracking-[-0.03em]">{savedQuery ? "Sign in to see your results" : intent === "start" ? "Create your free account" : "Welcome back"}</h1>
+        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
           {savedQuery
-            ? `We'll pick up where you left off: “${savedQuery}”`
-            : "Search infrastructure, compare permitted routes and decide before money moves."}
+            ? <>Your search carries over: <span className="font-semibold text-[var(--color-ink)]">“{savedQuery}”</span></>
+            : intent === "start"
+              ? "Enter your email and we’ll send you a link. No password, no card."
+              : "Enter your email and we’ll send you a secure sign-in link."}
         </p>
       </div>
 
@@ -88,7 +91,7 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
         {(["google", "github"] as const).filter((provider) => oauth[provider]).map((provider) => {
           const label = provider === "google" ? "Continue with Google" : "Continue with GitHub";
           return (
-            <a key={provider} href={`/api/auth/oauth/${provider}?returnTo=${encodeURIComponent(returnTo)}`} className="inline-flex min-h-11 items-center justify-center gap-3 rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[14px] font-semibold hover:bg-[var(--color-paper)]">
+            <a key={provider} href={`/api/auth/oauth/${provider}?returnTo=${encodeURIComponent(returnTo)}`} className="press inline-flex min-h-12 items-center justify-center gap-3 rounded-full border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[15px] font-semibold hover:border-[var(--color-ink)]">
                 <TechnologyLogo name={provider} size={20} />
                 {label}
             </a>
@@ -123,7 +126,7 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3" aria-busy={state === "sending"}>
-          <label htmlFor="sign-in-email" className="text-[12px] font-semibold">Email address</label>
+          <label htmlFor="sign-in-email" className="text-[13.5px] font-semibold">Email address</label>
           <input
             id="sign-in-email"
             name="email"
@@ -133,19 +136,19 @@ export function LoginForm({ returnTo, oauth, demoAvailable, savedQuery, initialE
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="rounded-xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 py-3 text-[14px] focus:border-[var(--color-action)]"
+            className="h-12 rounded-2xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[16px] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-ink)] focus:shadow-[0_0_0_4px_rgb(21_19_16/0.06)]"
             aria-label="Email address"
             aria-describedby="sign-in-email-hint"
           />
-          <p id="sign-in-email-hint" className="text-[12px] text-[var(--color-muted)]">Company or work email preferred. Personal email is welcome too.</p>
-          <Button type="submit" disabled={state === "sending"} className="justify-center">
-            {state === "sending" ? "Sending…" : "Continue with email"}
+          <p id="sign-in-email-hint" className="text-[12.5px] text-[var(--color-muted)]">Work or personal email both work.</p>
+          <Button type="submit" disabled={state === "sending"} className="min-h-12 justify-center rounded-full bg-[var(--color-ink)] text-[15px] hover:bg-[#2a2722]">
+            {state === "sending" ? "Sending your link…" : "Continue with email"}
             <ArrowRight size={16} aria-hidden />
           </Button>
           {state === "error" && message ? (
             <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">{message}</p>
           ) : null}
-          <p className="flex items-center justify-center gap-1.5 text-[11px] text-[var(--color-muted)]"><ShieldCheck size={13} aria-hidden /> A secure sign-in link. No password needed.</p>
+          <p className="flex items-center justify-center gap-1.5 text-[12px] text-[var(--color-muted)]"><ShieldCheck size={14} aria-hidden /> A one-time link, valid for 20 minutes.</p>
         </form>
       )}
 

@@ -5,7 +5,7 @@ import { Banknote, Wallet, Landmark, Store, CreditCard, Vault, Coins, ArrowLeftR
 import { ChoiceGrid, SmartPicker, StepFlow, Flag, type Choice, type PickerOption } from "@railor/ui";
 import { completeOnboarding, saveStep } from "../../app/welcome/actions";
 import { CurrencyLogo } from "../marketing/currency-logo";
-import { OnboardingComplete, OnboardingVisual } from "./onboarding-feedback";
+import { OnboardingComplete, WorkspacePreview } from "./onboarding-feedback";
 import styles from "./onboarding.module.css";
 
 export interface OnboardingSeed {
@@ -146,9 +146,10 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     { label: "Currencies", value: labelFor(currencies, settlement), step: 3 },
   ];
   if (completed) return <OnboardingComplete {...completed} />;
+  const profileLabel = selectedBuilding === "freelancer_business" ? "Freelancer · business" : selectedBuilding === "freelancer" ? "Freelancer" : profile === "business" ? "Business" : profile === "personal" ? "Personal" : undefined;
+  const nameOf = (code: string) => countries.find((item) => item.value === code)?.label ?? code;
   return <section className={styles.shell} aria-label="Personalize your workspace">
-    <OnboardingVisual step={step} country={entityCountry[0]} targets={targets} />
-    <div className={styles.stepNames} aria-hidden="true">{["About you", "Your country", "Your markets"].map((label, index) => <span key={label} data-active={step === index}><i>{index < step ? <Check size={11} /> : index + 1}</i>{label}{index < 2 && <ChevronRight size={11} />}</span>)}</div>
+    <div className={styles.columns}>
     <StepFlow className={`onboarding-screen ${styles.flow}`} step={step} total={3} title={question[0]} subtitle={question[1]}
     onBack={step > 0 && !pending ? () => { setError(""); setStep(step - 1); } : undefined}
     onNext={() => advance()} onSkip={!pending ? () => advance(true) : undefined}
@@ -169,5 +170,7 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     {error ? <p role="alert" className="text-sm text-[var(--color-bad)]">{error}</p> : null}
     {step === 2 ? <details className="onboarding-review" aria-label="Review your answers"><summary className="cursor-pointer text-sm font-semibold">Review your answers</summary><section><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Check size={16} aria-hidden />Your workspace, at a glance</div><dl>{review.map((item) => <div key={item.label} className="onboarding-review-row"><div><dt className="text-xs text-[var(--color-muted)]">{item.label}</dt><dd className="mt-1 text-sm">{item.value}</dd></div><button type="button" disabled={pending} className="text-xs font-medium text-[var(--color-purple)]" aria-label={`Edit ${item.label.toLowerCase()}`} onClick={() => setStep(Math.min(2, item.step))}>Edit</button></div>)}</dl></section></details> : null}
     {step === 2 && assumptions.length ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-xs text-[var(--color-muted)]"><summary className="cursor-pointer">Review skipped answers ({assumptions.length})</summary><ul className="mt-3 space-y-2">{assumptions.map((item) => <li key={item}>{item}</li>)}</ul></details> : null}
-  </StepFlow></section>;
+  </StepFlow>
+    <WorkspacePreview step={step} profile={profileLabel} country={entityCountry[0] ? { code: entityCountry[0], name: nameOf(entityCountry[0]) } : undefined} targets={targets.map((code) => ({ code, name: nameOf(code) }))} api={setupApi} />
+    </div></section>;
 }

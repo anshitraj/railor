@@ -97,7 +97,7 @@ export default async function DevelopersPage() {
       dailySeries={dailySeries}
       quota={quota}
     />
-    <details className="mx-auto w-full max-w-[1000px] rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6"><summary className="cursor-pointer text-sm font-semibold">Webhooks & delivery history</summary><div className="mt-5"><WebhookEndpoints
+    <details className="mx-auto w-full max-w-[980px] rounded-[24px] border border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-5"><summary className="cursor-pointer text-[15px] font-semibold">Webhooks & delivery history</summary><div className="mt-5"><WebhookEndpoints
       canManage={session.role === "owner" || session.role === "admin"}
       endpoints={endpoints.map((e) => ({ id: e.id, url: e.url, description: e.description, mode: e.mode, events: e.events, enabled: e.enabled, secretHint: e.secretHint }))}
       deliveries={deliveries.map(({ delivery, url }) => ({ id: delivery.id, eventType: delivery.eventType, status: delivery.status, attempts: delivery.attempts, lastStatusCode: delivery.lastStatusCode, lastError: delivery.lastError, createdAt: delivery.createdAt.toISOString(), url }))}

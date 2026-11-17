@@ -65,7 +65,7 @@ export default async function WelcomePage({
 
   return (
     <main id="main" className="min-h-screen">
-      <header className="mx-auto flex w-[min(760px,calc(100%-2rem))] flex-wrap items-center gap-3 py-6">
+      <header className="mx-auto flex w-[min(1080px,calc(100%-2rem))] flex-wrap items-center gap-3 py-6">
         <Link href="/" className="flex items-center gap-2">
           <RailorBrand />
         </Link>
@@ -73,12 +73,12 @@ export default async function WelcomePage({
           {org.name}
         </span>
         <span className="flex-1" />
-        <Link href={returnTo} className="text-[13px] text-[var(--color-muted)] hover:text-[var(--color-ink)]">
+        <Link href={returnTo} className="rounded-full px-3 py-2 text-[14px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]">
           Do this later
         </Link>
       </header>
 
-      <div className="mx-auto w-[min(760px,calc(100%-2rem))] pb-24">
+      <div className="mx-auto w-[min(1080px,calc(100%-2rem))] pb-24">
         <OnboardingFlow
           countries={reference.countries}
           currencies={reference.currencies}

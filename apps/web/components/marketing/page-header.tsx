@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <header className={cn("railor-rise flex flex-col gap-4 border-b border-[var(--color-line-strong)] pb-7", className)}>
       <SectionLabel className="product-eyebrow mb-0">{eyebrow}</SectionLabel>
-      <h1 className="max-w-4xl text-balance font-display text-[clamp(2.2rem,4.5vw,3.6rem)] font-semibold leading-[1.04] tracking-[-0.045em]">
+      <h1 className="max-w-4xl text-balance font-display text-[clamp(2.2rem,4.5vw,3.6rem)] font-semibold leading-[1.04] tracking-[-0.03em]">
         {title}
       </h1>
       {children ? (

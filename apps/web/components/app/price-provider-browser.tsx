@@ -93,9 +93,10 @@ function UnpricedProvider({ provider }: { provider: MarketCoverageProvider }) {
     <div className={styles.selectedMetrics}><div><span>Pricing</span><strong>Set by provider</strong></div><div><span>Next step</span><strong>Check your price</strong></div></div>
     <p className={styles.detailIntro}>{provider.currencyMatch === "unverified" ? "Check whether this provider offers your route before requesting a price." : "This provider publishes product or currency coverage. Open its pricing page for an amount-specific offer."}</p>
     <p className={styles.detailIntro}>{provider.pricingStatus?.reason ?? "The provider's account, payment method and commercial agreement determine pricing. Unknown fees are not treated as zero."}</p>
-    <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />Connect {provider.providerName} · Coming soon</button>
+    {provider.websiteUrl
+      ? <a className={styles.providerAction} href={provider.websiteUrl} target="_blank" rel="noreferrer noopener">Check your price with {provider.providerName}<ArrowUpRight size={14} /></a>
+      : <p className={styles.noAction}>{provider.providerName} doesn’t publish a price for this route. Ask the provider for a quote.</p>}
     {provider.feeEvidence?.slice(0, 3).map((fee, index) => <div key={index}><p className={styles.detailIntro}>{fee.summary}</p>{fee.sourceUrl && <a href={fee.sourceUrl} className={styles.sourceLink} target="_blank" rel="noreferrer noopener">Published fee evidence <ArrowUpRight size={11} /></a>}</div>)}
-    {provider.websiteUrl && <a className={styles.sourceLink} href={provider.websiteUrl} target="_blank" rel="noreferrer noopener">Official provider website<ArrowUpRight size={12} /></a>}
     {provider.discoverySources?.map(source => <a key={source.url} className={styles.sourceLink} href={source.url} target="_blank" rel="noreferrer noopener">{source.label}<ArrowUpRight size={12} /></a>)}
     <Link href="/docs/pricing#provider-coverage" className={styles.sourceLink}>Coverage and pricing methodology<ArrowRight size={12} /></Link>
   </aside>;

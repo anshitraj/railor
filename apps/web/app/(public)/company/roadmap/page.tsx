@@ -229,7 +229,7 @@ export default async function RoadmapPage() {
           </p>
         </div>
         <Link
-          href="/#search"
+          href="/prices"
           className="relative z-10 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-bold text-[#22211f] transition hover:bg-[#ffad8c]"
         >
           Search rails <ArrowRight size={15} />

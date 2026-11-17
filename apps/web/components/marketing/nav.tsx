@@ -1,293 +1,251 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
 import {
-  BookOpen,
+  Activity,
   ArrowRight,
+  BookOpen,
   ChevronDown,
   Code2,
-  GitCompare,
-  Globe,
   History,
   Info,
   Map as MapIcon,
   Menu,
   Package,
-  Plug,
-  Radar,
-  Radio,
-  Route,
   Search,
   ShieldCheck,
   Terminal,
-  Warehouse,
   X,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
-import { StageBadge, TechnologyLogo, TechnologyLogoStack, cn, type Stage } from "@railor/ui";
 import { RailorMark } from "../brand";
+import styles from "./nav.module.css";
 export { RailorMark } from "../brand";
 
-interface MenuItem {
-  label: string;
-  href: string;
-  hint: string;
-  stage: Stage;
-  icon: LucideIcon;
+interface MenuLink { label: string; href: string; hint: string; icon: LucideIcon }
+type NavLink = { label: string; href: string } | { label: string; menu: MenuLink[] };
+
+const LINKS: NavLink[] = [
+  { label: "Compare prices", href: "/prices" },
+  { label: "Providers", href: "/providers" },
+  { label: "Coverage", href: "/coverage" },
+  {
+    label: "Developers",
+    menu: [
+      { label: "Documentation", href: "/docs", hint: "Quick start and guides", icon: BookOpen },
+      { label: "API reference", href: "/docs/api", hint: "REST endpoints and examples", icon: Code2 },
+      { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", icon: Package },
+      { label: "MCP for AI tools", href: "/docs/mcp", hint: "Claude, Cursor, Codex and more", icon: Terminal },
+      { label: "Changelog", href: "/docs/changelog", hint: "What shipped recently", icon: History },
+    ],
+  },
+  {
+    label: "Company",
+    menu: [
+      { label: "About", href: "/company", hint: "Why Railor exists", icon: Info },
+      { label: "Trust", href: "/company/trust", hint: "Where every price comes from", icon: ShieldCheck },
+      { label: "Roadmap", href: "/company/roadmap", hint: "What we are building next", icon: MapIcon },
+      { label: "Status", href: "/status", hint: "Live service status", icon: Activity },
+    ],
+  },
+];
+
+/** Where a search from the public site goes: sign in first, then the question opens in the workspace. */
+export function searchSignInHref(query: string) {
+  const q = query.trim();
+  return q ? `/login?intent=start&q=${encodeURIComponent(q)}` : "/login?intent=start";
 }
 
-const MENUS: Record<string, { items: MenuItem[]; panel: { title: string; body: string; href: string } }> = {
-  Product: {
-    items: [
-      { label: "Search", href: "/#search", hint: "Ask in plain language, get structured filters", stage: "live", icon: Search },
-      { label: "Live prices", href: "/prices", hint: "What arrives through each provider, quoted live", stage: "beta", icon: Zap },
-      { label: "Corridor Explorer", href: "/app/corridors", hint: "Every provider for a route, with reasons", stage: "live", icon: Route },
-      { label: "Provider Intelligence", href: "/providers?view=infrastructure", hint: "Coverage, requirements, limits, sources", stage: "live", icon: Warehouse },
-      { label: "Change Monitoring", href: "/app/monitoring", hint: "Know before your integration breaks", stage: "live", icon: Radar },
-      { label: "Comparisons", href: "/app/compare", hint: "2–4 providers, differences only", stage: "live", icon: GitCompare },
-      { label: "Payments & routing", href: "/docs/payments", hint: "Send through your own provider accounts, routed with fallback", stage: "beta", icon: Plug },
-    ],
-    panel: {
-      title: "One question, one answer",
-      body: "“Indian company sending USDC to a UAE supplier who receives AED” resolves to every mapped provider checked, each with a verdict, a reason and a source.",
-      href: "/#search",
-    },
-  },
-  Developers: {
-    items: [
-      { label: "API", href: "/docs/api", hint: "REST with evidence on every claim", stage: "beta", icon: Code2 },
-      { label: "Documentation", href: "/docs", hint: "Runnable snippets, your own test key", stage: "live", icon: BookOpen },
-      { label: "MCP", href: "/docs/mcp", hint: "Let coding agents query verified data", stage: "beta", icon: Zap },
-      { label: "SDKs", href: "/docs/sdks", hint: "TypeScript and Python", stage: "beta", icon: Package },
-      { label: "CLI", href: "/docs/cli", hint: "railor corridors search", stage: "beta", icon: Terminal },
-      { label: "Changelog", href: "/docs/changelog", hint: "What shipped", stage: "live", icon: History },
-    ],
-    panel: {
-      title: "Built API-first",
-      body: "Every screen in Railor is a thin client over the same endpoints you get. Signed in, the docs render with your key and your last corridor.",
-      href: "/docs",
-    },
-  },
-  Resources: {
-    items: [
-      { label: "Provider Directory", href: "/providers", hint: "400 surveyed provider entries and dated fees", stage: "live", icon: Warehouse },
-      { label: "Market Coverage", href: "/coverage", hint: "Which corridors are well served", stage: "live", icon: Globe },
-      { label: "Change Feed", href: "/changes", hint: "Everything Railor detected", stage: "live", icon: Radio },
-      { label: "Guides", href: "/docs/guides", hint: "How to evaluate a rail", stage: "live", icon: BookOpen },
-    ],
-    panel: {
-      title: "Evidence, not vibes",
-      body: "Each claim carries its source, the time it was retrieved, the time it was last verified, and a confidence score that decays with age.",
-      href: "/changes",
-    },
-  },
-  Company: {
-    items: [
-      { label: "About", href: "/company", hint: "Why Railor exists", stage: "live", icon: Info },
-      { label: "Roadmap", href: "/company/roadmap", hint: "Intelligence → orchestration", stage: "live", icon: MapIcon },
-      { label: "Trust", href: "/company/trust", hint: "How we handle data and claims", stage: "live", icon: ShieldCheck },
-    ],
-    panel: {
-      title: "Say unknown, not wrong",
-      body: "Railor would rather return “unknown” than a confident answer it cannot evidence. That principle outranks every other product decision.",
-      href: "/company/trust",
-    },
-  },
-};
-
 export function MarketingNav() {
+  const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const header = useRef<HTMLElement>(null);
-  const mobileTrigger = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
 
-  // Hover opens a menu, so a click must never toggle it shut (a tap is a hover plus a click). It closes on
-  // Escape, on leaving the header, or on a press anywhere outside it.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => { setMobileOpen(false); setOpen(null); }, [pathname]);
+
   useEffect(() => {
     if (!open) return;
-    const away = (event: PointerEvent) => {
-      if (header.current && !header.current.contains(event.target as Node)) setOpen(null);
-    };
+    const away = (event: PointerEvent) => { if (!header.current?.contains(event.target as Node)) setOpen(null); };
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);
   }, [open]);
 
+  // The mobile sheet owns the screen while it is open.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [mobileOpen]);
+
+  const openMenu = (label: string) => { window.clearTimeout(closeTimer.current); setOpen(label); };
+  const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpen(null), 120); };
+
   return (
     <header
       ref={header}
-      className="sticky top-0 z-50 mx-auto w-full border-b border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-paper)_88%,transparent)] backdrop-blur-xl"
-      onMouseLeave={() => setOpen(null)}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          setOpen(null);
-          setMobileOpen(false);
-          if (mobileOpen) mobileTrigger.current?.focus();
-        }
-      }}
+      className={styles.header}
+      data-scrolled={scrolled || mobileOpen || undefined}
+      onKeyDown={(event) => { if (event.key === "Escape") { setOpen(null); setMobileOpen(false); } }}
     >
-      <nav className="mx-auto flex w-[min(1360px,calc(100%-2rem))] items-center gap-1 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2 pr-1 py-1 sm:gap-2.5 sm:pr-5">
-          <RailorMark size={30} />
-          <span className="font-display text-[21px] font-bold tracking-[-0.055em]">Railor</span>
+      <nav className={styles.bar} aria-label="Main">
+        <Link href="/" className={styles.brand} aria-label="Railor home">
+          <RailorMark size={28} />
+          <span>Railor</span>
         </Link>
 
-        <div className="hidden items-center gap-0.5 md:flex">
-          {Object.keys(MENUS).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onMouseEnter={() => setOpen(key)}
-              onFocus={() => setOpen(key)}
-              onClick={() => setOpen(key)}
-              aria-expanded={open === key}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition",
-                open === key
-                  ? "bg-[var(--color-ink)] text-white"
-                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]",
-              )}
-            >
-              {key}
-              <ChevronDown size={11} aria-hidden className={open === key ? "rotate-180 transition-transform" : "transition-transform"} />
-            </button>
+        <ul className={styles.links}>
+          {LINKS.map((link) => "href" in link ? (
+            <li key={link.label}>
+              <Link href={link.href} className={styles.link} aria-current={pathname === link.href ? "page" : undefined}>{link.label}</Link>
+            </li>
+          ) : (
+            <li key={link.label} className={styles.menuItem} onMouseEnter={() => openMenu(link.label)} onMouseLeave={closeSoon}>
+              <button
+                type="button"
+                className={styles.link}
+                aria-expanded={open === link.label}
+                onClick={() => setOpen((current) => (current === link.label ? null : link.label))}
+              >
+                {link.label}
+                <ChevronDown size={14} aria-hidden className={styles.chevron} data-open={open === link.label || undefined} />
+              </button>
+              <div className={styles.menu} data-open={open === link.label || undefined} inert={open !== link.label}>
+                <ul>
+                  {link.menu.map((item) => (
+                    <li key={item.href}>
+                      <Link href={item.href} className={styles.menuLink} onClick={() => setOpen(null)}>
+                        <span className={styles.menuIcon}><item.icon size={17} aria-hidden /></span>
+                        <span>
+                          <strong>{item.label}</strong>
+                          <small>{item.hint}</small>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
           ))}
+        </ul>
+
+        <div className={styles.actions}>
+          <button type="button" className={styles.iconButton} aria-label="Search Railor" onClick={() => setSearchOpen(true)}>
+            <Search size={18} aria-hidden />
+          </button>
+          <Link href="/login" className={styles.signIn}>Sign in</Link>
+          <Link href="/login?intent=start" className={`${styles.cta} press`}>
+            Get started
+          </Link>
+          <button
+            type="button"
+            className={styles.menuButton}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMobileOpen((value) => !value)}
+          >
+            {mobileOpen ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
+          </button>
         </div>
-
-        <div className="flex-1" />
-
-        <Link
-          href="/#search"
-          aria-label="Search rails, providers and countries"
-          className="hidden h-9 items-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-[11px] text-[var(--color-muted)] hover:border-[var(--color-line-strong)] sm:inline-flex"
-        >
-          <Search size={14} aria-hidden /><span className="hidden xl:block">Search rails, providers, countries…</span>
-        </Link>
-        <Link
-          href="/login"
-          className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[11px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] sm:px-3 sm:text-[13px]"
-        >
-          Sign in
-        </Link>
-        <Link
-          href="/login?intent=start"
-          className="inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--color-ink)] px-3 py-2.5 text-[11px] font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[var(--color-orange-deep)] sm:gap-2 sm:px-4 sm:text-[12px]"
-        >
-          Get started <ArrowRight size={13} aria-hidden />
-        </Link>
-        <button
-          type="button"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-expanded={mobileOpen}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          ref={mobileTrigger}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] transition hover:bg-[var(--color-sand)] md:hidden"
-        >
-          {mobileOpen ? <X size={19} /> : <Menu size={19} />}
-        </button>
       </nav>
 
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-full hidden w-[min(980px,calc(100%-2rem))] -translate-x-1/2 pt-3 md:block"
-            onMouseEnter={() => setOpen(open)}
-          >
-            <div className="grid gap-6 rounded-[var(--radius-panel)] border border-[var(--color-line)] bg-[var(--color-paper)] p-6 shadow-[var(--shadow-panel)] lg:grid-cols-[1.5fr_1fr]">
-              <ul className="grid gap-1 sm:grid-cols-2">
-                {MENUS[open]!.items.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="flex items-start gap-3 rounded-2xl px-3 py-2.5 transition hover:bg-[var(--color-canvas)]"
-                      onClick={() => setOpen(null)}
-                    >
-                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--color-sand)] text-[var(--color-orange-deep)]">
-                        {item.href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={23} /> : item.href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={14} /> : <item.icon size={16} strokeWidth={2} />}
-                      </span>
-                      <span className="flex flex-col gap-0.5">
-                        <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-ink)]">
-                          {item.label}
-                          {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
-                        </span>
-                        <span className="text-[12.5px] leading-snug text-[var(--color-muted)]">
-                          {item.hint}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
+      <div id="mobile-menu" className={styles.sheet} data-open={mobileOpen || undefined} inert={!mobileOpen}>
+        <div className={styles.sheetInner}>
+          <ul className={styles.sheetLinks}>
+            {LINKS.filter((link): link is { label: string; href: string } => "href" in link).map((link) => (
+              <li key={link.href}><Link href={link.href} onClick={() => setMobileOpen(false)}>{link.label}<ArrowRight size={18} aria-hidden /></Link></li>
+            ))}
+          </ul>
+          {LINKS.filter((link): link is { label: string; menu: MenuLink[] } => "menu" in link).map((group) => (
+            <div key={group.label} className={styles.sheetGroup}>
+              <p>{group.label}</p>
+              <ul>
+                {group.menu.map((item) => (
+                  <li key={item.href}><Link href={item.href} onClick={() => setMobileOpen(false)}><item.icon size={16} aria-hidden />{item.label}</Link></li>
                 ))}
               </ul>
-
-              <Link
-                href={MENUS[open]!.panel.href}
-                onClick={() => setOpen(null)}
-                className="flex flex-col justify-between gap-4 rounded-[var(--radius-card)] bg-[var(--color-ink)] p-5 text-white transition hover:bg-[var(--color-orange-deep)]"
-              >
-                <div className="flex flex-col gap-2">
-                  <p className="text-[15px] font-semibold text-white">
-                    {MENUS[open]!.panel.title}
-                  </p>
-                  <p className="text-[13px] leading-relaxed text-white/65">
-                    {MENUS[open]!.panel.body}
-                  </p>
-                </div>
-                <span className="text-[13px] font-medium text-[var(--color-orange)]">Open →</span>
-              </Link>
             </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+          ))}
+          <div className={styles.sheetActions}>
+            <Link href="/login?intent=start" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Get started</Link>
+            <Link href="/login" className={styles.sheetSecondary} onClick={() => setMobileOpen(false)}>Sign in</Link>
+          </div>
+        </div>
+      </div>
 
-      <AnimatePresence>
-        {mobileOpen ? (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-t border-[var(--color-line)] md:hidden"
-          >
-            <div className="max-h-[75vh] overflow-y-auto px-4 py-3">
-              <Link
-                href="/#search"
-                onClick={() => setMobileOpen(false)}
-                className="block rounded-xl px-3 py-2.5 text-[14px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
-              >
-                Search rails
-              </Link>
-              {Object.entries(MENUS).map(([key, menu]) => (
-                <div key={key} className="mt-3 border-t border-[var(--color-line)] pt-3 first:mt-0 first:border-0 first:pt-0">
-                  <p className="mb-1 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-faint)]">
-                    {key}
-                  </p>
-                  <ul className="flex flex-col">
-                    {menu.items.map((item) => (
-                      <li key={item.label}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[var(--color-ink)] hover:bg-[var(--color-sand)]"
-                        >
-                          {item.href === "/docs/mcp" ? <TechnologyLogo name="MCP" size={21} /> : item.href === "/docs/sdks" ? <TechnologyLogoStack names={["TypeScript", "Python"]} size={17} /> : <item.icon size={16} strokeWidth={2} className="text-[var(--color-orange-deep)]" />}
-                          {item.label}
-                          {item.stage !== "live" ? <StageBadge stage={item.stage} /> : null}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <NavSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
+  );
+}
+
+const SEARCH_EXAMPLES = ["USD to INR for a freelancer", "Stablecoin payouts to Nigeria", "Business account in the UAE"];
+
+/** Search is a signed-in feature: a public search sends the question to sign-in and opens it in the workspace. */
+function NavSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const [value, setValue] = useState("");
+  const [hint, setHint] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    setHint(false);
+    const frame = window.requestAnimationFrame(() => input.current?.focus());
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => { window.cancelAnimationFrame(frame); document.removeEventListener("keydown", onKey); };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  const go = (query: string) => {
+    if (!query.trim()) { setHint(true); input.current?.focus(); return; }
+    onClose();
+    router.push(searchSignInHref(query));
+  };
+
+  return (
+    <div className={styles.searchLayer}>
+      <button type="button" className={styles.searchBackdrop} aria-label="Close search" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className={styles.searchPanel}>
+        <p id={titleId} className="sr-only">Search Railor</p>
+        <form onSubmit={(event) => { event.preventDefault(); go(value); }} className={styles.searchForm}>
+          <Search size={18} aria-hidden />
+          <input
+            ref={input}
+            value={value}
+            onChange={(event) => { setValue(event.target.value); setHint(false); }}
+            placeholder="Search providers, countries or routes"
+            aria-label="Search providers, countries or routes"
+            aria-describedby={`${titleId}-note`}
+          />
+          <button type="submit" className={`${styles.searchGo} press`}>Search</button>
+        </form>
+        <div className={styles.searchBody}>
+          {hint ? <p role="status" className={styles.searchHint}>Type what you are looking for, or pick an example.</p> : null}
+          <p className={styles.searchLabel}>Try</p>
+          <div className={styles.searchExamples}>
+            {SEARCH_EXAMPLES.map((example) => (
+              <button key={example} type="button" className="press" onClick={() => go(example)}>{example}</button>
+            ))}
+          </div>
+          <p id={`${titleId}-note`} className={styles.searchNote}>Search results open in your free Railor workspace after you sign in.</p>
+        </div>
+      </div>
+    </div>
   );
 }

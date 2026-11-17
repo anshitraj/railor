@@ -48,7 +48,7 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
       >
         <div className="mb-4 flex items-center gap-2 px-2">
           <Link href="/admin" aria-label="Railor operations overview" className="flex items-center gap-2.5"><RailorMark size={28} />
-          <span className="font-display text-[21px] font-bold tracking-[-0.05em]">Railor</span></Link>
+          <span className="font-display text-[21px] font-bold tracking-[-0.03em]">Railor</span></Link>
           <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-[9.5px] font-semibold uppercase tracking-wide text-[var(--color-accent-light)]">Ops</span>
           <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="ml-auto md:hidden">
             <X size={17} />
@@ -106,7 +106,7 @@ export function AdminHeader({ title, description, action }: { title: string; des
     <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-strong)] pb-5">
       <div className="max-w-2xl">
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-orange-deep)]">Railor operations</p>
-        <h1 className="mt-2 font-display text-[clamp(1.8rem,3.5vw,2.6rem)] font-semibold leading-none tracking-[-0.045em]">{title}</h1>
+        <h1 className="mt-2 font-display text-[clamp(1.8rem,3.5vw,2.6rem)] font-semibold leading-none tracking-[-0.03em]">{title}</h1>
         <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--color-muted)]">{description}</p>
       </div>
       {action}

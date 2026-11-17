@@ -14,7 +14,7 @@ export function ProviderFeatureComparison() {
       <div className="flex flex-wrap items-end justify-between gap-5 p-5 sm:p-7">
         <div className="max-w-xl">
           <p className="product-eyebrow mb-2">Beyond the price</p>
-          <h2 id="provider-features-title" className="font-display text-[26px] font-semibold leading-tight tracking-[-0.04em] sm:text-[32px]">Different rails. Clear trade-offs.</h2>
+          <h2 id="provider-features-title" className="font-display text-[26px] font-semibold leading-tight tracking-[-0.03em] sm:text-[32px]">Different rails. Clear trade-offs.</h2>
           <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-muted)]">Compare published features before checking your exact route. No account or API key needed to explore.</p>
         </div>
         <button type="button" aria-pressed={differences} onClick={() => setDifferences(v => !v)} className="inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-[var(--color-canvas)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-accent)]">

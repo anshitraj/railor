@@ -1,0 +1,54 @@
+.layout { display: grid; gap: 40px; align-items: center; }
+.points { display: grid; gap: 16px; margin: 28px 0 32px; }
+.points li { display: flex; align-items: flex-start; gap: 12px; }
+.points li > span { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 10px; background: var(--color-lavender); color: var(--color-orange-deep); }
+.points strong { color: var(--color-ink); font-size: 15.5px; font-weight: 650; }
+.points p { margin-top: 2px; color: var(--color-muted); font-size: 14.5px; line-height: 1.5; }
+.stage { position: relative; display: grid; place-items: center; padding: 36px 20px; border-radius: 32px; background: linear-gradient(160deg, #f3e6d8, #ead7c4); }
+.card { width: min(440px, 100%); overflow: hidden; border-radius: 24px; background: var(--color-surface); box-shadow: 0 0 0 1px rgb(21 19 16 / .06), 0 30px 60px -30px rgb(60 35 15 / .45); }
+.payment { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--color-line); }
+.kicker { color: var(--color-muted); font-size: 12.5px; font-weight: 550; }
+.amount { margin-top: 2px; color: var(--color-ink); font-size: 26px; font-weight: 700; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.amount span { margin-left: 4px; color: var(--color-muted); font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.flags { display: inline-flex; }
+.flags img + img { margin-left: -8px; box-shadow: 0 0 0 3px var(--color-surface); }
+.rulesHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px 6px; color: var(--color-ink); font-size: 13.5px; font-weight: 650; }
+.version { color: var(--color-ok); font-size: 12px; font-weight: 600; }
+.rules { padding: 4px 12px 10px; }
+.rule { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 42px; padding: 0 8px; border-radius: 12px; }
+.rule:nth-child(odd) { background: var(--color-paper); }
+.status { position: relative; display: grid; width: 22px; height: 22px; place-items: center; }
+.status > span { grid-area: 1 / 1; display: grid; width: 22px; height: 22px; place-items: center; border-radius: 50%; }
+.pending { color: var(--color-faint); }
+.pass { background: var(--color-ok); color: #fff; }
+.flag { background: var(--color-orange); color: #fff; }
+.ruleLabel { overflow: hidden; color: var(--color-ink-soft); font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.ruleResult { color: var(--color-ink); font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.ruleResult[data-tone="warn"] { color: var(--color-orange-deep); }
+.result { display: flex; align-items: center; gap: 12px; margin: 4px 12px 12px; padding: 12px 14px; border-radius: 16px; background: var(--color-ink); color: rgb(250 246 239 / .75); font-size: 13px; }
+.result svg { flex: none; color: var(--color-accent-light); }
+.result strong { display: block; color: #fff; font-size: 14px; font-weight: 650; }
+.sticker { position: absolute; right: 8%; top: 18px; }
+
+/* One 5.6 s loop: each rule resolves in turn, the last one flags, then the result arrives. */
+.pending[data-anim] { animation: ruleWait 5.6s linear infinite both; }
+.pass[data-anim], .flag[data-anim] { animation: ruleDone 5.6s var(--ease-out) infinite both; }
+.ruleResult[data-anim] { animation: ruleText 5.6s var(--ease-out) infinite both; }
+.result[data-anim] { animation: resultIn 5.6s var(--ease-out) infinite both; }
+.sticker[data-anim] { animation: stickerLoop 5.6s var(--ease-out) infinite both; }
+.loop [data-anim] { animation-play-state: paused; }
+.loop[data-playing] [data-anim] { animation-play-state: running; }
+@keyframes ruleWait { 0%, 14% { opacity: 1; transform: rotate(0); } 17%, 100% { opacity: 0; transform: rotate(200deg); } }
+@keyframes ruleDone { 0%, 14% { opacity: 0; transform: scale(.4); } 19% { opacity: 1; transform: scale(1.12); } 23%, 90% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
+@keyframes ruleText { 0%, 15% { opacity: 0; transform: translateX(6px); } 22%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes resultIn { 0%, 52% { opacity: 0; transform: translateY(10px); } 60%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes stickerLoop { 0%, 56% { opacity: 0; transform: rotate(var(--tilt)) scale(.7); } 63% { opacity: 1; transform: rotate(calc(var(--tilt) - 3deg)) scale(1.05); } 68%, 90% { opacity: 1; transform: rotate(var(--tilt)) scale(1); } 100% { opacity: 0; transform: rotate(var(--tilt)); } }
+
+@media (min-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 64px; }
+  .stage { padding: 56px 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loop [data-anim] { animation: none !important; }
+  .pending { opacity: 0; }
+}

@@ -14,7 +14,7 @@ export default async function PublicChangesPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <SectionLabel>Change feed</SectionLabel>
-        <h1 className="max-w-3xl font-display text-[clamp(2rem,4.5vw,3.2rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
+        <h1 className="max-w-3xl font-display text-[clamp(2rem,4.5vw,3.2rem)] font-semibold leading-[1.02] tracking-[-0.03em]">
           Financial infrastructure changes. Railor keeps track.
         </h1>
         <p className="max-w-2xl text-[15px] leading-relaxed text-[var(--color-muted)]">

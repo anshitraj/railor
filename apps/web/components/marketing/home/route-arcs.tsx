@@ -1,0 +1,106 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { MAP_HEIGHT, MAP_WIDTH, arcPath, projectCountry } from "@railor/core/geo";
+import { Flag } from "@railor/ui";
+
+export interface MapRoute { from: string; to: string }
+
+/**
+ * The live layer over the dot map: each corridor draws itself once when the
+ * map scrolls into view, then a single dot travels along it to show which way
+ * the money moves. Countries are labelled with their flags so nothing on the
+ * map needs a legend.
+ */
+export function RouteArcs({ routes }: { routes: MapRoute[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const svg = useRef<SVGSVGElement>(null);
+  const [inView, setInView] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  const [pulsing, setPulsing] = useState(false);
+
+  useEffect(() => {
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const element = ref.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => { if (entry?.isIntersecting) { setInView(true); observer.disconnect(); } }, { threshold: 0.3 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  // Pulses start only once every corridor has finished drawing, and SMIL timing is
+  // relative to page load, so each one is started explicitly when it appears.
+  useEffect(() => {
+    if (!inView || reduced) return;
+    const timer = window.setTimeout(() => setPulsing(true), 1200 + routes.length * 120);
+    return () => window.clearTimeout(timer);
+  }, [inView, reduced, routes.length]);
+  useEffect(() => {
+    if (!pulsing) return;
+    svg.current?.querySelectorAll<SVGAnimationElement>("animateMotion, animate").forEach((animation) => {
+      try { animation.beginElement(); } catch { /* SMIL unsupported: the static arcs still read. */ }
+    });
+  }, [pulsing]);
+
+  const arcs = routes.flatMap((route, index) => {
+    const from = projectCountry(route.from);
+    const to = projectCountry(route.to);
+    if (!from || !to) return [];
+    // Bow every arc upward (north) so corridors read as flight paths, not as lines through land.
+    const bow = from.x < to.x ? -0.22 : 0.22;
+    return [{ id: `${route.from}-${route.to}`, d: arcPath(from, to, bow), index }];
+  });
+  const countries = [...new Set(routes.flatMap((route) => [route.from, route.to]))].flatMap((code) => {
+    const point = projectCountry(code);
+    return point ? [{ code, point, destination: routes.some((route) => route.to === code) }] : [];
+  });
+
+  return (
+    <div ref={ref} style={{ position: "absolute", inset: 0 }}>
+      <svg ref={svg} viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} preserveAspectRatio="xMidYMid meet" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} aria-hidden>
+        <defs>
+          <linearGradient id="route-stroke" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#ffad8c" stopOpacity=".35" />
+            <stop offset="1" stopColor="#ff7a4d" />
+          </linearGradient>
+        </defs>
+        {arcs.map((arc) => (
+          <g key={arc.id}>
+            <path id={`arc-${arc.id}`} d={arc.d} pathLength={1} fill="none" stroke="url(#route-stroke)" strokeWidth={1.6} strokeLinecap="round"
+              style={{ strokeDasharray: 1, strokeDashoffset: inView || reduced ? 0 : 1, transition: reduced ? "none" : `stroke-dashoffset 1.2s cubic-bezier(0.77, 0, 0.175, 1) ${arc.index * 0.12}s` }} />
+            {pulsing ? (
+              <circle r={3.2} fill="#fff" opacity={0}>
+                <animateMotion dur={`${3.2 + (arc.index % 3) * 0.6}s`} begin="indefinite" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                  <mpath href={`#arc-${arc.id}`} />
+                </animateMotion>
+                <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.1;.85;1" dur={`${3.2 + (arc.index % 3) * 0.6}s`} begin="indefinite" repeatCount="indefinite" />
+              </circle>
+            ) : null}
+          </g>
+        ))}
+        {countries.map((country) => (
+          <circle key={country.code} cx={country.point.x} cy={country.point.y} r={country.destination ? 5 : 3.5} fill={country.destination ? "#ff7a4d" : "#fff"} stroke="#151310" strokeWidth={1.5} />
+        ))}
+      </svg>
+      {countries.map((country, index) => (
+        <span
+          key={country.code}
+          className="sticker-flag"
+          style={{
+            position: "absolute",
+            left: `${(country.point.x / MAP_WIDTH) * 100}%`,
+            top: `${(country.point.y / MAP_HEIGHT) * 100}%`,
+            translate: "-50% calc(-100% - 10px)",
+            padding: 2,
+            "--tilt": `${index % 2 ? 6 : -6}deg`,
+            "--delay": `${0.4 + index * 0.06}s`,
+            animationPlayState: inView || reduced ? "running" : "paused",
+          } as React.CSSProperties}
+          title={country.code}
+        >
+          <Flag code={country.code} size={22} round />
+        </span>
+      ))}
+    </div>
+  );
+}

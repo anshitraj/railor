@@ -11,5 +11,5 @@ export function RailorMark({ size = 22 }: { size?: number }) {
 }
 
 export function RailorBrand({ size = 28 }: { size?: number }) {
-  return <span className="inline-flex items-center gap-2.5"><RailorMark size={size} /><span className="font-display text-[21px] font-bold tracking-[-0.05em]">Railor</span></span>;
+  return <span className="inline-flex items-center gap-2.5"><RailorMark size={size} /><span className="font-display text-[21px] font-bold tracking-[-0.03em]">Railor</span></span>;
 }

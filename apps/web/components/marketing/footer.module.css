@@ -1,0 +1,24 @@
+.footer { background: var(--color-ink); color: var(--color-on-dark); }
+.inner { width: min(1240px, calc(100% - 32px)); margin-inline: auto; }
+.top { display: grid; gap: 48px; padding: 72px 0 56px; }
+.about { display: grid; align-content: start; gap: 18px; max-width: 360px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -.035em; }
+.about > p { color: rgb(250 246 239 / .66); font-size: 15px; line-height: 1.6; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.primary, .secondary { display: inline-flex; height: 42px; align-items: center; padding: 0 18px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+.primary { background: #fff; color: var(--color-ink); }
+.primary:hover { background: var(--color-sand); }
+.secondary { border: 1px solid rgb(255 255 255 / .2); color: #fff; }
+.secondary:hover { border-color: rgb(255 255 255 / .45); }
+.columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+.columnTitle { margin-bottom: 14px; color: rgb(250 246 239 / .5); font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.columns ul { display: grid; gap: 4px; }
+.columns a { display: inline-flex; min-height: 32px; align-items: center; color: rgb(250 246 239 / .82); font-size: 14.5px; transition: color .15s ease; }
+.columns a:hover { color: #fff; }
+.bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 32px; padding: 22px 0 calc(28px + env(safe-area-inset-bottom)); border-top: 1px solid rgb(255 255 255 / .1); }
+.bottom > p { max-width: 70ch; color: rgb(250 246 239 / .55); font-size: 12.5px; line-height: 1.6; }
+.status { display: inline-flex; align-items: center; gap: 8px; color: rgb(250 246 239 / .75); font-size: 13px; }
+.status:hover { color: #fff; }
+.status > span { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 3px rgb(74 222 128 / .18); }
+@media (min-width: 720px) { .columns { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .top { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 64px; padding-top: 88px; } }

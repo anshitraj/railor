@@ -1,0 +1,84 @@
+.bento { display: grid; gap: 14px; }
+.tile { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-line); border-radius: 28px; background: var(--color-surface); }
+.stage { position: relative; display: grid; height: 200px; place-items: center; overflow: hidden; background: var(--color-canvas); }
+.copy { padding: 20px 22px 24px; }
+.copy h3 { display: flex; align-items: center; gap: 8px; color: var(--color-ink); font-size: 19px; font-weight: 650; letter-spacing: -.015em; }
+.copy p { margin-top: 6px; color: var(--color-muted); font-size: 14.5px; line-height: 1.55; }
+.beta { padding: 2px 8px; border-radius: 999px; background: var(--color-lavender); color: var(--color-orange-deep); font-size: 11.5px; font-weight: 700; letter-spacing: 0; }
+
+/* Tile 1: providers fly in and line up. */
+.converge { display: grid; grid-template-columns: repeat(3, auto); gap: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 650; box-shadow: 0 0 0 1px var(--color-line), 0 8px 18px -12px rgb(21 19 16 / .35); }
+
+/* Tile 2: one row is struck out with a stamp. */
+.filterList { position: relative; display: grid; width: min(240px, 80%); gap: 8px; }
+.filterRow { display: grid; grid-template-columns: 22px 1fr 16px; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 14px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 600; box-shadow: 0 0 0 1px var(--color-line); }
+.ok { color: var(--color-ok); }
+.bad { color: var(--color-bad); }
+.stamp { position: absolute; top: 50%; right: -14px; margin-top: -16px; }
+
+/* Tile 3: a refresh ring and a price that moves. */
+.live { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 20px; background: var(--color-surface); box-shadow: 0 0 0 1px var(--color-line), 0 12px 24px -16px rgb(21 19 16 / .35); }
+.ring { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; color: var(--color-orange-deep); box-shadow: inset 0 0 0 2px var(--color-lavender-deep); }
+.liveLabel { display: block; color: var(--color-muted); font-size: 12px; font-weight: 550; }
+.liveAmount { position: relative; display: grid; color: var(--color-ink); font-size: 24px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.liveAmount > span { grid-area: 1 / 1; }
+
+/* Tile 4: a source tip pops from the price. */
+.source { position: relative; display: grid; justify-items: center; gap: 10px; }
+.sourcePrice { padding: 10px 16px; border-radius: 14px; background: var(--color-surface); color: var(--color-ink); font-size: 18px; font-weight: 650; text-decoration: underline dotted var(--color-line-strong); text-underline-offset: 5px; box-shadow: 0 0 0 1px var(--color-line); }
+.sourceTip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--color-ink); color: #fff; font-size: 13px; font-weight: 550; transform-origin: top center; }
+
+/* Tile 5: an alert slides in like a notification. */
+.alert { display: flex; align-items: flex-start; gap: 10px; width: min(300px, 86%); padding: 12px 14px; border-radius: 16px; background: var(--color-surface); box-shadow: 0 0 0 1px var(--color-line), 0 16px 32px -18px rgb(21 19 16 / .45); }
+.alert strong { display: block; color: var(--color-ink); font-size: 14px; font-weight: 650; }
+.alert small { display: block; margin-top: 2px; color: var(--color-muted); font-size: 12.5px; line-height: 1.4; }
+.alertIcon { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border-radius: 9px; background: var(--color-lavender); color: var(--color-orange-deep); }
+
+/* Tile 6: a question and an answer. */
+.chat { display: grid; width: min(460px, 88%); gap: 10px; }
+.ask { display: inline-flex; align-items: center; gap: 8px; justify-self: end; max-width: 90%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: var(--color-ink); color: #fff; font-size: 14px; font-weight: 550; }
+.answer { display: flex; align-items: flex-start; gap: 8px; max-width: 92%; padding: 11px 14px; border-radius: 16px 16px 16px 4px; background: var(--color-surface); color: var(--color-ink-soft); font-size: 14px; line-height: 1.45; box-shadow: 0 0 0 1px var(--color-line); }
+.answer svg { flex: none; margin-top: 2px; color: var(--color-ok); }
+
+/* Loops (4.6 s); paused until the tile is on screen. */
+.chip[data-anim] { animation: flyIn 4.6s var(--ease-out) infinite both; }
+.filterRow[data-anim] { animation: strike 4.6s var(--ease-out) infinite both; }
+.stamp[data-anim] { animation: stamp 4.6s var(--ease-out) infinite both; }
+.ring[data-anim] { animation: spin 4.6s var(--ease-in-out) infinite both; }
+.liveOld[data-anim] { animation: swapOut 4.6s var(--ease-out) infinite both; }
+.liveNew[data-anim] { animation: swapIn 4.6s var(--ease-out) infinite both; }
+.sourceTip[data-anim] { animation: tip 4.6s var(--ease-out) infinite both; }
+.alert[data-anim] { animation: notify 4.6s var(--ease-drawer) infinite both; }
+.ask[data-anim] { animation: bubble 4.6s var(--ease-out) infinite both; }
+.answer[data-anim] { animation: bubble 4.6s var(--ease-out) .9s infinite both; }
+.loop [data-anim] { animation-play-state: paused; }
+.loop[data-playing] [data-anim] { animation-play-state: running; }
+
+@keyframes flyIn { 0% { opacity: 0; transform: translate(var(--from-x), var(--from-y)) scale(.9); } 18%, 86% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(.96); } }
+@keyframes strike { 0%, 30% { opacity: 1; } 40%, 88% { opacity: .38; } 100% { opacity: 1; } }
+@keyframes stamp { 0%, 32% { opacity: 0; transform: rotate(var(--tilt)) scale(1.4); } 40% { opacity: 1; transform: rotate(var(--tilt)) scale(.96); } 46%, 88% { opacity: 1; transform: rotate(var(--tilt)) scale(1); } 100% { opacity: 0; transform: rotate(var(--tilt)) scale(1); } }
+@keyframes spin { 0%, 30% { transform: rotate(0); } 46%, 100% { transform: rotate(360deg); } }
+@keyframes swapOut { 0%, 38% { opacity: 1; transform: none; filter: blur(0); } 46%, 100% { opacity: 0; transform: translateY(-8px); filter: blur(2px); } }
+@keyframes swapIn { 0%, 40% { opacity: 0; transform: translateY(8px); filter: blur(2px); color: inherit; } 48% { opacity: 1; transform: none; filter: blur(0); color: var(--color-ok); } 70%, 100% { opacity: 1; transform: none; color: inherit; } }
+@keyframes tip { 0%, 20% { opacity: 0; transform: translateY(-4px) scale(.96); } 30%, 86% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes notify { 0%, 10% { opacity: 0; transform: translateY(-28px); } 24%, 84% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; transform: translateY(-12px); } }
+@keyframes bubble { 0%, 8% { opacity: 0; transform: translateY(8px) scale(.98); } 18%, 86% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+@media (min-width: 720px) {
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .full { grid-column: 1 / -1; }
+}
+@media (min-width: 1000px) {
+  .bento { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wide { grid-column: span 2; }
+  .full { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); align-items: center; }
+  .full .stage { height: 220px; }
+  .full .copy { padding: 28px 36px; }
+  .full .copy h3 { font-size: 24px; }
+  .full .copy p { font-size: 15.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loop [data-anim] { animation: none !important; }
+  .liveOld { opacity: 0; }
+}

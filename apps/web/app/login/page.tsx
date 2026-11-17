@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Check } from "lucide-react";
 import { getSession } from "../../lib/auth";
 import { safeReturnPath, signInDestination } from "../../lib/security";
 import { LoginForm } from "../../components/auth/login-form";
-import { RailArtwork } from "../../components/marketing/rail-artwork";
+import { AuthVisual } from "../../components/auth/auth-visual";
 import { RailorBrand } from "../../components/brand";
 
 export const dynamic = "force-dynamic";
@@ -17,54 +18,54 @@ export default async function LoginPage({
   const params = await searchParams;
   // `next` lets flows like /invite/:token send people back after signing in.
   const next = typeof params.next === "string" ? safeReturnPath(params.next, "") : "";
-  const session = await getSession();
-  if (session) redirect(signInDestination(next || "/welcome", Boolean(session.organization?.onboardingCompletedAt)));
-
-  const query = typeof params.q === "string" ? params.q : undefined;
-  const error = typeof params.error === "string" ? params.error : undefined;
+  const query = typeof params.q === "string" ? params.q.slice(0, 300) : undefined;
   // The visitor's question survives authentication — it is carried into
-  // onboarding and pre-fills their first corridor.
+  // onboarding and then opens in the workspace search.
   const returnTo = next || (query ? `/welcome?q=${encodeURIComponent(query)}` : "/welcome");
+  const session = await getSession();
+  if (session) redirect(signInDestination(returnTo, Boolean(session.organization?.onboardingCompletedAt)));
+
+  const error = typeof params.error === "string" ? params.error : undefined;
+  const intent = typeof params.intent === "string" ? params.intent : undefined;
   const prefillEmail = typeof params.email === "string" ? params.email : undefined;
 
   return (
-    <main id="main" className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between gap-10 overflow-hidden border-r border-[var(--color-line)] bg-[var(--color-paper)] p-10 xl:p-12 lg:flex">
-        <div className="rail-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
-        <Link href="/" className="relative flex items-center gap-2">
-          <RailorBrand size={32} />
-        </Link>
-        <div className="relative flex flex-col gap-6">
-          <div className="max-w-md">
-            <span className="product-eyebrow">Financial infrastructure, mapped</span>
-            <p className="font-display text-[clamp(2.5rem,4vw,4rem)] font-semibold leading-[1.06] tracking-[-0.05em]">
-              Your next move.<br /><span className="text-[var(--color-orange-deep)]">Backed by evidence.</span>
-            </p>
-            <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-[var(--color-muted)]">
-              Railor checks each mapped provider against your corridor and tells you why the answer
-              is what it is.
-            </p>
+    <main id="main" className="grid min-h-dvh bg-[var(--color-canvas)] lg:grid-cols-[1.05fr_1fr]">
+      <section className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-[linear-gradient(165deg,#f7e8d9,#efd8c4)] p-10 lg:flex xl:p-14">
+        <Link href="/" className="relative w-fit" aria-label="Railor home"><RailorBrand size={32} /></Link>
+        <div className="relative mx-auto flex w-full max-w-[460px] flex-col gap-10">
+          <div>
+            <p className="text-[clamp(30px,3vw,40px)] font-[650] leading-[1.08] tracking-[-0.03em] text-[var(--color-ink)]">See what arrives before you send.</p>
+            <ul className="mt-6 grid gap-3 text-[15px] text-[var(--color-ink-soft)]">
+              {["Live prices from apps, banks and payment platforms", "Only options your profile can actually use", "Saved routes, alerts, company rules and an API key"].map((item) => (
+                <li key={item} className="flex items-start gap-2.5"><Check size={17} aria-hidden className="mt-0.5 shrink-0 text-[var(--color-orange-deep)]" />{item}</li>
+              ))}
+            </ul>
           </div>
-          <RailArtwork />
+          <AuthVisual />
         </div>
-        <p className="relative text-[12px] text-[var(--color-muted)]">
-          Know the route. Understand the evidence. Move with clarity.
-        </p>
+        <p className="relative text-[12.5px] text-[var(--color-muted)]">Free to start · No card needed</p>
       </section>
 
-      <section className="flex flex-col items-center justify-center gap-12 px-6 py-10 sm:py-16">
-        <Link href="/" className="self-start lg:hidden" aria-label="Railor home"><RailorBrand size={30} /></Link>
-        <LoginForm
-          returnTo={returnTo}
-          savedQuery={query}
-          initialEmail={prefillEmail}
-          initialError={error}
-          demoAvailable={process.env.NODE_ENV !== "production"}
-          oauth={{
-            google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-            github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
-          }}
-        />
+      <section className="flex flex-col px-5 py-6 sm:px-10 sm:py-10">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="lg:invisible" aria-label="Railor home"><RailorBrand size={30} /></Link>
+          <Link href="/prices" className="rounded-full px-3 py-2 text-[14px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]">Compare prices</Link>
+        </div>
+        <div className="flex flex-1 items-center justify-center py-10">
+          <LoginForm
+            returnTo={returnTo}
+            intent={intent}
+            savedQuery={query}
+            initialEmail={prefillEmail}
+            initialError={error}
+            demoAvailable={process.env.NODE_ENV !== "production"}
+            oauth={{
+              google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+              github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+            }}
+          />
+        </div>
       </section>
     </main>
   );

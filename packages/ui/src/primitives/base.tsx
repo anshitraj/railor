@@ -18,7 +18,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cn(
         // duration/ease are explicit so every button shares one motion feel
         // with the rest of the system rather than Tailwind's default 150ms.
-        "railor-button inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[var(--ease-out-quint)] active:translate-y-px active:duration-75 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none",
+        "railor-button inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 disabled:hover:shadow-none",
         size === "sm" && "min-h-9 px-3.5 py-1.5 text-[13px]",
         size === "md" && "min-h-11 px-4.5 py-2.5 text-sm",
         size === "lg" && "min-h-12 px-6 py-3.5 text-[15px]",

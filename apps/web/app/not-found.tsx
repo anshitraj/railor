@@ -14,16 +14,19 @@ export default function NotFound() {
       </svg>
       <div className="relative flex max-w-md flex-col items-center gap-4 text-center">
         <RailorMark size={40} />
-        <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--color-orange-deep)]">404 · Route not found</p>
-        <h1 className="font-display text-[clamp(2.2rem,6vw,3.4rem)] font-medium leading-[0.95] tracking-[-0.06em]">
-          This rail doesn&apos;t go anywhere.
+        <p className="text-[14px] font-semibold text-[var(--color-orange-deep)]">Error 404</p>
+        <h1 className="text-[clamp(2.2rem,6vw,3.2rem)] font-[650] leading-[1.02] tracking-[-0.035em]">
+          This page doesn&apos;t exist.
         </h1>
         <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
-          The page may have moved, or the link was mistyped. Railor would rather tell you that than guess where you meant to go.
+          It may have moved, or the link was mistyped. Here are the places most people are looking for.
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          <Link href="/" className="rounded-full bg-[var(--color-ink)] px-5 py-2.5 text-[14px] font-bold text-white transition hover:bg-[var(--color-orange-deep)]">
-            Back to Railor
+          <Link href="/" className="rounded-full bg-[var(--color-ink)] px-5 py-2.5 text-[14px] font-bold text-white transition hover:bg-[#2a2722]">
+            Back to home
+          </Link>
+          <Link href="/prices" className="rounded-full border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-5 py-2.5 text-[14px] font-semibold transition hover:border-[var(--color-ink)]">
+            Compare prices
           </Link>
           <Link href="/providers" className="rounded-full border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-5 py-2.5 text-[14px] font-semibold transition hover:border-[var(--color-ink)]">
             Browse providers
