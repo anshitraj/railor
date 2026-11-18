@@ -4,10 +4,16 @@ import { benchmarkCost, formatBenchmarkCost } from "./price-cost";
 const complete = { partial: false, costComplete: true } as const;
 
 describe("cost against a benchmark", () => {
+  it("shows the quoted cost when account eligibility still needs confirmation", () => {
+    expect(benchmarkCost({ partial: true, costComplete: true, recipientAmount: 902.70 }, 1000, .911702, "EUR"))
+      .toMatchObject({ kind: "cost", costMinor: 900, bps: 99 });
+  });
+
   it("matches the worked example: ₹100,000 baseline, ₹99,500 arrives → ₹500 and 50 bps", () => {
     const cost = benchmarkCost({ ...complete, recipientAmount: 99_500 }, 1_000, 100, "INR");
     expect(cost).toEqual({ kind: "cost", currency: "INR", baselineMinor: 10_000_000, netMinor: 9_950_000, costMinor: 50_000, bps: 50 });
     expect(cost.kind === "cost" && formatBenchmarkCost(cost)).toBe("₹500 · 50 bps");
+    expect(cost.kind === "cost" && formatBenchmarkCost(cost, "percent")).toBe("₹500 · 0.50%");
   });
 
   it("uses exact minor units for a real-world pair", () => {

@@ -166,3 +166,17 @@
 .invoiceLink svg { color: var(--color-orange-deep); }
 .invoiceTag { padding: 2px 7px; border-radius: 999px; background: var(--color-lavender); color: var(--color-orange-deep); font-size: 11px; font-weight: 650; }
 @media (hover: hover) and (pointer: fine) { .invoiceLink:hover { border-style: solid; border-color: var(--color-ink); color: var(--color-ink); } }
+.cardComingSoon {
+  display: grid;
+  align-items: start;
+  justify-items: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: var(--color-paper);
+}
+.cardComingSoon h2 { font-size: 17px; font-weight: 700; text-wrap: balance; }
+.cardComingSoon p { margin-top: 4px; color: var(--color-muted); font-size: 13px; line-height: 1.5; text-wrap: pretty; }
+.cardComingSoon button { min-height: 44px; padding-inline: 14px; border-radius: 8px; background: var(--color-surface); border: 1px solid var(--color-line-strong); font-size: 13px; font-weight: 650; }
+.cardComingSoon button:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }

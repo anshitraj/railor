@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { indiaReceivingAssessment } from "./public-pricing/receiving-products.js";
+import { withReceivingEvidence, type ReceivingPaymentFacts } from "./public-pricing/receiving-evidence.js";
 
 /** Account holder, not the overseas payer. Freelance income is commercial. */
 export const CustomerContext = z.object({
@@ -30,6 +31,7 @@ export interface ProviderProfileAssessment {
   priceApplicable: boolean;
   sources: Array<{ label: string; url: string }>;
   reviewedAt: string | null;
+  payment?: ReceivingPaymentFacts;
 }
 const WISE_VERIFY = "https://wise.com/help/articles/6Kpm9pXlJW79OGAktSnHos/how-to-verify-your-indian-business-to-receive-payments";
 const WISE_RECEIVE = "https://wise.com/help/articles/71lNXW0Ls3gEFhUH8PtodV/receiving-payments-for-indian-businesses";
@@ -137,7 +139,7 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     a.reasons = ["The selected purpose needs a separate product and purpose-code review; export-service rules cannot approve it."];
     a.priceApplicable = false;
   }
-  return a;
+  return intoIndia ? withReceivingEvidence(a, provider, context, request.sourceCurrency) : a;
 }
 
 /**

@@ -15,7 +15,7 @@ import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { providerSite } from "../../lib/provider-sites";
 import { CurrencyPicker } from "../price/currency-picker";
-import { PayMethodSelect } from "../price/pay-method-select";
+import { CardPricingComingSoon, PayMethodSelect } from "../price/pay-method-select";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { providerIdentity } from "../../lib/price-display";
 import { priceView } from "../../lib/price-view";
@@ -176,11 +176,12 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
   const amount = Number(amountText);
   const valid = Boolean(from && to && from !== to && amount > 0);
+  const cardComingSoon = context.direction === "receive" && context.paymentMethod === "card";
   const result = priceResponseMatches(response, { from, to, amount, market, context }) ? response : null;
   const contextCurrent = Boolean(result);
 
   const load = useCallback(async () => {
-    if (!valid) return;
+    if (!valid || cardComingSoon) return;
     controller.current?.abort();
     const ctl = new AbortController();
     controller.current = ctl;
@@ -212,7 +213,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     } finally {
       if (controller.current === ctl) setLoading(false);
     }
-  }, [valid, from, to, amount, market, context, basePath]);
+  }, [valid, cardComingSoon, from, to, amount, market, context, basePath]);
 
   // Re-quote on any input change (typing waits a beat); a new pair resets the flash baseline.
   useEffect(() => {
@@ -235,8 +236,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return () => window.clearInterval(tick);
   }, []);
   useEffect(() => {
-    if (!loading && valid && document.visibilityState === "visible" && now - fetchedAt >= REFRESH_SECONDS * 1000) void load();
-  }, [now, fetchedAt, loading, valid, load]);
+    if (!loading && valid && !cardComingSoon && document.visibilityState === "visible" && now - fetchedAt >= REFRESH_SECONDS * 1000) void load();
+  }, [now, fetchedAt, loading, valid, cardComingSoon, load]);
 
   useEffect(() => {
     if (!Object.keys(flashes).length) return;
@@ -280,7 +281,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     <div className={styles.comparisonLayout}>
       <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2 px-1">
+          {!cardComingSoon && <div className="flex items-center justify-between gap-2 px-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
               <span className="relative flex size-2">
                 <span className="relative inline-flex size-2 rounded-full bg-[#22a35a]" />
@@ -299,7 +300,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </button>
               <RefreshRing elapsed={elapsed} loading={loading} onClick={() => void load()} />
             </div>
-          </div>
+          </div>}
 
           <div role="group" aria-label="Account type" className="flex flex-wrap items-center justify-between gap-2 px-1 py-1">
             <span className="text-[12px] font-medium text-[var(--color-muted)]">I’m {context.direction === "receive" ? "receiving" : "sending"} as</span>
@@ -314,17 +315,18 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 </button>;
               })}
             </div>
-            {!contextCurrent ? <span role="status" className="sr-only">Checking this profile…</span> : null}
+            {!contextCurrent && !cardComingSoon ? <span role="status" className="sr-only">Checking this profile…</span> : null}
           </div>
           {context.direction === "receive" ? (
             <div className="px-1 pb-1">
               <div className="flex flex-wrap items-center gap-2">
                 <PayMethodSelect
+                  cardComingSoon
                   value={context.paymentMethod ?? (context.profile === "personal" ? "transfer_service" : "local_bank")}
                   onChange={(paymentMethod) => setContext((c) => ({ ...c, paymentMethod }))}
                   label={context.profile === "personal" ? "Sender pays by" : "Client pays by"}
                 />
-                {context.profile !== "personal" ? (
+                {context.profile !== "personal" && !cardComingSoon ? (
                   <Link prefetch={false} href={`/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`} className={`${priceStyles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
                     <FileUp size={14} aria-hidden />Upload invoice
                   </Link>
@@ -333,6 +335,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </div>
           ) : null}
 
+          {cardComingSoon ? <CardPricingComingSoon personal={context.profile === "personal"} onCompare={() => setContext(c => ({ ...c, paymentMethod: c.profile === "personal" ? "transfer_service" : "local_bank" }))} /> : <>
           <div className="relative flex flex-col gap-1.5">
             <div className="rounded-2xl border border-transparent bg-[var(--color-canvas)] p-4 transition focus-within:border-[var(--color-ink)]">
               <div className="flex items-center justify-between gap-2">
@@ -405,7 +408,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <span>
                   {selectedCost?.kind === "cost" ? (
                     <>
-                      Cost <span className={cn("font-semibold", selectedCost.bps <= 50 ? "text-[var(--color-ok)]" : selectedCost.bps <= 150 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{formatBenchmarkCost(selectedCost)}</span> vs mid-market
+                      Cost <span className={cn("font-semibold", selectedCost.bps <= 50 ? "text-[var(--color-ok)]" : selectedCost.bps <= 150 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{formatBenchmarkCost(selectedCost, "percent")}</span> vs mid-market
                     </>
                   ) : selected?.partial ? (
                     selected.publicOffer ? "First transfer · US bank funded" : selected.missing?.[0] ? `Missing: ${selected.missing[0]}` : "Partial estimate · a cost is unknown"
@@ -457,8 +460,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </p>
           ) : null}
 
+          </>}
         </div>
       </section>
+      {!cardComingSoon && <>
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
@@ -502,6 +507,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           {excluded.length ? <details className="rounded-xl border border-[var(--color-bad)]/20 p-3 text-[12px] text-[var(--color-ink-soft)]"><summary className="cursor-pointer">Outside documented profile rules · {excluded.length}</summary><ul className="mt-2 space-y-2">{excluded.map((row) => <li key={row.providerSlug}><strong>{row.providerName}</strong><p>{row.profileAssessment?.reasons.join(" ")}</p>{row.profileAssessment?.sources.length ? <p className="mt-1 flex flex-wrap gap-2">{row.profileAssessment.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener" className="text-[var(--color-orange-deep)] underline">{source.label} ↗</a>)}</p> : null}{row.webChecks?.length ? <WebCheckDetails checks={row.webChecks} compact /> : null}{row.side !== "payer" && context.profile !== "personal" ? <ConnectionLink slug={row.providerSlug} name={row.providerName} mode={mode} connected={connected.includes(row.providerSlug)} /> : null}</li>)}</ul></details> : null}</div></PriceDisclosure>}
         <p className={styles.priceFootnote}>Sources and price basis are labelled separately. Mid-market reference: {result?.reference?.source ?? "not available"}. Published schedules are estimates, not guaranteed payout amounts. Additional banking or corridor fees may apply.</p>
       </div>
+      </>}
     </div>
   );
 }

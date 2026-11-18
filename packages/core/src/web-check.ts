@@ -162,10 +162,15 @@ export function priceCheckClaims(input: PriceCheckInput, rows: PriceRow[]): WebC
     if (profile && context) {
       statement = `${PROFILE_WHO[context.profile]} in ${countryName(context.country)} can receive ${PURPOSE_WHAT[context.purpose]} from abroad through ${name}.`;
     } else {
-      const sender = row.providerSlug === "revolut" ? "someone with a Revolut personal account in the United Kingdom"
+      const airwallexCalculator = row.product?.id === "airwallex:us-public-fx";
+      const euroReference = dst === "EUR" && src === "USD" && row.basis === "live_public"
+        && (row.providerSlug === "wise" || row.providerSlug === "revolut" || airwallexCalculator);
+      const sender = airwallexCalculator ? "a US business"
+        : row.providerSlug === "revolut" ? "someone with a Revolut personal account in the United Kingdom"
         : context?.direction === "send" ? `${PROFILE_SENDER[context.profile]} based in ${countryName(context.country)}`
         : "a customer";
-      const into = country ? `a bank account in ${countryName(country)}` : "the recipient's bank account";
+      const destination = euroReference ? input.destinationCountry : country;
+      const into = destination ? `a bank account in ${countryName(destination)}` : euroReference ? "an eligible EUR bank account in Europe" : "the recipient's bank account";
       statement = `${name} lets ${sender} pay in ${currencyName(src)} (${src}) and have ${currencyName(dst)} (${dst}) paid into ${into}.`;
     }
     const kind = profile ? "profile" : "corridor";

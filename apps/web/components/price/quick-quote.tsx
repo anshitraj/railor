@@ -13,7 +13,7 @@ import { isLockedPriceCheck, type LockedPriceCheck } from "../../lib/price-lock"
 import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
 import { pricingSourceLabel } from "../../lib/price-display";
 import { CurrencyPicker } from "./currency-picker";
-import { PayMethodSelect } from "./pay-method-select";
+import { CardPricingComingSoon, PayMethodSelect } from "./pay-method-select";
 import styles from "./price.module.css";
 
 /**
@@ -125,6 +125,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
 
   const amount = Number(amountText);
   const valid = Boolean(from && to && from !== to && amount > 0);
+  const cardComingSoon = context.direction === "receive" && context.paymentMethod === "card";
   const request = useMemo(() => ({ from, to, amount, market: true, context }), [from, to, amount, context]);
   const matching = priceResponseMatches(response, request) ? response : null;
   const result = matching && !isLockedPriceCheck(matching) ? matching : null;
@@ -153,7 +154,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const invoiceHref = locked ? `/login?intent=start&next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
 
   const load = useCallback(async () => {
-    if (!valid) return;
+    if (!valid || cardComingSoon) return;
     controller.current?.abort();
     const ctl = new AbortController();
     controller.current = ctl;
@@ -175,7 +176,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
     } finally {
       if (controller.current === ctl) setLoading(false);
     }
-  }, [valid, from, to, amount, context]);
+  }, [valid, cardComingSoon, from, to, amount, context]);
 
   // Any change re-quotes after a short pause (typing doesn't fire a request per key).
   useEffect(() => {
@@ -195,8 +196,8 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
     return () => window.clearInterval(tick);
   }, []);
   useEffect(() => {
-    if (!loading && valid && !error && document.visibilityState === "visible" && fetchedAt && now - fetchedAt >= REFRESH_SECONDS * 1000) void load();
-  }, [now, fetchedAt, loading, valid, error, load]);
+    if (!loading && valid && !cardComingSoon && !error && document.visibilityState === "visible" && fetchedAt && now - fetchedAt >= REFRESH_SECONDS * 1000) void load();
+  }, [now, fetchedAt, loading, valid, cardComingSoon, error, load]);
   useEffect(() => () => controller.current?.abort(), []);
 
   const setProfile = (profile: Profile) => setContext((previous) => contextFor(to, profile, entityCountry, previous));
@@ -243,10 +244,10 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
               </button>
             ))}
           </div>
-          <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
+          {!cardComingSoon && <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
             <span aria-hidden className={styles.liveDot} data-loading={loading || undefined} />
             {fetchedAt ? `Updated ${ago(now - fetchedAt)}` : "Live prices"}
-          </span>
+          </span>}
         </div>
 
         {context.direction === "receive" && (variant !== "hero" || activeProfile !== "personal") ? (
@@ -254,12 +255,13 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
             {/* The landing hero keeps to amount and currencies: the payment-method choice lives in the app. The method still defaults in `context`, so the prices are unchanged. */}
             {variant === "hero" ? null : (
               <PayMethodSelect
+                cardComingSoon
                 value={context.paymentMethod ?? (activeProfile === "personal" ? "transfer_service" : "local_bank")}
                 onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
                 label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
               />
             )}
-            {activeProfile !== "personal" ? (
+            {activeProfile !== "personal" && !cardComingSoon ? (
               <Link href={invoiceHref} prefetch={false} className={`${styles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
                 <FileUp size={14} aria-hidden />
                 Upload invoice
@@ -269,6 +271,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </div>
         ) : null}
 
+        {cardComingSoon ? <CardPricingComingSoon personal={context.profile === "personal"} onCompare={() => setContext(c => ({ ...c, paymentMethod: c.profile === "personal" ? "transfer_service" : "local_bank" }))} /> : <>
         <div className={styles.fields}>
           <div className={styles.field}>
             <label htmlFor={`${variant}-amount`} className={styles.fieldLabel}>Sending</label>
@@ -322,7 +325,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                 <>
                   via <strong>{top.providerName.split(" · ")[0]}</strong>
                   {top.feeAmount !== null ? <> · fee {money(top.feeAmount)} {top.feeCurrency ?? ""}</> : null}
-                  {(() => { const cost = benchmarkCost(top, amount, midRate, to); return cost.kind === "cost" ? <> · cost {formatBenchmarkCost(cost)}</> : null; })()}
+                  {(() => { const cost = benchmarkCost(top, amount, midRate, to); return cost.kind === "cost" ? <> · cost {formatBenchmarkCost(cost, "percent")}</> : null; })()}
                   {top.delivery ? <> · arrives {top.delivery}</> : null}
                 </>
               ) : midRate ? <>Mid-market rate 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}</> : <>&nbsp;</>}
@@ -388,7 +391,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                         </span>
                         <span className={styles.rowAmount}>
                           <strong>{money(row.recipientAmount)}</strong>
-                          <small>{isBest ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span> : row.basis === "market_estimate" ? <span className={styles.estimateTag}>Market reference</span> : (() => { const cost = benchmarkCost(row, amount, midRate, to); return cost.kind === "cost" ? <span className={styles.costTag}>{formatBenchmarkCost(cost)}</span> : <span className={styles.estimateTag}>Cost unknown</span>; })()}</small>
+                          <small>{isBest ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span> : row.basis === "market_estimate" ? <span className={styles.estimateTag}>Market reference</span> : (() => { const cost = benchmarkCost(row, amount, midRate, to); return cost.kind === "cost" ? <span className={styles.costTag}>{formatBenchmarkCost(cost, "percent")}</span> : <span className={styles.estimateTag}>Cost unknown</span>; })()}</small>
                         </span>
                       </div>
                     </motion.li>
@@ -423,6 +426,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
             Every price shows its source. Confirm the final amount with the provider.
           </>}
         </p>
+        </>}
       </div>
     </div>
   );

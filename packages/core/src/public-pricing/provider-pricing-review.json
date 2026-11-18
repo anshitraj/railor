@@ -1,51 +1,97 @@
 {
   "checkedAt": "2026-10-29T22:12:19.231643+00:00",
-  "method": "Official pages checked through Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with an independent official web-reader fallback and a public calculator browser check. Each record identifies its retrieval method. Retrieval time is not the source publication date or proof of a complete quote. Summaries describe published components and limitations.",
+  "method": "The initial audit used Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with independent official web-reader and calculator checks. Later reviews use official pricing pages and product documentation. Each record identifies its retrieval method and date. Summaries describe published components and limitations.",
   "providers": [
     {
       "slug": "1money",
       "name": "1Money",
       "sourceUrl": "https://www.1money.com/pricing",
-      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "checkedAt": "2026-11-18",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": "Published US ACH fee: USD 0.55; SWIFT withdrawal: USD 25. Conversion spreads vary and are quoted at transaction time. A bank-rail fee alone does not price a currency conversion."
+      "method": "official_pricing_and_coverage",
+      "summary": "USD same-day ACH costs $0.55 each way. USD international SWIFT costs $10 to deposit and $25 to withdraw. These are USD bank-rail fees.",
+      "routeNotes": [{
+        "to": "INR",
+        "label": "INR payouts coming soon",
+        "reason": "1Money lists INR pay-in and payout as coming soon. Its published USD ACH and SWIFT fees do not price an INR payout.",
+        "sources": [{ "label": "1Money fiat rails and limits", "url": "https://developer.1money.com/docs/fiat-rails-and-limits" }]
+      }]
     },
     {
       "slug": "airwallex",
       "name": "Airwallex",
-      "sourceUrl": "https://www.airwallex.com/en-us/pricing",
-      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "sourceUrl": "https://www.airwallex.com/en-us/terms/fee-schedule",
+      "checkedAt": "2026-11-18",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": "US Business Account plan: FX markup 0.5% for major currencies and 1% for others; SWIFT USD 15–25. Platform API pricing is custom. Account region, payout rail and the provider interbank rate determine the actual quote."
+      "method": "official_pricing_and_coverage",
+      "summary": "The US fee schedule lists a 0.50% standard EUR FX margin, $1 for a local EUR transfer and $2 for a local INR transfer. Grow and Accelerate are exempt from the local transfer fee. SWIFT costs $15 (SHA) or $25 (OUR).",
+      "routeNotes": [{
+        "to": "INR",
+        "label": "Business payout · fees vary",
+        "reason": "Airwallex supports local INR payouts. The public USD-to-INR calculator illustrates a U.S. business sending money. Airwallex lists Singapore as the onboarding entity for India-registered businesses, so confirm the plan and price for your own account.",
+        "sources": [
+          { "label": "Airwallex USD-to-INR calculator", "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-india" },
+          { "label": "Airwallex India payout guide", "url": "https://www.airwallex.com/docs/payouts/payout-network/india" },
+          { "label": "Airwallex country eligibility", "url": "https://help.airwallex.com/hc/en-gb/articles/4408591334937-Eligible-Countries-and-Territories" }
+        ]
+      }, {
+        "from": "USD",
+        "to": "EUR",
+        "label": "US business payout",
+        "reason": "The public calculator shows a U.S. business sender’s exchange rate before fees. The current fee schedule lists standard fees separately; the sender’s plan and rail determine the final price.",
+        "sources": [
+          { "label": "Airwallex USD-to-EUR calculator", "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-europe" }
+        ]
+      }]
     },
     {
       "slug": "al-ansari-exchange",
       "name": "Al Ansari Exchange",
-      "sourceUrl": "https://alansariexchange.com/service/remittances/",
-      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "sourceUrl": "https://alansariexchange.com/wp-content/uploads/2019/10/Key-Fact-Statement-Remittance-0925-English.pdf",
+      "checkedAt": "2026-11-18",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_and_coverage",
+      "summary": "The UAE bank-transfer schedule groups India with four other destinations and lists AED 0–25.24 plus 5% VAT. The exact fee depends on the destination, currency and amount.",
+      "routeNotes": [{
+        "from": "USD",
+        "to": "INR",
+        "label": "UAE calculator starts in AED",
+        "reason": "The documented India remittance calculator starts with AED from the UAE. Its fee range does not provide a price for USD-funded transfers.",
+        "sources": [{ "label": "Al Ansari UAE-to-India calculator", "url": "https://alansariexchange.com/send-money-to-india-from-the-uae/" }]
+      }]
     },
     {
       "slug": "alchemy-pay",
       "name": "Alchemy Pay",
-      "sourceUrl": "https://alchemypay.org",
-      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "sourceUrl": "https://alchemypay.readme.io/docs/native-api-integration",
+      "checkedAt": "2026-11-18",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_product_docs",
+      "summary": null,
+      "routeNotes": [{
+        "to": "INR",
+        "label": "Crypto ramp pricing",
+        "reason": "Alchemy Pay documents quotes for buying or selling crypto. Its INR payment methods for buying crypto do not establish a USD-to-INR bank transfer price.",
+        "sources": [
+          { "label": "Alchemy Pay ramp quote API", "url": "https://alchemypay.readme.io/docs/native-api-integration" },
+          { "label": "Alchemy Pay payment methods", "url": "https://support.alchemypay.org/hc/en-us/articles/23455052460443-What-payment-methods-and-currencies-are-supported-on-Alchemy-Pay" }
+        ]
+      }]
     },
     {
       "slug": "alfred",
       "name": "Alfred",
-      "sourceUrl": "https://alfredpay.io",
-      "checkedAt": "2026-10-29T21:46:53.471Z",
+      "sourceUrl": "https://alfredpay.io/coverage",
+      "checkedAt": "2026-11-18",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_product_docs",
+      "summary": null,
+      "routeNotes": [{
+        "to": "INR",
+        "label": "INR payout not listed",
+        "reason": "Alfred publishes USD and Latin American rails, including MXN, BRL, COP and ARS. Its coverage page does not list local INR payouts.",
+        "sources": [{ "label": "Alfred supported markets", "url": "https://alfredpay.io/coverage" }]
+      }]
     },
     {
       "slug": "anchorage",
@@ -117,7 +163,16 @@
       "checkedAt": "2026-10-29T21:47:19.006Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Card/Apple Pay purchases have a published 1.99% processing fee. Network charges and variable Banxa/partner/recovery spreads are additional; zero processing fee on another method does not mean zero total cost."
+      "summary": "Card/Apple Pay purchases have a published 1.99% processing fee. Network charges and variable Banxa/partner/recovery spreads are additional; zero processing fee on another method does not mean zero total cost.",
+      "routeNotes": [{
+        "from": "USD",
+        "to": "EUR",
+        "label": "Crypto buy or sell",
+        "reason": "Banxa’s EUR SEPA payout prices the sale of a crypto asset. Its hosted checkout does not quote a USD-funded fiat bank transfer to EUR.",
+        "sources": [
+          { "label": "Banxa supported payment methods", "url": "https://docs.banxa.com/products/hosted-checkout/docs/reference/supported-payment-methods" }
+        ]
+      }]
     },
     {
       "slug": "bitgo",
@@ -153,7 +208,17 @@
       "checkedAt": "2026-10-29T21:55:50.029Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Published platform subscriptions depend on plan and billing interval. Subscription prices are separate from the FX rate, rail fees and amount-specific payout quote."
+      "summary": "Published platform subscriptions depend on plan and billing interval. Subscription prices are separate from the FX rate, rail fees and amount-specific payout quote.",
+      "routeNotes": [{
+        "from": "USD",
+        "to": "EUR",
+        "label": "Account quote required",
+        "reason": "BlindPay supports USD virtual accounts and a separate EUR SEPA payout flow funded with stablecoins. The payout quote requires an authenticated instance and a registered recipient bank account.",
+        "sources": [
+          { "label": "BlindPay virtual accounts", "url": "https://blindpay.com/virtual-accounts" },
+          { "label": "BlindPay payout quote requirements", "url": "https://blindpay.com/resources/more/how-to-integrate-a-stablecoin-api" }
+        ]
+      }]
     },
     {
       "slug": "botim",
@@ -698,11 +763,11 @@
     {
       "slug": "payzoll",
       "name": "PayZoll",
-      "sourceUrl": "https://payzoll.finance",
-      "checkedAt": "2026-10-29T21:49:56.842Z",
+      "sourceUrl": "https://payzoll.finance/payzoll-vs-skydo",
+      "checkedAt": "2026-11-18T00:00:00.000Z",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": "Publishes a 1% transfer fee and no FX markup. Tax inclusion, applicable minimums and partner conditions are not established by the headline, so it remains a published fee reference."
+      "method": "official_review",
+      "summary": "PayZoll publishes USD 10 below USD 1,000 and 1% from USD 1,000. Banking, partner, conversion and corridor-specific charges may apply. The observed dashboard calculator confirms the USD-to-INR payout fee formula."
     },
     {
       "slug": "peoples-group",

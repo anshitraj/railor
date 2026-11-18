@@ -50,9 +50,18 @@ export async function revolutPublicReference(input: PriceCheckInput, fetcher: ty
     delivery: null,
     observedAt: new Date(quote.rate.timestamp).toISOString(),
     source: { label: "Revolut UK public FX converter", url: "https://www.revolut.com/currency-converter/" },
+    ...(destination === "EUR" ? {
+      missing: ["Sender’s plan, remaining FX allowance and EUR payout route"],
+      taxNote: "The converter shows an exchange fee only. Check the transfer details for any other charges.",
+      receipt: "The sender can download a PDF confirmation for eligible bank transfers.",
+    } : {}),
     notes: [
       "Revolut's UK Standard-plan conversion rate, for someone who already holds a Revolut UK account. Revolut's transfer fee is not included.",
       "A currency conversion amount, not a guaranteed bank payout or your business account's price.",
+      ...(destination === "EUR" ? [
+        "UK Personal Standard lists SEPA EUR bank payouts as free. The Standard plan charges 1% on exchange above the £1,000 rolling monthly allowance and 1% on weekend exchange. Other payout routes and business plans have different fees. https://www.revolut.com/legal/standard-fees/",
+        "Revolut transfer confirmations: https://help.revolut.com/help/transfers/outbound-transfers/how-to-send-money-to-another-bank/how-do-i-download-my-transfer-confirmation/",
+      ] : []),
       ...(destination === "INR" || source === "INR"
         ? ["Revolut can send INR to Indian bank accounts, but standard Revolut accounts can't hold or receive INR, and Revolut India receives domestic UPI only."]
         : []),

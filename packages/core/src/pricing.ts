@@ -1,5 +1,7 @@
 import { wisePublicQuote } from "./payments/adapters/wise.js";
 import { revolutPublicReference } from "./public-pricing/revolut.js";
+import { airwallexPublicReference, hasAirwallexPublicReference } from "./public-pricing/airwallex.js";
+import { alAnsariPublicReference, hasAlAnsariPublicReference } from "./public-pricing/al-ansari.js";
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
 import { shared } from "./public-pricing/shared-cache.js";
@@ -8,7 +10,7 @@ import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
-import { CustomerContext, assessCustomerProfile, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
+import { CustomerContext, assessCustomerProfile, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
 /**
@@ -48,11 +50,12 @@ export interface PriceRow {
   recipientAmount: number | null;
   feeAmount: number | null;
   feeCurrency: string | null;
+  feeBreakdown?: string;
   rate: number | null;
   rateSource?: { label: string; url: string; observedAt: string };
   /** 1 − recipient ÷ (amount × reference rate): everything the route costs, fee and FX together. */
   totalCostPct: number | null;
-  /** Complete rows can be ranked; partial ones are missing a cost component. */
+  /** Account eligibility or some costs still need confirmation before ranking. */
   partial: boolean;
   delivery: string | null;
   /** Source timestamp; empty when a comparison feed supplies no collection time. */
@@ -141,6 +144,7 @@ export interface MarketCoverageProvider {
   lastVerified: string | null;
   pricingStatus?: { label: string; reason: string };
   feeEvidence?: Array<{ summary: string; product: string; sourceUrl: string | null; observedAt: string | null }>;
+  profileAssessment?: ProviderProfileAssessment;
 }
 
 export interface MarketCoverage {
@@ -312,15 +316,15 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
     notes: ["Standard UK business pricing; express delivery, account approval and destination eligibility require confirmation.", "Illustrated with Railor's reference FX rate. Atlantic's executable institutional rate may differ; this is not an Atlantic quote."],
   },
   {
-    slug: "payzoll", product: "PayZoll · receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    slug: "payzoll", product: "PayZoll · receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: "FIRA/FIRC for eligible international receipts",
     name: "PayZoll",
-    sourceUrl: "https://payzoll.finance/",
-    observedAt: "2026-10-29",
-    appliesTo: intoIndia,
-    fee: (input) => ({ amount: round(input.amount * .01), currency: input.sourceCurrency, parts: ["1% public headline fee; minimum, taxes and partner charges unconfirmed"] }),
+    sourceUrl: "https://payzoll.finance/payzoll-vs-skydo",
+    observedAt: "2026-11-18",
+    appliesTo: input => input.sourceCurrency === "USD" ? intoIndia(input) : "The documented minimum applies to USD collections into INR.",
+    fee: (input) => ({ amount: round(Math.max(10, input.amount * .01)), currency: "USD", parts: ["USD 10 below USD 1,000; 1% from USD 1,000"] }),
     partial: true,
-    missing: ["PayZoll's minimum fee, tax treatment and partner charges."],
-    notes: ["Official homepage advertises 1% and zero FX markup. The previously assumed USD 10 floor is not confirmed by the current page and is not applied.", "Tax inclusion, minimums and banking/partner charges are unconfirmed. The reference receive amount is before any additional charges and cannot be certified as the lowest total.", "Published fee reference only — no PayZoll account quote integration is used."],
+    missing: ["Applicable tax and banking, partner or corridor charges."],
+    notes: ["PayZoll's published USD fee matches its USD-to-INR dashboard calculator. The homepage advertises zero FX markup.", "Railor estimates the payout at its reference exchange rate. The final rate and amount are confirmed in PayZoll at withdrawal."],
   },
   {
     slug: "skydo", product: "Skydo · receive into a local collection account", payMethods: ["local_bank"], taxIncluded: false, receipt: "FIRA (instant, every payment)",
@@ -413,6 +417,11 @@ function arrival(minutes: number) {
   return `in ~${Math.round(minutes / 1440)} days`;
 }
 
+const wiseEuroGuide = "https://wise.com/help/articles/2932149/guide-to-eur-transfers";
+const wiseTransferReceipt = "https://wise.com/help/articles/2977946/how-do-i-download-a-transfer-confirmation";
+const wiseRemittanceTax = "https://wise.com/help/articles/3uQHBn8NCiafZqlTWMvfkO/remittance-tax";
+const isUsdToEur = (input: PriceCheckInput) => input.sourceCurrency === "USD" && input.destinationCurrency === "EUR";
+
 export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckDeps = {}): Promise<PriceCheckResult> {
   const input: PriceCheckInput = {
     ...rawInput,
@@ -433,9 +442,9 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}:${input.destinationCountry ?? ""}`;
-  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx] = await Promise.all([
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
-    cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher)).catch((error: Error) => error),
+    cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, isUsdToEur(input))).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
     input.sourceCurrency === "USD"
       ? Promise.resolve(1)
@@ -446,6 +455,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     cache(`revolut:GB:${pair}`, 60_000, () => revolutPublicReference(input, fetcher, now)).catch(() => null),
     cache(`skydo-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => skydoPublicFx(input, fetcher, now)).catch(() => null),
     cache(`mulya-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => mulyaPublicFx(input, fetcher, now)).catch(() => null),
+    hasAirwallexPublicReference(input) ? cache(`airwallex-public-fx:${pair}`, 15_000, () => airwallexPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
+    hasAlAnsariPublicReference(input) ? cache(`al-ansari-public-fx:${pair}`, 30_000, () => alAnsariPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
   ]);
 
   for (const c of connected) {
@@ -456,6 +467,9 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
   rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug)));
+  for (const fx of [airwallexPublic, alAnsariPublic]) {
+    if (fx && !connectedSlugs.has(fx.providerSlug)) rows.push({ ...fx, notes: [...fx.notes] });
+  }
   if (revolutPublic && !connectedSlugs.has("revolut")) rows.push({ ...revolutPublic, notes: [...revolutPublic.notes] });
   else if (!revolutPublic && !connectedSlugs.has("revolut")) unavailable.push({ providerSlug: "revolut", providerName: "Revolut", reason: "No public UK FX reference for this request. Public pricing does not confirm business eligibility or total transfer cost." });
 
@@ -464,13 +478,29 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     const rate = Number(wisePublic.exchangeRate);
     if (Number.isFinite(rate) && rate > 0) reference = { rate, source: "Wise's public rate (Wise quotes the mid-market rate)", observedAt: wisePublic.observedAt };
     if (!connectedSlugs.has("wise")) {
-      rows.push(
-        fromQuote(input.sourceCurrency.toUpperCase() === "AED" ? { ...wisePublic, costPartial: true, costNote: "AED funding eligibility and complete transfer costs require confirmation." } : wisePublic, "Wise", "live_public", {
-          delivery: wisePublic.deliveryLabel ?? null,
-          source: { label: "Wise public quote", url: "https://wise.com/" },
-          notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`, ...(input.sourceCurrency.toUpperCase() === "AED" ? ["Wise's AED funding guide limits sending AED to money already held in a Wise balance. This public reference does not confirm a UAE bank-funded transfer or its complete cost. https://wise.com/help/articles/2932360/guide-to-aed-transfers"] : [])],
-        }),
-      );
+      const wiseRow = fromQuote(input.sourceCurrency === "AED" ? { ...wisePublic, costPartial: true, costNote: "AED funding eligibility and complete transfer costs require confirmation." } : wisePublic, "Wise", "live_public", {
+        delivery: wisePublic.deliveryLabel ?? null,
+        source: { label: "Wise public quote", url: "https://wise.com/" },
+        notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`, ...(input.sourceCurrency === "AED" ? ["Wise's AED funding guide limits sending AED to money already held in a Wise balance. This public reference does not confirm a UAE bank-funded transfer or its complete cost. https://wise.com/help/articles/2932360/guide-to-aed-transfers"] : [])],
+      });
+      if (isUsdToEur(input)) {
+        wiseRow.source.url = "https://wise.com/us/send-money/send-money-to-europe";
+        if (wisePublic.payInMethod === "BANK_TRANSFER") {
+          wiseRow.product = { id: "wise:usd-eur-bank", label: "Wise · sender-funded bank transfer" };
+        }
+        wiseRow.receipt = "The sender can download and share a PDF after the transfer completes.";
+        wiseRow.taxNote = "Wise says its funding methods are exempt from the U.S. 1% remittance tax. Any other tax depends on the sender’s location.";
+        const { platformFeeAmount, payoutFeeAmount } = wisePublic;
+        if (wiseRow.feeCurrency === "USD" && wiseRow.feeAmount !== null
+          && platformFeeAmount != null && payoutFeeAmount != null
+          && round(platformFeeAmount + payoutFeeAmount) === wiseRow.feeAmount) {
+          wiseRow.feeBreakdown = `USD ${platformFeeAmount.toFixed(2)} funding + USD ${payoutFeeAmount.toFixed(2)} Wise fee`;
+        }
+        wiseRow.partial = wiseRow.partial || wiseRow.feeCurrency !== "USD" || wiseRow.feeAmount === null
+          || wiseRow.feeAmount < 0 || wiseRow.recipientAmount === null || !reference
+          || Math.abs(wiseRow.recipientAmount - (input.amount - wiseRow.feeAmount) * reference.rate) > .03;
+      }
+      rows.push(wiseRow);
     }
   } else {
     unavailable.push({ providerSlug: "wise", providerName: "Wise", reason: `No public quote: ${wisePublic.message}` });
@@ -571,8 +601,32 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     }
     if (receiving && row.side === "payer" && !row.paymentMethods) row.paymentMethods = ["transfer_service"];
     if (input.context) {
-      row.profileAssessment = assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
+      row.profileAssessment = row.providerSlug === "wise" && row.basis === "live_public" && isUsdToEur(input)
+        ? {
+          ...unconfirmedAssessment(),
+          reasons: ["This public estimate prices the sender’s Wise transfer. Confirm the sender’s account and the recipient’s EUR bank details."],
+          verification: ["The sender needs an eligible Wise account and must complete Wise’s verification."],
+          fees: row.taxNote ?? "The sender should verify final fees with Wise.",
+          corridors: "Pay EUR into a SEPA account or an eligible EUR-denominated IBAN outside SEPA. Country and receiving bank restrictions apply.",
+          settlement: ["Wise pays the selected EUR bank account. Confirm the supported rail and delivery date in the sender’s quote."],
+          documents: [row.receipt ?? "Check which confirmation the sender can share."],
+          sources: [
+            { label: "Wise guide to EUR transfers", url: wiseEuroGuide },
+            { label: "Wise transfer confirmation", url: wiseTransferReceipt },
+            { label: "Wise guidance on U.S. remittance tax", url: wiseRemittanceTax },
+          ],
+          reviewedAt: "2026-11-18",
+        }
+        : assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
       if (!row.profileAssessment.priceApplicable) row.partial = true;
+      // Receiving-account evidence does not describe the sender's public Wise quote.
+      if (row.side === "payer" && row.profileAssessment.payment) {
+        row.profileAssessment = { ...row.profileAssessment, payment: undefined };
+      }
+      const payment = row.profileAssessment.payment;
+      row.delivery ??= payment?.delivery?.label ?? null;
+      if (payment?.receipt) row.receipt ??= payment.receipt.detail;
+      row.taxNote ??= payment?.feeTax?.detail;
     }
   }
   let webCheck: WebCheckSummary | undefined;
@@ -613,6 +667,9 @@ export function applyPaymentMethod(input: PriceCheckInput, rows: PriceRow[], una
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const row = rows[i]!;
     const payerService = row.side === "payer";
+    // With USD → EUR bank collection selected, retain the bank-funded Wise
+    // sender quote as a labeled alternative. Its eligibility remains unconfirmed.
+    if (method === "local_bank" && payerService && row.product?.id === "wise:usd-eur-bank") continue;
     if (method === "transfer_service" ? !payerService : payerService) {
       rows.splice(i, 1);
       continue;
@@ -621,6 +678,9 @@ export function applyPaymentMethod(input: PriceCheckInput, rows: PriceRow[], una
     if (methods.includes(method)) continue;
     if (method === "wire") {
       row.partial = true;
+      row.costComplete = false;
+      row.receipt = null;
+      if (row.basis === "published") row.delivery = null;
       row.missing = [...(row.missing ?? []), "Wire (SWIFT) fee not published — bank-transfer fee shown; intermediary banks may deduct more."];
       continue;
     }

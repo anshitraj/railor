@@ -2,7 +2,7 @@ import universe from "../../../RAILOR_PROVIDER_UNIVERSE.json";
 import sourceAudit from "../../../packages/core/src/public-pricing/provider-source-audit.json";
 import pricingReview from "../../../packages/core/src/public-pricing/provider-pricing-review.json";
 import type { MarketCoverage, PriceCheckInput } from "@railor/core";
-import { INDIA_RECEIVING_PRODUCTS } from "@railor/core";
+import { assessCustomerProfile, INDIA_RECEIVING_PRODUCTS } from "@railor/core";
 import { discoveredCoverage, DISCOVERED_PROVIDERS } from "./corridor-discovery";
 
 interface UniverseProvider {
@@ -13,6 +13,10 @@ interface UniverseProvider {
   currencies: string[];
   lastVerified: string | null;
 }
+
+type PricingReview = Pick<(typeof pricingReview.providers)[number], "slug" | "checkedAt" | "status" | "sourceUrl" | "summary"> & {
+  routeNotes?: Array<{ from?: string; to: string; label: string; reason: string; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
+};
 
 const PRICE_MARKET_CATEGORIES = new Set([
   "DIRECT_PAYOUT_PROVIDER",
@@ -93,12 +97,19 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
     pricingStatus: { label: "Route unconfirmed", reason: "A complete price and eligibility for this route have not been verified. Currency support in a catalog is not a transfer quote." },
   }).sort((a, b) => Number("routeMatch" in b && b.routeMatch) - Number("routeMatch" in a && a.routeMatch) || Number(a.currencyMatch === "unverified") - Number(b.currencyMatch === "unverified") || a.providerName.localeCompare(b.providerName));
   const destinationProviders = [...matched.filter(provider => !discovered.some(item => item.providerSlug === provider.providerSlug)), ...known];
-  const reviewed = (provider: MarketCoverage["providers"][number]) => {
-    const source = pricingReview.providers.find(entry => entry.slug === provider.providerSlug);
-    if (!source?.summary || source.status !== "readable") return provider;
+  const reviewed = (candidate: MarketCoverage["providers"][number]) => {
+    const profile = input.context && candidate.currencyMatch !== "unverified" && destination === "INR"
+      ? assessCustomerProfile(candidate.providerSlug, input.context, { ...input, sourceCurrency: source, destinationCurrency: destination, amountUsd: source === "USD" ? input.amount : null, referenceRate: null })
+      : undefined;
+    const provider = profile?.payment ? { ...candidate, profileAssessment: profile } : candidate;
+    const review: PricingReview | undefined = pricingReview.providers.find(entry => entry.slug === provider.providerSlug);
+    if (!review || review.status !== "readable") return provider;
+    const route = review.routeNotes?.find(note => note.to === destination && (!note.from || note.from === source));
+    if (!route && !review.summary) return provider;
     return { ...provider,
-      feeEvidence: [...(provider.feeEvidence ?? []), { summary: source.summary, product: "Published pricing components", sourceUrl: source.sourceUrl, observedAt: source.checkedAt }],
-      discoverySources: [...(provider.discoverySources ?? []), ...(source.sourceUrl ? [{ label: "Official pricing source", url: source.sourceUrl }] : [])],
+      ...(route ? { pricingStatus: { label: route.label, reason: route.reason } } : {}),
+      feeEvidence: [...(provider.feeEvidence ?? []), ...(review.summary ? [{ summary: review.summary, product: "Published pricing components", sourceUrl: review.sourceUrl, observedAt: review.checkedAt }] : [])],
+      discoverySources: [...(provider.discoverySources ?? []), ...(route?.sources ?? []), ...(review.summary && review.sourceUrl ? [{ label: "Official pricing source", url: review.sourceUrl }] : [])],
     };
   };
   return { totalTracked: catalog.size, matched: destinationProviders.length, providers: destinationProviders.map(reviewed), allProviders: allProviders.map(reviewed) };

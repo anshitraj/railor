@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { comparePrices, PUBLISHED_PRICING, type PriceCheckInput } from "../pricing.js";
 import { skydoFxTime, skydoPublicFx } from "../public-pricing/skydo.js";
 import { mulyaPublicFx } from "../public-pricing/mulya.js";
+import { priceCheckClaims } from "../web-check.js";
 
 const now = new Date("2026-10-29T12:00:00Z");
 const input: PriceCheckInput = { sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000, context: { profile: "freelancer", country: "IN", direction: "receive", purpose: "services" } };
@@ -9,6 +10,24 @@ const publicQuote = { sourceAmount: 1000, sourceCurrency: "USD", targetCurrency:
 const fetcher: typeof fetch = async (url) => String(url).includes("skydo.com/api/fxratelist") ? Response.json([{ base: "USD", target: "INR", fx_rate: 91, api_timestamp: "Oct 29, 2026, 5:30:00 PM" }]) : String(url).includes("revolut") ? new Response("{}", { status: 503 }) : Response.json(publicQuote);
 
 describe("published comparison integrity", () => {
+  it("keeps the bank-funded USD to EUR Wise reference visible without ranking it as a freelancer's own quote", async () => {
+    const network: typeof fetch = async (url) => !String(url).includes("api.wise.com/v3/quotes") ? new Response(null, { status: 503 }) : Response.json({
+      ...publicQuote, targetCurrency: "EUR", rate: .911702,
+      paymentOptions: [
+        { payIn: "BALANCE", payOut: "BANK_TRANSFER", disabled: false, targetAmount: 908.58, fee: { total: 3.42 } },
+        { payIn: "BANK_TRANSFER", payOut: "BANK_TRANSFER", disabled: false, targetAmount: 902.70, fee: { total: 9.87, payIn: 6.11, transferwise: 3.76 } },
+      ],
+    });
+    const result = await comparePrices({ ...input, destinationCurrency: "EUR", destinationCountry: undefined,
+      context: { ...input.context!, paymentMethod: "local_bank" } }, { fetcher: network, now });
+    expect(result.rows.find(row => row.providerSlug === "wise")).toMatchObject({
+      partial: true, costComplete: true, shortfall: null, side: "payer", feeAmount: 9.87,
+      feeBreakdown: "USD 6.11 funding + USD 3.76 Wise fee", recipientAmount: 902.70,
+      product: { id: "wise:usd-eur-bank" }, profileAssessment: { status: "unconfirmed", priceApplicable: false },
+    });
+    expect(priceCheckClaims(result.input, result.rows).find(claim => claim.providerSlug === "wise")?.statement)
+      .toContain("an eligible EUR bank account in Europe");
+  });
   it("does not recommend a public AED rate as a confirmed UAE bank-funded Wise route", async () => {
     const network: typeof fetch = async () => Response.json({ ...publicQuote, sourceCurrency: "AED" });
     const result = await comparePrices({ sourceCurrency: "AED", destinationCurrency: "INR", amount: 1000, context: { country: "AE", profile: "personal", direction: "send", purpose: "personal" } }, { fetcher: network, now });
@@ -36,6 +55,21 @@ describe("published comparison integrity", () => {
     expect(result.rows.find((row) => row.providerSlug === "payzoll")).toMatchObject({ feeAmount: 10, partial: true, shortfall: null });
     expect(result.rows.find((row) => row.providerSlug === "xflow")?.profileAssessment?.status).toBe("documented");
     expect(result.rows.find((row) => row.providerSlug === "dashx")).toMatchObject({ feeAmount: 3, partial: true, shortfall: null });
+  });
+  it("attaches scoped Infinity delivery, KYC, fee tax and remittance proof", async () => {
+    const business = { ...input.context!, profile: "business" as const, paymentMethod: "local_bank" as const };
+    const result = await comparePrices({ ...input, context: business }, { fetcher, now });
+    const infinity = result.rows.find(row => row.providerSlug === "infinity");
+    expect(infinity).toMatchObject({
+      delivery: "1–2 business days to settle",
+      profileAssessment: { payment: { receipt: { label: "FIRA available" }, feeTax: {}, exportTax: {} } },
+    });
+    expect(infinity?.profileAssessment?.verification.join(" ")).toContain("PAN cards for two directors");
+    expect(result.rows.find(row => row.providerSlug === "mulya")?.profileAssessment?.payment?.receipt?.label).toBe("FIRS available");
+
+    const wire = await comparePrices({ ...input, context: { ...business, paymentMethod: "wire" } }, { fetcher, now });
+    expect(wire.rows.find(row => row.providerSlug === "infinity")).toMatchObject({ partial: true, receipt: null, delivery: null });
+    expect(wire.rows.find(row => row.providerSlug === "infinity")?.profileAssessment?.payment).toBeUndefined();
   });
   it("uses Mulya's public rate and distinguishes retrieval time from a provider publication date", async () => {
     const network: typeof fetch = async (url, init) => String(url).includes("app.mulya.co/api/site/liveRate/") ? Response.json({ details: { rate: 89.9 } }, { headers: { date: now.toUTCString() } }) : fetcher(url, init);
