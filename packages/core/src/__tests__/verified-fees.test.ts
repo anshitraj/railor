@@ -7,8 +7,11 @@ import { comparePrices, PUBLISHED_PRICING, UNPRICED_PRODUCTS, type PriceCheckInp
  *   Infinity — 0.5% flat, GST included, zero FX markup (FAQ + pricing blog)
  *   Skydo    — USD 19 to 2,000 / USD 29 to 10,000, +18% GST, zero FX margin
  *   Xflow    — Starter USD 12 to 2,000 then 0.6%; Growth USD 20 to 5,000 then 0.4%
- *   Wise Business India receiving — USD 2 e-FIRC + 18% GST published; the
- *     conversion fee is not, so it stays unpriced.
+ *   Wise Business India receiving — read from the pricing-page calculator in a
+ *     real browser (USD to INR, paid by ACH): total fees USD 10.96, 33.19 and
+ *     75.82, each a Wise fee plus 18% GST. Wise's help centre also names a
+ *     USD 2 e-FIRC charge that the pricing page calls free, so the row stays
+ *     partial until that is settled.
  */
 const now = new Date("2026-11-18T12:00:00Z");
 const base: PriceCheckInput = { sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000, context: { profile: "freelancer", country: "IN", direction: "receive", purpose: "services", paymentMethod: "local_bank" } };
@@ -52,13 +55,64 @@ describe("first-party fee schedules (checked 2026-11-18)", () => {
     expect(result.rows.find((row) => row.providerSlug === "infinity")).toMatchObject({ feeAmount: 20, taxIncluded: true, receipt: "FIRA (free, automatic)", recipientAmount: 358_200 });
   });
 
-  it("lists Wise Business India receiving without a price, apart from 'Client sends with Wise'", async () => {
+  // Wise's calculator, read at 93.44 INR per USD: [amount, Wise fee, GST, total fees]. It moves a cent with the FX rate.
+  it.each([
+    [500, 9.29, 1.67, 10.96],
+    [1700, 28.13, 5.06, 33.19],
+    [4000, 64.25, 11.57, 75.82],
+  ])("USD %d: Wise Business India receiving is within a cent of its calculator (fee %d + GST %d = %d)", (amount, _fee, _gst, total) => {
+    const fee = schedule("wise").fee({ ...base, amount }, amount, 93.44)!;
+    expect(fee.currency).toBe("USD");
+    expect(Math.abs(fee.amount - total)).toBeLessThanOrEqual(0.0101);
+    expect(fee.parts.join(" ")).toContain("1.6% conversion fee plus a fixed USD 1.46");
+  });
+
+  it("applies Wise's per-receipt limits and only prices USD", () => {
+    const wise = schedule("wise");
+    expect(wise.fee({ ...base, amount: 4.99 }, 4.99, 93.44)).toBeNull();
+    expect(wise.fee({ ...base, amount: 5 }, 5, 93.44)).not.toBeNull();
+    // INR 2,500,000 at 93.44 is about USD 26,757.
+    expect(wise.fee({ ...base, amount: 26_700 }, 26_700, 93.44)).not.toBeNull();
+    expect(wise.fee({ ...base, amount: 26_800 }, 26_800, 93.44)).toBeNull();
+    expect(wise.fee({ ...base, amount: 1700 }, null, 93.44)).toBeNull();
+    expect(wise.fee({ ...base, amount: 1700 }, 1700, null)).toBeNull();
+    expect(wise.appliesTo(base)).toBeNull();
+    expect(wise.appliesTo({ ...base, sourceCurrency: "EUR" })).not.toBeNull();
+    expect(wise.appliesTo({ ...base, context: { ...base.context!, direction: "send" } })).not.toBeNull();
+    expect(wise.appliesTo({ ...base, context: { ...base.context!, profile: "personal" } })).not.toBeNull();
+  });
+
+  it("prices Wise Business India receiving as its own partial product, apart from 'Client sends with Wise'", async () => {
     const bank = await comparePrices({ ...base, amount: 1700 }, { fetcher, now });
-    expect(bank.unavailable.find((entry) => entry.product === "Wise Business · India receiving account")).toMatchObject({ providerSlug: "wise", sourceUrl: UNPRICED_PRODUCTS[0]!.sourceUrl });
-    expect(bank.rows.some((row) => row.product?.label.startsWith("Wise Business"))).toBe(false);
+    const wise = bank.rows.find((row) => row.providerSlug === "wise" && row.basis === "published")!;
+    expect(wise).toMatchObject({
+      providerName: "Wise Business", product: { id: "wise:published", label: "Wise Business · India receiving account" },
+      feeCurrency: "USD", paymentMethods: ["local_bank"], taxIncluded: false, receipt: "e-FIRC",
+      partial: true, costComplete: false, shortfall: null, rate: 90,
+      source: { url: "https://wise.com/in/pricing/business/receive" },
+      profileAssessment: { status: "documented", priceApplicable: true },
+    });
+    expect(Math.abs(wise.feeAmount! - 33.19)).toBeLessThanOrEqual(0.0101);
+    expect(wise.recipientAmount).toBeCloseTo((1700 - wise.feeAmount!) * 90, 2);
+    expect(wise.missing?.[0]).toContain("e-FIRC");
+    expect(wise.notes.join(" ")).toContain("Swift or wire costs more");
+    // Priced, so it is no longer listed as unavailable; the unpriced entry only covers what is not priced.
+    expect(bank.unavailable.some((entry) => entry.providerSlug === "wise")).toBe(false);
+    // The public "Client sends with Wise" quote is a different product and stays out of the receiving-account price.
+    expect(bank.rows.some((row) => row.providerSlug === "wise" && row.product?.label === "Client sends with Wise")).toBe(false);
 
     const app = await comparePrices({ ...base, amount: 1700, context: { ...base.context!, paymentMethod: "transfer_service" } }, { fetcher, now });
     expect(app.unavailable.some((entry) => entry.product?.startsWith("Wise Business"))).toBe(false);
+    expect(app.rows.some((row) => row.product?.label.startsWith("Wise Business"))).toBe(false);
     expect(app.rows.find((row) => row.providerSlug === "wise")?.product?.label).toBe("Client sends with Wise");
+  });
+
+  it("keeps the unpriced Wise entry only for what the Wise schedule does not cover", () => {
+    const unpriced = UNPRICED_PRODUCTS[0]!;
+    expect(unpriced).toMatchObject({ slug: "wise", product: "Wise Business · India receiving account", sourceUrl: "https://wise.com/in/pricing/business/receive" });
+    expect(unpriced.appliesTo({ ...base, amount: 1700 })).toBe(false);
+    expect(unpriced.appliesTo({ ...base, sourceCurrency: "EUR", amount: 1700 })).toBe(true);
+    expect(unpriced.appliesTo({ ...base, amount: 1700, context: { ...base.context!, purpose: "goods" } })).toBe(true);
+    expect(unpriced.appliesTo({ ...base, amount: 1700, context: { ...base.context!, paymentMethod: "transfer_service" } })).toBe(false);
   });
 });

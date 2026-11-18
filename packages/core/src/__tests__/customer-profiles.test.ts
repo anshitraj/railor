@@ -47,6 +47,13 @@ describe("account-holder product eligibility", () => {
     expect(assess("wise", {}, { amount: 30_000, amountUsd: 30_000 }).status).toBe("not_supported");
     expect(assess().limits).toContain("2,500,000");
   });
+  it("applies Wise's receiving-account price to the published receiving product, never to a send quote", () => {
+    const receiving = { ...request, product: "wise:published" };
+    expect(assessCustomerProfile("wise", context, receiving)).toMatchObject({ status: "documented", priceApplicable: true });
+    expect(assessCustomerProfile("wise", context, request)).toMatchObject({ status: "documented", priceApplicable: false });
+    expect(assessCustomerProfile("wise", context, { ...receiving, amountUsd: 4.99 })).toMatchObject({ status: "not_supported", priceApplicable: false });
+    expect(assessCustomerProfile("wise", { ...context, purpose: "goods" }, receiving)).toMatchObject({ status: "unconfirmed", priceApplicable: false });
+  });
   it("does not infer support for salaries, personal transfers, other countries or outgoing transfers", () => {
     for (const change of [{ purpose: "salary" }, { purpose: "personal" }, { purpose: "goods" }, { country: "GB" }, { direction: "send" }] as Partial<CustomerContext>[]) expect(assess("wise", change).status).toBe("unconfirmed");
     expect(assess("market:remitly").status).toBe("unconfirmed");
@@ -82,7 +89,7 @@ describe("profile-aware price comparisons", () => {
     const connectedQuotes = vi.fn(async () => []);
     const result = await comparePrices({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000, includeMarket: true, context }, { fetcher, connectedQuotes });
     expect(connectedQuotes).toHaveBeenCalledOnce();
-    expect(result.rows.find((r) => r.providerSlug === "wise")).toMatchObject({ partial: true, totalCostPct: null, shortfall: null, profileAssessment: { status: "documented", priceApplicable: false } });
+    expect(result.rows.find((r) => r.providerSlug === "wise" && r.basis === "live_public")).toMatchObject({ partial: true, totalCostPct: null, shortfall: null, profileAssessment: { status: "documented", priceApplicable: false } });
     expect(result.rows.find((r) => r.providerSlug === "market:remitly")).toMatchObject({ partial: true, shortfall: null, profileAssessment: { status: "unconfirmed" } });
     expect(result.rows.find((r) => r.shortfall === 0)?.providerSlug).toBe("infinity");
   });

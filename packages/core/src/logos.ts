@@ -51,6 +51,7 @@ export const KNOWN_PROVIDER_SITES: Record<string, string> = {
   tether: "https://tether.to",
   uniswap: "https://app.uniswap.org",
   titan: "https://titan.exchange",
+  xerof: "https://xerof.com",
   bridge: "https://www.bridge.xyz",
   nium: "https://www.nium.com",
   moonpay: "https://www.moonpay.com",

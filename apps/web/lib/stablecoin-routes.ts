@@ -2,7 +2,8 @@
  * Stablecoin routes, built only from first-party sources (re-read 2026-11-18):
  *   tokens    — Circle's USDC and EURC contract lists; Tether's supported protocols
  *   swaps     — Uniswap's documented prefill link; Titan's swap app on Solana
- *   off-ramps — Xflow's stablecoin collections; Tether and Circle issuer redemption
+ *   off-ramps — Xflow's stablecoin collections; XEROF's Ethereum-funded INR payouts
+ *               (read rendered on 2026-11-18); Tether and Circle issuer redemption
  *
  * Railor never converts a stablecoin at 1:1 itself. USDT, USDC and EURC each
  * trade at their own market price; redemption at par is a product of the
@@ -129,6 +130,26 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
       sourceUrl: "https://www.xflowpay.com/products/stablecoins",
       checkedAt: STABLECOIN_CHECKED,
     });
+    // XEROF funds a payout with USDT or USDC on Ethereum only, so it is a route only there. It also pays
+    // fiat EUR over SEPA, but that is a bank payout, not EURC, so the EURC destination has no XEROF route.
+    if (network === "ethereum") {
+      cards.push({
+        id: "xerof-payouts",
+        provider: "XEROF",
+        slug: "xerof",
+        title: "Stablecoin payout to an Indian bank account",
+        delivers: "INR in a bank account in India",
+        points: [
+          "Funded with USDT or USDC on Ethereum (ERC-20) only. Tron, Solana, Polygon and other networks can’t fund a payout.",
+          "Pays INR by local bank transfer. Trade payments up to INR 1,500,000 per invoice; person-to-person payments up to INR 500,000,000.",
+          "Swiss-regulated brokerage. Needs a XEROF account, the beneficiary’s IFSC and account number, the invoice for a trade payment and an RBI purpose code.",
+        ],
+        price: "Price on request",
+        priceNote: "XEROF’s brokerage fee is 1.00% at the entry tier, plus 0.25% to pay someone else. It quotes the INR leg per payment, so no INR total is published.",
+        sourceUrl: "https://xerof.com/payouts/india",
+        checkedAt: STABLECOIN_CHECKED,
+      });
+    }
   }
   if (asset === "USDT" && destination === "INR") {
     const below = amount < 100_000;

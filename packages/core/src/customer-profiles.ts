@@ -62,6 +62,8 @@ export function unconfirmedAssessment(): ProviderProfileAssessment {
 export function assessCustomerProfile(slug: string, context: CustomerContext, request: {
   sourceCurrency: string; destinationCurrency: string; amount: number;
   amountUsd: number | null; referenceRate: number | null;
+  /** The row's product id, for providers whose rows describe different products (a sender's service vs a receiving account). */
+  product?: string;
 }): ProviderProfileAssessment {
   const unknown = unconfirmedAssessment();
   const provider = slug.replace(/^market:/, "");
@@ -91,7 +93,7 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
     const currencies = context.profile === "business" ? BUSINESS_CURRENCIES : FREELANCE_CURRENCIES;
     a.verification = [individualName ? "Personal PAN and an INR bank account in your personal name; identity verification." : context.profile === "sole_proprietor" ? "Personal PAN, business registration and an INR bank account in the trading name; identity verification." : "Entity registration, business PAN, bank ownership and owner/director verification; exact requirements depend on legal form."];
     a.documents = [individualName ? "Invoice or matched payment request and payer details." : context.profile === "sole_proprietor" ? "Registration identifier plus separate business proof, invoice and payer details." : "Constitution and ownership documents appropriate to the entity; invoice and payer details.", "e-FIRC is issued for the receipt."];
-    a.fees = "Conversion fee plus USD 2 equivalent for e-FIRC; 18% GST on conversion and e-FIRC fees. Anonymous sender quotes do not price this receiving-account product.";
+    a.fees = "Wise's pricing page shows the conversion fee in a calculator (USD to INR by ACH: 1.6% plus a fixed USD 1.46, with 18% GST on the fee). Its help centre also says an equivalent of USD 2 is charged for the e-FIRC, which the pricing page calls free. Anonymous sender quotes do not price this receiving-account product.";
     a.limits = "Per receipt: minimum USD 5 equivalent; maximum INR 2,500,000 equivalent. Confirm the accepted amount with Wise before payment.";
     a.corridors = `${currencies.join(", ")} into INR; payer-country restrictions must also be checked.`;
     a.settlement = ["Automatic conversion and payout to the verified Indian INR bank account; these receiving details cannot hold balances or send money."];
@@ -112,8 +114,9 @@ export function assessCustomerProfile(slug: string, context: CustomerContext, re
       a.status = "unconfirmed";
       a.reasons = ["A reference rate is missing, so the amount cannot be checked against both published receiving limits."];
     }
-    // A public send quote and an Indian receiving-account quote are different products.
-    a.priceApplicable = false;
+    // A public send quote and an Indian receiving-account quote are different products:
+    // only the published receiving-account fee prices this one.
+    a.priceApplicable = request.product === "wise:published" && a.status === "documented";
   } else {
     a.verification = [context.profile === "business" ? "Business PAN, entity and beneficial-owner checks." : "Personal PAN for freelancers and sole proprietors; owner identity checks.", "Bank-account ownership and Aadhaar/DigiLocker verification."];
     a.documents = ["Recent bank statements showing foreign receipts, a signed client contract or alternative evidence requested during onboarding.", ...(context.profile === "business" ? ["Entity documents as applicable, such as a partnership deed."] : []), "FIRA accompanies export receipts; confirm purpose-specific documents."];

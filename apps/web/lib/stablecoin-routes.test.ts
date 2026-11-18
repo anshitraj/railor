@@ -40,9 +40,33 @@ describe("stablecoin off-ramp routes", () => {
   });
 
   it("applies Tether's published minimum and fee", () => {
-    expect(stablecoinRoutes("USDT", "ethereum", "INR", 1700)[1]!.price).toBe("Below the USD 100,000 minimum");
-    expect(stablecoinRoutes("USDT", "ethereum", "INR", 100_000)[1]!.price).toBe("Fee USD 1,000");
-    expect(stablecoinRoutes("USDT", "ethereum", "INR", 2_500_000)[1]!.price).toBe("Fee USD 2,500");
+    const tether = (amount: number) => stablecoinRoutes("USDT", "ethereum", "INR", amount).find((route) => route.id === "tether-redemption")!;
+    expect(tether(1700).price).toBe("Below the USD 100,000 minimum");
+    expect(tether(100_000).price).toBe("Fee USD 1,000");
+    expect(tether(2_500_000).price).toBe("Fee USD 2,500");
+  });
+
+  it("offers XEROF for USDT or USDC sent on Ethereum, as price on request", () => {
+    for (const asset of ["USDT", "USDC"] as const) {
+      const routes = stablecoinRoutes(asset, "ethereum", "INR", 1700);
+      expect(routes.slice(0, 2).map((route) => route.id)).toEqual(["xflow-stablecoins", "xerof-payouts"]);
+      const xerof = routes.find((route) => route.id === "xerof-payouts")!;
+      expect(xerof).toMatchObject({ provider: "XEROF", slug: "xerof", price: "Price on request", delivers: "INR in a bank account in India", sourceUrl: "https://xerof.com/payouts/india" });
+      expect(xerof.caution).toBeUndefined();
+      expect(xerof.points[0]).toContain("Ethereum (ERC-20) only");
+      // The published fee components are stated, but no INR total is invented from them.
+      expect(xerof.priceNote).toContain("1.00%");
+      expect(xerof.priceNote).toContain("0.25%");
+      expect(xerof.priceNote).toContain("no INR total is published");
+    }
+  });
+
+  it("hides XEROF on networks it cannot be funded from, and for the EURC destination", () => {
+    for (const [asset, network] of [["USDT", "tron"], ["USDT", "solana"], ["USDC", "polygon"], ["USDC", "base"], ["USDC", "arbitrum"], ["USDC", "solana"]] as const) {
+      expect(stablecoinRoutes(asset, network, "INR", 1700).some((route) => route.id === "xerof-payouts"), `${asset} on ${network}`).toBe(false);
+    }
+    // XEROF pays fiat EUR into a bank over SEPA; that is not EURC.
+    expect(stablecoinRoutes("USDC", "ethereum", "EURC", 1700).some((route) => route.id === "xerof-payouts")).toBe(false);
   });
 
   it("flags EVM chains Xflow doesn't name", () => {
