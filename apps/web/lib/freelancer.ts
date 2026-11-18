@@ -53,18 +53,20 @@ export async function recordInvoiceReceipt(org: string, user: string, id: string
   });
 }
 
-export async function routeInvoice(org: string, id: string) {
+export async function routeInvoice(org: string, id: string, paymentMethod?: "local_bank" | "wire" | "card" | "transfer_service") {
   const invoice = await findInvoice(org, id);
   const receipts = await invoiceReceipts(org, id);
   const balance = reconcileInvoice(invoice, receipts);
   if (balance.status === "recorded_paid") throw new InvoiceError("This invoice has already been recorded as paid.");
   const amount = Number(balance.outstanding);
+  // Compare one way of paying at a time, as the price page does; a client invoice usually arrives by bank transfer.
+  const method = paymentMethod ?? (invoice.profile === "personal" ? "transfer_service" : "local_bank");
   // A freelancer's service export is commercial collection, not a personal remittance.
   const query = CorridorQuery.parse({ entityCountry: invoice.accountCountry, customerType: "business", sourceCountry: invoice.clientCountry, sourceCurrency: invoice.currency, destinationCountry: invoice.accountCountry, destinationCurrency: invoice.settlementCurrency, product: "collection", endpointType: "bank_account", amount, amountCurrency: invoice.currency });
   const satisfiedRequirements = await getSatisfiedRequirements(org);
   const [routing, prices] = await Promise.all([
     searchCorridors(query, { organizationId: org, satisfiedRequirements, preset: "cheapest", recordTelemetry: false, includeDemoProviders: false }),
-    runPriceCheck(org, { sourceCurrency: invoice.currency, destinationCurrency: invoice.settlementCurrency, destinationCountry: invoice.accountCountry, amount, includeMarket: false, context: { profile: invoice.profile, country: invoice.accountCountry, direction: "receive", purpose: invoice.purpose } }),
+    runPriceCheck(org, { sourceCurrency: invoice.currency, destinationCurrency: invoice.settlementCurrency, destinationCountry: invoice.accountCountry, amount, includeMarket: false, context: { profile: invoice.profile, country: invoice.accountCountry, direction: "receive", purpose: invoice.purpose, paymentMethod: method } }),
   ]);
   const evidence = new Map<string, InvoiceRouteEvidence>(routing.results.map((r) => [r.provider.slug, { eligibility: r.eligibility, score: r.score, outstandingRequirements: r.outstandingRequirements, reasons: r.reasons.map((reason) => reason.message) }]));
   const ranked = rankInvoicePrices(prices.rows, evidence);
@@ -73,6 +75,7 @@ export async function routeInvoice(org: string, id: string) {
     currency: invoice.currency, settlementCurrency: invoice.settlementCurrency,
     routeOptions: routing.results.filter((r) => r.eligibility !== "unavailable").slice(0, 8).map((r) => ({ providerSlug: r.provider.slug, providerName: r.provider.name, ...evidence.get(r.provider.slug)!, settlement: r.facts.settlementSummary ?? null, sources: r.evidence.map((e) => ({ url: e.sourceUrl, title: e.sourceTitle })) })),
     unavailable: prices.unavailable,
+    paymentMethod: method,
   };
 }
 export type InvoiceRouting = Awaited<ReturnType<typeof routeInvoice>>;

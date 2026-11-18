@@ -69,7 +69,7 @@ describe("workspace invoices and receipt allocation", () => {
     state.search.mockResolvedValue({ results: [] }); state.price.mockResolvedValue({ rows: [], reference: null, generatedAt: "2026-10-07", unavailable: [] });
     const result = await service.routeInvoice(orgA, invoice.id);
     expect(state.search).toHaveBeenCalledWith(expect.objectContaining({ product: "collection", customerType: "business", sourceCountry: "US", amount: 750, amountCurrency: "USD" }), expect.objectContaining({ organizationId: orgA, includeDemoProviders: false, recordTelemetry: false }));
-    expect(state.price).toHaveBeenCalledWith(orgA, expect.objectContaining({ amount: 750, context: { profile: "freelancer", country: "IN", direction: "receive", purpose: "services" } }));
+    expect(state.price).toHaveBeenCalledWith(orgA, expect.objectContaining({ amount: 750, context: { profile: "freelancer", country: "IN", direction: "receive", purpose: "services", paymentMethod: "local_bank" } }));
     expect(result.recommendedSlug).toBeNull();
   });
   it("escapes spreadsheet formulas in client names and references", () => {

@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), draft: InvoiceDraft }),
-  z.object({ action: z.literal("route"), id: z.string().uuid() }),
+  z.object({ action: z.literal("route"), id: z.string().uuid(), paymentMethod: z.enum(["local_bank", "wire", "card", "transfer_service"]).optional() }),
   z.object({ action: z.literal("receipt"), id: z.string().uuid(), draft: ReceiptDraft }),
 ]);
 export async function GET(request: Request) {
@@ -34,6 +34,6 @@ export async function POST(request: Request) {
     if (!(await consumeLimit("freelancer", org, 60, 3_600_000))) throw new InvoiceError("Too many invoice requests. Try again later.", 429);
     if (body.action === "save") return NextResponse.json({ invoice: await saveInvoice(org, user, body.draft) }, { status: 201 });
     if (body.action === "receipt") return NextResponse.json({ receipt: await recordInvoiceReceipt(org, user, body.id, body.draft) });
-    return NextResponse.json({ routing: await routeInvoice(org, body.id) });
+    return NextResponse.json({ routing: await routeInvoice(org, body.id, body.paymentMethod) });
   } catch (error) { return invoiceHttpError(error); }
 }

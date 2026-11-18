@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, Info, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, FileUp, Info, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
 import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow, RowWebCheck, WebCheckSummary } from "@railor/core";
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
@@ -21,6 +21,7 @@ import { providerIdentity } from "../../lib/price-display";
 import { priceView } from "../../lib/price-view";
 import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
+import priceStyles from "../price/price.module.css";
 
 /**
  * A swap-style live quote: pick what you send and what they receive, and
@@ -317,11 +318,18 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           </div>
           {context.direction === "receive" ? (
             <div className="px-1 pb-1">
-              <PayMethodSelect
-                value={context.paymentMethod ?? (context.profile === "personal" ? "transfer_service" : "local_bank")}
-                onChange={(paymentMethod) => setContext((c) => ({ ...c, paymentMethod }))}
-                label={context.profile === "personal" ? "Sender pays by" : "Client pays by"}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <PayMethodSelect
+                  value={context.paymentMethod ?? (context.profile === "personal" ? "transfer_service" : "local_bank")}
+                  onChange={(paymentMethod) => setContext((c) => ({ ...c, paymentMethod }))}
+                  label={context.profile === "personal" ? "Sender pays by" : "Client pays by"}
+                />
+                {context.profile !== "personal" ? (
+                  <Link prefetch={false} href={`/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`} className={`${priceStyles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
+                    <FileUp size={14} aria-hidden />Upload invoice
+                  </Link>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

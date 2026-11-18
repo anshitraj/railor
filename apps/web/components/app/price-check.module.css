@@ -167,7 +167,7 @@
 .helpLinks a { display: inline-flex; align-items: center; gap: 5px; }
 .helpLinks a:hover { color: var(--color-orange-deep); }
 @media(max-width:600px){.providerRows[data-expanded="true"]{max-height:470px}.helpLinks{justify-content:flex-start;gap:12px;font-size:12.5px}}
-.lockedLayout { display: grid; gap: 20px; align-items: start; }
+.lockedLayout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .unlockCard { display: grid; gap: 10px; padding: 24px; border: 1px solid var(--color-line); border-radius: 24px; background: var(--color-surface); }
 .unlockCard h2 { color: var(--color-ink); font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
 .unlockCard > p { color: var(--color-muted); font-size: 14.5px; line-height: 1.55; }

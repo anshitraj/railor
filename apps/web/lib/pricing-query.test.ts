@@ -33,7 +33,7 @@ describe("onboarding price defaults", () => {
     mocks.options.mockResolvedValue({ currencies: [{ value: "USD", label: "USD" }, { value: "INR", label: "INR" }], currencyByCountry: { IN: "INR" } });
     // Equal currencies isolate initialization from provider/network access.
     const personal = await loadPricePage({ from: "INR", to: "INR" }, null, "IN", "personal");
-    expect(personal.initial.context).toEqual({ profile: "personal", country: "IN", direction: "receive", purpose: "personal" });
+    expect(personal.initial.context).toEqual({ profile: "personal", country: "IN", direction: "receive", purpose: "personal", paymentMethod: "transfer_service" });
     const explicit = await loadPricePage({ from: "INR", to: "INR", direction: "send" }, null, "IN", "personal");
     expect(explicit.initial.context.direction).toBe("send");
   });

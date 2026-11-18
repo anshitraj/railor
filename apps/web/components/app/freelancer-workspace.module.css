@@ -281,3 +281,10 @@
   .newInvoice, .input, .primary, .secondary, .dropzone, .uploadIcon, .expandArrow { transition: none; }
   .newInvoice:hover, .browse:hover:not(:disabled) .uploadIcon { transform: none; }
 }
+
+.carried { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin: -4px 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--color-lavender); color: var(--color-ink-soft); font-size: 13px; line-height: 1.55; animation: carried-in .3s var(--ease-out) both; }
+.carried strong { color: var(--color-ink); font-weight: 650; }
+.carried button { display: inline-grid; flex: none; width: 24px; height: 24px; place-items: center; border-radius: 8px; color: var(--color-muted); }
+.carried button:hover { background: rgb(0 0 0 / .05); color: var(--color-ink); }
+@keyframes carried-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .carried { animation: none; } }

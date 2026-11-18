@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowDownUp, ArrowRight, CircleAlert, LockKeyhole, RefreshCw } from "lucide-react";
+import { ArrowDownUp, ArrowRight, CircleAlert, FileUp, LockKeyhole, RefreshCw } from "lucide-react";
 import type { CustomerContext, PriceCheckResult, PriceRow } from "@railor/core";
 import { Flag, type PickerOption } from "@railor/ui";
 import { ProviderLogo } from "../app/provider-logo";
@@ -148,6 +148,9 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const toOption = currencies.find((option) => option.value === to);
   const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...contextParams(context) }).toString();
   const compareHref = `${compareBase}?${query}`;
+  // Optional: read the invoice instead of typing. Guests go through the free sign-up first.
+  const invoiceTarget = `/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`;
+  const invoiceHref = locked ? `/login?intent=start&next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
 
   const load = useCallback(async () => {
     if (!valid) return;
@@ -253,6 +256,13 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
               onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
               label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
             />
+            {activeProfile !== "personal" ? (
+              <Link href={invoiceHref} prefetch={false} className={`${styles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
+                <FileUp size={14} aria-hidden />
+                Upload invoice
+                {locked ? <span className={styles.invoiceTag}>Free account</span> : null}
+              </Link>
+            ) : null}
           </div>
         ) : null}
 
