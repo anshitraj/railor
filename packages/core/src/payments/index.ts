@@ -11,8 +11,9 @@ export {
   wisePayoutAdapter,
   wiseProviderAdapter,
   wisePublicQuote,
+  wisePublicTargetQuote,
   airwallexPayoutAdapter,
   airwallexProviderAdapter,
 } from "./adapters/index.js";
-export { wiseQuoteToUnified, wiseRecipientBody } from "./adapters/wise.js";
+export { wiseQuoteToUnified, wiseRecipientBody, type WiseTargetQuote } from "./adapters/wise.js";
 export { airwallexQuoteToUnified, airwallexBeneficiary } from "./adapters/airwallex.js";

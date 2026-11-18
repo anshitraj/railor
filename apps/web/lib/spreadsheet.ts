@@ -150,15 +150,16 @@ export function parseAmount(cell: string | undefined): number | null {
   return Number.isFinite(number) ? (negative ? -number : number) : null;
 }
 
-/** Index of the first header matching a synonym (exact first, then contains). */
-export function findColumn(header: string[], synonyms: string[]): number | null {
+/** Index of the first header matching a synonym (exact first, then contains), skipping columns already claimed. */
+export function findColumn(header: string[], synonyms: string[], skip: ReadonlyArray<number | null> = []): number | null {
   const normal = header.map((cell) => cell.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim());
+  const free = (index: number) => !skip.includes(index);
   for (const synonym of synonyms) {
-    const exact = normal.indexOf(synonym);
+    const exact = normal.findIndex((cell, index) => cell === synonym && free(index));
     if (exact > -1) return exact;
   }
   for (const synonym of synonyms) {
-    const partial = normal.findIndex((cell) => cell.includes(synonym));
+    const partial = normal.findIndex((cell, index) => cell.includes(synonym) && free(index));
     if (partial > -1) return partial;
   }
   return null;

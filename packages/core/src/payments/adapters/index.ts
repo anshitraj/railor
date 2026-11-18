@@ -3,7 +3,7 @@ import { airwallexPayoutAdapter, airwallexProviderAdapter } from "./airwallex.js
 import { bridgePayoutAdapter } from "./bridge.js";
 import { circlePayoutAdapter } from "./circle.js";
 import { sandboxPayoutAdapter } from "./sandbox.js";
-import { wisePayoutAdapter, wiseProviderAdapter, wisePublicQuote } from "./wise.js";
+import { wisePayoutAdapter, wiseProviderAdapter, wisePublicQuote, wisePublicTargetQuote } from "./wise.js";
 
 /** Providers Railor can execute payouts through, via the organization's own connected account. */
 export const PAYOUT_ADAPTERS: Record<string, PayoutAdapter> = {
@@ -26,4 +26,5 @@ export {
   wisePayoutAdapter,
   wiseProviderAdapter,
   wisePublicQuote,
+  wisePublicTargetQuote,
 };

@@ -10,7 +10,7 @@ import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
-import { CustomerContext, assessCustomerProfile, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
+import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
 /**
@@ -98,6 +98,12 @@ export interface PriceRow {
   };
   /** Conditional calculator capture; the display deadline is not a provider rate guarantee. */
   publicOffer?: { kind: "first_transfer"; fundingMethod: string; payoutMethod: string; displayUntil: string };
+  /**
+   * The sender country a public price is published for, when the source is
+   * country-specific (Revolut's UK converter prices Revolut UK customers). A
+   * sender registered elsewhere can't get it: see senderCountryAssessment.
+   */
+  senderCountry?: string;
 }
 
 export interface PriceUnavailable {
@@ -617,7 +623,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
           ],
           reviewedAt: "2026-11-18",
         }
-        : assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
+        : senderCountryAssessment(row, input.context)
+          ?? assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
       if (!row.profileAssessment.priceApplicable) row.partial = true;
       // Receiving-account evidence does not describe the sender's public Wise quote.
       if (row.side === "payer" && row.profileAssessment.payment) {

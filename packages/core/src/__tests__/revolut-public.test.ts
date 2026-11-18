@@ -49,6 +49,18 @@ describe("Revolut public FX reference", () => {
     expect(result.rows[0]!.providerSlug).not.toBe("revolut");
   });
 
+  it("is never compared for a sender outside the UK, and says why", async () => {
+    const fetcher: typeof fetch = async (url) => String(url).includes("revolut.com")
+      ? response(fixture())
+      : response({ rate: 96, sourceCurrency: "USD", paymentOptions: [{ payIn: "BANK_TRANSFER", payOut: "BANK_TRANSFER", disabled: false, targetAmount: 950000, fee: { total: 100 } }] });
+    const send = (country: string) => comparePrices({ ...input, context: { profile: "business", country, direction: "send", purpose: "salary" } }, { fetcher, now });
+    const india = (await send("IN")).rows.find((r) => r.providerSlug === "revolut")!;
+    expect(india).toMatchObject({ senderCountry: "GB", partial: true, shortfall: null });
+    expect(india.profileAssessment).toMatchObject({ status: "not_supported", priceApplicable: false });
+    expect(india.profileAssessment!.reasons[0]).toContain("customers in the United Kingdom. A sender in India can't get it");
+    expect((await send("GB")).rows.find((r) => r.providerSlug === "revolut")!.profileAssessment?.status).toBe("unconfirmed");
+  });
+
   it("preserves other prices when the public website blocks a request", async () => {
     const fetcher: typeof fetch = async (url) => String(url).includes("revolut.com")
       ? response({}, 403)

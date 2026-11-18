@@ -154,6 +154,68 @@ export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fet
   };
 }
 
+/** Wise's public price for delivering an exact amount: what to send, fee included. */
+export interface WiseTargetQuote {
+  sourceCurrency: string;
+  targetCurrency: string;
+  /** What to send, fee included, for the pay-in method below. */
+  sourceAmount: number;
+  /** Exactly what arrives. */
+  targetAmount: number;
+  /** Wise's conversion rate, which is the mid-market rate. */
+  rate: number;
+  feeAmount: number | null;
+  feeCurrency: string;
+  payInLabel: string;
+  observedAt: string;
+  expiresAt?: string;
+}
+
+/**
+ * The reverse of wisePublicQuote: how much to send so exactly `targetAmount`
+ * arrives. Verified against a live anonymous call on 2026-11-18: /v3/quotes
+ * accepts `targetAmount` in place of `sourceAmount` and returns each payment
+ * option's `sourceAmount` (fee included) for that fixed target. Same option
+ * choice as the send-side quote; display only, never a transfer.
+ */
+export async function wisePublicTargetQuote(
+  request: { sourceAsset: string; destinationCurrency: string; targetAmount: number },
+  fetcher: typeof fetch = fetch,
+  now = new Date(),
+): Promise<WiseTargetQuote> {
+  const sourceCurrency = assertFiat(request.sourceAsset);
+  const targetCurrency = assertFiat(request.destinationCurrency);
+  const target = request.targetAmount;
+  if (!Number.isFinite(target) || !(target > 0)) throw new Error("Enter an amount above zero.");
+  const response = await fetcher(`${PUBLIC_BASE}/v3/quotes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sourceCurrency, targetCurrency, targetAmount: target }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Wise public quote failed (HTTP ${response.status}).`);
+  const body = (await response.json()) as WiseQuoteBody;
+  const option = pickOption(body.paymentOptions, true);
+  const rate = Number(body.rate);
+  // A quote for a different target says nothing about this one.
+  if (!option || !(option.sourceAmount > 0) || !(rate > 0) || Math.abs(option.targetAmount - target) > Math.max(0.01, target * 1e-6)) {
+    throw new Error("Wise returned no matching quote for this amount.");
+  }
+  const fee = option.price?.total?.value?.amount ?? option.fee?.total;
+  return {
+    sourceCurrency,
+    targetCurrency,
+    sourceAmount: option.sourceAmount,
+    targetAmount: option.targetAmount,
+    rate,
+    feeAmount: fee ?? null,
+    feeCurrency: option.price?.total?.value?.currency ?? body.sourceCurrency ?? sourceCurrency,
+    payInLabel: option.payIn !== "BALANCE" ? "by bank transfer into Wise" : option.disabled ? `from a Wise ${sourceCurrency} balance (the only way Wise funds this pair)` : "from a Wise balance",
+    observedAt: now.toISOString(),
+    expiresAt: body.expirationTime,
+  };
+}
+
 // Profiles rarely change; one lookup per token per 10 minutes.
 const profileCache = new Map<string, { id: string; name: string; at: number }>();
 
