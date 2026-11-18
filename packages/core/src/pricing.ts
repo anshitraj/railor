@@ -2,10 +2,12 @@ import { wisePublicQuote } from "./payments/adapters/wise.js";
 import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
+import { shared } from "./public-pricing/shared-cache.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
+import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
@@ -205,6 +207,17 @@ const intoIndia = (input: PriceCheckInput) =>
 
 const commercialIntoIndia = (input: PriceCheckInput) => input.context?.country === "IN" && input.context.direction === "receive" && input.context.profile !== "personal" && input.context.purpose === "services" ? intoIndia(input) : "This published model requires an Indian commercial service-export recipient.";
 
+/**
+ * What Wise's pricing-page calculator for Indian businesses showed for USD to INR
+ * paid by ACH on 2026-11-18: a 1.6% conversion fee taken from the amount that is
+ * converted, a fixed USD 1.46, and 18% GST on both. Wise's help centre sets the
+ * per-receipt limits (at least USD 5, at most INR 2,500,000).
+ */
+const WISE_INDIA = { variable: 0.016, fixedUsd: 1.46, gstPercent: 18, minUsd: 5, maxInr: 2_500_000 } as const;
+
+/** Wise sets a different conversion fee for each currency; only USD has been read from the calculator. */
+const wiseIndiaReceiving = (input: PriceCheckInput) => input.sourceCurrency === "USD" ? commercialIntoIndia(input) : "Wise's India receiving fee has only been read for USD collections.";
+
 /** Read from each provider's own site on `observedAt`. Re-check before relying on them. */
 export const PUBLISHED_PRICING: PublishedSchedule[] = [
   {
@@ -323,6 +336,26 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
     },
     notes: ["For Indian businesses receiving from abroad (exports). The recipient pays the flat fee plus 18% GST; Skydo charges the sender nothing, though the sender's bank may charge its usual domestic transfer fee.", "Publishes zero FX margin at the live rate. Senders outside Skydo's local-account countries pay by SWIFT wire, where intermediary deductions may apply."],
   },
+  {
+    slug: "wise", product: "Wise Business · India receiving account", payMethods: ["local_bank"], taxIncluded: false, receipt: "e-FIRC", name: "Wise Business",
+    sourceUrl: "https://wise.com/in/pricing/business/receive", observedAt: "2026-11-18",
+    appliesTo: wiseIndiaReceiving,
+    fee: (input, amountUsd, referenceRate) => {
+      const { variable, fixedUsd, gstPercent, minUsd, maxInr } = WISE_INDIA;
+      if (amountUsd === null || amountUsd < minUsd || !referenceRate || input.amount * referenceRate > maxInr) return null;
+      // The 1.6% comes off what is converted (the amount after every fee), so the fee solves X = 1.6% × (A − 1.18X) + fixed.
+      const feeCents = Math.round(((variable * input.amount + fixedUsd) / (1 + (1 + gstPercent / 100) * variable)) * 100);
+      const gstCents = Math.round(feeCents * gstPercent / 100);
+      return { amount: (feeCents + gstCents) / 100, currency: "USD", parts: [`${variable * 100}% conversion fee plus a fixed USD ${fixedUsd}, free to receive by ACH`, `${gstPercent}% GST on the fee`] };
+    },
+    partial: true,
+    missing: ["Whether Wise also charges the USD 2 e-FIRC fee its help centre describes; its pricing page calls the e-FIRC free."],
+    notes: [
+      "Read from the calculator on Wise's pricing page for Indian businesses (USD to INR, paid by ACH). Wise converts at the mid-market rate, so Railor's common reference rate applies. The calculator itself moves by a cent with the FX rate.",
+      "Wise's help centre and an August 2026 Wise blog post say an equivalent of USD 2 is also charged to issue the e-FIRC. The pricing page calls the e-FIRC free and its calculator has no such line, so it is not added here. Confirm it in your Wise Business account.",
+      "Paying by Swift or wire costs more in the same calculator (USD 39.20 in fees at USD 1,700, against USD 33.19 by ACH) and is not modelled. Wise accepts at least USD 5 and at most INR 2,500,000 per receipt.",
+    ],
+  },
 ];
 
 /**
@@ -332,26 +365,15 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
  */
 export const UNPRICED_PRODUCTS: Array<{ slug: string; name: string; product: string; sourceUrl: string; observedAt: string; appliesTo(input: PriceCheckInput): boolean; reason: string }> = [
   {
+    // Priced above for USD service-export receipts; this covers the rest of the same product.
     slug: "wise", name: "Wise Business", product: "Wise Business · India receiving account",
-    sourceUrl: "https://wise.com/help/articles/71lNXW0Ls3gEFhUH8PtodV/receiving-payments-for-indian-businesses", observedAt: "2026-11-18",
+    sourceUrl: "https://wise.com/in/pricing/business/receive", observedAt: "2026-11-18",
     appliesTo: input => input.context?.direction === "receive" && input.context.country === "IN" && input.context.profile !== "personal"
-      && input.destinationCurrency === "INR" && input.context.paymentMethod !== "transfer_service" && input.context.paymentMethod !== "card",
-    reason: "Wise publishes a USD 2 e-FIRC fee and 18% GST on its fees, but not the USD→INR conversion fee for Indian business accounts as a fixed rate, so no amount is shown. Check it in your Wise Business account.",
+      && input.destinationCurrency === "INR" && input.context.paymentMethod !== "transfer_service" && input.context.paymentMethod !== "card"
+      && wiseIndiaReceiving(input) !== null,
+    reason: "Wise shows this product's fee only in a calculator, and Railor has read it for USD to INR service-export receipts. Wise sets the conversion fee per currency, so no amount is shown for this one. Check it in your Wise Business account.",
   },
 ];
-
-// Public quotes are the same for everyone for a few seconds: share them, so a
-// page polling every 20s (or many viewers of the same pair) costs Wise one call.
-const publicCache = new Map<string, { at: number; value: Promise<unknown> }>();
-function shared<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-  const hit = publicCache.get(key);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as Promise<T>;
-  const value = load();
-  publicCache.set(key, { at: Date.now(), value });
-  value.catch(() => publicCache.delete(key));
-  if (publicCache.size > 500) publicCache.delete(publicCache.keys().next().value!);
-  return value;
-}
 
 function round(n: number, dp = 2) {
   const f = 10 ** dp;
@@ -527,6 +549,16 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const receiving = input.context?.direction === "receive";
   for (const row of rows) {
     row.costComplete = !row.partial && row.recipientAmount !== null;
+    // Public quotes and market estimates carry no tax or receipt data of their own: fill what each provider's pages state.
+    if (row.basis !== "published" && row.basis !== "exact" && row.taxIncluded === undefined && row.receipt === undefined && input.destinationCurrency === "INR" && (!input.destinationCountry || input.destinationCountry === "IN")) {
+      const facts = payerFacts(row.providerSlug, input.context);
+      if (facts) {
+        row.receipt = facts.receipt;
+        row.taxIncluded = facts.taxIncluded;
+        if (facts.taxNote) row.taxNote = facts.taxNote;
+        row.notes.push(`Tax and receipt facts read ${PAYER_FACTS_CHECKED}: ${facts.sources.map((source) => `${source.label} (${source.url})`).join("; ")}.`);
+      }
+    }
     if (receiving) row.side = row.basis === "published" || row.basis === "exact" ? "recipient" : "payer";
     // Name the product, so a sender's service is never mistaken for the recipient's account.
     if (!row.product) {
@@ -539,7 +571,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     }
     if (receiving && row.side === "payer" && !row.paymentMethods) row.paymentMethods = ["transfer_service"];
     if (input.context) {
-      row.profileAssessment = assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null });
+      row.profileAssessment = assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
       if (!row.profileAssessment.priceApplicable) row.partial = true;
     }
   }
@@ -614,15 +646,27 @@ export interface TickerRate {
   observedAt: string;
 }
 
+async function tickerRate(from: string, to: string, fetcher?: typeof fetch): Promise<TickerRate> {
+  const q = await wisePublicQuote({ sourceAsset: from, destinationCurrency: to, amount: 1000 }, fetcher);
+  return { from, to, rate: Number(q.exchangeRate), observedAt: q.observedAt };
+}
+
 /** Mid-market rates for the ticker (Wise's public rate), shared for 60s across every viewer. */
 export async function fxTicker(pairs: Array<[string, string]> = TICKER_PAIRS): Promise<TickerRate[]> {
-  const settled = await Promise.allSettled(
-    pairs.map(([from, to]) =>
-      shared(`ticker:${from}:${to}`, 60_000, async () => {
-        const q = await wisePublicQuote({ sourceAsset: from, destinationCurrency: to, amount: 1000 });
-        return { from, to, rate: Number(q.exchangeRate), observedAt: q.observedAt };
-      }),
-    ),
-  );
+  const settled = await Promise.allSettled(pairs.map(([from, to]) => shared(`ticker:${from}:${to}`, 60_000, () => tickerRate(from, to))));
   return settled.flatMap((r) => (r.status === "fulfilled" && Number.isFinite(r.value.rate) && r.value.rate > 0 ? [r.value] : []));
+}
+
+/**
+ * Wise's public mid-market rate for one pair, read from the same 60s cache the
+ * ticker fills (so the exchange price route costs Wise no extra call). Null
+ * when the rate did not load. An injected fetcher (tests) bypasses the cache.
+ */
+export async function midMarketRate(from: string, to: string, fetcher?: typeof fetch): Promise<TickerRate | null> {
+  try {
+    const rate = await (fetcher ? tickerRate(from, to, fetcher) : shared(`ticker:${from}:${to}`, 60_000, () => tickerRate(from, to)));
+    return Number.isFinite(rate.rate) && rate.rate > 0 ? rate : null;
+  } catch {
+    return null;
+  }
 }

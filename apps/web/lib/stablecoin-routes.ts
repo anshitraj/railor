@@ -2,13 +2,22 @@
  * Stablecoin routes, built only from first-party sources (re-read 2026-11-18):
  *   tokens    — Circle's USDC and EURC contract lists; Tether's supported protocols
  *   swaps     — Uniswap's documented prefill link; Titan's swap app on Solana
- *   off-ramps — Xflow's stablecoin collections; Tether and Circle issuer redemption
+ *   off-ramps — Indian exchanges that sell USDT for INR (indian-exchanges.ts, each read
+ *               from its own fee and help pages); Xflow's stablecoin collections; XEROF's
+ *               Ethereum-funded INR payouts (read rendered on 2026-11-18); Tether and Circle
+ *               issuer redemption
  *
  * Railor never converts a stablecoin at 1:1 itself. USDT, USDC and EURC each
  * trade at their own market price; redemption at par is a product of the
  * issuer, open only to verified accounts with their own fees and minimums.
  * Funds, keys, conversion and settlement stay with the provider.
+ *
+ * These cards are facts and links, so they are public. A card carries no INR
+ * amount: for signed-in users the quote component adds each Indian exchange's
+ * live bid and an estimate beside it (lib/exchange-live.ts), never a 1:1 figure.
  */
+import { exchangeCards } from "./indian-exchanges";
+
 export type Stablecoin = "USDT" | "USDC";
 export type Network = "ethereum" | "base" | "arbitrum" | "optimism" | "polygon" | "avalanche" | "bnb" | "arc" | "solana" | "tron" | "ton" | "aptos";
 export type Destination = "INR" | "EURC";
@@ -142,6 +151,8 @@ export interface RouteCard {
   priceNote: string;
   /** A caveat for this exact selection, e.g. a network the provider names only generically. */
   caution?: string;
+  /** A link that starts the sale or payout on the provider's own site. */
+  action?: { label: string; url: string };
   sourceUrl: string;
   checkedAt: string;
 }
@@ -156,6 +167,8 @@ function usd(value: number) {
 export function stablecoinRoutes(asset: Stablecoin, network: Network, destination: Destination, amount: number): RouteCard[] {
   const cards: RouteCard[] = [];
   if (destination === "INR") {
+    // Selling USDT you hold on an Indian exchange is the route most people use; Indian exchanges list USDT/INR, not USDC/INR.
+    if (asset === "USDT") cards.push(...exchangeCards(network, NETWORKS[network].label));
     cards.push({
       id: "xflow-stablecoins",
       provider: "Xflow",
@@ -173,6 +186,26 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
       sourceUrl: "https://www.xflowpay.com/products/stablecoins",
       checkedAt: STABLECOIN_CHECKED,
     });
+    // XEROF funds a payout with USDT or USDC on Ethereum only, so it is a route only there. It also pays
+    // fiat EUR over SEPA, but that is a bank payout, not EURC, so the EURC destination has no XEROF route.
+    if (network === "ethereum") {
+      cards.push({
+        id: "xerof-payouts",
+        provider: "XEROF",
+        slug: "xerof",
+        title: "Stablecoin payout to an Indian bank account",
+        delivers: "INR in a bank account in India",
+        points: [
+          "Funded with USDT or USDC on Ethereum (ERC-20) only. Tron, Solana, Polygon and other networks can’t fund a payout.",
+          "Pays INR by local bank transfer. Trade payments up to INR 1,500,000 per invoice; person-to-person payments up to INR 500,000,000.",
+          "Swiss-regulated brokerage. Needs a XEROF account, the beneficiary’s IFSC and account number, the invoice for a trade payment and an RBI purpose code.",
+        ],
+        price: "Price on request",
+        priceNote: "XEROF’s brokerage fee is 1.00% at the entry tier, plus 0.25% to pay someone else. It quotes the INR leg per payment, so no INR total is published.",
+        sourceUrl: "https://xerof.com/payouts/india",
+        checkedAt: STABLECOIN_CHECKED,
+      });
+    }
   }
   if (asset === "USDT" && destination === "INR") {
     const below = amount < 100_000;
