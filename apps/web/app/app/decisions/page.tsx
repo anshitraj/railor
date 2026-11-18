@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { DecisionListQuery, listDecisions, listPolicies, loadProviderInputs } from "@railor/core";
 import { requireSession } from "../../../lib/auth";
+import { CompanyGate } from "../../../components/app/company-gate";
+import { isCompanyWorkspace } from "../../../lib/workspace-profile";
 import { DecisionForm } from "../../../components/app/control-forms";
 import { ProductBadge, ProductEmpty, ProductHeader } from "../../../components/app/product-ui";
 import { getIntentOptions } from "../../../lib/reference";
@@ -10,11 +12,12 @@ export const metadata = { title: "Decisions" };
 export const dynamic = "force-dynamic";
 export default async function DecisionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const session = await requireSession(); if (!session.organization) return null;
+  if (!isCompanyWorkspace(session.organization.building)) return <div className="product-page"><CompanyGate feature="Rule checks" next="/app/decisions" /></div>;
   const params = await searchParams;
   const query = DecisionListQuery.safeParse({ search: params.q, before: params.before, beforeId: params.beforeId, status: params.status });
   const [rows, policies, providers, options] = await Promise.all([listDecisions(session.organization.id, query.success ? query.data : {}), listPolicies(session.organization.id), loadProviderInputs(), getIntentOptions()]);
   return <div className="product-page space-y-7">
-    <ProductHeader eyebrow="Rules" title="Rule checks" description="Every time a route is checked against your company rules, the result lands here with its reasons and sources." value={rows.length} valueLabel="checks shown" />
+    <ProductHeader eyebrow="Company" title="Rule checks" description="Every time a route is checked against your company rules, the result lands here with its reasons and sources." value={rows.length} valueLabel="checks shown" />
     <details className="product-panel p-5"><summary className="cursor-pointer text-sm font-semibold">Run a new rule check</summary>{session.role !== "viewer" && <DecisionForm policies={policies.filter((p) => p.status === "active")} providers={providers.filter((p) => !p.isDemo).map((p) => ({ slug: p.slug, name: p.name }))} entityCountry={session.organization.entityCountry ?? undefined} options={options} />}</details>
     <section className="space-y-4" aria-labelledby="decision-history-heading">
       <div className="flex flex-wrap items-end justify-between gap-3"><div><span className="product-eyebrow">Record / immutable trail</span><h2 id="decision-history-heading" className="font-display text-2xl font-semibold">Recorded checks</h2></div><Link className="product-quiet-link" href="/api/decisions/export">Export CSV ↗</Link></div>

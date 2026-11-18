@@ -23,9 +23,9 @@ export interface OnboardingSeed {
 }
 
 const PROFILES: Choice[] = [
-  { value: "business", label: "Business", hint: "Explore providers for your company or product", icon: <Building2 size={22} aria-hidden /> },
-  { value: "freelancer", label: "Freelancer", hint: "Get paid by clients across borders", icon: <BriefcaseBusiness size={22} aria-hidden /> },
-  { value: "personal", label: "Personal", hint: "Compare options for your own transfers", icon: <UserRound size={22} aria-hidden /> },
+  { value: "business", label: "Company", hint: "Everything, plus company tools: rules, team reviews, payment audit and payroll pricing", icon: <Building2 size={22} aria-hidden /> },
+  { value: "freelancer", label: "Freelancer", hint: "Get paid by clients across borders, with invoices. No company tools", icon: <BriefcaseBusiness size={22} aria-hidden /> },
+  { value: "personal", label: "Personal", hint: "Prices, routes and alerts for your own transfers. No company tools", icon: <UserRound size={22} aria-hidden /> },
 ];
 const FREELANCER_TYPES: Choice[] = [
   { value: "freelancer", label: "Independent freelancer", hint: "Explore options available to individuals" },
@@ -140,13 +140,13 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     : QUESTIONS[step]!;
   const labelFor = (options: PickerOption[], values: string[]) => values.map((value) => options.find((item) => item.value === value)?.label ?? value).join(", ") || "Decide later";
   const review = [
-    { label: "Using Railor for", value: selectedBuilding === "freelancer_business" ? "Freelancer · registered business" : selectedBuilding === "freelancer" ? "Freelancer · independent" : profile === "business" ? `Business · ${BUILDING.find((item) => item.value === selectedBuilding)?.label ?? "Payments"}` : PROFILES.find((item) => item.value === profile)?.label ?? "Decide later", step: 0 },
+    { label: "Using Railor for", value: selectedBuilding === "freelancer_business" ? "Freelancer · registered business" : selectedBuilding === "freelancer" ? "Freelancer · independent" : profile === "business" ? `Company · ${BUILDING.find((item) => item.value === selectedBuilding)?.label ?? "Payments"}` : PROFILES.find((item) => item.value === profile)?.label ?? "Decide later", step: 0 },
     { label: isBusiness ? "Company country" : "Home country", value: labelFor(countries, entityCountry), step: 1 },
     { label: "Destination markets", value: labelFor(countries, targets), step: 2 },
     { label: "Currencies", value: labelFor(currencies, settlement), step: 3 },
   ];
   if (completed) return <OnboardingComplete {...completed} />;
-  const profileLabel = selectedBuilding === "freelancer_business" ? "Freelancer · business" : selectedBuilding === "freelancer" ? "Freelancer" : profile === "business" ? "Business" : profile === "personal" ? "Personal" : undefined;
+  const profileLabel = selectedBuilding === "freelancer_business" ? "Freelancer · business" : selectedBuilding === "freelancer" ? "Freelancer" : profile === "business" ? "Company" : profile === "personal" ? "Personal" : undefined;
   const nameOf = (code: string) => countries.find((item) => item.value === code)?.label ?? code;
   return <section className={styles.shell} aria-label="Personalize your workspace">
     <div className={styles.columns}>
@@ -159,7 +159,7 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
     <fieldset disabled={pending} className="min-w-0">
       {step === 0 ? <div className="space-y-6">
         <ChoiceGrid className="onboarding-choices onboarding-profiles" options={PROFILES} value={profile ? [profile] : []} onChange={([value]) => setBuilding([value === "business" ? "payments" : value!])} columns={3} name="How will you use Railor" />
-        {profile === "business" ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-sm"><summary className="cursor-pointer">Business purpose · optional</summary><div className="railor-step-in mt-4 space-y-3"><h2 className="text-sm font-semibold">What are you building or managing?</h2><ChoiceGrid className="onboarding-choices" options={BUILDING} value={building} onChange={setBuilding} columns={3} name="Business purpose" /></div></details> : null}
+        {profile === "business" ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-sm"><summary className="cursor-pointer">Company purpose · optional</summary><div className="railor-step-in mt-4 space-y-3"><h2 className="text-sm font-semibold">What are you building or managing?</h2><ChoiceGrid className="onboarding-choices" options={BUILDING} value={building} onChange={setBuilding} columns={3} name="Business purpose" /></div></details> : null}
         {profile === "freelancer" ? <div className="railor-step-in space-y-3"><h2 className="text-sm font-semibold">How do you work with clients?</h2><ChoiceGrid className="onboarding-choices" options={FREELANCER_TYPES} value={building} onChange={setBuilding} columns={2} name="Freelancer customer type" /></div> : null}
         <button type="button" role="checkbox" aria-checked={setupApi} onClick={toggleApi} className={styles.apiChoice}><Code2 size={21} aria-hidden /><span><strong>Set up the API or an AI agent</strong><small>Compare and explore routes from your own tools.</small></span><i aria-hidden>{setupApi && <Check size={12} />}</i></button>
       </div> : null}

@@ -8,6 +8,7 @@ import {
   Activity,
   Banknote,
   BadgeCheck,
+  Building2,
   Bot,
   Calculator,
   ChevronsLeft,
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   Code2,
   FileCheck2,
+  FileSearch,
   FileText,
   GitCompare,
   Globe2,
@@ -40,6 +42,7 @@ import { CommandPalette, StageBadge, cn, useModalFocus, type CommandItem } from 
 import { RailorMark } from "../marketing/nav";
 import { ProviderLogo } from "./provider-logo";
 import { workspaceArea } from "../../lib/workspace-navigation";
+import { isCompanyPath } from "../../lib/workspace-profile";
 import { WorkspaceAreaNav } from "./workspace-area-nav";
 import mobileStyles from "./mobile-navigation.module.css";
 
@@ -69,7 +72,9 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
     { href: "/app/compare", label: "Compare providers", icon: GitCompare },
     { href: "/app/map", label: "Route map", icon: Globe2 },
   ] },
-  { title: "Rules", icon: ListChecks, items: [
+  { title: "Company", icon: Building2, items: [
+    { href: "/app/audit", label: "Payment audit", icon: FileSearch },
+    { href: "/app/payroll", label: "Payroll pricing", icon: Users },
     { href: "/app/policies", label: "Company rules", icon: ListChecks },
     { href: "/app/decisions", label: "Rule checks", icon: Scale },
     { href: "/app/approvals", label: "Team reviews", icon: BadgeCheck },
@@ -93,7 +98,7 @@ const PRIMARY_NAV = [{ title: null, items: [
   { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
   { href: "/app/prices", label: "Prices", icon: Calculator },
   { href: "/app/search", label: "Routes", icon: Route },
-  { href: "/app/policies", label: "Rules", icon: ListChecks },
+  { href: "/app/audit", label: "Company", icon: Building2 },
   { href: "/app/payments", label: "Activity", icon: Activity },
   { href: "/app/developers", label: "Developers", icon: Code2 },
   { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" as const },
@@ -117,12 +122,15 @@ export function AppShell({
   orgName,
   userEmail,
   isDemo = false,
+  company = true,
   palette,
 }: {
   children: React.ReactNode;
   orgName: string;
   userEmail: string;
   isDemo?: boolean;
+  /** Company tools (rules, reviews, audit, payroll) show only in company workspaces. */
+  company?: boolean;
   palette: Array<{ id: string; label: string; group: string; href: string; hint?: string; keywords?: string }>;
 }) {
   const pathname = usePathname();
@@ -134,6 +142,8 @@ export function AppShell({
   const [keyboard, setKeyboard] = useState({ open: false, height: 0 });
   const drawerRef = useModalFocus<HTMLElement>(mobileOpen, () => setMobileOpen(false));
   const currentGroup = NAV_GROUPS.find((group) => group.items.some((item) => isActive(pathname, item)));
+  const groups = company ? NAV_GROUPS : NAV_GROUPS.filter((group) => !group.items.every((item) => isCompanyPath(item.href)));
+  const primary = company ? PRIMARY_NAV : PRIMARY_NAV.map((group) => ({ ...group, items: group.items.filter((item) => !isCompanyPath(item.href)) }));
   const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? "Settings";
 
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -182,7 +192,7 @@ export function AppShell({
       return !v;
     });
 
-  const pageItems: typeof palette = NAV_GROUPS.flatMap((g) => g.items).map((item) => ({
+  const pageItems: typeof palette = groups.flatMap((g) => g.items).map((item) => ({
     id: `page:${item.href}`,
     label: item.label,
     group: "Go to",
@@ -269,7 +279,7 @@ export function AppShell({
         ) : null}
 
         <nav aria-label="Workspace" className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1 pb-2 [scrollbar-width:thin]">
-          {PRIMARY_NAV.map((group) => {
+          {primary.map((group) => {
             const open = !group.title || openGroups.includes(group.title);
             const groupId = `nav-${group.title?.toLowerCase().replaceAll(" ", "-") ?? "main"}`;
             return <div key={group.title ?? "root"} className={cn("flex flex-col gap-0.5", !group.title && "mb-4")}>

@@ -4,6 +4,7 @@ import { getSession } from "../../lib/auth";
 import { DEMO_EMAIL } from "../../lib/demo";
 import { getSavedCorridors } from "../../lib/org";
 import { AppShell } from "../../components/app/shell";
+import { isCompanyPath, isCompanyWorkspace } from "../../lib/workspace-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     getSavedCorridors(session.organization.id),
   ]);
 
+  const company = isCompanyWorkspace(session.organization.building);
   const palette = [
     ...corridors.map((c) => ({
       id: `corridor:${c.id}`,
@@ -37,6 +39,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { id: "action:history", label: "View payment history", group: "Action", href: "/app/payments", keywords: "history payments transactions activity status sandbox live" },
     { id: "action:connect", label: "Connect a provider account", group: "Action", href: "/app/settings/connections", keywords: "credentials api key sandbox production circle bridge" },
     { id: "action:routing", label: "Routing settings", group: "Action", href: "/app/routing", keywords: "fallback preset preferred providers" },
+    { id: "action:audit", label: "Audit payments against the bank statement", group: "Action", href: "/app/audit", keywords: "audit reconcile bank statement csv excel short paid missing duplicate" },
+    { id: "action:payroll", label: "Price payroll payouts", group: "Action", href: "/app/payroll", keywords: "payroll salary employees excel csv sheet cheapest" },
     { id: "action:evaluate", label: "Evaluate a payment", group: "Action", href: "/app/decisions", keywords: "decision check policy" },
     { id: "action:policy", label: "Create a policy", group: "Action", href: "/app/policies", keywords: "rules guardrails" },
     { id: "action:compare", label: "Compare providers", group: "Action", href: "/app/compare", keywords: "diff side by side" },
@@ -55,7 +59,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       orgName={session.organization.name}
       userEmail={session.user.email}
       isDemo={session.user.email === DEMO_EMAIL}
-      palette={palette}
+      company={company}
+      palette={company ? palette : palette.filter((item) => !isCompanyPath(item.href))}
     >
       {children}
     </AppShell>
