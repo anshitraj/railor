@@ -2,6 +2,80 @@
   "scope": "Community discovery checked against official product sources. Directional coverage is not a quote, account approval or a best-price ranking.",
   "providers": [
     {
+      "slug": "hdfc-bank",
+      "name": "HDFC Bank",
+      "website": "https://www.hdfc.bank.in",
+      "reviewedAt": "2026-11-19",
+      "paymentMethod": "wire",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "HDFC publishes a separate TT Buying rate for inward wires. Its 30 October 2026 sheet showed ₹93.49 per USD as a dated reference. The rate at credit and any negotiated rate determine the conversion. HDFC lists no retail inward remittance charge. FX GST and any originating or correspondent bank charges still apply. For INR conversions up to ₹1 lakh, the published FX GST is 0.18% of the converted value with a ₹45 minimum.",
+      "sources": [
+        "https://www.hdfc.bank.in/remittance/fees-and-charges",
+        "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/discover-products/interest-rates/hdfc-bank-treasury-forex-card-rates.pdf",
+        "https://www.hdfc.bank.in/msme-banking/trade-services/remittances"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/FreelanceIndia/comments/1pffxdi/how_much_money_do_you_end_up_losing_while_getting/",
+        "https://www.reddit.com/r/indiasocial/comments/1xjys1c/freelancers_with_foreign_clients_how_much_of_your/"
+      ]
+    },
+    {
+      "slug": "idfc-first-bank",
+      "name": "IDFC FIRST Bank",
+      "website": "https://www.idfcfirst.bank.in",
+      "reviewedAt": "2026-11-19",
+      "paymentMethod": "wire",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "An IDFC FIRST account and remittance purpose are required. The bank says it generally credits the beneficiary within one to two days after it receives the foreign currency in its correspondent account. The sender’s wire time, any requests for additional details and the FX rate at conversion affect the final result.",
+      "sources": [
+        "https://www.idfcfirst.bank.in/personal-banking/forex/inward-remittance",
+        "https://www.idfcfirst.bank.in/forex-rate"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/IndiaTax/comments/1rqurct/getting_paid_in_usd_while_working_in_india/"
+      ]
+    },
+    {
+      "slug": "canara-bank",
+      "name": "Canara Bank",
+      "website": "https://www.canarabank.bank.in",
+      "reviewedAt": "2026-11-19",
+      "paymentMethod": "wire",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "Canara accepts USD wires through its correspondent banks and asks for the remittance purpose. Its tariff effective August 2025 lists no inward fee for individuals on non-export remittances and ₹300 for other non-export recipients. Export collections follow separate terms. Confirm the applied conversion rate, taxes and any intermediary deductions.",
+      "sources": [
+        "https://www.canarabank.bank.in/swift",
+        "https://canarabank.com/UploadedFiles/Pdf/FOREX%20RELATED%20SERVICE%20CHARGES%20WEF%200108.pdf"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/indiasocial/comments/1xjys1c/freelancers_with_foreign_clients_how_much_of_your/"
+      ]
+    },
+    {
+      "slug": "state-bank-of-india",
+      "name": "State Bank of India",
+      "website": "https://sbi.co.in",
+      "reviewedAt": "2026-11-19",
+      "paymentMethod": "wire",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "SBI documents inward SWIFT remittances for overseas senders. The published card-rate sheet distinguishes TT Buying and says the applicable rate is the one in effect at credit. The linked rate sheet is dated and covers a specified amount band. Confirm the applicable conversion rate, fee and correspondent deductions for your amount.",
+      "sources": [
+        "https://sbi.co.in/web/nri/information/faqs",
+        "https://www.sbi.co.in/documents/16012/1400784/FOREX_CARD_RATES.pdf"
+      ],
+      "discovery": [
+        "https://www.reddit.com/r/FreelanceIndia/comments/1pffxdi/how_much_money_do_you_end_up_losing_while_getting/"
+      ]
+    },
+    {
       "slug": "careem-pay",
       "name": "Careem Pay",
       "website": "https://www.careem.com",

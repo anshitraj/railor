@@ -15,6 +15,7 @@ import { shared } from "./shared-cache.js";
  *   Giottus  GET api.giottus.com/api/v1/public/market/orderbook           (api.giottus.com/docs)    book, USDT
  *   ZebPay   GET sapi.zebpay.com/api/v2/market/orderbook?symbol=USDT-INR (github.com/zebpay/zebpay-api-references) book, USDT
  *   Flitpay  GET api.flitpay.com/v1/tickers/24hr/?symbol=INR_USDT         (api.flitpay.com/public-api-of-flitpay) top, USDT
+ *   KoinBX   GET api.koinbx.com/orderbook?market_pair=USDT_INR&depth=50   (koinbx.com/publicapi)    book, USDT + USDC
  *
  * SunCrypto's /public/tickers answers, but lists a bid above its ask on every
  * pair, so which side is which cannot be told; Mudrex's public price API covers
@@ -29,7 +30,7 @@ import { shared } from "./shared-cache.js";
  * unreadable or implausible becomes an "unavailable" entry with the reason.
  */
 
-export type ExchangeFeedSlug = "wazirx" | "coindcx" | "giottus" | "zebpay" | "flitpay";
+export type ExchangeFeedSlug = "wazirx" | "coindcx" | "giottus" | "zebpay" | "flitpay" | "koinbx";
 export type ExchangeAsset = "USDT" | "USDC";
 /** [price in INR, size in tokens] */
 export type BookLevel = [price: number, size: number];
@@ -237,6 +238,20 @@ const FEEDS: Feed[] = [
       if (!row) throw unreadable("Flitpay", "a ticker");
       // Flitpay's documented key for the bid has a space in it. It gives no sizes, so the amount can't be walked.
       return { bid: num(row["bid price"]), ask: num(row.ask_price), levels: null, at: toMillis(row.at) };
+    },
+  },
+  {
+    slug: "koinbx", name: "KoinBX", label: "KoinBX public order book", assets: BOTH,
+    url: (asset) => `https://api.koinbx.com/orderbook?market_pair=${asset}_INR&depth=50`,
+    docs: "https://koinbx.com/publicapi",
+    read(body) {
+      const envelope = record(body);
+      const book = record(envelope?.data);
+      const bids = pairsOf(book?.bids);
+      const asks = pairsOf(book?.asks);
+      const at = toMillis(book?.timestamp);
+      if (envelope?.status !== "1" || !bids || !asks || at === null) throw unreadable("KoinBX", "an order book");
+      return bookReading(bids, asks, at);
     },
   },
 ];

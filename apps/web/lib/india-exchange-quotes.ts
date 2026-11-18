@@ -23,23 +23,27 @@ export async function indiaExchangeQuotes(asset: Stablecoin, network: Network, a
   const quotes = exchangesFor(asset).map((exchange): ExchangeQuote => {
     const base = { slug: exchange.slug, name: exchange.name, support: depositSupport(exchange, asset, network), checkedAt: market.generatedAt };
     if (exchange.noLivePrice) return { ...base, status: "unavailable", reason: `No live price. ${exchange.noLivePrice}.` };
-    const rate = (market.rates as Record<string, InrExchangeRates["rates"][keyof InrExchangeRates["rates"]]>)[exchange.slug];
+    const rate = exchange.slug in market.rates ? market.rates[exchange.slug as keyof InrExchangeRates["rates"]] : undefined;
     if (!rate) return { ...base, status: "unavailable", reason: `${exchange.name} has no public price feed Railor can read.` };
     if (rate.status === "unavailable") return { ...base, status: "unavailable", reason: `Live price unavailable. ${rate.detail}` };
     // A feed with only a best bid can't be walked: the amount is priced at that bid, and the live block says so.
     const fill: BookFill | null = rate.depth === "book" ? fillBids(rate.bids, amount) : amount > 0 ? { filled: amount, gross: paise(amount * rate.bid), averagePrice: rate.bid, bestBid: rate.bid, short: false } : null;
     if (!fill) return { ...base, status: "unavailable", reason: `${exchange.name}’s ${asset}/INR book is empty right now.` };
-    const breakdown = exchangeCharges(exchange, fill.gross);
     const live: LiveBid = { bid: rate.bid, ask: rate.ask, observedAt: rate.observedAt, clock: rate.clock, depth: rate.depth, gapPct: rate.gapPct, referenceRate: market.reference?.rate ?? null, source: rate.source };
+    if (exchange.feeRate === null || exchange.withdrawalFee === null) {
+      return { ...base, status: "market_reference", fill, live, reason: "Gross sale estimate. INR withdrawal costs and GST treatment require confirmation." };
+    }
+    const breakdown = exchangeCharges(exchange, fill.gross);
     return {
       ...base,
       status: "priced",
       fill,
       breakdown,
       live,
-      ...(breakdown.inBank < exchange.withdrawalMin ? { belowMinimum: true } : {}),
+      ...(exchange.withdrawalMin !== null && breakdown.inBank < exchange.withdrawalMin ? { belowMinimum: true } : {}),
       ...(exchange.withdrawalMax && breakdown.inBank > exchange.withdrawalMax ? { aboveMaximum: true } : {}),
     };
   });
-  return { quotes: quotes.sort((a, b) => (b.breakdown?.inBank ?? -1) - (a.breakdown?.inBank ?? -1)), reference: market.reference };
+  const rank = (quote: ExchangeQuote) => quote.breakdown?.inBank ?? (quote.status === "market_reference" ? 0 : -1);
+  return { quotes: quotes.sort((a, b) => rank(b) - rank(a)), reference: market.reference };
 }

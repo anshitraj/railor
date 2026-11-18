@@ -30,7 +30,13 @@ describe("directional community provider discovery", () => {
     expect(matched({ ...request("AED", "INR", "AE"), destinationCountry: "US" })).toEqual([]);
     expect(matched({ sourceCurrency: "AED", destinationCurrency: "INR", amount: 1000 })).toEqual([]);
   });
-  it("makes all twelve searchable without inventing numeric prices or erasing official limitations", () => {
+  it("checks Indian bank wire coverage using the requested funding method", () => {
+    const input = request("USD", "INR", "IN", "personal", "receive");
+    const wire = { ...input, context: { ...input.context!, paymentMethod: "wire" as const } };
+    expect(matched(wire)).toEqual(expect.arrayContaining(["hdfc-bank", "idfc-first-bank", "canara-bank", "state-bank-of-india"]));
+    expect(matched({ ...wire, context: { ...wire.context, paymentMethod: "local_bank" } })).not.toContain("hdfc-bank");
+  });
+  it("makes discovery providers searchable without inventing numeric prices or erasing official limitations", () => {
     const coverage = providerMarketCoverage(request("AED", "INR", "AE"));
     expect(coverage.totalTracked).toBeGreaterThanOrEqual(112);
     expect(new Set(coverage.allProviders?.map(provider => provider.providerSlug)).size).toBe(coverage.totalTracked);

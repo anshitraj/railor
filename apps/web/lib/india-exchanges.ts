@@ -35,7 +35,7 @@
  */
 import type { Network, Stablecoin } from "./stablecoin-routes";
 
-export type ExchangeSlug = "coindcx" | "wazirx" | "giottus" | "flitpay" | "zebpay" | "suncrypto" | "mudrex";
+export type ExchangeSlug = "coindcx" | "wazirx" | "giottus" | "flitpay" | "zebpay" | "suncrypto" | "mudrex" | "koinbx";
 export type DepositSupport = "yes" | "no" | "unknown";
 
 export const EXCHANGES_CHECKED = "2026-11-18";
@@ -49,17 +49,19 @@ export interface IndiaExchange {
   name: string;
   site: string;
   tradeUrl: (asset: Stablecoin) => string;
-  feeRate: number;
+  feeRate: number | null;
   /** True when the published fee already includes the 18% GST (Flitpay). */
   gstIncluded?: boolean;
   feeLabel: string;
   feeNote: string;
   feeSource: string;
-  withdrawalFee: number;
-  withdrawalMin: number;
+  withdrawalFee: number | null;
+  withdrawalMin: number | null;
   withdrawalMax?: number;
   withdrawalNote?: string;
   withdrawalSource: string;
+  /** Provider-specific review date, when newer than the common fee review. */
+  reviewedAt?: string;
   networks: Record<Stablecoin, { listed: Network[]; unknown?: Network[] | "all"; source: string; noNote: string; unknownNote: string }>;
   /** Tokens it lists against INR that Railor prices. Omitted: USDT and USDC. */
   assets?: Stablecoin[];
@@ -214,6 +216,25 @@ export const INDIA_EXCHANGES: IndiaExchange[] = [
       USDC: usdtOnly("Mudrex", "https://mudrex.com/off-ramp/usdt"),
     },
   },
+  {
+    slug: "koinbx",
+    name: "KoinBX",
+    site: "https://koinbx.com",
+    tradeUrl: () => "https://koinbx.com/markets",
+    feeRate: null,
+    feeLabel: "Reported taker fees",
+    feeNote: "The public asset API reported 0.47% for USDT and 0.25% for USDC on 19 Nov 2026. Confirm the fee for your trade and whether it includes GST.",
+    feeSource: "https://api.koinbx.com/asset",
+    withdrawalFee: null,
+    withdrawalMin: null,
+    withdrawalNote: "Confirm the INR withdrawal fee and limit in your KoinBX account.",
+    withdrawalSource: "https://koinbxsupport.freshdesk.com/support/solutions/articles/82000883077-how-to-withdraw-inr-from-koinbx-wallet-",
+    reviewedAt: "2026-11-19",
+    networks: {
+      USDT: { listed: [], unknown: "all", source: "https://koinbx.com/publicapi", noNote: "", unknownNote: "Check which USDT networks accept deposits in your KoinBX account" },
+      USDC: { listed: [], unknown: "all", source: "https://koinbx.com/publicapi", noNote: "", unknownNote: "Check which USDC networks accept deposits in your KoinBX account" },
+    },
+  },
 ];
 
 export function exchangeBySlug(slug: string) {
@@ -272,6 +293,7 @@ export interface ExchangeBreakdown {
 
 /** The exchange's charges on a sale, in INR. TDS is 1% of the consideration net of those charges. */
 export function exchangeCharges(exchange: Pick<IndiaExchange, "feeRate" | "withdrawalFee" | "gstIncluded">, gross: number): ExchangeBreakdown {
+  if (exchange.feeRate === null || exchange.withdrawalFee === null) throw new Error("A sale breakdown requires known trade and withdrawal fees.");
   const tradingFee = paise(gross * exchange.feeRate);
   const gst = exchange.gstIncluded ? 0 : paise(tradingFee * GST_RATE);
   const tds = paise((gross - tradingFee - gst) * TDS_RATE);
@@ -323,7 +345,7 @@ export interface ExchangeQuote {
   slug: ExchangeSlug;
   name: string;
   support: { status: DepositSupport; note: string };
-  status: "priced" | "unavailable";
+  status: "priced" | "market_reference" | "unavailable";
   reason?: string;
   fill?: BookFill;
   breakdown?: ExchangeBreakdown;

@@ -32,14 +32,18 @@ const flitpay = (row: Record<string, unknown> = {}) => [
   { at: (NOW - 3_000) / 1000, symbol: "INR_XRP", base_coin: "INR", trade_unit: "XRP", "bid price": "", ask_price: "", Last_price: "32.4" },
   { at: (NOW - 3_000) / 1000, symbol: "INR_USDT", base_coin: "INR", trade_unit: "USDT", "bid price": "102.33000000", ask_price: "102.44000000", Last_price: "102.43000000", ...row },
 ];
+const koinbx = (timestamp = (NOW - 2_000) / 1000) => ({
+  status: "1",
+  data: { timestamp, bids: [[101.519, 4074.9395], [101.453, 2784.7152]], asks: [[101.521, 1589.5804]] },
+});
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-const HOSTS: Record<string, ExchangeFeedSlug> = { "api.wazirx.com": "wazirx", "api.coindcx.com": "coindcx", "api.giottus.com": "giottus", "sapi.zebpay.com": "zebpay", "api.flitpay.com": "flitpay" };
+const HOSTS: Record<string, ExchangeFeedSlug> = { "api.wazirx.com": "wazirx", "api.coindcx.com": "coindcx", "api.giottus.com": "giottus", "sapi.zebpay.com": "zebpay", "api.flitpay.com": "flitpay", "api.koinbx.com": "koinbx" };
 
 type Answer = unknown | (() => Response | Promise<Response>);
 /** A fetch that answers each exchange's host with a body (or a function building the response) and records every call. */
 function exchangeFetch(overrides: Partial<Record<ExchangeFeedSlug, Answer>> = {}) {
-  const answers: Record<ExchangeFeedSlug, Answer> = { wazirx: wazirx(), coindcx: coindcx(), giottus: giottus(), zebpay: zebpay(), flitpay: flitpay(), ...overrides };
+  const answers: Record<ExchangeFeedSlug, Answer> = { wazirx: wazirx(), coindcx: coindcx(), giottus: giottus(), zebpay: zebpay(), flitpay: flitpay(), koinbx: koinbx(), ...overrides };
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const impl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -89,8 +93,8 @@ describe("live USDT/INR prices from each exchange's own endpoint", () => {
   it("cites each exchange's own documentation for the number", async () => {
     const { rates } = await run(exchangeFetch());
     const links = Object.values(rates).map((rate) => rate.status === "ok" && new URL(rate.source.url).hostname);
-    expect(links).toEqual(["docs.wazirx.com", "docs.coindcx.com", "api.giottus.com", "github.com", "api.flitpay.com"]);
-    expect(EXCHANGE_FEEDS.map((feed) => new URL(feed.endpoint).protocol)).toEqual(Array(5).fill("https:"));
+    expect(links).toEqual(["docs.wazirx.com", "docs.coindcx.com", "api.giottus.com", "github.com", "api.flitpay.com", "koinbx.com"]);
+    expect(EXCHANGE_FEEDS.every((feed) => new URL(feed.endpoint).protocol === "https:")).toBe(true);
   });
 
   it("takes the best level of an unsorted book and ignores levels with no size", async () => {
@@ -232,12 +236,20 @@ describe("USDC", () => {
     const fetcher = exchangeFetch();
     const { pair, rates } = await run(fetcher, {}, "USDC");
     expect(pair).toBe("USDC/INR");
-    expect(Object.keys(rates)).toEqual(["wazirx", "coindcx"]);
+    expect(Object.keys(rates)).toEqual(["wazirx", "coindcx", "koinbx"]);
     expect(fetcher.calls.map((call) => call.url)).toEqual([
       "https://api.wazirx.com/sapi/v1/depth?symbol=usdcinr&limit=100",
       "https://api.coindcx.com/market_data/orderbook?pair=I-USDC_INR",
+      "https://api.koinbx.com/orderbook?market_pair=USDC_INR&depth=50",
     ]);
   });
+});
+
+it("uses KoinBX's timestamped bid depth and rejects an old book", async () => {
+  expect((await run(exchangeFetch())).rates.koinbx).toMatchObject({
+    status: "ok", depth: "book", clock: "exchange", bid: 101.519, ask: 101.521, bids: [[101.519, 4074.9395], [101.453, 2784.7152]],
+  });
+  expect((await run(exchangeFetch({ koinbx: koinbx((NOW - 180_000) / 1000) }))).rates.koinbx).toMatchObject({ status: "unavailable", problem: "stale" });
 });
 
 describe("what is sent", () => {
@@ -250,6 +262,7 @@ describe("what is sent", () => {
       "https://api.giottus.com/api/v1/public/market/orderbook?symbol=USDT/INR&limit=50",
       "https://sapi.zebpay.com/api/v2/market/orderbook?symbol=USDT-INR&limit=100",
       "https://api.flitpay.com/v1/tickers/24hr/?symbol=INR_USDT",
+      "https://api.koinbx.com/orderbook?market_pair=USDT_INR&depth=50",
     ]);
     for (const { init } of fetcher.calls) {
       expect(init?.method ?? "GET").toBe("GET");
@@ -276,20 +289,20 @@ describe("shared cache", () => {
   it("makes one call per exchange for every viewer in 15 seconds, including viewers who arrive together", async () => {
     const fetcher = stub();
     await Promise.all([live(), live(), live()]);
-    expect(fetcher.calls).toHaveLength(5);
+    expect(fetcher.calls).toHaveLength(EXCHANGE_FEEDS.length);
     vi.setSystemTime(NOW + 14_000);
     await live();
-    expect(fetcher.calls).toHaveLength(5);
+    expect(fetcher.calls).toHaveLength(EXCHANGE_FEEDS.length);
     vi.setSystemTime(NOW + 16_000);
     await live();
-    expect(fetcher.calls).toHaveLength(10);
+    expect(fetcher.calls).toHaveLength(EXCHANGE_FEEDS.length * 2);
   });
 
   it("keeps USDT and USDC readings apart", async () => {
     const fetcher = stub();
     await live("USDT");
     await live("USDC");
-    expect(fetcher.calls).toHaveLength(7);
+    expect(fetcher.calls).toHaveLength(EXCHANGE_FEEDS.length + EXCHANGE_FEEDS.filter(feed => feed.assets.includes("USDC")).length);
   });
 
   it("keeps ageing a cached bid, so a feed that stops updating is dropped instead of served as fresh", async () => {
@@ -305,10 +318,10 @@ describe("shared cache", () => {
   it("remembers a failed exchange for 30 seconds and one that asked Railor to slow down for two minutes", async () => {
     const fetcher = stub({ wazirx: () => new Response("", { status: 500 }), giottus: () => new Response("", { status: 429 }) });
     await live();
-    expect(fetcher.calls).toHaveLength(5);
+    expect(fetcher.calls).toHaveLength(EXCHANGE_FEEDS.length);
     vi.setSystemTime(NOW + 20_000);
     await live();
-    // Three healthy exchanges re-read after 15s; the two failures are not retried yet.
+    // Healthy exchanges re-read after 15s; the two failures are not retried yet.
     expect(fetcher.calls.filter((call) => /wazirx|giottus/.test(call.url))).toHaveLength(2);
     // After 30s WazirX is tried again; Giottus is still backing off after its 429.
     vi.setSystemTime(NOW + 31_000);

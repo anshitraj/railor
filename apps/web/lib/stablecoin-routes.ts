@@ -175,6 +175,10 @@ export interface RouteCard {
 }
 
 const XFLOW_NAMED: Network[] = ["solana", "tron", "ethereum", "polygon"];
+const SETTLE_NETWORKS: Record<Stablecoin, Network[]> = {
+  USDT: ["ethereum", "polygon", "bnb", "solana", "arbitrum", "base"],
+  USDC: ["ethereum", "solana", "bnb", "polygon", "arbitrum", "base", "optimism", "avalanche"],
+};
 
 function usd(value: number) {
   return `USD ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
@@ -205,6 +209,24 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
   }
   if (isCashPickupCurrency(destination)) return cards;
   if (destination === "INR") {
+    if (TOKENS[asset].addresses[network] && SETTLE_NETWORKS[asset].includes(network)) {
+      cards.push({
+        id: "settle-inr",
+        provider: "SETTLE by LedgerPe",
+        slug: "ledgerpe",
+        title: "Cash out from a wallet to an Indian bank",
+        delivers: "INR to a linked Indian bank account, via the payout method shown in your quote",
+        points: [
+          "Complete identity checks and link an eligible bank account before settlement.",
+          "Confirm this token and network in the live wallet quote. Availability can vary by provider.",
+          "The partner quote API requires a provisioned key and expires quotes after 30 seconds.",
+        ],
+        price: "0.50% illustrative fee",
+        priceNote: "SETTLE's public calculator uses 0.50%. Final rate, fees and what reaches the bank are shown in its quote.",
+        sourceUrl: `https://settle.ledgerpe.com/convert/${asset.toLowerCase()}-inr`,
+        checkedAt: "2026-11-19",
+      });
+    }
     cards.push({
       id: "xflow-stablecoins",
       provider: "Xflow",

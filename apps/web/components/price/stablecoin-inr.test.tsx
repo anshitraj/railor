@@ -75,4 +75,17 @@ describe("an exchange card in the stablecoin page", () => {
     expect(shown).toContain("ZebPay refuses requests from Railor’s server (HTTP 403)");
     expect(shown).not.toContain("read live");
   });
+
+  it("shows a market reference before fees without presenting it as money in the bank", () => {
+    const exchange = exchangeBySlug("koinbx")!;
+    const shown = text(html({
+      slug: "koinbx", name: exchange.name, support: depositSupport(exchange, "USDT", "tron"),
+      status: "market_reference", checkedAt: "2026-11-19T00:00:00.000Z",
+      fill: { gross: 101_519, filled: 1000, averagePrice: 101.519, bestBid: 101.519, short: false },
+      live: live({ bid: 101.519, ask: 101.521 }),
+    }));
+    expect(shown).toContain("Gross sale estimate ₹1,01,519.00");
+    expect(shown).toContain("0.47% for USDT");
+    expect(shown).not.toContain("In your bank");
+  });
 });
