@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PriceCheckInput, PriceCheckResult, PriceRow } from "@railor/core";
+import type { PriceCheckInput, PriceCheckResult, PriceRow, ProviderProfileAssessment } from "@railor/core";
 
 const mocks = vi.hoisted(() => ({ session: vi.fn(), limit: vi.fn(), price: vi.fn(), target: vi.fn(), ticker: vi.fn() }));
 vi.mock("server-only", () => ({}));
@@ -9,7 +9,7 @@ vi.mock("../../../lib/pricing", () => ({ runPriceCheck: mocks.price }));
 vi.mock("@railor/core", async (original) => ({ ...await original<typeof import("@railor/core")>(), wisePublicTargetQuote: mocks.target, fxTicker: mocks.ticker }));
 const { POST } = await import("./route");
 
-const unconfirmed = { status: "unconfirmed", reasons: ["No verified rules for this account holder, country and payment product yet."], verification: [], fees: "", limits: "", corridors: "", settlement: [], documents: [], purpose: "", priceApplicable: false, sources: [], reviewedAt: null } as const;
+const unconfirmed = { status: "unconfirmed", reasons: ["No verified rules for this account holder, country and payment product yet."], verification: [], fees: "", limits: "", corridors: "", settlement: [], documents: [], purpose: "", priceApplicable: false, sources: [], reviewedAt: null } as unknown as ProviderProfileAssessment;
 /** A public quote priced at what each request sends, losing `cost` (in the payout currency). */
 function row(slug: string, name: string, input: PriceCheckInput, rate: number, cost: number, extra: Partial<PriceRow> = {}): PriceRow {
   return {
