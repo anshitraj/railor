@@ -149,6 +149,8 @@ export interface MarketCoverageProvider {
   currencyMatch: "both" | "destination" | "unverified";
   lastVerified: string | null;
   pricingStatus?: { label: string; reason: string };
+  pricingReviewedAt?: string;
+  feeHighlight?: string;
   feeEvidence?: Array<{ summary: string; product: string; sourceUrl: string | null; observedAt: string | null }>;
   profileAssessment?: ProviderProfileAssessment;
 }

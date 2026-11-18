@@ -1,6 +1,6 @@
 {
   "checkedAt": "2026-10-29T22:12:19.231643+00:00",
-  "method": "The initial audit used Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with independent official web-reader and calculator checks. Later reviews use official pricing pages and product documentation. Each record identifies its retrieval method and date. Summaries describe published components and limitations.",
+  "method": "The initial audit used Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with independent official web-reader and calculator checks. Later reviews use official pricing pages and product documentation. Each record identifies its retrieval method and date. Summaries describe published components and limitations. The November 19 review records source-backed findings for every directory entry and labels figures by product. A fee, minimum or announced promotion is not a payout price.",
   "providers": [
     {
       "slug": "1money",
@@ -10,12 +10,26 @@
       "status": "readable",
       "method": "official_pricing_and_coverage",
       "summary": "USD same-day ACH costs $0.55 each way. USD international SWIFT costs $10 to deposit and $25 to withdraw. These are USD bank-rail fees.",
-      "routeNotes": [{
-        "to": "INR",
-        "label": "INR payouts coming soon",
-        "reason": "1Money lists INR pay-in and payout as coming soon. Its published USD ACH and SWIFT fees do not price an INR payout.",
-        "sources": [{ "label": "1Money fiat rails and limits", "url": "https://developer.1money.com/docs/fiat-rails-and-limits" }]
-      }]
+      "routeNotes": [
+        {
+          "to": "INR",
+          "label": "INR payouts coming soon",
+          "reason": "1Money lists INR pay-in and payout as coming soon. Its published USD ACH and SWIFT fees do not price an INR payout.",
+          "sources": [
+            {
+              "label": "1Money fiat rails and limits",
+              "url": "https://developer.1money.com/docs/fiat-rails-and-limits"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Rail fees published",
+        "reason": "Public USD ACH and SWIFT fees cover bank rails. INR payouts are listed as coming soon.",
+        "url": "https://developer.1money.com/docs/fiat-rails-and-limits",
+        "feeHighlight": "USD 0.55 same-day ACH"
+      }
     },
     {
       "slug": "airwallex",
@@ -25,24 +39,46 @@
       "status": "readable",
       "method": "official_pricing_and_coverage",
       "summary": "The US fee schedule lists a 0.50% standard EUR FX margin, $1 for a local EUR transfer and $2 for a local INR transfer. Grow and Accelerate are exempt from the local transfer fee. SWIFT costs $15 (SHA) or $25 (OUR).",
-      "routeNotes": [{
-        "to": "INR",
-        "label": "Business payout · fees vary",
-        "reason": "Airwallex supports local INR payouts. The public USD-to-INR calculator illustrates a U.S. business sending money. Airwallex lists Singapore as the onboarding entity for India-registered businesses, so confirm the plan and price for your own account.",
-        "sources": [
-          { "label": "Airwallex USD-to-INR calculator", "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-india" },
-          { "label": "Airwallex India payout guide", "url": "https://www.airwallex.com/docs/payouts/payout-network/india" },
-          { "label": "Airwallex country eligibility", "url": "https://help.airwallex.com/hc/en-gb/articles/4408591334937-Eligible-Countries-and-Territories" }
-        ]
-      }, {
-        "from": "USD",
-        "to": "EUR",
-        "label": "US business payout",
-        "reason": "The public calculator shows a U.S. business sender’s exchange rate before fees. The current fee schedule lists standard fees separately; the sender’s plan and rail determine the final price.",
-        "sources": [
-          { "label": "Airwallex USD-to-EUR calculator", "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-europe" }
-        ]
-      }]
+      "routeNotes": [
+        {
+          "to": "INR",
+          "label": "Business payout · fees vary",
+          "reason": "Airwallex supports local INR payouts. The public USD-to-INR calculator illustrates a U.S. business sending money. Airwallex lists Singapore as the onboarding entity for India-registered businesses, so confirm the plan and price for your own account.",
+          "sources": [
+            {
+              "label": "Airwallex USD-to-INR calculator",
+              "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-india"
+            },
+            {
+              "label": "Airwallex India payout guide",
+              "url": "https://www.airwallex.com/docs/payouts/payout-network/india"
+            },
+            {
+              "label": "Airwallex country eligibility",
+              "url": "https://help.airwallex.com/hc/en-gb/articles/4408591334937-Eligible-Countries-and-Territories"
+            }
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "EUR",
+          "label": "US business payout",
+          "reason": "The public calculator shows a U.S. business sender’s exchange rate before fees. The current fee schedule lists standard fees separately; the sender’s plan and rail determine the final price.",
+          "sources": [
+            {
+              "label": "Airwallex USD-to-EUR calculator",
+              "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-europe"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account and rail matter",
+        "reason": "The US fee schedule and currency calculators cover different parts of a transfer. The account plan, FX and payout rail determine the final price.",
+        "url": "https://www.airwallex.com/en-us/terms/fee-schedule",
+        "feeHighlight": "US local payouts from USD 1"
+      }
     },
     {
       "slug": "al-ansari-exchange",
@@ -52,13 +88,27 @@
       "status": "readable",
       "method": "official_pricing_and_coverage",
       "summary": "The UAE bank-transfer schedule groups India with four other destinations and lists AED 0–25.24 plus 5% VAT. The exact fee depends on the destination, currency and amount.",
-      "routeNotes": [{
-        "from": "USD",
-        "to": "INR",
-        "label": "UAE calculator starts in AED",
-        "reason": "The documented India remittance calculator starts with AED from the UAE. Its fee range does not provide a price for USD-funded transfers.",
-        "sources": [{ "label": "Al Ansari UAE-to-India calculator", "url": "https://alansariexchange.com/send-money-to-india-from-the-uae/" }]
-      }]
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "label": "UAE calculator starts in AED",
+          "reason": "The documented India remittance calculator starts with AED from the UAE. Its fee range does not provide a price for USD-funded transfers.",
+          "sources": [
+            {
+              "label": "Al Ansari UAE-to-India calculator",
+              "url": "https://alansariexchange.com/send-money-to-india-from-the-uae/"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "AED-funded calculator",
+        "reason": "Public India estimates are funded in AED from the UAE. The fee depends on amount and payout method.",
+        "url": "https://alansariexchange.com/send-money-to-india-from-the-uae/",
+        "feeHighlight": "AED 0–25.24 + VAT for the listed group"
+      }
     },
     {
       "slug": "alchemy-pay",
@@ -68,15 +118,29 @@
       "status": "readable",
       "method": "official_product_docs",
       "summary": null,
-      "routeNotes": [{
-        "to": "INR",
-        "label": "Crypto ramp pricing",
-        "reason": "Alchemy Pay documents quotes for buying or selling crypto. Its INR payment methods for buying crypto do not establish a USD-to-INR bank transfer price.",
-        "sources": [
-          { "label": "Alchemy Pay ramp quote API", "url": "https://alchemypay.readme.io/docs/native-api-integration" },
-          { "label": "Alchemy Pay payment methods", "url": "https://support.alchemypay.org/hc/en-us/articles/23455052460443-What-payment-methods-and-currencies-are-supported-on-Alchemy-Pay" }
-        ]
-      }]
+      "routeNotes": [
+        {
+          "to": "INR",
+          "label": "Crypto ramp pricing",
+          "reason": "Alchemy Pay documents quotes for buying or selling crypto. Its INR payment methods for buying crypto do not establish a USD-to-INR bank transfer price.",
+          "sources": [
+            {
+              "label": "Alchemy Pay ramp quote API",
+              "url": "https://alchemypay.readme.io/docs/native-api-integration"
+            },
+            {
+              "label": "Alchemy Pay payment methods",
+              "url": "https://support.alchemypay.org/hc/en-us/articles/23455052460443-What-payment-methods-and-currencies-are-supported-on-Alchemy-Pay"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto ramp quote",
+        "reason": "The quote API prices the purchase or sale of a digital asset. A fiat-to-fiat bank payout needs a different product.",
+        "url": "https://alchemypay.readme.io/docs/native-api-integration"
+      }
     },
     {
       "slug": "alfred",
@@ -86,12 +150,25 @@
       "status": "readable",
       "method": "official_product_docs",
       "summary": null,
-      "routeNotes": [{
-        "to": "INR",
-        "label": "INR payout not listed",
-        "reason": "Alfred publishes USD and Latin American rails, including MXN, BRL, COP and ARS. Its coverage page does not list local INR payouts.",
-        "sources": [{ "label": "Alfred supported markets", "url": "https://alfredpay.io/coverage" }]
-      }]
+      "routeNotes": [
+        {
+          "to": "INR",
+          "label": "INR payout not listed",
+          "reason": "Alfred publishes USD and Latin American rails, including MXN, BRL, COP and ARS. Its coverage page does not list local INR payouts.",
+          "sources": [
+            {
+              "label": "Alfred supported markets",
+              "url": "https://alfredpay.io/coverage"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "LATAM payout coverage",
+        "reason": "Published bank and local-rail coverage centers on Latin America. Ask Alfred for a route and commercial quote.",
+        "url": "https://alfredpay.io/coverage"
+      }
     },
     {
       "slug": "anchorage",
@@ -100,7 +177,13 @@
       "checkedAt": "2026-10-29T21:47:05.471Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Institutional custody pricing",
+        "reason": "Fee disclosures depend on the Anchorage entity and product. The covered stablecoin schedule is separate from custody and bank payout pricing.",
+        "url": "https://www.anchorage.com/terms-and-disclosures"
+      }
     },
     {
       "slug": "anclap",
@@ -109,16 +192,29 @@
       "checkedAt": "2026-10-29T21:47:05.471Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Wallet pricing unverified",
+        "reason": "Anclap’s site describes a wallet and digital assets. A current bank-transfer tariff for this comparison could not be verified from its public pages.",
+        "url": "https://www.anclap.com/"
+      }
     },
     {
       "slug": "arq",
       "name": "ARQ (formerly DolarApp)",
-      "sourceUrl": "https://www.arqfinance.com/es-MX/help/intercom/13901947",
-      "checkedAt": "2026-10-29T21:47:05.471Z",
+      "sourceUrl": "https://www.arqfinance.com/en-MX/help/articles/arq-costs-and-fees-mexico",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "ARQ Mexico lists a 3 USDc charge when using its US account details. Other payment products have separate tariffs.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Mexico account tariff",
+        "reason": "The Mexico account publishes fees for several funding routes. Confirm the exchange rate, account market and destination method in ARQ.",
+        "url": "https://www.arqfinance.com/en-MX/help/articles/arq-costs-and-fees-mexico",
+        "feeHighlight": "3 USDc for listed US-account route"
+      }
     },
     {
       "slug": "aspora",
@@ -127,7 +223,13 @@
       "checkedAt": "2026-10-29T21:47:05.471Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Official US help says the transfer fee is dynamic and shown in the app after entering the amount. The public first-transfer zero-fee offer is conditional; no standard FX rate is assumed."
+      "summary": "Official US help says the transfer fee is dynamic and shown in the app after entering the amount. The public first-transfer zero-fee offer is conditional; no standard FX rate is assumed.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "US-to-India remittance",
+        "reason": "Aspora’s US help centre describes its personal remittance flow and bank funding. The price depends on the sender, amount and funding method.",
+        "url": "https://www.aspora.com/help/us/transfers"
+      }
     },
     {
       "slug": "b2c2",
@@ -136,7 +238,13 @@
       "checkedAt": "2026-10-29T21:47:05.471Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Institutional RFQ",
+        "reason": "B2C2 describes negotiated OTC crypto execution and an all-in price on request. The spread depends on the trade.",
+        "url": "https://www.b2c2.com/b2c2-client-policies/mifid-ii-cost-and-charges-disclosure-policy"
+      }
     },
     {
       "slug": "baanx",
@@ -145,16 +253,29 @@
       "checkedAt": "2026-10-29T21:47:19.006Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card-program fees",
+        "reason": "Baanx publishes fee documents mapped to specific card programs and jurisdictions. Ask the program for the applicable tariff.",
+        "url": "https://docs.baanx.us/"
+      }
     },
     {
       "slug": "banking-circle",
       "name": "Banking Circle",
-      "sourceUrl": "https://www.bankingcircle.com",
-      "checkedAt": "2026-10-29T21:47:19.006Z",
+      "sourceUrl": "https://www.bankingcircle.com/summary-operational-fees/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Banking Circle adds EUR 20 per OUR transaction to its standard fees. Account pricing and FX are separate.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "SWIFT surcharge published",
+        "reason": "The operational schedule identifies the OUR surcharge separately from standard fees and FX.",
+        "url": "https://www.bankingcircle.com/summary-operational-fees/",
+        "feeHighlight": "EUR 20 OUR surcharge"
+      }
     },
     {
       "slug": "banxa",
@@ -164,15 +285,27 @@
       "status": "readable",
       "method": "parallel_extract",
       "summary": "Card/Apple Pay purchases have a published 1.99% processing fee. Network charges and variable Banxa/partner/recovery spreads are additional; zero processing fee on another method does not mean zero total cost.",
-      "routeNotes": [{
-        "from": "USD",
-        "to": "EUR",
-        "label": "Crypto buy or sell",
-        "reason": "Banxa’s EUR SEPA payout prices the sale of a crypto asset. Its hosted checkout does not quote a USD-funded fiat bank transfer to EUR.",
-        "sources": [
-          { "label": "Banxa supported payment methods", "url": "https://docs.banxa.com/products/hosted-checkout/docs/reference/supported-payment-methods" }
-        ]
-      }]
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "EUR",
+          "label": "Crypto buy or sell",
+          "reason": "Banxa’s EUR SEPA payout prices the sale of a crypto asset. Its hosted checkout does not quote a USD-funded fiat bank transfer to EUR.",
+          "sources": [
+            {
+              "label": "Banxa supported payment methods",
+              "url": "https://docs.banxa.com/products/hosted-checkout/docs/reference/supported-payment-methods"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto order fees",
+        "reason": "Its buy and sell checkout has asset, processing and network charges. A digital-asset trade is a different product from a USD-funded bank payout.",
+        "url": "https://support.banxa.com/en/support/solutions/articles/44002465167-how-does-banxa-set-the-price-of-cryptocurrency-",
+        "feeHighlight": "1.99% on eligible card crypto buys"
+      }
     },
     {
       "slug": "bitgo",
@@ -181,7 +314,13 @@
       "checkedAt": "2026-10-29T21:47:19.006Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account-specific custody fees",
+        "reason": "BitGo publishes billing methodology for custody and transaction activity. The contracted fee rate depends on the custody or wallet agreement.",
+        "url": "https://bitgo.com/resources/billing-methodology/"
+      }
     },
     {
       "slug": "bitso",
@@ -190,7 +329,13 @@
       "checkedAt": "2026-10-29T21:47:19.006Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Exchange maker/taker fees vary with 30-day volume. These are crypto exchange fees, not a fiat MXN-to-USD bank-transfer quote. Bitso Business pricing requires its own terms."
+      "summary": "Exchange maker/taker fees vary with 30-day volume. These are crypto exchange fees, not a fiat MXN-to-USD bank-transfer quote. Bitso Business pricing requires its own terms.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Local rails and trade fees",
+        "reason": "Bitso publishes country-specific deposits and withdrawals plus separate trading charges. The total depends on currency and both legs.",
+        "url": "https://bitso.com/fees"
+      }
     },
     {
       "slug": "bitso-juno",
@@ -199,7 +344,13 @@
       "checkedAt": "2026-10-29T21:55:50.029Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Bitso Business offers commercial payment infrastructure. Retail Bitso crypto trading tariffs and similarly named Juno services are not substituted for this product’s commercial quote."
+      "summary": "Bitso Business offers commercial payment infrastructure. Retail Bitso crypto trading tariffs and similarly named Juno services are not substituted for this product’s commercial quote.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "MXNB mint and redeem",
+        "reason": "Juno’s business terms relate to the MXNB product. The transfer amount, token, banking rail and account agreement determine applicability.",
+        "url": "https://bitso.com/business"
+      }
     },
     {
       "slug": "blindpay",
@@ -209,25 +360,46 @@
       "status": "readable",
       "method": "parallel_extract",
       "summary": "Published platform subscriptions depend on plan and billing interval. Subscription prices are separate from the FX rate, rail fees and amount-specific payout quote.",
-      "routeNotes": [{
-        "from": "USD",
-        "to": "EUR",
-        "label": "Account quote required",
-        "reason": "BlindPay supports USD virtual accounts and a separate EUR SEPA payout flow funded with stablecoins. The payout quote requires an authenticated instance and a registered recipient bank account.",
-        "sources": [
-          { "label": "BlindPay virtual accounts", "url": "https://blindpay.com/virtual-accounts" },
-          { "label": "BlindPay payout quote requirements", "url": "https://blindpay.com/resources/more/how-to-integrate-a-stablecoin-api" }
-        ]
-      }]
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "EUR",
+          "label": "Account quote required",
+          "reason": "BlindPay supports USD virtual accounts and a separate EUR SEPA payout flow funded with stablecoins. The payout quote requires an authenticated instance and a registered recipient bank account.",
+          "sources": [
+            {
+              "label": "BlindPay virtual accounts",
+              "url": "https://blindpay.com/virtual-accounts"
+            },
+            {
+              "label": "BlindPay payout quote requirements",
+              "url": "https://blindpay.com/resources/more/how-to-integrate-a-stablecoin-api"
+            }
+          ]
+        }
+      ],
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Authenticated rail quote",
+        "reason": "BlindPay’s public page prices subscription plans. A payout quote still needs an instance and a registered recipient.",
+        "url": "https://blindpay.com/resources/more/how-to-integrate-a-stablecoin-api"
+      }
     },
     {
       "slug": "botim",
       "name": "Botim Money",
-      "sourceUrl": "https://botim.me/international-transfer/",
-      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "sourceUrl": "https://botim.me/international-transfer/india/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Botim’s UAE-to-India page advertises no fee on the first eligible transfer. Later fees vary by amount, funding method and payout method.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "AED app quote",
+        "reason": "The UAE calculator shows an indicative exchange rate. The app confirms fee and rate for the funding and delivery methods.",
+        "url": "https://botim.me/international-transfer/india/",
+        "feeHighlight": "First eligible AED→INR transfer: AED 0 fee"
+      }
     },
     {
       "slug": "brale",
@@ -236,7 +408,13 @@
       "checkedAt": "2026-10-29T21:48:00.705Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "US bank rails: USD 0.25 ACH, USD 2 RTP and USD 20 wire; USDT conversion 0.05%. Network and program terms are separate. These USD components do not establish an international FX payout price."
+      "summary": "US bank rails: USD 0.25 ACH, USD 2 RTP and USD 20 wire; USDT conversion 0.05%. Network and program terms are separate. These USD components do not establish an international FX payout price.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "US rail fees published",
+        "reason": "Brale’s US stablecoin accounts have channel-specific fees. These do not establish a converted international payout.",
+        "url": "https://brale.xyz/pricing"
+      }
     },
     {
       "slug": "bridge",
@@ -245,7 +423,13 @@
       "checkedAt": "2026-10-29T21:48:00.705Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Product and partner pricing",
+        "reason": "The disclosure describes Bridge and partner fees separately. Rate and fee depend on the platform, fiat rail, asset, and transaction.",
+        "url": "https://bridge.xyz/legal/fee-disclosure-statement/overview"
+      }
     },
     {
       "slug": "briskpe",
@@ -254,16 +438,29 @@
       "checkedAt": "2026-10-29T21:48:00.705Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "The public business page lists USD 16 through USD 2,000; USD 25 through USD 10,000; then 0.25%, with GST applicable. Marketplace and card products have different tariffs; a final FX quote is still needed."
+      "summary": "The public business page lists USD 16 through USD 2,000; USD 25 through USD 10,000; then 0.25%, with GST applicable. Marketplace and card products have different tariffs; a final FX quote is still needed.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Plan and collection terms",
+        "reason": "The provider markets collected export receipts and card acceptance separately. Confirm the applicable collection plan and tax before quoting.",
+        "url": "https://www.briskpe.com/"
+      }
     },
     {
       "slug": "bvnk",
       "name": "BVNK",
-      "sourceUrl": "https://www.bvnk.com",
-      "checkedAt": "2026-10-29T21:48:00.705Z",
+      "sourceUrl": "https://www.bvnk.com/eu/pricing-policy",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Internal BVNK-wallet transfers are free under the EU pricing policy. External transfers, FX and platform fees can be charged according to the contract.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Contracted fee and FX",
+        "reason": "The EU pricing policy specifies pre-agreed charges and discloses network estimates at transaction time.",
+        "url": "https://www.bvnk.com/eu/pricing-policy",
+        "feeHighlight": "Internal BVNK-wallet transfers: free"
+      }
     },
     {
       "slug": "careem-pay",
@@ -272,7 +469,13 @@
       "checkedAt": "2026-10-29T21:48:21.065Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "The official transfer help directs customers to the app for exact fees. Destination, Careem Plus membership and transfer history change pricing; cashback is not a standard fee reduction."
+      "summary": "The official transfer help directs customers to the app for exact fees. Destination, Careem Plus membership and transfer history change pricing; cashback is not a standard fee reduction.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "UAE remittance fee rules",
+        "reason": "Country, amount, eligibility and payout method determine the rate and fee shown in the UAE app.",
+        "url": "https://www.careem.com/en-AE/send-money-faqs/"
+      }
     },
     {
       "slug": "cashfree",
@@ -281,7 +484,13 @@
       "checkedAt": "2026-10-29T21:48:21.065Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "The public pricing page includes payment-gateway tariffs. Those card-processing fees do not price Global Collections bank receipts. Use the specific account’s collection and FX quote."
+      "summary": "The public pricing page includes payment-gateway tariffs. Those card-processing fees do not price Global Collections bank receipts. Use the specific account’s collection and FX quote.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Collection product quote",
+        "reason": "Cashfree has published gateway processing fees. Its Global Collections bank-transfer product has a separate price.",
+        "url": "https://www.cashfree.com/international-payments/international-wire-transfer/"
+      }
     },
     {
       "slug": "cbw-bank",
@@ -290,7 +499,13 @@
       "checkedAt": "2026-10-29T21:48:21.065Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Banking partner terms",
+        "reason": "CBW Bank provides bank and embedded-payment services. The sources checked did not establish a standard cross-border rate card for partners.",
+        "url": "https://www.cbw.bank/"
+      }
     },
     {
       "slug": "checkout-com",
@@ -299,7 +514,13 @@
       "checkedAt": "2026-10-29T21:48:21.065Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Merchant risk pricing",
+        "reason": "Checkout.com quotes payment processing based on the business profile and risk category. Interchange++ is a pricing structure rather than an amount.",
+        "url": "https://www.checkout.com/pricing"
+      }
     },
     {
       "slug": "circle",
@@ -308,34 +529,61 @@
       "checkedAt": "2026-10-29T21:48:21.065Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Mint tariff is separate",
+        "reason": "Circle publishes product fee schedules by legal entity. A Circle Payments Network corridor still needs the participating institution’s rate and fee.",
+        "url": "https://help.circle.com/support/en/circle-product-fee-schedule?id=support_article_view&sysparm_article=KB0010626"
+      }
     },
     {
       "slug": "clickpesa",
       "name": "ClickPesa",
       "sourceUrl": "https://clickpesa.com/payment-gateway/pricing/",
-      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "ClickPesa’s Tanzania merchant card collection schedule lists a 4.85% fee charged to the customer. It prices bank and mobile disbursements separately.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Tanzania payout tariff",
+        "reason": "The Tanzania schedule lists transaction-band fees for mobile money and bank disbursements. A conversion from a different currency needs a separate FX quote.",
+        "url": "https://clickpesa.com/payment-gateway/pricing/",
+        "feeHighlight": "4.85% Tanzania card collection"
+      }
     },
     {
       "slug": "coinbase",
       "name": "Coinbase",
-      "sourceUrl": "https://www.coinbase.com",
-      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "sourceUrl": "https://help.coinbase.com/en/exchange/trading-and-funding/exchange-fees",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Coinbase Exchange publishes volume-tiered maker fees of 0%–0.40% and taker fees of 0.04%–0.60% for its standard order book.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Exchange trading fees",
+        "reason": "The trading spread or exchange fee is distinct from cash-out and cross-border bank delivery.",
+        "url": "https://help.coinbase.com/en/exchange/trading-and-funding/exchange-fees",
+        "feeHighlight": "0.04%–0.60% Exchange taker fee"
+      }
     },
     {
       "slug": "coins-ph",
       "name": "Coins.ph",
-      "sourceUrl": "https://www.coins.ph/en-ph/pro",
-      "checkedAt": "2026-10-29T21:48:28.017Z",
+      "sourceUrl": "https://support.coins.ph/hc/en-us/articles/11620285112217-How-are-my-trading-fees-calculated-based-on-the-Tier-Level-setup",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Coins Pro Tier 0 lists 0.10% maker and 0.15% taker. Larger trailing trading volumes can reduce the fees.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Philippine trading tariff",
+        "reason": "Coins.ph publishes Coins Pro trading tiers. Use its cash-out terms separately for a PHP settlement.",
+        "url": "https://support.coins.ph/hc/en-us/articles/11620285112217-How-are-my-trading-fees-calculated-based-on-the-Tier-Level-setup",
+        "feeHighlight": "0.10% maker / 0.15% taker at Tier 0"
+      }
     },
     {
       "slug": "conduit",
@@ -344,7 +592,13 @@
       "checkedAt": "2026-10-29T21:48:28.017Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Contract and FX disclosure",
+        "reason": "Conduit’s terms say the applicable FX fee is disclosed before conversion. The bank rail and partner agreement determine final charges.",
+        "url": "https://conduitpay.com/terms-mta"
+      }
     },
     {
       "slug": "cowrie",
@@ -353,7 +607,13 @@
       "checkedAt": "2026-10-29T21:48:28.017Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Treasury quote",
+        "reason": "Cowrie offers institutional liquidity and settlement for Nigeria and Ghana. The price depends on currency, size and settlement arrangement.",
+        "url": "https://cowriesys.com/solutions.html#fx-liquidity"
+      }
     },
     {
       "slug": "cross-river",
@@ -362,7 +622,13 @@
       "checkedAt": "2026-10-29T21:48:39.767Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Bank partner pricing",
+        "reason": "Cross River supplies payments infrastructure to program partners. The public bank materials do not establish an end-customer corridor tariff.",
+        "url": "https://www.crossriver.com/"
+      }
     },
     {
       "slug": "crossmint",
@@ -371,7 +637,14 @@
       "checkedAt": "2026-10-29T21:55:50.029Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "EU disclosure publishes card processing ranges of 0.5–4.5%, possible non-USD/EUR currency conversion fees of 0.5–2%, and orchestration ranges of 0.03–0.40%. Partner, network and contract charges can apply. Ranges cannot produce a guaranteed route total."
+      "summary": "EU disclosure publishes card processing ranges of 0.5–4.5%, possible non-USD/EUR currency conversion fees of 0.5–2%, and orchestration ranges of 0.03–0.40%. Partner, network and contract charges can apply. Ranges cannot produce a guaranteed route total.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto fee ranges published",
+        "reason": "The EU disclosure covers crypto processing and orchestration. Multiple charges can apply to a transaction.",
+        "url": "https://help.crossmint.com/articles/6270626721-pricing-disclosure",
+        "feeHighlight": "0.5%–4.5% card processing range"
+      }
     },
     {
       "slug": "currencycloud",
@@ -380,16 +653,29 @@
       "checkedAt": "2026-10-29T21:48:39.767Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account-specific FX and payment fees",
+        "reason": "Currencycloud’s terms describe client fee arrangements and pre-trade rates. An amount-specific quote is account dependent.",
+        "url": "https://go.currencycloud.com/hubfs/Product/Legal/Currencycloud%20Terms-EU-1%20December%202025.pdf"
+      }
     },
     {
       "slug": "dashx",
       "name": "DashX",
-      "sourceUrl": "https://dashx.xyz",
-      "checkedAt": "2026-10-29T21:48:39.767Z",
+      "sourceUrl": "https://dashx.xyz/tools/currency-converter",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The calculator advertises a flat 0.30% platform fee with no FX markup. The public figure does not specify GST treatment.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India collection fee published",
+        "reason": "DashX advertises its flat fee on the converter. GST inclusion and the executable account rate require confirmation.",
+        "url": "https://dashx.xyz/tools/currency-converter",
+        "feeHighlight": "0.30% advertised collection fee"
+      }
     },
     {
       "slug": "dlocal",
@@ -398,7 +684,13 @@
       "checkedAt": "2026-10-29T21:48:39.767Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Product and country pricing",
+        "reason": "dLocal Go collects merchant payments at country/payment-method rates. Enterprise payouts use separate commercial terms.",
+        "url": "https://helpcenter.dlocalgo.com/en/articles/7229153-what-costs-do-i-have"
+      }
     },
     {
       "slug": "dtcpay",
@@ -407,16 +699,29 @@
       "checkedAt": "2026-10-29T22:11:15.649Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "The official virtual-account schedule is dated 23 May 2024 and lists SGD 100 monthly maintenance at balances up to SGD 100,000. This historical account-service tariff is not a current transaction FX or payout quote."
+      "summary": "The official virtual-account schedule is dated 23 May 2024 and lists SGD 100 monthly maintenance at balances up to SGD 100,000. This historical account-service tariff is not a current transaction FX or payout quote.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Virtual-account tariff",
+        "reason": "The schedule prices specific virtual-account rails. Conversion and onward payout need the applicable account terms.",
+        "url": "https://dtcpay.com/api/media/file/Virtual-Account-Fee-Schedule.pdf"
+      }
     },
     {
       "slug": "eand-money",
       "name": "e& money",
       "sourceUrl": "https://www.eandmoney.com/en/send-abroad.html",
-      "checkedAt": "2026-10-29T21:48:52.462Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The public AED-to-INR calculator displayed AED 15.75 including VAT for its bank-account example. The final app quote depends on amount, corridor and delivery method.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "AED app and calculator",
+        "reason": "The UAE service has an AED exchange calculator. The app determines the transfer fee for the amount and destination method.",
+        "url": "https://www.eandmoney.com/en/send-abroad.html",
+        "feeHighlight": "AED 15.75 in public bank-account example"
+      }
     },
     {
       "slug": "eco",
@@ -425,7 +730,13 @@
       "checkedAt": "2026-10-29T21:48:52.462Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "On-chain route quote",
+        "reason": "Eco Routes quotes swaps and sends on supported blockchains. The route and liquidity price depend on the assets; bank delivery is separate.",
+        "url": "https://eco.com/support/en/articles/10264159-what-is-eco-routes"
+      }
     },
     {
       "slug": "episode-six",
@@ -434,7 +745,13 @@
       "checkedAt": "2026-10-29T21:48:52.462Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Issuer platform pricing",
+        "reason": "Episode Six supplies ledger and card-program infrastructure. A programme contract is needed for processing costs; it does not quote retail transfers.",
+        "url": "https://episodesix.com/"
+      }
     },
     {
       "slug": "ethena",
@@ -443,7 +760,13 @@
       "checkedAt": "2026-10-29T21:48:52.462Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Stablecoin mint and redeem",
+        "reason": "Ethena’s USDe terms describe subscription and redemption in eligible assets by eligible mint users. The exchange price and bank payout would be separate.",
+        "url": "https://docs.ethena.fi/resources/usde-terms-and-conditions"
+      }
     },
     {
       "slug": "fireblocks",
@@ -452,16 +775,29 @@
       "checkedAt": "2026-10-29T21:48:52.462Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Platform plan pricing",
+        "reason": "Fireblocks lists plan features and custom tiers. The quoted payment price also depends on the connected rail, liquidity provider and plan.",
+        "url": "https://www.fireblocks.com/pricing"
+      }
     },
     {
       "slug": "flutterwave",
       "name": "Flutterwave",
-      "sourceUrl": "https://flutterwave.com/us/pricing",
-      "checkedAt": "2026-10-29T21:48:58.023Z",
+      "sourceUrl": "https://flutterwave.com/ng/support/pricing/pricing-for-transfers-and-payouts",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The public regional payout schedule lists Ghana bank payouts at GHS 10 and Ghana mobile-money payouts at 1.50%.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Local payout tariff",
+        "reason": "Flutterwave publishes country and rail tables. The advertised local payout charge does not determine the rate for a cross-currency transfer.",
+        "url": "https://flutterwave.com/ng/support/pricing/pricing-for-transfers-and-payouts",
+        "feeHighlight": "GHS 10 bank or 1.50% mobile payout"
+      }
     },
     {
       "slug": "fomo-pay",
@@ -470,7 +806,13 @@
       "checkedAt": "2026-10-29T21:48:58.023Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Merchant plan pricing",
+        "reason": "FOMO Pay describes its merchant payment and business products. The commercial package and rail determine the price.",
+        "url": "https://www.fomopay.com/faq"
+      }
     },
     {
       "slug": "fonbnk",
@@ -479,7 +821,13 @@
       "checkedAt": "2026-10-29T21:48:58.023Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Token and channel quote",
+        "reason": "Fonbnk lists mobile-money and airtime rails by country. Rates are specific to the rail, currency, token and partner.",
+        "url": "https://docs.fonbnk.com/supported-countries-and-cryptocurrencies"
+      }
     },
     {
       "slug": "fuze",
@@ -488,7 +836,13 @@
       "checkedAt": "2026-10-29T21:48:58.023Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Liquidity quote required",
+        "reason": "Fuze says pricing is sourced from liquidity providers. The quote depends on asset, size and account terms.",
+        "url": "https://fuze.finance/policies"
+      }
     },
     {
       "slug": "global66",
@@ -497,7 +851,13 @@
       "checkedAt": "2026-10-29T21:48:58.023Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Country-specific calculator",
+        "reason": "Global66 offers country-specific transfer flows and local terms. Use a quote for the actual sending country, amount and payout method.",
+        "url": "https://www.global66.com/enviar-dinero/MX/US/"
+      }
     },
     {
       "slug": "guardarian",
@@ -506,7 +866,13 @@
       "checkedAt": "2026-10-29T21:49:09.683Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto checkout quote",
+        "reason": "Guardarian’s quotes are for fiat-to-crypto or crypto-to-fiat orders. Amount, asset and payment method change the price.",
+        "url": "https://guardarian.com/faq"
+      }
     },
     {
       "slug": "highnote",
@@ -515,25 +881,45 @@
       "checkedAt": "2026-10-29T21:49:09.683Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card-program terms",
+        "reason": "Highnote’s money-movement documentation describes network and instrument eligibility; pricing depends on the card or bank programme.",
+        "url": "https://docs.highnote.com/docs/money-movement/payment-rails/instrument-eligibility"
+      }
     },
     {
       "slug": "immersve",
       "name": "Immersve",
-      "sourceUrl": "https://immersve.com/pricing",
-      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "sourceUrl": "https://immersve.com/fees-and-charges/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The Immersve virtual prepaid card schedule lists a 1.5% foreign-currency purchase fee.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Prepaid card tariff",
+        "reason": "Its published card fees apply to the virtual prepaid card. Issuing-as-a-service and external cash movement have different terms.",
+        "url": "https://immersve.com/fees-and-charges/",
+        "feeHighlight": "1.5% prepaid card FX fee"
+      }
     },
     {
       "slug": "infinity",
       "name": "Infinity",
-      "sourceUrl": "https://www.infinityapp.in",
-      "checkedAt": "2026-10-29T21:49:09.683Z",
+      "sourceUrl": "https://www.infinityapp.in/faqs/articles/what-infinity-charges-for-bank-transfer-payments",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Infinity publishes a 0.50% standard bank-payment fee with zero FX markup, and states the fee includes GST.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India collection tariff",
+        "reason": "The standard tariff is for bank payments to eligible Indian exporters. Card payments and large transfers are quoted separately.",
+        "url": "https://www.infinityapp.in/faqs/articles/what-infinity-charges-for-bank-transfer-payments",
+        "feeHighlight": "0.50% India bank collection incl. GST"
+      }
     },
     {
       "slug": "karbon",
@@ -542,7 +928,13 @@
       "checkedAt": "2026-10-29T21:49:09.683Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Official inward-remittance FAQ lists FX conversion, transfer fees, taxes and possible intermediary bank charges. The breakdown depends on sender country, currency and payment method."
+      "summary": "Official inward-remittance FAQ lists FX conversion, transfer fees, taxes and possible intermediary bank charges. The breakdown depends on sender country, currency and payment method.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account and rail quote",
+        "reason": "Karbon’s fees depend on currency, origin, route and the bank that handles the payment. Use the account or calculator for the exact amount.",
+        "url": "https://www.karboncard.com/pricing-fees-help-centre"
+      }
     },
     {
       "slug": "koywe",
@@ -551,7 +943,13 @@
       "checkedAt": "2026-10-29T21:49:22.281Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "API quote required",
+        "reason": "Koywe documents a time-limited negotiated quote per size, rail and currency pair rather than a public universal fee.",
+        "url": "https://docs.koywe.com/en/core-concepts/quotes-and-exchange-rates"
+      }
     },
     {
       "slug": "lirium",
@@ -560,16 +958,29 @@
       "checkedAt": "2026-10-29T21:49:22.281Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Embedded crypto terms",
+        "reason": "Lirium’s digital-asset purchase, sale and custody terms define a transaction-specific exchange rate. Programme and trade fees need a quote.",
+        "url": "https://www.lirium.com/terms"
+      }
     },
     {
       "slug": "lulu-exchange",
       "name": "LuLu Exchange",
-      "sourceUrl": "https://luluexchange.com/services/money-transfer/",
-      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "sourceUrl": "https://luluexchange.com/wp-content/uploads/2025/07/LE-UAE-Commission-Charges-Rate-Board-2025.pdf",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "LuLu’s UAE rate board lists AED 19.50 and AED 26.50 including VAT in the two India INR account-transfer brackets. The live FX conversion and precise eligibility are separate.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "UAE fee schedule",
+        "reason": "LuLu publishes a UAE remittance fee board by destination and payout method. The app or agent confirms currency conversion and eligibility.",
+        "url": "https://luluexchange.com/wp-content/uploads/2025/07/LE-UAE-Commission-Charges-Rate-Board-2025.pdf",
+        "feeHighlight": "AED 19.50 / 26.50 incl. VAT to INR bank"
+      }
     },
     {
       "slug": "mastercard-move",
@@ -578,16 +989,29 @@
       "checkedAt": "2026-10-29T21:49:22.281Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Partner quotation",
+        "reason": "Mastercard Move is a network for participating banks and platforms. The originating institution sets the customer’s fee and exchange rate.",
+        "url": "https://www.mastercard.com/us/en/business/payments/mastercard-move.html"
+      }
     },
     {
       "slug": "mercuryo",
       "name": "Mercuryo",
-      "sourceUrl": "https://mercuryo.io",
-      "checkedAt": "2026-10-29T21:49:22.281Z",
+      "sourceUrl": "https://help.mercuryo.io/hc/en-gb/articles/14495507432989-What-fees-do-you-charge",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Mercuryo lists a crypto buy fee up to 5.5% with a EUR 1 minimum, or a sell fee up to 3.95% with a EUR 4 minimum.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto retail fee range",
+        "reason": "The fee schedule covers crypto buys and sells. Network or partner conditions change the final checkout.",
+        "url": "https://help.mercuryo.io/hc/en-gb/articles/14495507432989-What-fees-do-you-charge",
+        "feeHighlight": "Crypto sale: up to 3.95%, EUR 4 minimum"
+      }
     },
     {
       "slug": "mesh",
@@ -596,7 +1020,13 @@
       "checkedAt": "2026-10-29T21:49:28.888Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Embedded crypto checkout",
+        "reason": "Mesh’s product connects crypto accounts and wallets. The relevant merchant programme or wallet route determines fees.",
+        "url": "https://www.meshconnect.com/"
+      }
     },
     {
       "slug": "mobee",
@@ -605,7 +1035,13 @@
       "checkedAt": "2026-10-29T22:11:15.649Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Official trading help lists IDR spot totals of 0.120% buy and 0.280% sell; non-IDR totals of 0.350%. Pair-specific rules, VIP tiers, withdrawals and execution price must also be checked. These crypto trading components do not price a fiat bank remittance."
+      "summary": "Official trading help lists IDR spot totals of 0.120% buy and 0.280% sell; non-IDR totals of 0.350%. Pair-specific rules, VIP tiers, withdrawals and execution price must also be checked. These crypto trading components do not price a fiat bank remittance.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Indonesia exchange costs",
+        "reason": "Trading and local cash-out fees depend on the Indonesian exchange order and withdrawal method.",
+        "url": "https://mobee.com/en/app/help-center/trading"
+      }
     },
     {
       "slug": "monavate",
@@ -614,25 +1050,45 @@
       "checkedAt": "2026-10-29T21:49:28.888Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Issuing programme pricing",
+        "reason": "Monavate offers embedded card issuance and payment infrastructure. The partner agreement is needed for a complete programme tariff.",
+        "url": "https://www.monavate.com/"
+      }
     },
     {
       "slug": "moneygram",
       "name": "MoneyGram",
-      "sourceUrl": "https://www.moneygram.com",
-      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "sourceUrl": "https://www.moneygram.com/us/en/corridor/india",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "MoneyGram advertises zero transfer fee for an eligible first online US-to-India transfer. FX and later transfer fees can differ.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Retail calculator",
+        "reason": "MoneyGram prices by originating country, funding and pickup method. The transfer estimator is the source for a repeat-customer total.",
+        "url": "https://www.moneygram.com/us/en/corridor/india",
+        "feeHighlight": "First eligible US→IN transfer: USD 0 fee"
+      }
     },
     {
       "slug": "moonpay",
       "name": "MoonPay",
-      "sourceUrl": "https://www.moonpay.com",
-      "checkedAt": "2026-10-29T21:49:28.888Z",
+      "sourceUrl": "https://www.moonpay.com/buy",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "MoonPay advertises crypto buy fees as low as 1% for bank transfers and 4.5% for Visa card funding. Minimum, partner and network charges can apply.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto on-ramp pricing",
+        "reason": "Rates depend on payment method, asset, geography and any network or partner charges.",
+        "url": "https://www.moonpay.com/buy",
+        "feeHighlight": "Crypto buys: 1% bank / 4.5% Visa advertised"
+      }
     },
     {
       "slug": "moorwand",
@@ -641,16 +1097,29 @@
       "checkedAt": "2026-10-29T21:49:35.206Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card and account programme",
+        "reason": "Moorwand’s terms refer to product-specific card and account charges. The programme or account terms are needed for the fee.",
+        "url": "https://moorwand.com/terms-and-conditions/"
+      }
     },
     {
       "slug": "mulya",
       "name": "Mulya",
-      "sourceUrl": "https://www.mulya.co/#pricing",
-      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "sourceUrl": "https://support.mulya.co/all-about-mulya-fees/355SkxzLmGBVnEpM1FjVqN/what-is-the-fees-charged-by-mulya/q7nerJsqcrvzR4ymt9ChnA",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Mulya describes a 1% all-inclusive transfer fee for its standard international collection product.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India collection tariff",
+        "reason": "Mulya publishes its standard exporter collection fee. Currency support and actual FX are confirmed at withdrawal.",
+        "url": "https://support.mulya.co/all-about-mulya-fees/355SkxzLmGBVnEpM1FjVqN/what-is-the-fees-charged-by-mulya/q7nerJsqcrvzR4ymt9ChnA",
+        "feeHighlight": "1% all-inclusive India collections"
+      }
     },
     {
       "slug": "mural-pay",
@@ -659,16 +1128,29 @@
       "checkedAt": "2026-10-29T21:49:35.206Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account payout quote",
+        "reason": "The payout API returns fees and the exchange rate for the specific route; integration fees can be added by the partner.",
+        "url": "https://developers.muralpay.com/docs/get-payout-fees"
+      }
     },
     {
       "slug": "n-exchange",
       "name": "n.exchange",
-      "sourceUrl": "https://n.exchange",
-      "checkedAt": "2026-10-29T21:49:35.206Z",
+      "sourceUrl": "https://n.exchange/faqs",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "n.exchange publishes a 2%–3% service fee for crypto pairs.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto swap fee range",
+        "reason": "The FAQ prices crypto swaps. Fiat on/off-ramp and foreign bank delivery are separate.",
+        "url": "https://n.exchange/faqs",
+        "feeHighlight": "2%–3% crypto swap service fee"
+      }
     },
     {
       "slug": "nium",
@@ -677,7 +1159,13 @@
       "checkedAt": "2026-10-29T21:49:35.206Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Custom fee and FX rules",
+        "reason": "Nium documents route-specific fixed and variable fees with configurable FX margins. A contracted account is needed for the exact quote.",
+        "url": "https://preview.docs.nium.com/docs/fees-and-limits/fees"
+      }
     },
     {
       "slug": "onafriq",
@@ -686,16 +1174,29 @@
       "checkedAt": "2026-10-29T21:49:46.854Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Enterprise payment terms",
+        "reason": "Onafriq’s enterprise payments documentation describes platform payouts. The network partner supplies corridor-specific cost and FX.",
+        "url": "https://onafriqenterprise.zendesk.com/hc/en-us/articles/18415495351069-Payments-FAQ"
+      }
     },
     {
       "slug": "opendue",
       "name": "Due",
-      "sourceUrl": "https://www.opendue.com",
-      "checkedAt": "2026-10-29T21:49:46.854Z",
+      "sourceUrl": "https://due.readme.io/docs/fees",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Due lists zero separate channel fee for on-chain payouts. Fiat rails and conversions can still be charged under the quote.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Channel and FX quote",
+        "reason": "Due documents fees on the incoming and outgoing rails, FX markup and optional partner fees.",
+        "url": "https://due.readme.io/docs/fees",
+        "feeHighlight": "On-chain payout channel fee: 0"
+      }
     },
     {
       "slug": "openpayd",
@@ -704,7 +1205,13 @@
       "checkedAt": "2026-10-29T22:12:19.231643+00:00",
       "status": "readable",
       "method": "official_web_reader",
-      "summary": "The official pricing FAQ states that pricing is completely bespoke. A commercial quote is required; old starting-from tariffs cannot establish a current account-specific total."
+      "summary": "The official pricing FAQ states that pricing is completely bespoke. A commercial quote is required; old starting-from tariffs cannot establish a current account-specific total.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Commercial pricing",
+        "reason": "OpenPayd explains its arrangement-specific rates for accounts and transfers. A customer agreement is needed for exact fees.",
+        "url": "https://www.openpayd.com/knowledge-base/how-is-your-pricing-structured/"
+      }
     },
     {
       "slug": "parfin",
@@ -713,7 +1220,13 @@
       "checkedAt": "2026-10-29T21:49:46.854Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Institutional account pricing",
+        "reason": "Parfin provides institutional custody and asset infrastructure. The cost depends on its enterprise product and account arrangement.",
+        "url": "https://support.parfin.io/en/support/solutions/folders/80000236640"
+      }
     },
     {
       "slug": "paxos",
@@ -722,7 +1235,13 @@
       "checkedAt": "2026-10-29T21:49:46.854Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Stablecoin redemption terms",
+        "reason": "Paxos publishes issuance and redemption terms for particular stablecoins. Minting or redeeming a stablecoin does not price an onward FX payout.",
+        "url": "https://www.paxos.com/mint-and-redeem"
+      }
     },
     {
       "slug": "paycaddy",
@@ -731,16 +1250,29 @@
       "checkedAt": "2026-10-29T21:49:56.842Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card programme pricing",
+        "reason": "PayCaddy’s product is embedded card issuance and program accounts. These need a partner rate card rather than a consumer remittance price.",
+        "url": "https://paycaddy.com/en/"
+      }
     },
     {
       "slug": "payglocal",
       "name": "PayGlocal",
       "sourceUrl": "https://payglocal.in/compare/payglocal-vs-skydo",
-      "checkedAt": "2026-10-29T21:56:20.146Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Bank collections advertise USD 10 through USD 2,000, USD 18 through USD 7,500, then 0.25%, plus 18% GST.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India bank collection tariff",
+        "reason": "Multi-currency bank collections and card checkout have separate pricing. The published bank collection tiers include an additional GST line.",
+        "url": "https://payglocal.in/compare/payglocal-vs-skydo",
+        "feeHighlight": "USD 10 + GST through USD 2,000"
+      }
     },
     {
       "slug": "payoneer",
@@ -749,7 +1281,14 @@
       "checkedAt": "2026-10-29T21:49:56.842Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "The public fee table distinguishes receiving accounts, payment requests, card/ACH funding and withdrawals. A receiving fee alone does not include the account-specific USD-to-INR conversion and withdrawal cost."
+      "summary": "The public fee table distinguishes receiving accounts, payment requests, card/ACH funding and withdrawals. A receiving fee alone does not include the account-specific USD-to-INR conversion and withdrawal cost.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Account withdrawal range",
+        "reason": "The amount depends on receiving method, withdrawal currency, account location and monthly volume.",
+        "url": "https://www.payoneer.com/pricing/",
+        "feeHighlight": "1%–4% on applicable withdrawals"
+      }
     },
     {
       "slug": "paypal",
@@ -758,7 +1297,14 @@
       "checkedAt": "2026-10-29T21:49:56.842Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "India merchant payments list 4.40% plus a currency-specific fixed fee. Currency conversion has a separate markup. This merchant tariff is different from Xoom personal remittance."
+      "summary": "India merchant payments list 4.40% plus a currency-specific fixed fee. Currency conversion has a separate markup. This merchant tariff is different from Xoom personal remittance.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India merchant processing",
+        "reason": "The merchant receiving tariff covers commercial checkout. Currency conversion, cross-border charges or applicable taxes can be additional.",
+        "url": "https://www.paypal.com/in/business/paypal-business-fees",
+        "feeHighlight": "4.40% + fixed fee for listed international receipts"
+      }
     },
     {
       "slug": "payzoll",
@@ -767,7 +1313,14 @@
       "checkedAt": "2026-11-18T00:00:00.000Z",
       "status": "readable",
       "method": "official_review",
-      "summary": "PayZoll publishes USD 10 below USD 1,000 and 1% from USD 1,000. Banking, partner, conversion and corridor-specific charges may apply. The observed dashboard calculator confirms the USD-to-INR payout fee formula."
+      "summary": "PayZoll publishes USD 10 below USD 1,000 and 1% from USD 1,000. Banking, partner, conversion and corridor-specific charges may apply. The observed dashboard calculator confirms the USD-to-INR payout fee formula.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "USD payout calculator",
+        "reason": "The USD-to-INR dashboard calculator confirms the published fee formula. The payout rate and partner charges can vary.",
+        "url": "https://payzoll.finance/payzoll-vs-skydo",
+        "feeHighlight": "USD 10 below USD 1,000, then 1%"
+      }
     },
     {
       "slug": "peoples-group",
@@ -776,16 +1329,29 @@
       "checkedAt": "2026-10-29T21:50:03.107Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Canadian deposit-account tariff",
+        "reason": "Published fees cover the Canadian personal account. The embedded-payments business requires partner terms.",
+        "url": "https://www.peoplesgroup.com/personal/resources/account-fees"
+      }
     },
     {
       "slug": "pingpong",
       "name": "PingPong",
-      "sourceUrl": "https://in.pingpongx.com/",
-      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "sourceUrl": "https://in.pingpongx.com/manage-your-account/what-is-the-charging-standard",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "PingPong’s India help page lists free account creation and receiving. Its general withdrawal or supplier-payment fee is 1% per transaction, with regional variation.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Regional withdrawal tariff",
+        "reason": "PingPong’s India help page gives a standard withdrawal/supplier charge and says regional rates can differ.",
+        "url": "https://in.pingpongx.com/manage-your-account/what-is-the-charging-standard",
+        "feeHighlight": "1% stated withdrawal fee, varies by region"
+      }
     },
     {
       "slug": "pomelo-la",
@@ -794,16 +1360,29 @@
       "checkedAt": "2026-10-29T21:50:03.107Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card processing contract",
+        "reason": "Pomelo’s LATAM card issuing and processing service is set up with a programme and applicable local rates.",
+        "url": "https://www.pomelo.la/en/card-processing"
+      }
     },
     {
       "slug": "ramp-network",
       "name": "Ramp Network",
-      "sourceUrl": "https://ramp.network",
-      "checkedAt": "2026-10-29T21:50:03.107Z",
+      "sourceUrl": "https://rampnetwork.com/pricing-policy",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Ramp Network lists published percentage caps varying by rail, from up to 1.40% to up to 5.45% on the cited on-ramp table. Each method has its own minimum and conditions.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto ramp tariff",
+        "reason": "The pricing policy lists processing caps and minimums by funding method. Network and integration fees can affect the final quote.",
+        "url": "https://rampnetwork.com/pricing-policy",
+        "feeHighlight": "Published on-ramp caps up to 5.45%"
+      }
     },
     {
       "slug": "rapyd",
@@ -812,25 +1391,45 @@
       "checkedAt": "2026-10-29T21:50:03.107Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Method and merchant terms",
+        "reason": "Rapyd’s pricing model varies by payment method and country. Card acquiring and payout agreements have separate fee schedules.",
+        "url": "https://www.rapyd.net/products/pricing/"
+      }
     },
     {
       "slug": "razorpay",
       "name": "Razorpay",
-      "sourceUrl": "https://razorpay.com/pricing/",
-      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "sourceUrl": "https://razorpay.com/accept-international-payments/money-saver/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The published MoneySaver bank transfer schedule used in Railor is INR 1,000 below INR 100,000 or 1% at higher amounts, plus applicable GST.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India bank collection tariff",
+        "reason": "MoneySaver’s bank account export product has a different fee from card checkout and payment links.",
+        "url": "https://razorpay.com/accept-international-payments/money-saver/",
+        "feeHighlight": "INR 1,000 or 1% + applicable GST"
+      }
     },
     {
       "slug": "refrens",
       "name": "Refrens",
       "sourceUrl": "https://www.refrens.com/receive-international-payments-india",
-      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Refrens publishes 1.5% or less for bank/ACH/wire with a USD 60 processing cap and included tax. Conversion is separate.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Fee published, FX separate",
+        "reason": "The bank/ACH/wire tariff covers processing. The executable FX rate is needed for a complete collection price.",
+        "url": "https://www.refrens.com/receive-international-payments-india",
+        "feeHighlight": "1.5% or less · USD 60 processing cap"
+      }
     },
     {
       "slug": "remitly",
@@ -839,7 +1438,13 @@
       "checkedAt": "2026-10-29T21:50:19.633Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "USD-to-INR welcome rates apply to new customers only, once per customer, on the first USD 6,000. Ongoing pricing depends on amount, funding and delivery method. Fresh comparison observations retain their original time."
+      "summary": "USD-to-INR welcome rates apply to new customers only, once per customer, on the first USD 6,000. Ongoing pricing depends on amount, funding and delivery method. Fresh comparison observations retain their original time.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Retail calculator and offer",
+        "reason": "Remitly shows different rates for new-customer promotions, payment speeds and delivery rails. The regular price depends on account and choices.",
+        "url": "https://www.remitly.com/us/en/money-transfer/send-money-to-india"
+      }
     },
     {
       "slug": "ripple",
@@ -848,16 +1453,29 @@
       "checkedAt": "2026-10-29T21:50:19.633Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Enterprise partner pricing",
+        "reason": "Ripple Payments offers institution and corridor-specific services. Published coverage does not provide a universal customer tariff.",
+        "url": "https://ripple.com/legal/compliance/"
+      }
     },
     {
       "slug": "salt",
       "name": "Salt",
       "sourceUrl": "https://www.salt.pe/international-payments",
-      "checkedAt": "2026-10-29T21:50:19.633Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Salt advertises a 1.75% fee with GST included and no exchange-rate markup. Current account availability and the applied rate require confirmation.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India collection fee advertised",
+        "reason": "The inward payment page publishes a fee including GST. Confirm account availability and the active rate before using it.",
+        "url": "https://www.salt.pe/international-payments",
+        "feeHighlight": "1.75% including GST advertised"
+      }
     },
     {
       "slug": "scrypt",
@@ -866,16 +1484,29 @@
       "checkedAt": "2026-10-29T21:50:35.936Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Institutional OTC quote",
+        "reason": "SCRYPT prices trades on request using the pair, amount and execution details. It does not publish a universal retail transfer tariff.",
+        "url": "https://scrypt.swiss/trading"
+      }
     },
     {
       "slug": "skydo",
       "name": "Skydo",
-      "sourceUrl": "https://www.skydo.com/blog/how-to-reduce-swift-charges-india",
-      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "sourceUrl": "https://www.skydo.com/send-money-to-india",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Skydo publishes USD 19 up to USD 2,000, USD 29 up to USD 10,000 and 0.3% above that, plus 18% GST.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India bank collection tariff",
+        "reason": "The India collection account lists flat USD slabs or a percentage fee above the threshold. Sender-bank charges can apply.",
+        "url": "https://www.skydo.com/send-money-to-india",
+        "feeHighlight": "USD 19 / USD 29 / 0.3% + GST"
+      }
     },
     {
       "slug": "sphere",
@@ -884,7 +1515,13 @@
       "checkedAt": "2026-10-29T21:50:35.936Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Institutional liquidity quote",
+        "reason": "Sphere’s institutional desk prices liquidity and settlement for the specific asset, size and destinations.",
+        "url": "https://spherepay.co/products/privatedesk"
+      }
     },
     {
       "slug": "stablecore",
@@ -893,25 +1530,45 @@
       "checkedAt": "2026-10-29T21:50:35.936Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Bank platform terms",
+        "reason": "Stablecore sells infrastructure to banks and credit unions. Public rail coverage does not expose an end-customer fee schedule.",
+        "url": "https://stablecore.com/products/stablecoins"
+      }
     },
     {
       "slug": "straitsx",
       "name": "StraitsX",
-      "sourceUrl": "https://www.straitsx.com",
-      "checkedAt": "2026-10-29T21:50:35.936Z",
+      "sourceUrl": "https://support.straitsx.com/support/solutions/articles/157000365665-straitsx-personal-account-transaction-fee-schedule",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Singapore personal StraitsX accounts list a USD 40 outbound USD bank transfer fee. Separate bank charges can apply.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Singapore personal account tariff",
+        "reason": "The personal-account fee schedule prices individual rails and stablecoin operations. Exchange and bank charges can be separate.",
+        "url": "https://support.straitsx.com/support/solutions/articles/157000365665-straitsx-personal-account-transaction-fee-schedule",
+        "feeHighlight": "USD 40 personal USD bank withdrawal"
+      }
     },
     {
       "slug": "stripe",
       "name": "Stripe",
       "sourceUrl": "https://stripe.com/in/pricing",
-      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Stripe India lists 3% for eligible Mastercard/Visa cards issued outside India and an extra 2% when currency conversion is required. Other card categories differ.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India merchant card tariff",
+        "reason": "Stripe’s India pricing covers merchant card acceptance. Card region, currency conversion and the merchant contract determine the final cost.",
+        "url": "https://stripe.com/in/pricing",
+        "feeHighlight": "3% foreign Visa/MC + 2% if FX required"
+      }
     },
     {
       "slug": "taptap-send",
@@ -920,7 +1577,13 @@
       "checkedAt": "2026-10-29T21:50:54.157Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "UAE help says Taptap Send does not charge for card or bank funding, while issuers/banks can charge. The offered FX rate is still needed for the total transfer cost."
+      "summary": "UAE help says Taptap Send does not charge for card or bank funding, while issuers/banks can charge. The offered FX rate is still needed for the total transfer cost.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Sender-country quote",
+        "reason": "Taptap Send publishes sender-country terms. The app determines the exact fee and rate for the selected payout method.",
+        "url": "https://help.taptapsend.com/en/sending-countries/how-do-i-send-money-from-the-uae/uae-what-payment-methods-can-i-use"
+      }
     },
     {
       "slug": "tazapay",
@@ -929,16 +1592,29 @@
       "checkedAt": "2026-10-29T22:11:15.649Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "For non-high-risk industries, official support lists APM transaction fees of 0.80–2.50% and card fees of 3.8% + USD 0.50. Local/wire settlement fees and Indian FIRC charges can be separate. The offered FX rate, product and tier boundaries still need confirmation."
+      "summary": "For non-high-risk industries, official support lists APM transaction fees of 0.80–2.50% and card fees of 3.8% + USD 0.50. Local/wire settlement fees and Indian FIRC charges can be separate. The offered FX rate, product and tier boundaries still need confirmation.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Checkout tariffs published",
+        "reason": "Tazapay’s fee tables list payment-method fees across markets. Account payout and currency conversion require their own terms.",
+        "url": "https://support.tazapay.com/transaction-fees"
+      }
     },
     {
       "slug": "tether",
       "name": "Tether",
-      "sourceUrl": "https://tether.to",
-      "checkedAt": "2026-10-29T21:50:54.157Z",
+      "sourceUrl": "https://tether.to/en/fees/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Tether.to lists a USD 100,000 minimum, a 0.1% acquisition fee and a redemption fee equal to the larger of USD 1,000 or 0.1%.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Direct mint/redemption tariff",
+        "reason": "Tether’s direct issuance and redemption schedule is for eligible verified Tether.to users. Bank fees and a local-currency conversion are separate.",
+        "url": "https://tether.to/en/fees/",
+        "feeHighlight": "Direct redemption: max of USD 1,000 / 0.1%"
+      }
     },
     {
       "slug": "thredd",
@@ -947,7 +1623,13 @@
       "checkedAt": "2026-10-29T21:50:54.157Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Card programme contract",
+        "reason": "Thredd documents how to configure card programme fees. The platform price and any partner fees are contractual.",
+        "url": "https://cardsapidocs.thredd.com/v2/docs/general-faqs"
+      }
     },
     {
       "slug": "thunes",
@@ -956,7 +1638,13 @@
       "checkedAt": "2026-10-29T21:51:05.911Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Contracted network pricing",
+        "reason": "The network terms put the transaction fee in the partner’s order document and tie it to the payment method. FX and fees can be quoted per transfer.",
+        "url": "https://www.thunes.com/legal-thunes-network-partner-terms/"
+      }
     },
     {
       "slug": "transak",
@@ -965,7 +1653,13 @@
       "checkedAt": "2026-10-29T21:51:05.911Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Crypto checkout quote",
+        "reason": "Partner, payment-method and network fees depend on the crypto purchase or sale. Its checkout returns the price for that order.",
+        "url": "https://transak.com/fees-pricing-calculation"
+      }
     },
     {
       "slug": "triple-a",
@@ -974,7 +1668,13 @@
       "checkedAt": "2026-10-29T21:51:05.911Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Merchant and payout pricing",
+        "reason": "The provider lists separate merchant crypto payments, crypto payouts and fiat payouts. Use the specific plan and quote for fees.",
+        "url": "https://support.triple-a.io/knowledge/what-services-does-triple-a-provide"
+      }
     },
     {
       "slug": "unlimit",
@@ -983,16 +1683,29 @@
       "checkedAt": "2026-10-29T21:51:05.911Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Merchant agreement pricing",
+        "reason": "Unlimit’s processing and payment-account fees depend on geography, payment method and merchant agreement.",
+        "url": "https://www.unlimit.com/en-gb/payment-processing/"
+      }
     },
     {
       "slug": "vibrant",
       "name": "Vibrant",
-      "sourceUrl": "https://vibrantapp.com",
-      "checkedAt": "2026-10-29T21:51:05.911Z",
+      "sourceUrl": "https://help.vesseoapp.com/hc/en-us/articles/31451921493527-Vesseo-Fees-Limits",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Vesseo lists 0.5% for sending Stellar USDC to another Stellar wallet, with a 1 USDC minimum withdrawal.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Vesseo wallet tariff",
+        "reason": "The Vibrant/Vesseo fee schedule names specific assets and deposit/withdrawal methods. Bank cash-out rates depend on the partner route.",
+        "url": "https://help.vesseoapp.com/hc/en-us/articles/31451921493527-Vesseo-Fees-Limits",
+        "feeHighlight": "0.5% Stellar USDC wallet withdrawal"
+      }
     },
     {
       "slug": "visa-direct",
@@ -1001,7 +1714,13 @@
       "checkedAt": "2026-10-29T21:51:17.524Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Originating partner quote",
+        "reason": "Visa Direct supplies payout rails to financial institutions and approved partners. The sending partner confirms the end-customer price.",
+        "url": "https://developer.visa.com/docs/visa_direct"
+      }
     },
     {
       "slug": "webbank",
@@ -1010,34 +1729,61 @@
       "checkedAt": "2026-10-29T21:51:17.524Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Bank programme terms",
+        "reason": "WebBank supplies bank partnership programmes. The applicable product or partner agreement determines fees.",
+        "url": "https://webbank.com/"
+      }
     },
     {
       "slug": "winvesta",
       "name": "Winvesta",
       "sourceUrl": "https://www.winvesta.in/faqs/global-collections-account/what-are-the-charges-for-the-global-collections-account",
-      "checkedAt": "2026-10-29T21:55:50.029Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Railor's published standard USD collection reference is USD 3 + 0.99% for up to USD 2,000 in monthly receipts. Non-JPMC account fees include the additional 18% GST in the estimate.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Collection tariff varies by account",
+        "reason": "Winvesta’s tier depends on total monthly receipts, currency, and account type. GST treatment differs by account.",
+        "url": "https://www.winvesta.in/faqs/global-collections-account/what-are-the-charges-for-the-global-collections-account",
+        "feeHighlight": "USD 3 + 0.99% on the standard USD tier"
+      }
     },
     {
       "slug": "wio",
       "name": "Wio Bank",
-      "sourceUrl": "https://wio.io/pay-and-get-paid",
-      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "sourceUrl": "https://assets.ctfassets.net/l65m9bcr2nac/3PuHnssHbDhLySqQ8wrfJp/fb2aa28b27ddb82fb33606e57c15650f/schedule-of-fees-business-sep-2026.pdf",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "The September 2026 Wio Business schedule lists AED 52.50 and AED 26.25 as the plan-specific foreign-currency outbound SWIFT charges, before any correspondent charges.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "UAE business SWIFT tariff",
+        "reason": "Wio publishes different fees by plan; correspondent charges and FX can be separate.",
+        "url": "https://assets.ctfassets.net/l65m9bcr2nac/3PuHnssHbDhLySqQ8wrfJp/fb2aa28b27ddb82fb33606e57c15650f/schedule-of-fees-business-sep-2026.pdf",
+        "feeHighlight": "AED 52.50 / 26.25 outgoing FX SWIFT"
+      }
     },
     {
       "slug": "wise",
       "name": "Wise",
-      "sourceUrl": "https://wise.com/in/pricing/",
-      "checkedAt": "2026-10-29T21:51:17.524Z",
+      "sourceUrl": "https://wise.com/in/pricing/business/receive/",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": null
+      "method": "official_pricing_review",
+      "summary": "Wise Business India applies 18% GST to Wise conversion and e-FIRC fees. Its published and help-centre pages should be checked for the charges on the selected business receipt.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Different send and receive prices",
+        "reason": "A public sender quote and an India Wise Business collection price cover different products. Final fees depend on funding and payout.",
+        "url": "https://wise.com/in/pricing/business/receive/",
+        "feeHighlight": "18% GST on Wise India receiving fees"
+      }
     },
     {
       "slug": "xflow",
@@ -1046,16 +1792,30 @@
       "checkedAt": "2026-10-29T21:56:20.146Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": "Starter: USD 12 through USD 2,000, then 0.6%; Growth: USD 20 through USD 5,000, then 0.4%; large invoices use custom pricing. The FAQ distinguishes fixed fees and FX markup for GST/RCM treatment. Plan and tax eligibility affect the final total."
+      "summary": "Starter: USD 12 through USD 2,000, then 0.6%; Growth: USD 20 through USD 5,000, then 0.4%; large invoices use custom pricing. The FAQ distinguishes fixed fees and FX markup for GST/RCM treatment. Plan and tax eligibility affect the final total.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "India receiving plans",
+        "reason": "Xflow publishes tiers for export collections. It confirms the selected plan and wallet-to-bank FX in the account.",
+        "url": "https://www.xflowpay.com/pricing",
+        "feeHighlight": "Starter: USD 12 through USD 2,000"
+      }
     },
     {
       "slug": "xoom",
       "name": "Xoom",
       "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
-      "checkedAt": "2026-10-29T21:51:23.609Z",
+      "checkedAt": "2026-11-19",
       "status": "readable",
-      "method": "parallel_extract",
-      "summary": "The US public calculator was checked for USD 1,000 to an Indian bank: INR 95,046 with USD 0 ACH funding fee, explicitly a first-transfer offer. Debit and credit cards have different fees. The captured observation expires from display after 24 hours."
+      "method": "official_pricing_review",
+      "summary": "The US public calculator returns ACH, card and other funding quotes for bank deposits. An eligible first transfer can include a promotional FX rate; the app confirms final terms.",
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Transfer calculator and promotion",
+        "reason": "Xoom shows rates and fees before sending. Promotional rates, funding, amount and destination affect the total.",
+        "url": "https://www.xoom.com/india/send-money?locale=en-us",
+        "feeHighlight": "Public bank and card calculator"
+      }
     },
     {
       "slug": "yellow-card",
@@ -1064,7 +1824,13 @@
       "checkedAt": "2026-10-29T21:51:23.609Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "API quote required",
+        "reason": "Yellow Card’s business API handles quotes and payment instructions by corridor. Its rail, liquidity and account terms determine the cost.",
+        "url": "https://help.yellowcard.io/articles/8999093541-api-documentation"
+      }
     },
     {
       "slug": "zero-hash",
@@ -1073,7 +1839,13 @@
       "checkedAt": "2026-10-29T21:51:23.609Z",
       "status": "readable",
       "method": "parallel_extract",
-      "summary": null
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-19",
+        "label": "Platform and issuer charges",
+        "reason": "Zero Hash documents stablecoin issuer fees and partner-facing programme pricing. The specific asset, funding rail and agreement determine the end-user fee.",
+        "url": "https://docs.zerohash.com/docs/issuer-fees"
+      }
     }
   ]
 }

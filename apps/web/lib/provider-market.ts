@@ -14,9 +14,11 @@ interface UniverseProvider {
   lastVerified: string | null;
 }
 
-type PricingReview = Pick<(typeof pricingReview.providers)[number], "slug" | "checkedAt" | "status" | "sourceUrl" | "summary"> & {
+type PricingReview = Pick<(typeof pricingReview.providers)[number], "slug" | "checkedAt" | "status" | "sourceUrl" | "summary" | "pricingReview"> & {
   routeNotes?: Array<{ from?: string; to: string; label: string; reason: string; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
 };
+
+const reviewBySlug = new Map<string, PricingReview>(pricingReview.providers.map(entry => [entry.slug, entry]));
 
 const PRICE_MARKET_CATEGORIES = new Set([
   "DIRECT_PAYOUT_PROVIDER",
@@ -102,14 +104,20 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
       ? assessCustomerProfile(candidate.providerSlug, input.context, { ...input, sourceCurrency: source, destinationCurrency: destination, amountUsd: source === "USD" ? input.amount : null, referenceRate: null })
       : undefined;
     const provider = profile?.payment ? { ...candidate, profileAssessment: profile } : candidate;
-    const review: PricingReview | undefined = pricingReview.providers.find(entry => entry.slug === provider.providerSlug);
+    const review = reviewBySlug.get(provider.providerSlug);
     if (!review || review.status !== "readable") return provider;
+    const finding = review.pricingReview;
     const route = review.routeNotes?.find(note => note.to === destination && (!note.from || note.from === source));
-    if (!route && !review.summary) return provider;
+    const sources = new Map<string, string>();
+    for (const { label, url } of [...(provider.discoverySources ?? []), ...(route?.sources ?? []), { label: "Pricing research", url: finding.url }]) {
+      if (!sources.has(url)) sources.set(url, label);
+    }
     return { ...provider,
-      ...(route ? { pricingStatus: { label: route.label, reason: route.reason } } : {}),
+      pricingStatus: route ? { label: route.label, reason: route.reason } : { label: finding.label, reason: finding.reason },
+      pricingReviewedAt: finding.reviewedOn,
+      ...("feeHighlight" in finding ? { feeHighlight: finding.feeHighlight } : {}),
       feeEvidence: [...(provider.feeEvidence ?? []), ...(review.summary ? [{ summary: review.summary, product: "Published pricing components", sourceUrl: review.sourceUrl, observedAt: review.checkedAt }] : [])],
-      discoverySources: [...(provider.discoverySources ?? []), ...(route?.sources ?? []), ...(review.summary && review.sourceUrl ? [{ label: "Official pricing source", url: review.sourceUrl }] : [])],
+      discoverySources: [...sources].map(([url, label]) => ({ url, label })),
     };
   };
   return { totalTracked: catalog.size, matched: destinationProviders.length, providers: destinationProviders.map(reviewed), allProviders: allProviders.map(reviewed) };

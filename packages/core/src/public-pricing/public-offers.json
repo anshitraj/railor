@@ -24,6 +24,126 @@
         "Bank-funded deposit. Debit and credit card fees are different.",
         "Captured from the US public calculator; the amount is rounded to whole INR by Xoom. This observation is not a locked quote."
       ]
+    },
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 100,
+      "recipientAmount": 9323,
+      "feeAmount": 4.29,
+      "feeCurrency": "USD",
+      "rate": 93.2304,
+      "observedAt": "2026-11-18T18:59:53.950Z",
+      "displayUntil": "2026-11-19T18:59:53.950Z",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account (ACH)",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "Captured at this exact send amount from Xoom's US public calculator. It showed a first-transfer FX rate and rounded the receive amount to whole INR.",
+        "The displayed USD funding fee is charged separately from the send amount. Card funding has separate pricing.",
+        "First-transfer eligibility and the rate are confirmed at checkout."
+      ]
+    },
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 500,
+      "recipientAmount": 46615,
+      "feeAmount": 1.99,
+      "feeCurrency": "USD",
+      "rate": 93.2304,
+      "observedAt": "2026-11-18T18:59:55.235Z",
+      "displayUntil": "2026-11-19T18:59:55.235Z",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account (ACH)",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "Captured at this exact send amount from Xoom's US public calculator. It showed a first-transfer FX rate and rounded the receive amount to whole INR.",
+        "The displayed USD funding fee is charged separately from the send amount. Card funding has separate pricing.",
+        "First-transfer eligibility and the rate are confirmed at checkout."
+      ]
+    },
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 1000,
+      "recipientAmount": 93230,
+      "feeAmount": 0,
+      "feeCurrency": "USD",
+      "rate": 93.2304,
+      "observedAt": "2026-11-18T18:59:56.372Z",
+      "displayUntil": "2026-11-19T18:59:56.372Z",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account (ACH)",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "Captured at this exact send amount from Xoom's US public calculator. It showed a first-transfer FX rate and rounded the receive amount to whole INR.",
+        "The displayed USD funding fee is charged separately from the send amount. Card funding has separate pricing.",
+        "First-transfer eligibility and the rate are confirmed at checkout."
+      ]
+    },
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 2000,
+      "recipientAmount": 186461,
+      "feeAmount": 0,
+      "feeCurrency": "USD",
+      "rate": 93.2303,
+      "observedAt": "2026-11-18T18:59:57.382Z",
+      "displayUntil": "2026-11-19T18:59:57.382Z",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account (ACH)",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "Captured at this exact send amount from Xoom's US public calculator. It showed a first-transfer FX rate and rounded the receive amount to whole INR.",
+        "The displayed USD funding fee is charged separately from the send amount. Card funding has separate pricing.",
+        "First-transfer eligibility and the rate are confirmed at checkout."
+      ]
+    },
+    {
+      "providerSlug": "xoom",
+      "providerName": "Xoom",
+      "sourceCurrency": "USD",
+      "destinationCurrency": "INR",
+      "destinationCountry": "IN",
+      "senderCountry": "US",
+      "amount": 5000,
+      "recipientAmount": 466152,
+      "feeAmount": 0,
+      "feeCurrency": "USD",
+      "rate": 93.2303,
+      "observedAt": "2026-11-18T18:59:58.539Z",
+      "displayUntil": "2026-11-19T18:59:58.539Z",
+      "sourceUrl": "https://www.xoom.com/india/send-money?locale=en-us",
+      "offer": "first_transfer",
+      "fundingMethod": "US bank account (ACH)",
+      "payoutMethod": "Bank deposit",
+      "conditions": [
+        "Captured at this exact send amount from Xoom's US public calculator. It showed a first-transfer FX rate and rounded the receive amount to whole INR.",
+        "The displayed USD funding fee is charged separately from the send amount. Card funding has separate pricing.",
+        "First-transfer eligibility and the rate are confirmed at checkout."
+      ]
     }
   ]
 }
