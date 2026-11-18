@@ -15,6 +15,8 @@ import { RailorMark } from "../brand";
 import { CHAT_HISTORY_LIMIT, CHAT_MESSAGE_LIMIT, chatTitle, parseAgentHistory, upsertAgentChat, type AgentChat, type ChatMessage } from "../../lib/agent-history";
 import { AgentStarters } from "./agent-starters";
 import { AgentRequestCard } from "./agent-request-card";
+import { AgentMessage, AgentWorking, CommandMenu } from "./agent-message";
+import { AGENT_COMMANDS, EXAMPLE_PROMPTS, findCommand, matchCommands, needsPaymentFacts, smallTalk, type AgentCommand } from "../../lib/agent-commands";
 import styles from "./agent-chat.module.css";
 import { exploreRouteHref } from "../../lib/explore-route";
 
@@ -50,6 +52,8 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   const [restored, setRestored] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [commandIndex, setCommandIndex] = useState(0);
+  const [seenUpTo, setSeenUpTo] = useState(0);
   const historyPanel = useModalFocus<HTMLElement>(historyOpen, () => setHistoryOpen(false));
   const toolsPanel = useModalFocus<HTMLDivElement>(toolsOpen, () => setToolsOpen(false));
 
@@ -129,6 +133,14 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     setMessages((current) => [...current, message].slice(-CHAT_MESSAGE_LIMIT));
     return message.id;
   }
+  const commands = matchCommands(text);
+  // Messages animate in once; restored chats and re-renders don't replay it.
+  useEffect(() => {
+    const last = messages.at(-1)?.id ?? 0;
+    if (restored) { setSeenUpTo(last); return; }
+    const timer = window.setTimeout(() => setSeenUpTo(last), 700);
+    return () => window.clearTimeout(timer);
+  }, [messages, restored]);
   const missing = intent ? [...missingIntentFields(intent), ...(!intent.destinationCurrency ? ["destination currency"] : []),
     ...(intent.sourceKind === "asset" && !intent.sourceNetwork ? ["source network"] : [])] : [];
 
@@ -156,10 +168,40 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     });
   }
 
+  function say(question: string, answer: AgentAnswer) { add("user", question); add("agent", "", answer); }
+
+  /** Slash commands act on the current chat; none of them invents a price or a decision. */
+  function runCommand(command: AgentCommand | null, typed: string) {
+    if (!command) { say(typed, { title: `I don’t know ${typed.split(/\s+/)[0]}`, lines: ["These are the commands I understand:"], reasonCodes: [], chips: AGENT_COMMANDS.slice(0, 8).map((item) => item.name) }); return; }
+    if (command.kind === "new") { newChat(); return; }
+    if (command.kind === "link") { router.push(command.href); return; }
+    if (command.kind === "help") { say(typed, smallTalk("help")!); return; }
+    if (command.kind === "edit") {
+      if (intent) { setReviewOpen(true); return; }
+      say(typed, needsPaymentFacts("what")); return;
+    }
+    if (command.kind === "preference") {
+      setPreference(command.value);
+      if (preview) { searchDraft(command.value, policyId, typed); return; }
+      say(typed, intent
+        ? { title: `Ranking by ${RANKING_PRESET_LABEL[command.value].toLowerCase()}`, lines: ["I’ll use this when you compare."], reasonCodes: [] }
+        : { title: `I’ll rank by ${RANKING_PRESET_LABEL[command.value].toLowerCase()}`, lines: ["Now describe the payment."], reasonCodes: [], chips: EXAMPLE_PROMPTS });
+      return;
+    }
+    if (command.kind !== "ask") return;
+    if (!preview) { say(typed, { title: "Run a comparison first", lines: ["Describe a payment, compare providers, then I can explain the result."], reasonCodes: [], chips: EXAMPLE_PROMPTS }); return; }
+    const answer = answerAgentQuestion(command.question, preview);
+    if (answer) say(typed, answer);
+  }
+
   function ask(raw: string) {
     const question = raw.trim();
     if (!question || pending) return;
-    setText(""); setError("");
+    setText(""); setError(""); setCommandIndex(0);
+    const command = findCommand(question);
+    if (command !== undefined) { runCommand(command, question); return; }
+    const talk = smallTalk(question);
+    if (talk) { say(question, talk); return; }
     if (preview && !/\b(?:send|sending|move|transfer|pay)\b.*\d/i.test(question)) {
       const rankingQuestion = /^(?:which|what|who)\b.*(?:cheapest|fastest|most reliable)/i.test(question) ? followupPreference(question) : null;
       if (rankingQuestion) { setPreference(rankingQuestion); searchDraft(rankingQuestion, policyId, question); return; }
@@ -182,6 +224,11 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         const result = await controlCommand({ action: "agent_search", text: requestText, policyId: policyId || undefined });
         if (!result.ok) { setError(result.error ?? "Could not read the request. Please retry."); return; }
         const reply = result.data as SearchReply;
+        const facts = reply.draft.draft as Record<string, unknown>;
+        // No amount, currency or destination at all: ask for them, rather than show a blank request.
+        if (!intent && !facts.amount && !facts.sourceCurrency && !facts.sourceAsset && !facts.destinationCountry && !facts.destinationCurrency) {
+          add("agent", "", needsPaymentFacts(question)); return;
+        }
         setDraft(reply.draft); setIntent(draftFromPartial(reply.draft.draft, entityCountry));
         setProduct(typeof reply.draft.draft.product === "string" ? reply.draft.draft.product : "");
         setMethod(typeof reply.draft.draft.paymentMethod === "string" ? reply.draft.draft.paymentMethod : "");
@@ -193,6 +240,10 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           add("agent", reply.state === "needs_input" ? `Almost there. I still need the ${reply.draft.missing.map((field) => field.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}.`
             : reply.state === "needs_confirmation" ? "Here’s what I understood. Check the destination, then compare."
             : "Here’s what I understood. Compare when you’re ready.");
+        }
+        if ((facts.sourceAsset === "USDT" || facts.sourceAsset === "USDC") && facts.destinationCurrency === "INR") {
+          const query = new URLSearchParams({ mode: "stablecoin", asset: String(facts.sourceAsset), ...(facts.sourceNetwork ? { network: String(facts.sourceNetwork) } : {}), dest: "INR", ...(facts.amount ? { amount: String(facts.amount) } : {}) });
+          add("agent", "", { title: `Selling ${String(facts.sourceAsset)} for INR?`, lines: ["Indian exchanges price this live, with the trading fee, GST, 1% TDS and income tax worked out."], reasonCodes: [], links: [{ label: "See live exchange prices", href: `/app/prices?${query}` }] });
         }
       } catch { setError("The connection dropped. Please try again."); }
     });
@@ -240,10 +291,9 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
       <div className={styles.feed} ref={feed}>
         {messages.length ? <>
           {restored ? <div className={styles.savedNotice}><span>Saved conversation. Earlier answers may be out of date.</span>{intent && policyId && !missing.length ? <button type="button" disabled={pending} onClick={() => searchDraft(preference, policyId, "Refresh this comparison using current evidence.")}>Refresh comparison</button> : <span>Review the request below to run a fresh comparison.</span>}</div> : null}
-          <div className={styles.messages} role="log" aria-label="Conversation messages" aria-live="polite" aria-relevant="additions">{messages.map((message) => <Fragment key={message.id}><div className={styles.message} data-role={message.role}>
-            <span>{message.role === "agent" ? <><RailorMark size={22} />Railor</> : "You"}</span>
-            <div>{message.answer ? <><h3>{message.answer.title}</h3><div className="agent-answer-lines">{message.answer.lines.map((line, index) => <p key={index}>{line}</p>)}</div>{message.answer.reasonCodes.length ? <p className="agent-reason-codes">{message.answer.reasonCodes.join(" · ")}</p> : null}</> : <p>{message.text}</p>}</div>
-          </div>{previewMessageId === message.id ? comparison : null}</Fragment>)}</div>
+          <div className={styles.messages} role="log" aria-label="Conversation messages" aria-live="polite" aria-relevant="additions">{messages.map((message) => <Fragment key={message.id}>
+            <AgentMessage message={message} fresh={message.id > seenUpTo} disabled={pending} onChip={(chip) => ask(chip)} />
+            {previewMessageId === message.id ? comparison : null}</Fragment>)}</div>
         </> : <div className={styles.welcome}>
           <div className={styles.welcomeMark} aria-hidden="true"><RailorMark size={54} /></div>
           <h1>Ask anything.</h1><p>Describe a payment in your own words. The agent checks providers and shows the reasons behind every answer.</p>
@@ -251,20 +301,27 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           <AgentStarters onChoose={(value) => { setText(value); composer.current?.focus(); }} />
           {!policies.length ? <div className={styles.policyNotice}><div><ShieldCheck size={18} /><p><strong>Start with your route</strong>Explore provider coverage now. Company rules are optional team setup.</p></div><Link href="/app/policies">Team rules <ArrowRight size={13} /></Link></div> : null}
         </div>}
-        {pending ? <div className={styles.working} role="status"><span aria-hidden="true"><i /><i /><i /></span>Checking your request, policy and evidence…</div> : null}
+        {pending ? <AgentWorking /> : null}
         {error ? <p className={styles.error} role="alert">{error}</p> : null}
         {!preview ? requestPanel : null}
 
       </div>
       <div className={styles.composerArea}>
+        {commands.length ? <CommandMenu commands={commands} active={Math.min(commandIndex, commands.length - 1)} onHover={setCommandIndex} onPick={(command) => ask(command.name)} /> : null}
         <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); ask(text); }}>
           <label className="sr-only" htmlFor="agent-message">Ask Railor</label>
           <textarea id="agent-message" ref={composer} rows={1} maxLength={2000} value={text} disabled={pending} onChange={(event) => setText(event.target.value)}
-            onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(text); } }}
+            role="combobox" aria-expanded={commands.length > 0} aria-controls="agent-commands" aria-autocomplete="list" aria-activedescendant={commands.length ? `agent-command-${Math.min(commandIndex, commands.length - 1)}` : undefined}
+            onKeyDown={(event) => {
+              if (commands.length && (event.key === "ArrowDown" || event.key === "ArrowUp")) { event.preventDefault(); setCommandIndex((index) => (index + (event.key === "ArrowDown" ? 1 : commands.length - 1)) % commands.length); return; }
+              if (commands.length && event.key === "Tab") { event.preventDefault(); setText(commands[Math.min(commandIndex, commands.length - 1)]!.name); return; }
+              if (commands.length && event.key === "Escape") { event.preventDefault(); setText(""); return; }
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(commands.length ? commands[Math.min(commandIndex, commands.length - 1)]!.name : text); }
+            }}
             placeholder={messages.length ? "Ask a follow-up, or describe another movement…" : "Ask anything about moving money…"} />
-          <div className={styles.composerBottom}><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Answers with sources"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
+          <div className={styles.composerBottom}><button type="button" className={styles.slashButton} onClick={() => { setText("/"); setCommandIndex(0); composer.current?.focus(); }} aria-label="Show commands" title="Commands">/</button><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Answers with sources"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
         </form>
-        <p className={styles.composerHint}><span>Enter to send · Shift + Enter for a new line</span><span>A decision is recorded only when you choose a provider.</span></p>
+        <p className={styles.composerHint}><span>Enter to send · Shift + Enter for a new line · / for commands</span><span>A decision is recorded only when you choose a provider.</span></p>
       </div>
     </section>
     {historyOpen ? <button type="button" className={styles.backdrop} aria-label="Close chat history" onClick={() => setHistoryOpen(false)} /> : null}

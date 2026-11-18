@@ -172,3 +172,83 @@
 @media (prefers-reduced-motion: reduce) { .feed { scroll-behavior: auto; } .welcome, .message, .artSignal, .working i { animation: none; } .starter, .composer, .send, .iconButton { transition: none; } .starter:hover { transform: none; } }
 
 @media (min-width: 1101px) { .toolbar .iconButton:has(> span) { display: none; } }
+
+/* ---- Chat turns: a bubble for you, full-width answers for Railor ---- */
+.messages { gap: 22px; }
+.message { animation: none; }
+.message > .author { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
+.message > .body { padding-left: 30px; }
+.message[data-role="user"] { justify-self: end; max-width: min(85%, 560px); }
+.message[data-role="user"] > .body { padding: 11px 16px; border: 0; border-radius: 20px 20px 6px 20px; background: var(--color-ink); box-shadow: 0 6px 18px -12px rgb(21 19 16 / .5); }
+.message[data-role="user"] p { color: #fff; font-size: 14px; line-height: 1.6; }
+.message[data-role="agent"] p { color: var(--color-ink-soft); font-size: 14px; line-height: 1.7; }
+.message h3 { margin-bottom: 6px; font: 650 16px/1.4 var(--font-sans); letter-spacing: -.01em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; padding: 8px 13px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 13px; font-weight: 550; line-height: 1.35; text-align: left; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, transform .15s var(--ease-out); }
+.chip:hover:not(:disabled) { border-color: var(--color-ink); }
+.chip:active:not(:disabled) { transform: scale(.97); }
+.chip:disabled { opacity: .5; cursor: not-allowed; }
+.chip[data-command] { border-style: dashed; font: 600 12.5px/1.35 var(--font-mono, ui-monospace, monospace); color: var(--color-orange-deep); }
+.chip svg { flex: none; }
+.answerLinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.answerLink { display: inline-flex; height: 40px; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; background: var(--color-orange); color: #fff; font-size: 13.5px; font-weight: 650; box-shadow: 0 10px 22px -14px rgb(233 86 42 / .9); }
+.answerLink:hover { background: var(--color-orange-deep); }
+
+/* ---- Working: the mark breathes, the phase changes, the dots bounce ---- */
+.working { display: flex; align-items: center; gap: 10px; margin: 14px 4px; color: var(--color-muted); font-size: 13.5px; }
+.workingMark { display: inline-grid; animation: breathe 1.6s ease-in-out infinite; }
+.workingText { display: inline-flex; align-items: baseline; gap: 4px; }
+.dots { display: inline-flex; gap: 3px; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--color-orange); animation: thinking 1.2s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; }
+.dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.9); opacity: .7; } }
+
+/* ---- "/" commands ---- */
+.composerArea { position: relative; }
+.commandMenu { position: absolute; left: 4px; right: 4px; bottom: calc(100% - 6px); z-index: 5; display: grid; max-height: 300px; overflow-y: auto; padding: 6px; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-panel); transform-origin: bottom center; }
+.commandItem { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; border-radius: 12px; text-align: left; cursor: pointer; }
+.commandItem[aria-selected="true"] { background: var(--color-canvas); }
+.commandItem code { color: var(--color-orange-deep); font: 600 13px var(--font-mono, ui-monospace, monospace); }
+.commandItem span { overflow: hidden; color: var(--color-ink-soft); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.commandItem svg { color: var(--color-muted); }
+.slashButton { display: inline-grid; width: 28px; height: 28px; flex: none; place-items: center; border: 1px solid var(--color-line-strong); border-radius: 8px; color: var(--color-ink-soft); font: 700 14px var(--font-mono, ui-monospace, monospace); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+.slashButton:hover { border-color: var(--color-ink); color: var(--color-ink); }
+.composerBottom { justify-content: flex-start; }
+.composerBottom .send { margin-left: auto; }
+
+/* ---- Phones: one column, like a chat app ---- */
+@media (max-width: 600px) {
+  /* The app header already carries the logo: keep the agent bar slim, like a chat app's title row. */
+  .toolbar { padding: 0 0 8px; }
+  .identity { font-size: 15px; }
+  .identity > :first-child { display: none; }
+  .identity small { display: none; }
+  .toolbarActions .iconButton { min-width: 34px; min-height: 34px; padding: 6px; border-color: transparent; background: transparent; }
+  .toolbarActions .iconButton:hover { background: var(--color-sand); }
+  .feed { padding: 14px 0 12px; }
+  .messages { gap: 18px; }
+  .message > .body { padding-left: 0; }
+  .message[data-role="user"] { max-width: 88%; }
+  .welcome { justify-items: start; text-align: left; }
+  .welcome h1 { font-size: 30px; }
+  .welcomeMark { display: none; }
+  .suggestionLabel { margin-top: 0; }
+  .starters { display: flex; overflow-x: auto; gap: 10px; padding: 2px 2px 6px; scroll-padding-inline: 2px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .starters::-webkit-scrollbar { display: none; }
+  .starter { display: block; flex: 0 0 78%; scroll-snap-align: start; }
+  .starterArt { height: 92px; }
+  .starterArt > svg { width: 100%; left: 0; }
+  .composerArea { padding: 8px 0 calc(4px + env(safe-area-inset-bottom)); border-top: 0; background: linear-gradient(to top, var(--color-canvas) 75%, transparent); }
+  .composer { border-radius: 26px; }
+  .composer textarea { min-height: 48px; padding: 13px 16px 4px; }
+  .composerBottom { padding: 0 8px 8px 12px; }
+  .composerHint { display: none; }
+  .commandItem { grid-template-columns: 96px minmax(0, 1fr); }
+  .commandItem svg { display: none; }
+  .chip { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workingMark, .dots i { animation: none; }
+  .chip { transition: none; }
+}
