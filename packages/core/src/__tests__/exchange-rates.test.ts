@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EXCHANGE_FEEDS, MAX_BID_AGE_MS, PUBLIC_FEED_USER_AGENT, usdtInrExchangeRates, type ExchangeFeedSlug } from "../public-pricing/exchange-rates.js";
+import { EXCHANGE_FEEDS, MAX_BID_AGE_MS, PUBLIC_FEED_USER_AGENT, inrExchangeRates, type ExchangeAsset, type ExchangeFeedSlug, type ExchangeRate, type InrExchangeRates } from "../public-pricing/exchange-rates.js";
 import { clearSharedCache } from "../public-pricing/shared-cache.js";
 
 // Response shapes are trimmed from real calls to each exchange's public endpoint on 2026-11-18;
@@ -8,8 +8,10 @@ const NOW = 1_795_010_290_000;
 const REFERENCE = { rate: 93.44 };
 
 const wazirx = (over: Record<string, unknown> = {}) => ({
-  symbol: "usdtinr", baseAsset: "usdt", quoteAsset: "inr", openPrice: "103.56", lowPrice: "102.35", highPrice: "104.1",
-  lastPrice: "103.0", volume: "103196.17", bidPrice: "102.85", askPrice: "103.43", at: NOW - 5_000, ...over,
+  timestamp: NOW - 5_000,
+  asks: [["103.43", "312.56"], ["103.39", "1877.83"], ["103.9", "3176.94"]],
+  bids: [["102.7", "100"], ["102.85", "3556.43"], ["102.0", "50"]],
+  ...over,
 });
 const coindcx = (over: Record<string, unknown> = {}) => ({
   timestamp: NOW - 2_000,
@@ -22,11 +24,8 @@ const giottus = (over: Record<string, unknown> = {}) => ({
   asks: [["103.97", "114.0000"], ["103.98", "32400.7681"]],
   ...over,
 });
-const zebpay = (row: Record<string, unknown> = {}) => ({
-  data: [
-    { symbol: "ETH-INR", timestamp: NOW - 1_500, bid: "400195", bidVolume: "0.002499", ask: "405000", askVolume: "0.1", last: "402597.5" },
-    { symbol: "USDT-INR", timestamp: NOW - 1_500, bid: "103.3", bidVolume: "689.620202", ask: "103.431", askVolume: "1014.682849", last: "103.428", ...row },
-  ],
+const zebpay = (over: Record<string, unknown> = {}) => ({
+  data: { nonce: 25951636, bids: [["103.3", "144.441142"], ["103.309", "647.54401"]], asks: [["103.431", "1014.682849"], ["103.437", "1156.26202"]], timestamp: (NOW - 1_500) / 1000, ...over },
   statusCode: 200, statusDescription: "Success",
 });
 const flitpay = (row: Record<string, unknown> = {}) => [
@@ -53,7 +52,10 @@ function exchangeFetch(overrides: Partial<Record<ExchangeFeedSlug, Answer>> = {}
   return Object.assign(impl as unknown as typeof fetch, { calls, impl });
 }
 
-const run = (fetcher: typeof fetch, extra: Record<string, unknown> = {}) => usdtInrExchangeRates({ fetcher, now: new Date(NOW), reference: REFERENCE, ...extra });
+/** Every exchange is present in a USDT result, so tests can index by slug. */
+type Full = Omit<InrExchangeRates, "rates"> & { rates: Record<ExchangeFeedSlug, ExchangeRate> };
+const full = async (result: Promise<InrExchangeRates>) => (await result) as unknown as Full;
+const run = (fetcher: typeof fetch, extra: Record<string, unknown> = {}, asset: ExchangeAsset = "USDT") => full(inrExchangeRates(asset, { fetcher, now: new Date(NOW), reference: REFERENCE, ...extra }));
 
 beforeEach(() => {
   clearSharedCache();
@@ -65,20 +67,23 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("live USDT/INR bids from each exchange's own endpoint", () => {
+describe("live USDT/INR prices from each exchange's own endpoint", () => {
   it("reads the best bid, the ask, the observation time and the gap to Wise's mid-market rate", async () => {
     const { rates, reference, pair } = await run(exchangeFetch());
     expect(pair).toBe("USDT/INR");
     expect(reference).toMatchObject({ rate: 93.44, source: "Wise's public rate (mid-market)" });
-    expect(rates.wazirx).toMatchObject({ status: "ok", bid: 102.85, ask: 103.43, clock: "exchange", gapPct: 10.07, observedAt: new Date(NOW - 5_000).toISOString() });
-    expect(rates.coindcx).toMatchObject({ status: "ok", bid: 103, ask: 103.34, clock: "exchange", gapPct: 10.23, observedAt: new Date(NOW - 2_000).toISOString() });
-    expect(rates.zebpay).toMatchObject({ status: "ok", bid: 103.3, ask: 103.431, clock: "exchange", gapPct: 10.55, observedAt: new Date(NOW - 1_500).toISOString() });
-    expect(rates.flitpay).toMatchObject({ status: "ok", bid: 102.33, ask: 102.44, clock: "exchange", gapPct: 9.51, observedAt: new Date(NOW - 3_000).toISOString() });
+    expect(rates.wazirx).toMatchObject({ status: "ok", bid: 102.85, ask: 103.39, clock: "exchange", depth: "book", gapPct: 10.07, observedAt: new Date(NOW - 5_000).toISOString() });
+    // The book comes back best bid first, to be walked for the amount sold.
+    expect((rates.wazirx as { bids: unknown }).bids).toEqual([[102.85, 3556.43], [102.7, 100], [102, 50]]);
+    expect(rates.coindcx).toMatchObject({ status: "ok", bid: 103, ask: 103.34, clock: "exchange", depth: "book", gapPct: 10.23, observedAt: new Date(NOW - 2_000).toISOString() });
+    expect(rates.zebpay).toMatchObject({ status: "ok", bid: 103.309, ask: 103.431, clock: "exchange", depth: "book", gapPct: 10.56, observedAt: new Date(NOW - 1_500).toISOString() });
+    // Flitpay's ticker has no sizes: only the best bid is known, and nothing is offered to walk.
+    expect(rates.flitpay).toMatchObject({ status: "ok", bid: 102.33, ask: 102.44, clock: "exchange", depth: "top", bids: [], gapPct: 9.51, observedAt: new Date(NOW - 3_000).toISOString() });
   });
 
   it("shows Railor's own read time where the exchange sends none (Giottus's order book has no timestamp)", async () => {
     const { rates } = await run(exchangeFetch());
-    expect(rates.giottus).toMatchObject({ status: "ok", bid: 101.91, ask: 103.97, clock: "railor", gapPct: 9.06, observedAt: new Date(NOW).toISOString() });
+    expect(rates.giottus).toMatchObject({ status: "ok", bid: 101.91, ask: 103.97, clock: "railor", depth: "book", gapPct: 9.06, observedAt: new Date(NOW).toISOString() });
   });
 
   it("cites each exchange's own documentation for the number", async () => {
@@ -93,14 +98,14 @@ describe("live USDT/INR bids from each exchange's own endpoint", () => {
       coindcx: coindcx({ bids: { "99.0": "10", "103.5": "0", "103.0": "5", "bad": "5" }, asks: { "103.34": "0", "103.4": "3", "103.9": "1" } }),
       giottus: giottus({ bids: [["101.5", "1"], ["101.95", "2"], ["104", "0"], ["x", "9"]], asks: [["103.97", "114"], ["103.5", "0.5"]] }),
     }));
-    expect(rates.coindcx).toMatchObject({ status: "ok", bid: 103, ask: 103.4 });
+    expect(rates.coindcx).toMatchObject({ status: "ok", bid: 103, ask: 103.4, bids: [[103, 5], [99, 10]] });
     expect(rates.giottus).toMatchObject({ status: "ok", bid: 101.95, ask: 103.5 });
   });
 
   it("accepts a timestamp in seconds or in milliseconds (WazirX documents one and sends the other)", async () => {
-    const seconds = await run(exchangeFetch({ wazirx: wazirx({ at: Math.floor((NOW - 5_000) / 1000) }) }));
+    const seconds = await run(exchangeFetch({ wazirx: wazirx({ timestamp: Math.floor((NOW - 5_000) / 1000) }) }));
     expect(seconds.rates.wazirx).toMatchObject({ status: "ok", observedAt: new Date(Math.floor((NOW - 5_000) / 1000) * 1000).toISOString() });
-    const millis = await run(exchangeFetch({ wazirx: wazirx({ at: String(NOW - 5_000) }) }));
+    const millis = await run(exchangeFetch({ wazirx: wazirx({ timestamp: String(NOW - 5_000) }) }));
     expect(millis.rates.wazirx).toMatchObject({ status: "ok", observedAt: new Date(NOW - 5_000).toISOString() });
   });
 
@@ -113,11 +118,11 @@ describe("live USDT/INR bids from each exchange's own endpoint", () => {
     const wiseQuote = { rate: 93.44, sourceCurrency: "USD", paymentOptions: [{ payIn: "BANK_TRANSFER", payOut: "BANK_TRANSFER", disabled: false, sourceAmount: 1000, targetAmount: 92_380, fee: { total: 11.26 } }] };
     const withWise = exchangeFetch();
     const routed = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => (String(input) === "https://api.wise.com/v3/quotes" ? json(wiseQuote) : withWise(input, init)));
-    const ok = await usdtInrExchangeRates({ fetcher: routed as unknown as typeof fetch, now: new Date(NOW) });
+    const ok = await full(inrExchangeRates("USDT", { fetcher: routed as unknown as typeof fetch, now: new Date(NOW) }));
     expect(ok.reference).toMatchObject({ rate: 93.44, source: "Wise's public rate (mid-market)" });
     expect(ok.rates.wazirx).toMatchObject({ status: "ok", gapPct: 10.07 });
 
-    const withoutWise = await usdtInrExchangeRates({ fetcher: exchangeFetch(), now: new Date(NOW) });
+    const withoutWise = await full(inrExchangeRates("USDT", { fetcher: exchangeFetch(), now: new Date(NOW) }));
     expect(withoutWise.reference).toBeNull();
     expect(withoutWise.rates.wazirx).toMatchObject({ status: "ok", bid: 102.85, gapPct: null });
   });
@@ -125,50 +130,54 @@ describe("live USDT/INR bids from each exchange's own endpoint", () => {
 
 describe("strict validation", () => {
   const verdict = async (slug: ExchangeFeedSlug, body: unknown, extra: Record<string, unknown> = {}) => (await run(exchangeFetch({ [slug]: body }), extra)).rates[slug];
+  /** A WazirX book with one level each side. */
+  const wz = (bid: string | null, ask: string | null, over: Record<string, unknown> = {}) => wazirx({ bids: bid === null ? [] : [[bid, "100"]], asks: ask === null ? [] : [[ask, "100"]], ...over });
 
-  it("rejects a bid that is zero, negative, empty or not a number", async () => {
-    for (const bidPrice of ["0.0", "0", "-102.85", "", "n/a", null]) {
-      expect(await verdict("wazirx", wazirx({ bidPrice })), `bidPrice ${String(bidPrice)}`).toMatchObject({ status: "unavailable", problem: "invalid_price" });
+  it("rejects a bid that is zero, negative, empty or not a number, or has no size", async () => {
+    for (const bid of ["0.0", "0", "-102.85", "", "n/a"]) {
+      expect(await verdict("wazirx", wz(bid, "103.4")), `bid ${bid}`).toMatchObject({ status: "unavailable", problem: "invalid_price" });
     }
+    expect(await verdict("wazirx", wazirx({ bids: [["102.85", "0"]] }))).toMatchObject({ status: "unavailable", problem: "invalid_price" });
     expect(await verdict("coindcx", coindcx({ bids: {} }))).toMatchObject({ status: "unavailable", problem: "invalid_price" });
     expect(await verdict("giottus", giottus({ bids: [] }))).toMatchObject({ status: "unavailable", problem: "invalid_price" });
-    expect(await verdict("zebpay", zebpay({ bidVolume: "0" }))).toMatchObject({ status: "unavailable", problem: "invalid_price" });
+    expect(await verdict("flitpay", flitpay({ "bid price": "0.00000000" }))).toMatchObject({ status: "unavailable", problem: "invalid_price" });
   });
 
   it("rejects a crossed quote, a bid above its own ask", async () => {
-    const crossed = await verdict("wazirx", wazirx({ bidPrice: "103.9", askPrice: "100.9" }));
+    const crossed = await verdict("wazirx", wz("103.9", "100.9"));
     expect(crossed).toMatchObject({ status: "unavailable", problem: "crossed" });
     expect(crossed.status === "unavailable" && crossed.detail).toContain("bid above its ask");
     // A locked book (bid equal to ask) is odd but not crossed.
-    expect(await verdict("wazirx", wazirx({ bidPrice: "103.0", askPrice: "103.0" }))).toMatchObject({ status: "ok", bid: 103 });
+    expect(await verdict("wazirx", wz("103.0", "103.0"))).toMatchObject({ status: "ok", bid: 103 });
   });
 
   it("rejects an absurd price: a decimal slip against the mid-market rate, or outside any sane band without one", async () => {
-    for (const bidPrice of ["1028.5", "10.285", "0.0097", "300"]) {
-      expect(await verdict("wazirx", wazirx({ bidPrice, askPrice: "5000" })), `bid ${bidPrice}`).toMatchObject({ status: "unavailable", problem: "out_of_range" });
+    for (const bid of ["1028.5", "10.285", "0.0097", "300"]) {
+      expect(await verdict("wazirx", wz(bid, "5000")), `bid ${bid}`).toMatchObject({ status: "unavailable", problem: "out_of_range" });
     }
-    expect(await verdict("wazirx", wazirx({ bidPrice: "1028.5", askPrice: "1034" }), { reference: null })).toMatchObject({ problem: "out_of_range" });
-    expect(await verdict("wazirx", wazirx({ bidPrice: "10.285", askPrice: "10.34" }), { reference: null })).toMatchObject({ problem: "out_of_range" });
+    expect(await verdict("wazirx", wz("1028.5", "1034"), { reference: null })).toMatchObject({ problem: "out_of_range" });
+    expect(await verdict("wazirx", wz("10.285", "10.34"), { reference: null })).toMatchObject({ problem: "out_of_range" });
     // Without a reference a normal price still passes, with no gap.
     expect(await verdict("wazirx", wazirx(), { reference: null })).toMatchObject({ status: "ok", gapPct: null });
     // A premium well above today's roughly 10% is still real.
-    expect(await verdict("wazirx", wazirx({ bidPrice: "115", askPrice: "116" }))).toMatchObject({ status: "ok", bid: 115 });
+    expect(await verdict("wazirx", wz("115", "116"))).toMatchObject({ status: "ok", bid: 115 });
   });
 
   it("rejects a stale exchange timestamp, and one ahead of the clock", async () => {
-    const stale = await verdict("wazirx", wazirx({ at: NOW - MAX_BID_AGE_MS - 1_000 }));
+    const stale = await verdict("wazirx", wazirx({ timestamp: NOW - MAX_BID_AGE_MS - 1_000 }));
     expect(stale).toMatchObject({ status: "unavailable", problem: "stale" });
     expect(await verdict("coindcx", coindcx({ timestamp: NOW - 10 * 60_000 }))).toMatchObject({ problem: "stale" });
     expect(await verdict("flitpay", flitpay({ at: (NOW - 3 * 60_000) / 1000 }))).toMatchObject({ problem: "stale" });
-    expect(await verdict("wazirx", wazirx({ at: NOW - MAX_BID_AGE_MS + 5_000 }))).toMatchObject({ status: "ok" });
-    expect(await verdict("wazirx", wazirx({ at: NOW + 5 * 60_000 }))).toMatchObject({ status: "unavailable", problem: "stale", detail: expect.stringContaining("ahead of the clock") });
+    expect(await verdict("zebpay", zebpay({ timestamp: (NOW - 10 * 60_000) / 1000 }))).toMatchObject({ problem: "stale" });
+    expect(await verdict("wazirx", wazirx({ timestamp: NOW - MAX_BID_AGE_MS + 5_000 }))).toMatchObject({ status: "ok" });
+    expect(await verdict("wazirx", wazirx({ timestamp: NOW + 5 * 60_000 }))).toMatchObject({ status: "unavailable", problem: "stale", detail: expect.stringContaining("ahead of the clock") });
     // A little clock skew is tolerated and never dates a price in the future.
-    expect(await verdict("wazirx", wazirx({ at: NOW + 20_000 }))).toMatchObject({ status: "ok", observedAt: new Date(NOW).toISOString() });
+    expect(await verdict("wazirx", wazirx({ timestamp: NOW + 20_000 }))).toMatchObject({ status: "ok", observedAt: new Date(NOW).toISOString() });
   });
 
   it("rejects a response that is not the expected market", async () => {
-    expect(await verdict("wazirx", wazirx({ symbol: "btcinr" }))).toMatchObject({ problem: "unreadable" });
     expect(await verdict("wazirx", [wazirx()])).toMatchObject({ problem: "unreadable" });
+    expect(await verdict("wazirx", { timestamp: NOW, bids: {}, asks: {} })).toMatchObject({ problem: "unreadable" });
     expect(await verdict("coindcx", { timestamp: NOW, bids: [["103", "1"]], asks: [] })).toMatchObject({ problem: "unreadable" });
     expect(await verdict("giottus", { bids: {}, asks: {} })).toMatchObject({ problem: "unreadable" });
     expect(await verdict("zebpay", { data: [{ symbol: "ETH-INR", bid: "1", ask: "2" }] })).toMatchObject({ problem: "unreadable" });
@@ -212,9 +221,22 @@ describe("a feed that fails never takes the page down", () => {
 
   it("resolves even when every exchange is down and Wise is too", async () => {
     const down = vi.fn(async () => { throw new Error("offline"); }) as unknown as typeof fetch;
-    const result = await usdtInrExchangeRates({ fetcher: down, now: new Date(NOW) });
+    const result = await inrExchangeRates("USDT", { fetcher: down, now: new Date(NOW) });
     expect(result.reference).toBeNull();
-    expect(Object.values(result.rates).every((rate) => rate.status === "unavailable")).toBe(true);
+    expect(Object.values(result.rates).every((rate) => rate?.status === "unavailable")).toBe(true);
+  });
+});
+
+describe("USDC", () => {
+  it("is read only from the exchanges that list USDC/INR, from their USDC markets", async () => {
+    const fetcher = exchangeFetch();
+    const { pair, rates } = await run(fetcher, {}, "USDC");
+    expect(pair).toBe("USDC/INR");
+    expect(Object.keys(rates)).toEqual(["wazirx", "coindcx"]);
+    expect(fetcher.calls.map((call) => call.url)).toEqual([
+      "https://api.wazirx.com/sapi/v1/depth?symbol=usdcinr&limit=100",
+      "https://api.coindcx.com/market_data/orderbook?pair=I-USDC_INR",
+    ]);
   });
 });
 
@@ -223,10 +245,10 @@ describe("what is sent", () => {
     const fetcher = exchangeFetch();
     await run(fetcher);
     expect(fetcher.calls.map((call) => call.url)).toEqual([
-      "https://api.wazirx.com/sapi/v1/ticker/24hr?symbol=usdtinr",
-      "https://api.coindcx.com/market_data/orderbook?pair=I-USDT_INR&depth=5",
-      "https://api.giottus.com/api/v1/public/market/orderbook?symbol=USDT/INR&limit=5",
-      "https://sapi.zebpay.com/api/v2/market/allTickers",
+      "https://api.wazirx.com/sapi/v1/depth?symbol=usdtinr&limit=100",
+      "https://api.coindcx.com/market_data/orderbook?pair=I-USDT_INR",
+      "https://api.giottus.com/api/v1/public/market/orderbook?symbol=USDT/INR&limit=50",
+      "https://sapi.zebpay.com/api/v2/market/orderbook?symbol=USDT-INR&limit=100",
       "https://api.flitpay.com/v1/tickers/24hr/?symbol=INR_USDT",
     ]);
     for (const { init } of fetcher.calls) {
@@ -249,7 +271,7 @@ describe("shared cache", () => {
     vi.stubGlobal("fetch", fetcher);
     return fetcher;
   };
-  const live = () => usdtInrExchangeRates({ reference: REFERENCE });
+  const live = (asset: ExchangeAsset = "USDT") => full(inrExchangeRates(asset, { reference: REFERENCE }));
 
   it("makes one call per exchange for every viewer in 15 seconds, including viewers who arrive together", async () => {
     const fetcher = stub();
@@ -263,8 +285,15 @@ describe("shared cache", () => {
     expect(fetcher.calls).toHaveLength(10);
   });
 
+  it("keeps USDT and USDC readings apart", async () => {
+    const fetcher = stub();
+    await live("USDT");
+    await live("USDC");
+    expect(fetcher.calls).toHaveLength(7);
+  });
+
   it("keeps ageing a cached bid, so a feed that stops updating is dropped instead of served as fresh", async () => {
-    stub({ wazirx: wazirx({ at: NOW - 5_000 }) });
+    stub({ wazirx: wazirx({ timestamp: NOW - 5_000 }) });
     expect((await live()).rates.wazirx.status).toBe("ok");
     vi.setSystemTime(NOW + 14_000);
     expect((await live()).rates.wazirx.status).toBe("ok");
