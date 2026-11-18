@@ -6,6 +6,7 @@ import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
+import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
@@ -560,6 +561,16 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const receiving = input.context?.direction === "receive";
   for (const row of rows) {
     row.costComplete = !row.partial && row.recipientAmount !== null;
+    // Public quotes and market estimates carry no tax or receipt data of their own: fill what each provider's pages state.
+    if (row.basis !== "published" && row.basis !== "exact" && row.taxIncluded === undefined && row.receipt === undefined && input.destinationCurrency === "INR" && (!input.destinationCountry || input.destinationCountry === "IN")) {
+      const facts = payerFacts(row.providerSlug, input.context);
+      if (facts) {
+        row.receipt = facts.receipt;
+        row.taxIncluded = facts.taxIncluded;
+        if (facts.taxNote) row.taxNote = facts.taxNote;
+        row.notes.push(`Tax and receipt facts read ${PAYER_FACTS_CHECKED}: ${facts.sources.map((source) => `${source.label} (${source.url})`).join("; ")}.`);
+      }
+    }
     if (receiving) row.side = row.basis === "published" || row.basis === "exact" ? "recipient" : "payer";
     // Name the product, so a sender's service is never mistaken for the recipient's account.
     if (!row.product) {

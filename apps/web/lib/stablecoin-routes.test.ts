@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { KNOWN_PROVIDER_SITES } from "@railor/core";
+import { EXCHANGES } from "./indian-exchanges";
 import { networksFor, stablecoinRoutes, swapOption, TOKENS } from "./stablecoin-routes";
 
 describe("stablecoin swap links", () => {
@@ -32,10 +34,10 @@ describe("stablecoin swap links", () => {
 });
 
 describe("stablecoin off-ramp routes", () => {
-  it("never prices a stablecoin at 1:1 — INR routes are price on request", () => {
+  it("never prices a stablecoin at 1:1 — no route shows a computed INR amount", () => {
     const routes = stablecoinRoutes("USDT", "tron", "INR", 1700);
-    expect(routes.map((route) => route.id)).toEqual(["xflow-stablecoins", "tether-redemption"]);
-    expect(routes[0]).toMatchObject({ price: "Price on request", delivers: "INR in your Indian bank account" });
+    expect(routes.map((route) => route.id).slice(-2)).toEqual(["xflow-stablecoins", "tether-redemption"]);
+    expect(routes.find((route) => route.id === "xflow-stablecoins")).toMatchObject({ price: "Price on request", delivers: "INR in your Indian bank account" });
     expect(routes.every((route) => !/₹|INR \d/.test(route.price))).toBe(true);
   });
 
@@ -49,7 +51,8 @@ describe("stablecoin off-ramp routes", () => {
   it("offers XEROF for USDT or USDC sent on Ethereum, as price on request", () => {
     for (const asset of ["USDT", "USDC"] as const) {
       const routes = stablecoinRoutes(asset, "ethereum", "INR", 1700);
-      expect(routes.slice(0, 2).map((route) => route.id)).toEqual(["xflow-stablecoins", "xerof-payouts"]);
+      const order = routes.map((route) => route.id);
+      expect(order.indexOf("xerof-payouts")).toBe(order.indexOf("xflow-stablecoins") + 1);
       const xerof = routes.find((route) => route.id === "xerof-payouts")!;
       expect(xerof).toMatchObject({ provider: "XEROF", slug: "xerof", price: "Price on request", delivers: "INR in a bank account in India", sourceUrl: "https://xerof.com/payouts/india" });
       expect(xerof.caution).toBeUndefined();
@@ -77,5 +80,52 @@ describe("stablecoin off-ramp routes", () => {
   it("offers Circle Mint for USDC only, and no INR route when the goal is EURC", () => {
     expect(stablecoinRoutes("USDC", "ethereum", "EURC", 500).map((route) => route.id)).toEqual(["circle-mint"]);
     expect(stablecoinRoutes("USDT", "ethereum", "EURC", 500)).toEqual([]);
+  });
+});
+
+describe("Indian exchange routes for USDT", () => {
+  const exchanges = (network: Parameters<typeof stablecoinRoutes>[1]) => stablecoinRoutes("USDT", network, "INR", 1700).filter((route) => route.id.startsWith("exchange-"));
+
+  it("lists every exchange read from its own pages, cheapest all-in entry fee first", () => {
+    // WazirX, SunCrypto and Giottus tie at 0.40% + 18% GST (0.47%); Flitpay's 0.50% includes GST; then ZebPay, CoinDCX, Mudrex.
+    expect(exchanges("ethereum").map((route) => route.slug)).toEqual(["wazirx", "suncrypto", "giottus", "flitpay", "zebpay", "coindcx", "mudrex"]);
+    expect(Object.fromEntries(exchanges("ethereum").map((route) => [route.slug, route.price]))).toEqual({
+      wazirx: "0.40% + GST", suncrypto: "0.40% + GST", giottus: "0.40% + GST", flitpay: "0.50% incl. GST", zebpay: "0.45% + GST", coindcx: "0.50% + GST", mudrex: "1.00% + GST",
+    });
+  });
+
+  it("cites each exchange's own page and the date it was read, and never an INR total", () => {
+    const sources = Object.fromEntries(exchanges("ethereum").map((route) => [route.slug, route.sourceUrl]));
+    expect(sources).toEqual({
+      wazirx: "https://wazirx.com/fees", suncrypto: "https://suncrypto.in/fee-structure", giottus: "https://www.giottus.com/docs/fees.html", flitpay: "https://www.flitpay.com/fees/trading-fees",
+      zebpay: "https://zebpay.com/in/features/pricing", coindcx: "https://coindcx.com/fees", mudrex: "https://mudrex.com/fee",
+    });
+    for (const route of exchanges("ethereum")) {
+      expect(route.checkedAt, route.slug).toBe("2026-11-18");
+      expect(route.action?.url, route.slug).toMatch(/^https:\/\//);
+      expect(route.priceNote, route.slug).toContain("1% TDS");
+      expect(route.priceNote, route.slug).toContain("live USDT/INR order book");
+      expect(route.points.join(" "), route.slug).not.toMatch(/₹[\d,]+ (?:for|per) USDT/);
+    }
+  });
+
+  it("hides an exchange that lists other networks, and flags one that lists none", () => {
+    expect(exchanges("tron").map((route) => route.slug)).toHaveLength(7);
+    // On Solana only the exchanges that don't publish a network list remain, each with a caution to confirm it.
+    const solana = exchanges("solana");
+    expect(solana.map((route) => route.slug)).toEqual(["suncrypto", "coindcx"]);
+    for (const route of solana) expect(route.caution, route.slug).toContain("Solana");
+    // Where an exchange publishes its networks there is nothing to caution about.
+    expect(exchanges("ethereum").filter((route) => route.caution).map((route) => route.slug)).toEqual(["suncrypto", "coindcx"]);
+    expect(exchanges("tron").find((route) => route.slug === "wazirx")!.points[2]).toBe("Takes USDT on Ethereum (ERC-20) and Tron (TRC-20).");
+  });
+
+  it("is for USDT sold into INR only", () => {
+    expect(stablecoinRoutes("USDC", "ethereum", "INR", 1700).some((route) => route.id.startsWith("exchange-"))).toBe(false);
+    expect(stablecoinRoutes("USDT", "ethereum", "EURC", 1700).some((route) => route.id.startsWith("exchange-"))).toBe(false);
+  });
+
+  it("has a logo site registered for every exchange", () => {
+    for (const exchange of EXCHANGES) expect(KNOWN_PROVIDER_SITES[exchange.slug], exchange.slug).toMatch(/^https:\/\//);
   });
 });

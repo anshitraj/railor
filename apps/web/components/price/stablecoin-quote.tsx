@@ -108,6 +108,7 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
 
       <div className={styles.results} aria-live="polite">
         <p className={styles.resultsHead}><strong>{count} verified {count === 1 ? "route" : "routes"}</strong> for {asset} on {NETWORKS[network].label} → {destination === "INR" ? "INR" : "EURC"}</p>
+        {routes.some((route) => route.id.startsWith("exchange-")) ? <p className={styles.parity}><Info size={14} aria-hidden />Selling USDT you hold: each exchange withholds 1% TDS on the sale, and a sale on an exchange is not an inward remittance, so no bank FIRA or e-FIRC comes with it. If a client pays an invoice in USDT, Xflow’s collections route issues an e-FIRA.</p> : null}
         <ul className={styles.list}>
           <AnimatePresence initial={false} mode="popLayout">
             {swap ? <motion.li key={`swap:${asset}:${network}:${swap.kind}`} {...item(0)} layout={!reduce}>
@@ -136,6 +137,7 @@ function Route({ route }: { route: RouteCard }) {
       <p className={styles.delivers}><ArrowRight size={14} aria-hidden />{route.delivers}</p>
       <ul className={styles.points}>{route.points.map((point) => <li key={point}><Check size={13} aria-hidden />{point}</li>)}</ul>
       {route.caution ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{route.caution}</p> : null}
+      {route.action ? <a className={`${styles.open} press`} href={route.action.url} target="_blank" rel="noreferrer noopener">{route.action.label}<ArrowUpRight size={14} aria-hidden /></a> : null}
       <footer><span>{route.priceNote}</span><a href={route.sourceUrl} target="_blank" rel="noreferrer noopener">Source · checked {CHECKED} <ArrowUpRight size={11} /></a></footer>
     </article>
   );
