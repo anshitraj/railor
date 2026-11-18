@@ -178,13 +178,13 @@ export function TrustSection() {
 }
 
 const FAQS: Array<{ q: string; a: React.ReactNode }> = [
-  { q: "Is Railor free?", a: <>Yes. Comparing prices is free and needs no account. A free workspace adds up to 3 saved routes, a monitored route and 500 API requests a month.</> },
+  { q: "Is Railor free?", a: <>Yes. Prices are free to see with a free Railor account — no card needed. Your workspace also includes up to 3 saved routes, a monitored route and 500 API requests a month.</> },
   { q: "Does Railor send the money?", a: <>No. Railor never holds your money — you send with the provider you choose, and Railor shows you which option is best and why.</> },
   { q: "Where do the prices come from?", a: <>Live public quotes from providers, their published fee schedules, and dated consumer estimates from comparison feeds. Each price is labelled with its source. <Link href="/docs/pricing#sources">Read how prices work</Link>.</> },
   { q: "How fresh are the prices?", a: <>The calculator refreshes every 30 seconds while you have it open, and every price shows when it was checked.</> },
   { q: "Why don’t I see a provider I know?", a: <>Some services only serve businesses, freelancers or certain countries. Railor hides prices your profile can’t use and tells you how many were hidden and why.</> },
   { q: "Can I use Railor from my own app or AI tool?", a: <>Yes. Create a free workspace to get a test API key. There are TypeScript and Python SDKs and an MCP server for AI tools. <Link href="/docs">See the docs</Link>.</> },
-  { q: "What happens to my data?", a: <>Comparing prices needs no personal details. Workspace data stays in your workspace and is never sold. <Link href="/legal/privacy">Privacy policy</Link>.</> },
+  { q: "What happens to my data?", a: <>Signing up needs only your email. Workspace data stays in your workspace and is never sold. <Link href="/legal/privacy">Privacy policy</Link>.</> },
 ];
 
 export function FaqSection() {
@@ -223,7 +223,7 @@ export function FinalCta() {
             <span className="coin" data-metal="gold" style={{ "--size": "58px", right: "14%", bottom: "16%", rotate: "-8deg" } as React.CSSProperties}>£</span>
           </div>
           <h2 id="final-title">Check before you send.</h2>
-          <p>Two currencies and an amount is all it takes. It’s free, and you don’t need an account.</p>
+          <p>Two currencies and an amount is all it takes. Sign in free and every price is yours.</p>
           <div className={styles.heroActions} style={{ marginTop: 6, justifyContent: "center", animation: "none" }}>
             <Link href="/#calculator" className={`${styles.btn} ${styles.btnPrimary} press`}>Compare prices now<ArrowRight size={17} aria-hidden /></Link>
             <Link href="/login?intent=start" className={`${styles.btn} ${styles.btnSecondary} press`}>Create a free account</Link>

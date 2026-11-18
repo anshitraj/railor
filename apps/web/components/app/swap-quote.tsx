@@ -53,13 +53,16 @@ function rateText(n: number) {
   return n.toLocaleString("en-US", { maximumSignificantDigits: 6 });
 }
 
-/** Eases a displayed number toward its new value so live updates read as movement, not flicker. */
-function useTween(target: number | null, ms = 450) {
+/** Eases a displayed number toward its new value. A different `identity` (another provider) jumps instead, so a figure never shows a blend of two providers. */
+function useTween(target: number | null, ms = 450, identity?: string | null) {
   const [value, setValue] = useState(target);
   const current = useRef(target);
+  const lastIdentity = useRef(identity);
   useEffect(() => {
     const start = current.current;
-    if (target === null || start === null || start === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const switched = lastIdentity.current !== identity;
+    lastIdentity.current = identity;
+    if (switched || target === null || start === null || start === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       current.current = target;
       setValue(target);
       return;
@@ -75,7 +78,7 @@ function useTween(target: number | null, ms = 450) {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
+  }, [target, ms, identity]);
   return value;
 }
 
@@ -244,7 +247,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => providerIdentity(row.providerSlug) === candidate.providerSlug) && !quotes.some(row => providerIdentity(row.providerSlug) === candidate.providerSlug));
   const selectedCandidate = picked && !quotes.some((row) => row.providerSlug === picked) ? candidates.find((candidate) => candidate.providerSlug === picked) ?? null : null;
   const selected = selectedCandidate ? null : result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
-  const receive = useTween(selected?.recipientAmount ?? null);
+  const receive = useTween(selected?.recipientAmount ?? null, 450, selected?.providerSlug ?? null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
   const elapsed = (now - fetchedAt) / 1000;

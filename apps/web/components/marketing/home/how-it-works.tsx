@@ -24,7 +24,7 @@ export function HowItWorks() {
             <p className={styles.eyebrow}>How it works</p>
             <h2 id="how-title" className={styles.title}>The best price in three steps.</h2>
           </div>
-          <p className={styles.lead}>No forms and no account needed. Pick an amount and Railor does the checking.</p>
+          <p className={styles.lead}>One free account, no forms. Pick an amount and Railor does the checking.</p>
         </div>
 
         <ol className={styles.steps}>

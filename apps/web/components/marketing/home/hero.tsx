@@ -22,7 +22,7 @@ export function HomeHero({ calculator }: { calculator: React.ReactNode }) {
       <div className={styles.container}>
         <div className={styles.heroInner}>
           <div className={styles.heroIntro}>
-            <p className={styles.pill}><span className={styles.pillIcon}><Zap size={12} aria-hidden /></span>Free price comparison<span className={styles.hideSmall}>, updated every 30 seconds</span></p>
+            <p className={styles.pill}><span className={styles.pillIcon}><Zap size={12} aria-hidden /></span><span>Free price comparison<span className={styles.hideSmall}>, updated every 30 seconds</span></span></p>
             <h1 id="home-title" className={styles.heroTitle}>
               <span>Move money abroad.</span>
               <span>
@@ -45,7 +45,7 @@ export function HomeHero({ calculator }: { calculator: React.ReactNode }) {
               <Link href="/prices" className={`${styles.btn} ${styles.btnSecondary} press`}>See every price</Link>
             </div>
             <ul className={styles.heroProof}>
-              <li><Check size={16} aria-hidden />No sign-up to compare</li>
+              <li><Check size={16} aria-hidden />Free account, no card needed</li>
               <li><Check size={16} aria-hidden />A source on every price</li>
               <li><Check size={16} aria-hidden />Personal, freelancer and business</li>
             </ul>

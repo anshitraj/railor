@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "../../../lib/auth";
 import { parsePriceQuery, runPriceCheck } from "../../../lib/pricing";
 import { consumeLimit, requestIdentity } from "../../../lib/rate-limit";
+import { lockPriceCheck } from "../../../lib/price-lock";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const maxDuration = 180;
 
 /**
  * GET /api/prices?from=USD&to=INR&amount=1000[&market=1] — the live quote
- * widget's poll. Anyone gets public and published prices; a signed-in
+ * widget's poll. Prices are for signed-in accounts (free): a signed-out
+ * visitor gets which providers were checked and nothing they charge. A
  * workspace also gets its own connected accounts' exact quotes.
  */
 export async function GET(request: Request) {
@@ -20,7 +22,8 @@ export async function GET(request: Request) {
   const allowed = await consumeLimit("prices", org ? `org:${org}` : requestIdentity(request), org ? 120 : 30, 60_000);
   if (!allowed) return NextResponse.json({ error: "Too many price checks — try again in a minute." }, { status: 429 });
   try {
-    return NextResponse.json(await runPriceCheck(org, input));
+    const result = await runPriceCheck(org, input);
+    return NextResponse.json(session ? result : lockPriceCheck(result));
   } catch (error) {
     return NextResponse.json({ error: "Price comparison is temporarily unavailable. Please try again shortly." }, { status: 502 });
   }

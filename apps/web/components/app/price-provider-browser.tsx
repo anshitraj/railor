@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, ArrowUpRight, ChevronDown, Clock3, FileSearch, Info, LockKeyhole, Search, ShieldCheck, X } from "lucide-react";
 import type { MarketCoverageProvider, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
@@ -83,7 +83,7 @@ export function PriceProviderBrowser(props: Props) {
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>
       <motion.div id="price-panel-2" role="tabpanel" aria-labelledby="price-tab-2" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>Historical pricing context</h2><p>Original amounts, dates and sources are preserved. These samples are never used as current quotes.</p>{props.history}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider provider={props.selectedCandidate} /> : <SelectedProvider row={selected} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} /> : <SelectedProvider key={selected ? `${selected.providerSlug}:${selected.observedAt}` : "none"} row={selected} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} />}
   </>;
 }
 
@@ -103,9 +103,9 @@ function UnpricedProvider({ provider }: { provider: MarketCoverageProvider }) {
 }
 
 function SelectedProvider({ row, from, to, amount, checked, webEvidence, connection, action }: { row: PriceRow | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"] }) {
+  // Keyed by provider and observation: every figure in this panel always comes from one row.
   const [tab, setTab] = useState<DetailTab>("Details");
   const reduce = useReducedMotion();
-  useEffect(() => setTab("Details"), [row?.providerSlug]);
   if (!row) return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider"><div className={styles.empty}><FileSearch size={24} /><strong>Select a provider to explore its price</strong><p>Fees, eligibility and source evidence will appear here.</p></div></aside>;
   const assessment = row.profileAssessment;
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
@@ -117,13 +117,14 @@ function SelectedProvider({ row, from, to, amount, checked, webEvidence, connect
     {action.href && !action.disabled ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</Link> : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />{action.label}</button>}
     {connection}
     <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>{(["Details", "Requirements", "Source", "Notes"] as const).map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}</div>
-    <AnimatePresence mode="wait" initial={false}><motion.div key={`${row.providerSlug}:${tab}`} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${tab}`} className={styles.detailContent} initial={reduce ? false : { opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0 : .14 }}>
+    {/* No exit animation: an outgoing panel must never show the previous provider's figures. */}
+    <div key={tab} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${tab}`} className={`${styles.detailContent} railor-step-in`}>
       {tab === "Details" && <><dl className={styles.factList}>{[
         ["Send amount", `${money(amount)} ${from}`], [row.partial ? "Reference receive amount" : "Receive amount (est.)", `${money(row.recipientAmount)} ${to}`], ["Known provider fee", row.feeAmount === null ? "Not supplied" : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`], ["Exchange rate", row.rate === null ? "Not supplied" : `1 ${from} ≈ ${row.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}`], ["Delivery estimate", row.delivery ?? "Not confirmed"], ...(row.shortfall ? [["Compared with lowest documented", `${money(Math.abs(row.shortfall))} ${to} ${row.shortfall > 0 ? "less" : "more"}`]] : []), ["Pricing source", pricingSourceLabel(row)], ["Source time", priceSourceTime(row.observedAt, row.basis)], ...(row.expiresAt ? [["Quote valid until", row.expiresAt]] : []), ["Panel checked", checked],
       ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p className={styles.detailNote}>Account approval, actual fees and payout availability must be confirmed before sending.</p></>}
       {tab === "Requirements" && <>{assessment ? <><p className={styles.detailIntro}>{assessment.reasons.join(" ")}</p><dl className={styles.requirements}>{[{ label: "KYC / KYB", value: assessment.verification.join(" ") }, { label: "Expected fees", value: assessment.fees }, { label: "Transfer limits", value: assessment.limits }, { label: "Available corridors", value: assessment.corridors }, { label: "Settlement methods", value: assessment.settlement.join(" ") }, { label: "Documents", value: assessment.documents.join(" ") }, { label: "Payment purpose", value: assessment.purpose }].map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>{assessment.sources.map((source) => <a className={styles.sourceLink} key={source.url} href={source.url} target="_blank" rel="noreferrer noopener">{source.label} <ArrowUpRight size={11} /></a>)}<p className={styles.detailNote}>Rules reviewed {assessment.reviewedAt ?? "date unavailable"}. A documented profile is not confirmation that you passed verification.</p></> : <p className={styles.detailIntro}>Account-specific requirements are not confirmed for this price. Ask the provider to verify eligibility.</p>}</>}
       {tab === "Source" && <><span className={styles.basisBadge} data-basis={row.basis}>{pricingSourceLabel(row)}</span><p className={styles.detailIntro}>{priceSourceTime(row.observedAt, row.basis)}</p>{row.source.url ? <a className={styles.sourceLink} href={row.source.url} target="_blank" rel="noreferrer noopener">{row.source.label}<ArrowUpRight size={12} /></a> : <p>{row.source.label}</p>}{row.rateSource && <><p className={styles.detailIntro}>Provider FX observed {new Date(row.rateSource.observedAt).toLocaleString("en-GB", { timeZone: "UTC" })} UTC</p><a className={styles.sourceLink} href={row.rateSource.url} target="_blank" rel="noreferrer noopener">{row.rateSource.label}<ArrowUpRight size={12} /></a></>}{webEvidence}</>}
       {tab === "Notes" && <>{row.side === "payer" && <p className={styles.detailIntro}>This is a service your sender pays. You only need your bank account; you do not sign up for their sending service.</p>}{row.notes.length ? row.notes.map((note, index) => <p className={styles.detailIntro} key={index}>{note}</p>) : <p className={styles.detailIntro}>No additional provider notes were supplied.</p>}</>}
-    </motion.div></AnimatePresence>
+    </div>
   </aside>;
 }
