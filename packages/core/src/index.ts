@@ -49,3 +49,4 @@ export * from "./web-check.js";
 export * from "./web-check-store.js";
 export * from "./freelancer.js";
 export * from "./invoice-extraction.js";
+export * from "./payslip-extraction.js";

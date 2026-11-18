@@ -50,6 +50,8 @@ export async function revolutPublicReference(input: PriceCheckInput, fetcher: ty
     delivery: null,
     observedAt: new Date(quote.rate.timestamp).toISOString(),
     source: { label: "Revolut UK public FX converter", url: "https://www.revolut.com/currency-converter/" },
+    // Requested with country=GB: the price of a Revolut UK account, nobody else's.
+    senderCountry: "GB",
     notes: [
       "Revolut's UK Standard-plan conversion rate, for someone who already holds a Revolut UK account. Revolut's transfer fee is not included.",
       "A currency conversion amount, not a guaranteed bank payout or your business account's price.",

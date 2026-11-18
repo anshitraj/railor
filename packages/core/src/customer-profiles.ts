@@ -58,6 +58,29 @@ export function unconfirmedAssessment(): ProviderProfileAssessment {
   };
 }
 
+const NAMED_WITH_THE = new Set(["GB", "US", "AE", "NL", "PH"]);
+function place(country: string) {
+  let name = country;
+  try { name = new Intl.DisplayNames(["en"], { type: "region" }).of(country) ?? country; } catch { /* keep the code */ }
+  return NAMED_WITH_THE.has(country) ? `the ${name}` : name;
+}
+
+/**
+ * A public price published for senders in one country (Revolut's UK
+ * converter prices Revolut UK customers) can't describe a sender registered
+ * anywhere else, so it is never compared for them. Sending only: when
+ * receiving, the price is the payer's and the payer's country isn't known.
+ */
+export function senderCountryAssessment(row: { providerName: string; senderCountry?: string }, context: CustomerContext): ProviderProfileAssessment | null {
+  if (!row.senderCountry || context.direction !== "send" || context.country === row.senderCountry) return null;
+  const name = row.providerName.split(" · ")[0]!;
+  return {
+    ...unconfirmedAssessment(), status: "not_supported", priceApplicable: false, reviewedAt: "2026-11-18",
+    reasons: [`This is ${name}'s public price for its customers in ${place(row.senderCountry)}. A sender in ${place(context.country)} can't get it, so it isn't compared.`],
+    corridors: `Published for senders in ${place(row.senderCountry)} only.`,
+  };
+}
+
 /** Published product rules, never an assertion that the customer passed KYC. */
 export function assessCustomerProfile(slug: string, context: CustomerContext, request: {
   sourceCurrency: string; destinationCurrency: string; amount: number;

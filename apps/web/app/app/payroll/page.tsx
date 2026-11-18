@@ -16,8 +16,11 @@ export default async function PayrollPage() {
   const home = options.currencyByCountry[session.organization.entityCountry ?? ""] ?? "USD";
   return (
     <div className="product-page space-y-7">
-      <ProductHeader eyebrow="Company" title="Payroll pricing" description="Upload your payroll sheet and Railor prices every payout: the cheapest way to pay each person, what arrives, and how much the priciest option would cost you." />
-      <PayrollPricing defaultCurrency={home} />
+      <ProductHeader eyebrow="Company" title="Payroll pricing" description="Upload your payroll sheet or payslips and Railor prices every payout: the cheapest way to pay each person, what arrives against their net pay, and how much the priciest option would cost you." />
+      <PayrollPricing
+        defaultCurrency={home}
+        payslips={{ aiEnabled: Boolean(process.env.GEMINI_API_KEY?.trim()), sharedDemo: session.user.email === "demo@railor.dev", canUpload: ["owner", "admin", "member"].includes(session.role ?? "") }}
+      />
     </div>
   );
 }
