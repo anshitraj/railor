@@ -138,18 +138,22 @@ function hintRole(text: string, index: number, length: number): "entity" | "dest
   return null;
 }
 
-function parseAmount(text: string): { amount: number; currency?: string; matched: string } | null {
+function parseAmount(text: string): { amount: number; currency?: string; symbol?: string; matched: string } | null {
   const m = text.match(
-    /(?<![\w.-])(?:([$€£₹₦])\s?)?(\d[\d,.]*)\s?(k|m|thousand|million)?\b\s?(usd|eur|gbp|aed|inr|ngn|sgd|brl|mxn|jpy|cad|aud|chf|zar|try|myr|idr)?\b/i,
+    /(?<![\w.-])(?:([$€£₹₦])\s?)?(\d[\d,.]*)\s?(k|m|thousand|million|lakhs?|lacs?|crores?|cr)?\b\s?([a-z]{3})?\b/i,
   );
   if (!m || !m[2]) return null;
   const raw = Number(m[2].replace(/,/g, ""));
   if (!Number.isFinite(raw) || raw <= 0) return null;
   const scale = m[3]?.toLowerCase();
-  const amount = scale === "k" || scale === "thousand" ? raw * 1_000 : scale === "m" || scale === "million" ? raw * 1_000_000 : raw;
+  // Indian numbering is common in requests: 1 lakh = 100,000 and 1 crore = 10,000,000.
+  const multiplier = scale === "k" || scale === "thousand" ? 1_000 : scale === "m" || scale === "million" ? 1_000_000
+    : scale && /^la(?:kh|c)s?$/.test(scale) ? 100_000 : scale && /^(?:crores?|cr)$/.test(scale) ? 10_000_000 : 1;
+  const amount = Math.round(raw * multiplier * 100) / 100;
   const symbolCurrency: Record<string, string> = { $: "USD", "€": "EUR", "£": "GBP", "₹": "INR", "₦": "NGN" };
-  const currency = m[4]?.toUpperCase() ?? (m[1] ? symbolCurrency[m[1]] : undefined);
-  return { amount, currency, matched: m[0].trim() };
+  const code = m[4]?.toUpperCase();
+  const currency = code && CURRENCY_TERMS.some((term) => term.code === code) ? code : m[1] ? symbolCurrency[m[1]] : undefined;
+  return { amount, currency, symbol: m[1] ? symbolCurrency[m[1]] : undefined, matched: m[0].trim() };
 }
 
 const countryName = (code: string) => COUNTRY_TERMS.find((c) => c.code === code)?.name ?? code;
@@ -284,7 +288,7 @@ export function interpretRules(input: string): Interpretation {
   } else {
     const currency = distinctCurrencies[0];
     if (currency) {
-      const sourceMention = !asset && currencyMatches.find((match) => /\b(?:send|sending|move|transfer|fund|pay)\s+(?:[$€£₹₦]\s*)?[\d,.]+(?:\s*(?:k|m|thousand|million))?\s*$/i.test(text.slice(0, match.index)));
+      const sourceMention = !asset && currencyMatches.find((match) => /\b(?:send|sending|move|transfer|fund|pay|pays|convert)\s+(?:[$€£₹₦]\s*)?[\d,.]+(?:\s*(?:k|m|thousand|million|lakhs?|lacs?|crores?|cr))?\s*$/i.test(text.slice(0, match.index)));
       if (sourceMention) {
         query.sourceCurrency = sourceMention.value;
         tokens.push({ field: "sourceCurrency", value: sourceMention.value, label: `Source currency: ${sourceMention.value}`, confidence: 0.96, matchedText: sourceMention.text, derivation: "source" });
@@ -390,6 +394,11 @@ export function interpretRules(input: string): Interpretation {
   const amount = parseAmount(input);
   if (amount) {
     query.amount = amount.amount;
+    // "$5,000" names the funding currency even when no currency word follows.
+    if (amount.symbol && !query.sourceCurrency && !query.sourceAsset && amount.symbol !== query.destinationCurrency) {
+      query.sourceCurrency = amount.symbol;
+      tokens.push({ field: "sourceCurrency", value: amount.symbol, label: `Source currency: ${amount.symbol}`, confidence: 0.9, matchedText: amount.matched, derivation: "source" });
+    }
     query.amountCurrency = (amount.currency ?? query.destinationCurrency ?? "USD") as string;
     tokens.push({
       field: "amount",
