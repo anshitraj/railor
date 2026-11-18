@@ -18,14 +18,16 @@ export default async function ProvidersPage() {
     pricingSummary: pricingReview.providers.find(entry => entry.slug === p.slug)?.summary ?? INDIA_RECEIVING_PRODUCTS.find(product => product.slug === p.slug)?.fee,
   }));
   // Public-source discoveries are searchable too, without inventing graph facts or dead profile links.
-  for (const provider of audit.providers) if (!directory.some(entry => entry.slug === provider.slug)) {
-    const evidence = discovery.providers.find(entry => entry.slug === provider.slug);
+  const discoveries = new Map(discovery.providers.map(provider => [provider.slug, provider]));
+  const research = new Map([...audit.providers, ...discovery.providers].map(provider => [provider.slug, provider]));
+  for (const provider of research.values()) if (!directory.some(entry => entry.slug === provider.slug)) {
+    const evidence = discoveries.get(provider.slug);
     directory.push({ slug: provider.slug, name: provider.name, category: "Public-source research",
       description: evidence?.pricingNote ?? "Explore the official source for current products, account eligibility and pricing.",
       products: [], assets: [], networks: [], countryCount: 0, currencyCount: 0, customerTypes: [],
       hasApi: false, hasSandbox: false, hasWebhooks: false, headquartersCountry: null, lastVerifiedAt: null,
-      profileAvailable: false, sourceUrl: pricingReview.providers.find(entry => entry.slug === provider.slug)?.sourceUrl ?? provider.website ?? undefined,
-      pricingSummary: pricingReview.providers.find(entry => entry.slug === provider.slug)?.summary ?? undefined,
+      profileAvailable: false, sourceUrl: pricingReview.providers.find(entry => entry.slug === provider.slug)?.sourceUrl ?? evidence?.sources[0] ?? provider.website ?? undefined,
+      pricingSummary: pricingReview.providers.find(entry => entry.slug === provider.slug)?.summary ?? evidence?.pricingNote,
     });
   }
 

@@ -31,6 +31,7 @@ function useStablecoinRequest<T extends ExchangeResponse | CashOutResponse>(asse
   const key = `${asset}:${network}:${amount}:${destination}`;
   const active = enabled && amount > 0 && amount <= 10_000_000;
   const [response, setResponse] = useState<{ key: string; data: T | null; error: string; loading: boolean } | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -63,10 +64,10 @@ function useStablecoinRequest<T extends ExchangeResponse | CashOutResponse>(asse
       window.clearInterval(timer);
       controller.current?.abort();
     };
-  }, [asset, network, amount, active, key, destination]);
+  }, [asset, network, amount, active, key, destination, attempt]);
 
   const current = active && response?.key === key ? response : null;
-  return { data: current?.data ?? null, error: current?.error ?? "", loading: active && (!current || current.loading) };
+  return { data: current?.data ?? null, error: current?.error ?? "", loading: active && (!current || current.loading), retry: active ? () => setAttempt(value => value + 1) : undefined };
 }
 
 function SupportPill({ support, asset, network, name }: { support: { status: DepositSupport; note: string }; asset: Stablecoin; network: Network; name: string }) {
@@ -146,12 +147,14 @@ function LiveBidNote({ live, asset }: { live: LiveBid; asset: Stablecoin }) {
 
 export function ExchangeCard({ quote, asset, network, amount, cost, locked, loading, best, signInHref }: { quote: LockedExchange | ExchangeQuote; asset: Stablecoin; network: Network; amount: number; cost: number | null; locked: boolean; loading: boolean; best: boolean; signInHref: string }) {
   const exchange = exchangeBySlug(quote.slug)!;
-  const full = "breakdown" in quote ? quote : null;
+  const full = "checkedAt" in quote ? quote : null;
   const breakdown = full?.breakdown;
   const tax = breakdown ? vdaTax(breakdown, cost) : null;
+  const marketReference = full?.status === "market_reference" ? full.fill : null;
+  const reviewDate = exchange.reviewedAt ? new Date(`${exchange.reviewedAt}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : CHECKED;
   const rows: Array<[string, string, string?]> = breakdown && full?.fill ? [
     ["Sale value", inr(breakdown.gross), `${full.fill.filled.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${asset} at ₹${full.fill.averagePrice.toFixed(2)} average`],
-    [`Trading fee (${(exchange.feeRate * 100).toFixed(2)}%${exchange.gstIncluded ? ", GST included" : ""})`, `− ${inr(breakdown.tradingFee)}`],
+    [exchange.feeRate === null ? "Trading fee" : `Trading fee (${(exchange.feeRate * 100).toFixed(2)}%${exchange.gstIncluded ? ", GST included" : ""})`, `− ${inr(breakdown.tradingFee)}`],
     ...(exchange.gstIncluded ? [] : [["GST on the fee (18%)", `− ${inr(breakdown.gst)}`] as [string, string]]),
     ["Estimated TDS (1%)", `− ${inr(breakdown.tds)}`, "Assumes the exchange withholds 1%. You can claim verified withholding as a tax credit."],
     ["INR withdrawal", breakdown.withdrawalFee ? `− ${inr(breakdown.withdrawalFee)}` : "Free"],
@@ -169,12 +172,19 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
 
       {locked && !exchange.noLivePrice ? (
         <Link href={signInHref} className={styles.lockedQuote} aria-label={`Sign in to see what ${exchange.name} pays`}>
-          <span className={styles.lockedRow}><span>In your bank</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
-          <span className={styles.lockedRow}><span>After income tax</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
-          <span className={styles.lockBadge}><LockKeyhole size={13} aria-hidden />Sign in to see the full price</span>
+          <span className={styles.lockedRow}><span>{exchange.withdrawalFee === null ? "Gross sale estimate" : "In your bank"}</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
+          {exchange.withdrawalFee !== null ? <span className={styles.lockedRow}><span>After income tax</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span> : null}
+          <span className={styles.lockBadge}><LockKeyhole size={13} aria-hidden />{exchange.withdrawalFee === null ? "Sign in to see the market rate" : "Sign in to see the full price"}</span>
         </Link>
       ) : loading && !exchange.noLivePrice ? <p className={styles.quoteStatus}>Refreshing quote…</p> : exchange.noLivePrice ? (
         <p className={styles.caution}><TriangleAlert size={13} aria-hidden /><span><strong>No live price.</strong> {exchange.noLivePrice}.</span></p>
+      ) : marketReference ? (
+        <>
+          <div className={styles.inBank}><span>{marketReference.short ? "Gross value of the available bids" : "Gross sale estimate"}</span><strong>{inr(marketReference.gross)}</strong></div>
+          {marketReference.short ? <p className={styles.caution}>The visible book covers {marketReference.filled.toLocaleString("en-US", { maximumFractionDigits: 6 })} of your {amount.toLocaleString("en-US")} {asset}.</p> : null}
+          {full?.live ? <LiveBidNote live={full.live} asset={asset} /> : null}
+          <p className={styles.feeNote}>{exchange.feeNote} {exchange.withdrawalNote}</p>
+        </>
       ) : quote.status !== "priced" || !breakdown || !tax ? (
         <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{"reason" in quote && quote.reason ? quote.reason : "No price right now."}</p>
       ) : (
@@ -207,9 +217,10 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
         </>
       )}
       <footer>
-        <span>{full?.live ? `${full.live.depth === "top" ? "Best bid" : "Order book"} read live · fees` : "Fees"} checked {CHECKED}</span>
+        <span>{full?.live ? `${full.live.depth === "top" ? "Best bid" : "Order book"} read live · fees` : "Fees"} checked {reviewDate}</span>
         <span className={styles.links}>
           <a href={exchange.feeSource} target="_blank" rel="noreferrer noopener">Fees <ArrowUpRight size={11} /></a>
+          {exchange.withdrawalFee === null ? <a href={exchange.withdrawalSource} target="_blank" rel="noreferrer noopener">Withdrawals <ArrowUpRight size={11} /></a> : null}
           <a href={exchange.networks[asset].source} target="_blank" rel="noreferrer noopener">Networks <ArrowUpRight size={11} /></a>
           <a href={exchange.tradeUrl(asset)} target="_blank" rel="noreferrer noopener">Open {exchange.name} <ArrowUpRight size={11} /></a>
         </span>

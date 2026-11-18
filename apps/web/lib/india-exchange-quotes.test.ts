@@ -14,6 +14,7 @@ const books = {
   giottus: { bids: [["101.91", "522.6108"], ["101.90", "421.2715"], ["101.82", "1000"]], asks: [["103.97", "114"]] },
   zebpay: { data: { bids: [["103.309", "647.54"]], asks: [["103.431", "1014.68"]], timestamp: (NOW - 1_500) / 1000 }, statusCode: 200 },
   flitpay: [{ at: (NOW - 3_000) / 1000, symbol: "INR_USDT", "bid price": "102.33", ask_price: "102.44" }],
+  koinbx: { status: "1", data: { timestamp: (NOW - 2000) / 1000, bids: [[101.519, 500], [101.453, 600]], asks: [[101.521, 1589.58]] } },
 };
 
 type Overrides = Partial<Record<keyof typeof books, () => Response>>;
@@ -29,7 +30,7 @@ function fetcherFor(overrides: Overrides = {}) {
   return Object.assign(impl, { calls });
 }
 
-describe("quotes on the seven Indian exchanges", () => {
+describe("quotes on Indian exchanges", () => {
   it("prices every exchange that has a feed, best INR in the bank first, and keeps the rest with the reason", async () => {
     const { quotes, reference } = await indiaExchangeQuotes("USDT", "tron", 1000, deps(fetcherFor({ zebpay: () => new Response("<html>Attention Required</html>", { status: 403 }) })));
     expect(reference).toMatchObject({ rate: 93.44 });
@@ -39,7 +40,7 @@ describe("quotes on the seven Indian exchanges", () => {
     expect(bySlug.zebpay).toMatchObject({ status: "unavailable", reason: expect.stringContaining("refuses requests from Railor’s server") });
     expect(bySlug.suncrypto).toMatchObject({ status: "unavailable", reason: expect.stringContaining("bid above its ask") });
     expect(bySlug.mudrex).toMatchObject({ status: "unavailable", reason: expect.stringContaining("futures markets only") });
-    expect(quotes).toHaveLength(7);
+    expect(quotes).toHaveLength(8);
   });
 
   it("walks the order book for the amount and carries the live bid, its time and its gap to Wise's mid-market", async () => {
@@ -75,21 +76,25 @@ describe("quotes on the seven Indian exchanges", () => {
     expect(wazirx.filled).toBeCloseTo(3656.43, 6);
   });
 
-  it("USDC is priced on CoinDCX and WazirX only, from their USDC markets", async () => {
+  it("fetches USDC from its own markets and excludes KoinBX gross proceeds from payout ranking", async () => {
     const fetcher = fetcherFor();
     const { quotes } = await indiaExchangeQuotes("USDC", "ethereum", 1000, deps(fetcher));
-    expect(quotes.map((quote) => quote.slug).sort()).toEqual(["coindcx", "wazirx"]);
+    expect(quotes.map((quote) => quote.slug).sort()).toEqual(["coindcx", "koinbx", "wazirx"]);
     expect(fetcher.calls.sort()).toEqual([
       "https://api.coindcx.com/market_data/orderbook?pair=I-USDC_INR",
+      "https://api.koinbx.com/orderbook?market_pair=USDC_INR&depth=50",
       "https://api.wazirx.com/sapi/v1/depth?symbol=usdcinr&limit=100",
     ]);
+    const koin = quotes.at(-1);
+    expect(koin).toMatchObject({ slug: "koinbx", status: "market_reference", fill: { gross: 101486, filled: 1000, short: false } });
+    expect(koin?.breakdown).toBeUndefined();
   });
 
-  it("survives every exchange failing: all seven stay listed as unavailable", async () => {
+  it("keeps every exchange listed with a reason when all feeds fail", async () => {
     const down = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
     const { quotes, reference } = await indiaExchangeQuotes("USDT", "tron", 1000, { fetcher: down, now: new Date(NOW) });
     expect(reference).toBeNull();
-    expect(quotes).toHaveLength(7);
+    expect(quotes).toHaveLength(8);
     expect(quotes.every((quote) => quote.status === "unavailable" && quote.reason)).toBe(true);
   });
 

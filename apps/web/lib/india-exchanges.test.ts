@@ -71,20 +71,21 @@ describe("deposit networks", () => {
   });
 });
 
-describe("the seven exchanges", () => {
-  it("lists CoinDCX, WazirX, Giottus, Flitpay, ZebPay, SunCrypto and Mudrex, each with the page its fee was read from", () => {
-    expect(INDIA_EXCHANGES.map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "giottus", "flitpay", "zebpay", "suncrypto", "mudrex"]);
+describe("Indian exchanges", () => {
+  it("lists the exchanges with fee sources and identifies those missing a bank payout price", () => {
+    expect(INDIA_EXCHANGES.map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "giottus", "flitpay", "zebpay", "suncrypto", "mudrex", "koinbx"]);
     for (const exchange of INDIA_EXCHANGES) {
       expect(exchange.feeSource, exchange.slug).toMatch(/^https:\/\//);
       expect(exchange.withdrawalSource, exchange.slug).toMatch(/^https:\/\//);
       expect(exchange.tradeUrl("USDT"), exchange.slug).toMatch(/^https:\/\//);
-      expect(exchange.feeRate, exchange.slug).toBeGreaterThan(0);
+      if (exchange.withdrawalFee !== null) expect(exchange.feeRate, exchange.slug).toBeGreaterThan(0);
+      else expect(exchange.withdrawalNote, exchange.slug).toBeTruthy();
     }
   });
 
   it("prices USDC only where the exchange lists it against INR", () => {
-    expect(exchangesFor("USDT")).toHaveLength(7);
-    expect(exchangesFor("USDC").map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx"]);
+    expect(exchangesFor("USDT")).toHaveLength(8);
+    expect(exchangesFor("USDC").map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "koinbx"]);
   });
 
   it("every exchange either has a live feed read in core or says why it has none, never both", () => {

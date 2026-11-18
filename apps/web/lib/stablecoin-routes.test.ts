@@ -93,8 +93,15 @@ describe("stablecoin off-ramp routes", () => {
   });
 
   it("flags EVM chains Xflow doesn't name", () => {
-    expect(stablecoinRoutes("USDC", "base", "INR", 500)[0]!.caution).toContain("Base");
-    expect(stablecoinRoutes("USDC", "polygon", "INR", 500)[0]!.caution).toBeUndefined();
+    expect(stablecoinRoutes("USDC", "base", "INR", 500).find(route => route.id === "xflow-stablecoins")?.caution).toContain("Base");
+    expect(stablecoinRoutes("USDC", "polygon", "INR", 500).find(route => route.id === "xflow-stablecoins")?.caution).toBeUndefined();
+  });
+
+  it("lists SETTLE only for documented token networks that the issuer supplies", () => {
+    const route = stablecoinRoutes("USDC", "base", "INR", 1000).find(entry => entry.id === "settle-inr");
+    expect(route).toMatchObject({ price: "0.50% illustrative fee", sourceUrl: "https://settle.ledgerpe.com/convert/usdc-inr" });
+    expect(stablecoinRoutes("USDT", "base", "INR", 1000).some(entry => entry.id === "settle-inr")).toBe(Boolean(TOKENS.USDT.addresses.base));
+    expect(stablecoinRoutes("USDC", "base", "EURC", 1000).some(entry => entry.id === "settle-inr")).toBe(false);
   });
 
   it("offers Circle Mint for USDC only, and no INR route when the goal is EURC", () => {
