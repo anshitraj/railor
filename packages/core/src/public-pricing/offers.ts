@@ -1,9 +1,10 @@
 import captured from "./public-offers.json";
+import { usBankRemittanceCorridor } from "./us-bank-remittances.js";
 import type { PriceCheckInput, PriceRow } from "../pricing.js";
 
 /** Real calculator captures are exact-amount observations, with a hard freshness limit. */
 export function publicOfferRows(input: PriceCheckInput, now: Date): PriceRow[] {
-  if (input.context?.profile !== "personal" || input.context.purpose !== "personal") return [];
+  if (!usBankRemittanceCorridor(input)) return [];
   return captured.observations.filter(offer => offer.amount === input.amount && offer.sourceCurrency === input.sourceCurrency
     && offer.destinationCurrency === input.destinationCurrency
     && (!input.destinationCountry || offer.destinationCountry === input.destinationCountry)
@@ -12,6 +13,8 @@ export function publicOfferRows(input: PriceCheckInput, now: Date): PriceRow[] {
     && now.getTime() < Date.parse(offer.displayUntil))
     .map(offer => ({
       providerSlug: offer.providerSlug, providerName: offer.providerName, basis: "live_public",
+      senderCountry: offer.senderCountry, paymentMethods: ["local_bank", "transfer_service"], side: "payer",
+      product: { id: offer.providerSlug + ":usd-" + offer.destinationCurrency.toLowerCase() + "-bank", label: offer.providerName + " · US bank-funded welcome offer" },
       recipientAmount: offer.recipientAmount, feeAmount: offer.feeAmount, feeCurrency: offer.feeCurrency,
       rate: offer.rate, totalCostPct: null, partial: true, delivery: null, observedAt: offer.observedAt,
       source: { label: "Public calculator · first-transfer offer", url: offer.sourceUrl }, notes: offer.conditions,

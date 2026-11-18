@@ -23,7 +23,36 @@ describe("providerMarketCoverage", () => {
     expect(coverage.totalTracked).toBeGreaterThanOrEqual(100);
     for (const providerSlug of ["pingpong", "karbon", "refrens", "salt"]) expect(coverage.allProviders).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug })]));
     expect(coverage.allProviders).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug: "razorpay" }), expect.objectContaining({ providerSlug: "dashx" }), expect.objectContaining({ providerSlug: "briskpe", currencyMatch: "unverified" })]));
-    expect(coverage.allProviders?.find((provider) => provider.providerSlug === "briskpe")?.pricingStatus?.reason).toContain("not been verified");
+    for (const provider of coverage.allProviders ?? []) {
+      expect(provider.pricingReviewedAt).toBe("2026-11-19");
+      expect(provider.pricingStatus?.reason).toBeTruthy();
+      expect(provider.discoverySources?.length).toBeGreaterThan(0);
+      expect(provider).not.toHaveProperty("recipientAmount");
+    }
+  });
+
+  it("shows verified fee components with their product scope and retains the audit when quoting fails", () => {
+    const coverage = providerMarketCoverage({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 });
+    const result = attachMarketPricingEvidence(coverage, "INR", [], [{ providerSlug: "pingpong", providerName: "PingPong", reason: "Account quote required." }], []);
+    const rows = result.allProviders ?? [];
+    const pingpong = rows.find(provider => provider.providerSlug === "pingpong");
+    expect(pingpong?.feeHighlight).toContain("1%");
+    expect(pingpong?.pricingStatus?.reason).toContain("Account quote required.");
+    expect(pingpong?.feeEvidence?.some(fee => fee.sourceUrl?.includes("what-is-the-charging-standard"))).toBe(true);
+    expect(rows.find(provider => provider.providerSlug === "wio")?.feeHighlight).toContain("SWIFT");
+    expect(rows.find(provider => provider.providerSlug === "highnote")?.feeHighlight).toBeUndefined();
+  });
+
+  it("shows MoneyGram’s scoped retail fee bands and remittance tax as evidence, without a payout number", () => {
+    const moneyGram = (currency: string) => providerMarketCoverage({ sourceCurrency: "USD", destinationCurrency: currency, amount: 1_000 })
+      .allProviders?.find(provider => provider.providerSlug === "moneygram");
+    const india = moneyGram("INR");
+    expect(india?.feeEvidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({ product: "Nevada agent fee schedule · India cash pickup", summary: expect.stringContaining("$13") }),
+      expect.objectContaining({ product: "U.S. federal remittance tax", summary: expect.stringContaining("1%") }),
+    ]));
+    expect(india).not.toHaveProperty("recipientAmount");
+    expect(moneyGram("EUR")?.feeEvidence?.some(fee => fee.product.includes("Nevada"))).toBe(false);
   });
 
   it("returns only providers that list the selected destination currency", () => {

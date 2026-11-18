@@ -13,9 +13,34 @@
  */
 export type Stablecoin = "USDT" | "USDC";
 export type Network = "ethereum" | "base" | "arbitrum" | "optimism" | "polygon" | "avalanche" | "bnb" | "arc" | "solana" | "tron" | "ton" | "aptos";
-export type Destination = "INR" | "EURC";
+export const CASH_OUT_CURRENCIES = {
+  EUR: { name: "Euro", flag: "EU" },
+  USD: { name: "US dollar", flag: "US" },
+  GBP: { name: "British pound", flag: "GB" },
+  CAD: { name: "Canadian dollar", flag: "CA" },
+  AUD: { name: "Australian dollar", flag: "AU" },
+  CHF: { name: "Swiss franc", flag: "CH" },
+} as const;
+export type CashOutCurrency = keyof typeof CASH_OUT_CURRENCIES;
+export const CASH_PICKUP_CURRENCIES = {
+  MXN: { name: "Mexican peso", flag: "MX" },
+  BRL: { name: "Brazilian real", flag: "BR" },
+  COP: { name: "Colombian peso", flag: "CO" },
+  PHP: { name: "Philippine peso", flag: "PH" },
+} as const;
+export type CashPickupCurrency = keyof typeof CASH_PICKUP_CURRENCIES;
+export type Destination = "INR" | CashOutCurrency | CashPickupCurrency | "EURC";
+export const DESTINATIONS: Destination[] = ["INR", ...Object.keys(CASH_OUT_CURRENCIES) as CashOutCurrency[], ...Object.keys(CASH_PICKUP_CURRENCIES) as CashPickupCurrency[], "EURC"];
 
-export const STABLECOIN_CHECKED = "2026-11-18";
+export function isCashOutCurrency(value: string): value is CashOutCurrency {
+  return Object.hasOwn(CASH_OUT_CURRENCIES, value);
+}
+
+export function isCashPickupCurrency(value: string): value is CashPickupCurrency {
+  return Object.hasOwn(CASH_PICKUP_CURRENCIES, value);
+}
+
+export const STABLECOIN_CHECKED = "2026-11-19";
 
 /** Every network Railor shows, in picker order. A token is only offered where its issuer lists it. */
 export const NETWORKS: Record<Network, { label: string; family: "evm" | "solana" | "tron" | "other"; color: string; uniswap?: string }> = {
@@ -90,7 +115,8 @@ export function notIssuedReason(asset: Stablecoin, network: Network): string {
 export function stablecoinInitial(params: Record<string, string | undefined>): { asset: Stablecoin; network: Network | null; destination: Destination; amount: number } {
   const asset: Stablecoin = params.asset?.toUpperCase() === "USDC" ? "USDC" : "USDT";
   const network = params.network && Object.hasOwn(NETWORKS, params.network) ? (params.network as Network) : null;
-  const destination: Destination = params.dest?.toUpperCase() === "EURC" ? "EURC" : "INR";
+  const target = params.dest?.toUpperCase() ?? "INR";
+  const destination = target === "EURC" || isCashOutCurrency(target) || isCashPickupCurrency(target) ? target : "INR";
   const amount = Math.min(10_000_000, Math.max(0, Number(params.amount) || 1_000));
   return { asset, network, destination, amount };
 }
@@ -157,6 +183,27 @@ function usd(value: number) {
 /** Verified ways out of a stablecoin, for the destination chosen. */
 export function stablecoinRoutes(asset: Stablecoin, network: Network, destination: Destination, amount: number): RouteCard[] {
   const cards: RouteCard[] = [];
+  if (isCashOutCurrency(destination)) return [];
+  if (asset === "USDC" && network === "solana" && (destination === "INR" || isCashPickupCurrency(destination))) {
+    cards.push({
+      id: "moneygram-ramps",
+      slug: "moneygram",
+      provider: "MoneyGram",
+      title: "Wallet cash-out · MoneyGram Ramps",
+      delivers: destination + " cash pickup at a participating agent, subject to the wallet’s payout options",
+      price: "Quote in supported wallet",
+      priceNote: "FX rate and fees are shown by the wallet before confirmation.",
+      points: [
+        "Deposit asset: native USDC on Solana. Start in a wallet that offers MoneyGram Ramps.",
+        "The wallet quote shows the payout currency, FX rate, MoneyGram and wallet partner fees before confirmation.",
+        "MoneyGram verifies identity. Confirm the pickup location, ID requirements and local limits in the wallet.",
+        "Wallet network charges and personal taxes depend on the transaction and your circumstances.",
+      ],
+      sourceUrl: "https://xramps.moneygram.com/",
+      checkedAt: STABLECOIN_CHECKED,
+    });
+  }
+  if (isCashPickupCurrency(destination)) return cards;
   if (destination === "INR") {
     cards.push({
       id: "xflow-stablecoins",

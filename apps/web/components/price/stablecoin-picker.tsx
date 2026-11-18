@@ -2,11 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { NetworkLogo } from "../marketing/network-logo";
-import { NETWORKS, TOKENS, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
+import { CASH_OUT_CURRENCIES, CASH_PICKUP_CURRENCIES, DESTINATIONS, NETWORKS, TOKENS, isCashOutCurrency, isCashPickupCurrency, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
 import priceStyles from "./price.module.css";
 import styles from "./stablecoin.module.css";
 
@@ -22,10 +22,15 @@ function ChainIcon({ network, size }: { network: Network; size: number }) {
   return <NetworkLogo slug={network} size={size} />;
 }
 
+function fiatFlag(asset: Asset) {
+  return asset === "INR" ? "IN" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].flag : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].flag : undefined;
+}
+
 function AssetIcon({ asset, network }: { asset: Asset; network?: Network }) {
+  const flag = fiatFlag(asset);
   return <span className={styles.tokenIcon} aria-hidden>
-    {asset === "INR" ? <Flag code="IN" size={26} round /> : <CurrencyLogo symbol={asset} size={26} />}
-    {network && asset !== "INR" ? <span className={styles.networkBadge}><ChainIcon network={network} size={13} /></span> : null}
+    {flag ? <Flag code={flag} size={26} round /> : <CurrencyLogo symbol={asset} size={26} />}
+    {network && !flag ? <span className={styles.networkBadge}><ChainIcon network={network} size={13} /></span> : null}
   </span>;
 }
 
@@ -35,25 +40,30 @@ export function StablecoinPicker(props: Props) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Asset>(value);
   const [query, setQuery] = useState("");
+  const [networkQuery, setNetworkQuery] = useState("");
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const id = useId();
   const label = side === "from" ? "Sending asset" : "Receive destination";
-  const subtitle = value === "INR" ? "Bank account" : NETWORKS[network].label;
-  const options: Asset[] = side === "from" ? ["USDT", "USDC"] : ["INR", "EURC"];
+  const subtitle = isCashPickupCurrency(value) ? "Cash pickup" : fiatFlag(value) ? "Bank account" : NETWORKS[network].label;
+  const options: Asset[] = side === "from" ? ["USDT", "USDC"] : DESTINATIONS;
   const filtered = options.filter((asset) => {
-    const names = asset === "INR" ? "Indian rupee bank account" : `${TOKENS[asset].issuer} ${asset === "EURC" ? "Euro" : "USD"} ${Object.keys(TOKENS[asset].addresses).map((chain) => NETWORKS[chain as Network].label).join(" ")}`;
+    const names = asset === "INR" ? "Indian rupee bank account" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].name + " bank account" : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].name + " cash pickup" : `${TOKENS[asset].issuer} ${asset === "EURC" ? "Euro" : "USD"}`;
     return `${asset} ${names}`.toLowerCase().includes(query.trim().toLowerCase());
   });
+  const draftToken = draft === "USDC" ? "USDC" : "USDT";
+  const filteredNetworks = networksFor(draftToken).filter(chain => (chain + " " + NETWORKS[chain].label).toLowerCase().includes(networkQuery.trim().toLowerCase()));
   const close = () => { setOpen(false); trigger.current?.focus({ preventScroll: true }); };
 
   useEffect(() => {
     if (!open) return;
     const place = () => {
       const rect = trigger.current!.getBoundingClientRect();
-      setPosition({ top: Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - 480)), left: Math.max(12, Math.min(rect.right - 340, window.innerWidth - 352)) });
+      const width = side === "from" ? 620 : 340;
+      const height = side === "from" ? 545 : 480;
+      setPosition({ top: Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - height)), left: Math.max(12, Math.min(rect.right - 340, window.innerWidth - width - 12)) });
     };
     place();
     search.current?.focus({ preventScroll: true });
@@ -61,7 +71,7 @@ export function StablecoinPicker(props: Props) {
     document.body.style.overflow = "hidden";
     window.addEventListener("resize", place);
     return () => { document.body.style.overflow = previous; window.removeEventListener("resize", place); };
-  }, [open]);
+  }, [open, side]);
 
   const chooseNetwork = (asset: Stablecoin, chain: Network) => {
     if (props.side === "from") props.onChange(asset, chain);
@@ -70,18 +80,18 @@ export function StablecoinPicker(props: Props) {
   const chooseToken = (asset: Asset) => {
     setDraft(asset);
     if (props.side === "to") { props.onChange(asset as Destination); close(); }
-    else if (asset !== value && TOKENS[asset as Stablecoin].addresses[network]) chooseNetwork(asset as Stablecoin, network);
+    else setNetworkQuery("");
   };
 
   return <>
-    <button ref={trigger} type="button" className={`${priceStyles.pickerTrigger} ${styles.assetPill} press`} aria-label={`${label}: ${value} · ${subtitle}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => { setDraft(value); setQuery(""); setOpen(true); }}>
+    <button ref={trigger} type="button" className={`${priceStyles.pickerTrigger} ${styles.assetPill} press`} aria-label={`${label}: ${value} · ${subtitle}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => { setDraft(value); setQuery(""); setNetworkQuery(""); setOpen(true); }}>
       <AssetIcon asset={value} network={network} />
       <span className={styles.pillText}>{value}<span className={styles.pillNetwork}><span className={styles.pillDot}> · </span>{subtitle}</span></span>
       <ChevronDown size={14} aria-hidden className={priceStyles.pickerChevron} />
     </button>
     {open ? createPortal(<div className={styles.pickerLayer}>
       <div className={styles.assetScrim} onClick={close} aria-hidden />
-      <div ref={panel} id={id} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className={`${priceStyles.pickerPanel} ${styles.assetPanel}`} style={position} onKeyDown={(event) => {
+      <div ref={panel} id={id} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className={`${priceStyles.pickerPanel} ${styles.assetPanel}`} data-split={side === "from" || undefined} style={position} onKeyDown={(event) => {
         if (event.key === "Escape") { event.preventDefault(); close(); }
         if (event.key === "Tab") {
           const focusable = panel.current!.querySelectorAll<HTMLElement>("button:not(:disabled), input");
@@ -91,23 +101,31 @@ export function StablecoinPicker(props: Props) {
         }
       }}>
         <header className={styles.pickerHeading}><h3 id={`${id}-title`}>{side === "from" ? "Choose token & network" : "Choose destination"}</h3><button type="button" onClick={close} aria-label="Close asset picker"><X size={18} /></button></header>
-        <label className={priceStyles.pickerSearch}><Search size={16} aria-hidden /><input ref={search} aria-label="Search tokens or networks" placeholder="Search tokens or networks" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-        <div className={styles.assetOptions}>
-          <p className={priceStyles.pickerGroup}>{side === "from" ? "Stablecoins" : "Receive as"}</p>
-          {filtered.map((asset) => <div key={asset}>
-            <button type="button" className={`${priceStyles.pickerOption} ${styles.tokenOption}`} data-active={draft === asset || undefined} aria-pressed={value === asset} aria-expanded={side === "from" ? draft === asset : undefined} onClick={() => chooseToken(asset)}>
-              <AssetIcon asset={asset} />
-              <span className={styles.tokenName}><strong>{asset}</strong><small>{asset === "INR" ? "Indian rupee · Bank account" : asset === "EURC" ? `On-chain · ${NETWORKS[network].label}` : TOKENS[asset].issuer}</small></span>
-              {value === asset ? <Check size={16} className={priceStyles.pickerCheck} aria-label="Selected" /> : side === "from" ? <ChevronDown size={14} aria-hidden /> : null}
-            </button>
-            {side === "from" && draft === asset ? <div className={styles.networkOptions} role="group" aria-label={`${asset} networks`}>
-              <p>{TOKENS[asset as Stablecoin].addresses[network] ? "Choose network" : `Choose a network for ${asset}`}</p>
-              {networksFor(asset as Stablecoin).map((chain) => <button type="button" key={chain} aria-label={NETWORKS[chain].label} aria-pressed={value === asset && network === chain} onClick={() => chooseNetwork(asset as Stablecoin, chain)}>
-                <ChainIcon network={chain} size={20} /><span>{NETWORKS[chain].label}</span>{value === asset && network === chain ? <Check size={14} aria-hidden /> : null}
+        <div className={styles.pickerColumns}>
+          <section className={styles.assetPane} aria-label={side === "from" ? "Choose token" : "Receive currencies"}>
+            <label className={priceStyles.pickerSearch}><Search size={16} aria-hidden /><input ref={search} aria-label={side === "to" ? "Search currencies" : "Search tokens"} placeholder={side === "to" ? "Search currencies" : "Search tokens"} value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+            <div className={styles.assetOptions}>
+              <p className={priceStyles.pickerGroup}>{side === "from" ? "Stablecoins" : "Receive as"}</p>
+              {filtered.map((asset) => <div key={asset}>
+                <button type="button" className={`${priceStyles.pickerOption} ${styles.tokenOption}`} data-active={draft === asset || undefined} aria-pressed={(side === "from" ? draft : value) === asset} aria-controls={side === "from" ? id + "-networks" : undefined} onClick={() => chooseToken(asset)}>
+                  <AssetIcon asset={asset} />
+                  <span className={styles.tokenName}><strong>{asset}</strong><small>{asset === "INR" ? "Indian rupee · Bank account" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].name + " · Bank account" : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].name + " · Cash pickup" : asset === "EURC" ? `On-chain · ${NETWORKS[network].label}` : TOKENS[asset].issuer}</small></span>
+                  {side === "from" ? <ChevronRight size={15} aria-hidden /> : value === asset ? <Check size={16} className={priceStyles.pickerCheck} aria-label="Selected" /> : null}
+                </button>
+              </div>)}
+              {!filtered.length ? <p className={priceStyles.pickerEmpty}>No matching options.</p> : null}
+            </div>
+          </section>
+          {side === "from" ? <section className={styles.networkPane} id={id + "-networks"} aria-labelledby={id + "-network-title"}>
+            <h4 id={id + "-network-title"}>{draftToken} networks</h4>
+            <label className={priceStyles.pickerSearch}><Search size={16} aria-hidden /><input aria-label="Search networks" placeholder="Search networks" value={networkQuery} onChange={(event) => setNetworkQuery(event.target.value)} /></label>
+            <div className={styles.networkOptions}>
+              {filteredNetworks.map(chain => <button type="button" key={chain} aria-label={NETWORKS[chain].label} aria-pressed={value === draftToken && network === chain} onClick={() => chooseNetwork(draftToken, chain)}>
+                <ChainIcon network={chain} size={23} /><span>{NETWORKS[chain].label}</span>{value === draftToken && network === chain ? <Check size={15} aria-hidden /> : null}
               </button>)}
-            </div> : null}
-          </div>)}
-          {!filtered.length ? <p className={priceStyles.pickerEmpty}>No tokens or networks found.</p> : null}
+              {!filteredNetworks.length && <p className={priceStyles.pickerEmpty}>No matching networks.</p>}
+            </div>
+          </section> : null}
         </div>
         {side === "to" ? <p className={styles.pickerHint}>EURC swaps use your sending network. Change it in “You have”.</p> : <p className={styles.pickerHint}>Only networks listed by the token’s issuer.</p>}
       </div>

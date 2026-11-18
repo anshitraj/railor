@@ -28,6 +28,10 @@ export function attachMarketPricingEvidence(coverage: MarketCoverage, currency: 
     const pricingStatus = price
       ? { label: price.basis === "published" ? "Published estimate above" : price.basis === "market_estimate" ? "Market estimate above" : "Price reference above", reason: price.partial ? "Some fees or profile rules remain unconfirmed. See the price details above." : "See the amount, fee and collection time above." }
       : { label: feeEvidence.length ? "Captured fee information" : "Quote not available", reason: missing?.reason ?? "No public quote source is integrated for this request. Account pricing requires provider access." };
+    if (provider.pricingReviewedAt && provider.pricingStatus) {
+      const status = provider.pricingStatus;
+      return { ...provider, feeEvidence, pricingStatus: missing && missing.reason !== status.reason ? { ...status, reason: status.reason + " " + missing.reason } : status };
+    }
     return { ...provider, feeEvidence, pricingStatus: (provider.discoverySources?.length || provider.currencyMatch === "unverified") && !price && !missing ? provider.pricingStatus ?? pricingStatus : pricingStatus };
   };
   return { ...coverage, providers: coverage.providers.map(attach), ...(coverage.allProviders ? { allProviders: coverage.allProviders.map(attach) } : {}) };

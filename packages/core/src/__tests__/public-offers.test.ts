@@ -15,6 +15,15 @@ describe("conditional public calculator captures", () => {
     expect(publicOfferRows({ ...input, context: { ...input.context!, direction: "send", country: "AE" } }, now)).toEqual([]);
     expect(publicOfferRows({ ...input, destinationCountry: "GB" }, now)).toEqual([]);
   });
+  it("keeps the refreshed Xoom calculator amount and the separate ACH fee", () => {
+    const refreshed = captured.observations.find(item => item.providerSlug === "xoom" && item.amount === 500)!;
+    const query = { ...input, amount: 500 };
+    const checked = new Date(Date.parse(refreshed.observedAt) + 1000);
+    expect(publicOfferRows(query, checked)[0]).toMatchObject({ providerSlug: "xoom", recipientAmount: 46615, feeAmount: 1.99, partial: true });
+    expect(publicOfferRows({ ...query, amount: 501 }, checked)).toEqual([]);
+    expect(publicOfferRows(query, new Date(refreshed.displayUntil))).toEqual([]);
+  });
+
   it("removes the observation at its 24-hour display deadline and rejects future captures", () => {
     expect(publicOfferRows(input, new Date(offer.displayUntil))).toEqual([]);
     expect(publicOfferRows(input, new Date(Date.parse(offer.observedAt) - 1))).toEqual([]);
