@@ -51,3 +51,5 @@ export * from "./web-check-store.js";
 export * from "./freelancer.js";
 export * from "./invoice-extraction.js";
 export * from "./payslip-extraction.js";
+
+export { usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl } from "./public-pricing/us-bank-remittances.js";

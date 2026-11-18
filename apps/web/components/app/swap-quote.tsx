@@ -245,6 +245,19 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     return () => window.clearTimeout(t);
   }, [flashes]);
 
+  async function getProviderQuote(slug: string, signal: AbortSignal) {
+    const query = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", provider: slug, ...contextParams(context) });
+    const res = await fetch("/api/prices/provider?" + query, { method: "POST", signal, cache: "no-store" });
+    const payload = await res.json() as { quote?: PriceRow; message?: string; error?: string; source?: { url: string; title: string } };
+    if (!res.ok || !payload.quote) return { message: payload.error ?? payload.message ?? "No verified price was returned.", source: payload.source };
+    if (signal.aborted) return null;
+    const quote = payload.quote;
+    setResult(previous => previous && priceResponseMatches(previous, { from, to, amount, market, context })
+      ? { ...previous, rows: [...previous.rows.filter(row => row.providerSlug !== slug), quote] }
+      : previous);
+    return null;
+  }
+
   const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now) && (!r.publicOffer || Date.parse(r.publicOffer.displayUntil) > now);
   const { quotes, estimates, excluded, best } = priceView(result, now);
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
@@ -466,6 +479,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       {!cardComingSoon && <>
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
+        onGetQuote={mode === "app" && valid && !cardComingSoon ? getProviderQuote : undefined}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
         reference={result?.reference ?? null}
         action={cta}

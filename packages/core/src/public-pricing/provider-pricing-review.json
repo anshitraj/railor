@@ -43,6 +43,7 @@
         {
           "to": "INR",
           "label": "Business payout · fees vary",
+          "feeHighlight": "US standard local fee: USD 2",
           "reason": "Airwallex supports local INR payouts. The public USD-to-INR calculator illustrates a U.S. business sending money. Airwallex lists Singapore as the onboarding entity for India-registered businesses, so confirm the plan and price for your own account.",
           "sources": [
             {
@@ -57,6 +58,13 @@
               "label": "Airwallex country eligibility",
               "url": "https://help.airwallex.com/hc/en-gb/articles/4408591334937-Eligible-Countries-and-Territories"
             }
+          ],
+          "fees": [
+            {
+              "product": "U.S. plan · INR bank payout",
+              "summary": "USD 2 standard local INR payout fee and 1.00% standard FX margin for currencies in the other-currency tier. Grow and Accelerate plans waive the local fee. Confirm actual markup, taxes and plan with Airwallex.",
+              "sourceUrl": "https://www.airwallex.com/en-us/terms/fee-schedule"
+            }
           ]
         },
         {
@@ -68,6 +76,31 @@
             {
               "label": "Airwallex USD-to-EUR calculator",
               "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-europe"
+            }
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "U.S. business payout · published fees",
+          "feeHighlight": "US standard local fee: USD 1",
+          "reason": "Airwallex publishes an indicative US business exchange rate. Final conversion and fee depend on the sender’s plan and local transfer method.",
+          "sources": [
+            {
+              "label": "Airwallex USD to SGD calculator",
+              "url": "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-singapore"
+            },
+            {
+              "label": "Singapore payout rails",
+              "url": "https://www.airwallex.com/docs/payouts/payout-network/singapore"
+            }
+          ],
+          "origin": "US",
+          "fees": [
+            {
+              "product": "U.S. plan · SGD bank payout",
+              "summary": "0.50% standard SGD FX margin and USD 1 standard local SGD payout fee. Grow and Accelerate plans waive the local fee. Confirm applicable tax and account rate.",
+              "sourceUrl": "https://www.airwallex.com/en-us/terms/fee-schedule"
             }
           ]
         }
@@ -490,7 +523,37 @@
         "label": "Collection product quote",
         "reason": "Cashfree has published gateway processing fees. Its Global Collections bank-transfer product has a separate price.",
         "url": "https://www.cashfree.com/international-payments/international-wire-transfer/"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "label": "Global Collections · quote required",
+          "reason": "For eligible Indian businesses receiving client payments via US ACH. Cashfree requests an account quote for its current collection fee.",
+          "sources": [
+            {
+              "label": "Cashfree Global Collections",
+              "url": "https://www.cashfree.com/international-payments/international-wire-transfer/"
+            },
+            {
+              "label": "US ACH collection and FX terms",
+              "url": "https://www.cashfree.com/blog/what-is-bank-routing-number/"
+            }
+          ],
+          "fees": [
+            {
+              "product": "Current Global Collections pricing",
+              "summary": "Cashfree advertises no FX markup for eligible collections and an e-FIRA at no extra charge. Its current collection fee is available on request.",
+              "sourceUrl": "https://www.cashfree.com/payment-gateway-charges/"
+            },
+            {
+              "product": "Historical fee disclosure · August 2023",
+              "summary": "Cashfree published 1%–1.5% depending on volume for local collections in major currencies including USD. That was USD 10–15 on USD 1,000 before any separately applicable charges. Confirm the current rate and GST.",
+              "sourceUrl": "https://www.cashfree.com/blog/how-to-receive-international-business-payments-in-india/"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "cbw-bank",
@@ -1461,7 +1524,33 @@
         "label": "Method and merchant terms",
         "reason": "Rapyd’s pricing model varies by payment method and country. Card acquiring and payout agreements have separate fee schedules.",
         "url": "https://www.rapyd.net/products/pricing/"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "Rapyd Disburse · account quote",
+          "feeHighlight": "Self-onboarding schedule: 3% + USD 20",
+          "reason": "Rapyd supports SGD bank payouts on approved merchant accounts. Its production FX API requires signed credentials and returns a rate that includes the account’s FX markup.",
+          "sources": [
+            {
+              "label": "Rapyd FX quote API",
+              "url": "https://docs.rapyd.net/en/get-fx-rate.html"
+            },
+            {
+              "label": "Rapyd payout access",
+              "url": "https://docs.rapyd.net/en/viewing-payout-methods.html"
+            }
+          ],
+          "fees": [
+            {
+              "product": "Merchant self-onboarding schedule",
+              "summary": "The published Rapyd Disburse self-onboarding agreement lists 3% plus USD 20, equivalent to USD 50 on USD 1,000 if that schedule applies. Confirm contracted fees, conversion and GST on the merchant account.",
+              "sourceUrl": "https://iconslib.rapyd.net/assets/client-portal/Service_Agreement.pdf"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "razorpay",
@@ -1493,7 +1582,28 @@
         "reason": "The bank/ACH/wire tariff covers processing. The executable FX rate is needed for a complete collection price.",
         "url": "https://www.refrens.com/receive-international-payments-india",
         "feeHighlight": "1.5% or less · USD 60 processing cap"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "Published product settles in INR",
+          "reason": "Refrens accepts SGD as a collection currency for its Indian export product and settles eligible collections in INR. There is no documented SGD bank payout for this product.",
+          "sources": [
+            {
+              "label": "Official product scope",
+              "url": "https://www.refrens.com/receive-international-payments-india"
+            }
+          ],
+          "fees": [
+            {
+              "product": "India export collections",
+              "summary": "Published bank/wire fee of 1.5% or less, capped at USD 60, including taxes for Indian INR settlement. FX is additional.",
+              "sourceUrl": "https://www.refrens.com/receive-international-payments-india"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "remitly",
@@ -1508,7 +1618,43 @@
         "label": "Retail calculator and offer",
         "reason": "Remitly shows different rates for new-customer promotions, payment speeds and delivery rails. The regular price depends on account and choices.",
         "url": "https://www.remitly.com/us/en/money-transfer/send-money-to-india"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "label": "USD 0 transfer fee at USD 1,000+",
+          "feeHighlight": "USD 0 at USD 1,000 or more",
+          "reason": "Remitly’s U.S. fee schedule lists USD 3.99 below USD 1,000 and USD 0 from USD 1,000. An eligible first transfer can have a different fee and rate.",
+          "sources": [
+            {
+              "label": "Remitly U.S. India calculator and fee schedule",
+              "url": "https://www.remitly.com/us/en/currency-converter/usd-to-inr-rate"
+            }
+          ],
+          "origin": "US",
+          "fees": [
+            {
+              "product": "Published corridor fee",
+              "summary": "USD 3.99 below USD 1,000 and USD 0 from USD 1,000. Eligible first transfers are advertised with a fee waiver. The sender confirms bank deposit, FX, charges and delivery.",
+              "sourceUrl": "https://www.remitly.com/us/en/currency-converter/usd-to-inr-rate"
+            }
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "US bank-funded personal transfer",
+          "reason": "The Singapore calculator publishes a first-transfer rate on the first USD 1,500 for eligible senders. Choose bank deposit at checkout for the precise payout.",
+          "sources": [
+            {
+              "label": "Remitly U.S. Singapore calculator",
+              "url": "https://www.remitly.com/us/en/money-transfer/send-money-to-singapore"
+            }
+          ],
+          "origin": "US"
+        }
+      ]
     },
     {
       "slug": "ripple",
@@ -1539,7 +1685,28 @@
         "reason": "The inward payment page publishes a fee including GST. Confirm account availability and the active rate before using it.",
         "url": "https://www.salt.pe/international-payments",
         "feeHighlight": "1.75% including GST advertised"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "Published product settles in INR",
+          "reason": "Salt accepts SGD as a collection currency for its Indian export product and settles eligible collections in INR. There is no documented SGD bank payout for this product.",
+          "sources": [
+            {
+              "label": "Official product scope",
+              "url": "https://www.salt.pe/international-payments"
+            }
+          ],
+          "fees": [
+            {
+              "product": "India export collections",
+              "summary": "Published 1.75% including GST, for eligible Indian INR settlement.",
+              "sourceUrl": "https://www.salt.pe/international-payments"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "scrypt",
@@ -1616,7 +1783,33 @@
         "reason": "The personal-account fee schedule prices individual rails and stablecoin operations. Exchange and bank charges can be separate.",
         "url": "https://support.straitsx.com/support/solutions/articles/157000365665-straitsx-personal-account-transaction-fee-schedule",
         "feeHighlight": "USD 40 personal USD bank withdrawal"
-      }
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "Verified account · live FX quote required",
+          "feeHighlight": "SGD withdrawal: SGD 0 (personal)",
+          "reason": "StraitsX documents USD funding and SGD withdrawals to a bank account in your own name. Third-party funds are a different product. The account confirms the applicable conversion rate.",
+          "sources": [
+            {
+              "label": "StraitsX bank funding",
+              "url": "https://support.straitsx.com/support/solutions/articles/157000365766-transfer-in-fiat-sgd-and-usd"
+            },
+            {
+              "label": "StraitsX swap quotes",
+              "url": "https://docs.straitsx.com/docs/swap-faqs"
+            }
+          ],
+          "fees": [
+            {
+              "product": "StraitsX personal account",
+              "summary": "USD bank funding and SGD bank withdrawal are free from StraitsX. FX spread and possible bank charges are separate. USD withdrawal has a USD 40 charge, which does not apply to SGD withdrawal.",
+              "sourceUrl": "https://support.straitsx.com/support/solutions/articles/157000365665-straitsx-personal-account-transaction-fee-schedule"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "stripe",
@@ -1877,9 +2070,44 @@
         "reviewedOn": "2026-11-19",
         "label": "Transfer calculator and promotion",
         "reason": "Xoom shows rates and fees before sending. Promotional rates, funding, amount and destination affect the total.",
-        "url": "https://www.xoom.com/india/send-money?locale=en-us",
-        "feeHighlight": "Public bank and card calculator"
-      }
+        "url": "https://www.xoom.com/india/send-money?locale=en-us"
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "to": "INR",
+          "label": "US bank funding · USD 0 at USD 1,000+",
+          "feeHighlight": "USD 0 on eligible USD 1,000+ transfers",
+          "reason": "Xoom waives the transfer fee for eligible U.S. bank-funded transfers of at least USD 1,000 to Indian bank accounts or UPI. The sender’s FX rate still applies.",
+          "sources": [
+            {
+              "label": "Xoom US to India calculator",
+              "url": "https://www.xoom.com/india/send-money?locale=en-us"
+            }
+          ],
+          "origin": "US",
+          "fees": [
+            {
+              "product": "US bank-funded deposit",
+              "summary": "USD 0 transfer fee at USD 1,000 or above for an eligible transfer. An introductory FX rate can differ from the rate for returning customers.",
+              "sourceUrl": "https://www.xoom.com/legal/xoom-transfer-fees"
+            }
+          ]
+        },
+        {
+          "from": "USD",
+          "to": "SGD",
+          "label": "US bank-funded personal transfer",
+          "reason": "Xoom prices SGD bank deposits from the US in its public calculator. Choose bank funding to see its fee.",
+          "sources": [
+            {
+              "label": "Xoom US to Singapore calculator",
+              "url": "https://www.xoom.com/singapore/send-money?locale=en-us"
+            }
+          ],
+          "origin": "US"
+        }
+      ]
     },
     {
       "slug": "yellow-card",

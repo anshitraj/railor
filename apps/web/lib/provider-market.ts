@@ -17,7 +17,7 @@ interface UniverseProvider {
 type FeeEvidence = NonNullable<MarketCoverage["providers"][number]["feeEvidence"]>[number];
 
 type PricingReview = Pick<(typeof pricingReview.providers)[number], "slug" | "checkedAt" | "status" | "sourceUrl" | "summary" | "pricingReview"> & {
-  routeNotes?: Array<{ from?: string; origin?: string; to: string; label: string; reason: string; fees?: Array<Pick<FeeEvidence, "product" | "summary" | "sourceUrl">>; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
+  routeNotes?: Array<{ from?: string; origin?: string; to: string; label: string; reason: string; feeHighlight?: string; fees?: Array<Pick<FeeEvidence, "product" | "summary" | "sourceUrl">>; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
 };
 
 const reviewBySlug = new Map<string, PricingReview>(pricingReview.providers.map(entry => [entry.slug, entry]));
@@ -115,10 +115,11 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
     for (const { label, url } of [...(provider.discoverySources ?? []), ...(route?.sources ?? []), { label: "Pricing research", url: finding.url }]) {
       if (!sources.has(url)) sources.set(url, label);
     }
+    const feeHighlight = route?.feeHighlight ?? (!route?.fees?.length && "feeHighlight" in finding ? finding.feeHighlight : undefined);
     return { ...provider,
       pricingStatus: route ? { label: route.label, reason: route.reason } : { label: finding.label, reason: finding.reason },
       pricingReviewedAt: finding.reviewedOn,
-      ...("feeHighlight" in finding ? { feeHighlight: finding.feeHighlight } : {}),
+      ...(feeHighlight ? { feeHighlight } : {}),
       feeEvidence: [
         ...(route?.fees ?? []).map(fee => ({ ...fee, observedAt: review.checkedAt })),
         ...(provider.feeEvidence ?? []),

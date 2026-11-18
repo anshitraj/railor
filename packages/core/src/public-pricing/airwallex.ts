@@ -3,10 +3,11 @@ import type { PriceCheckInput, PriceRow } from "../pricing.js";
 
 const indiaCalculator = "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-india";
 const europeCalculator = "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-europe";
+const singaporeCalculator = "https://www.airwallex.com/en-us/business-account/transfers/send-money-to-singapore";
 const usFees = "https://www.airwallex.com/en-us/terms/fee-schedule";
 const euroCountries = new Set(["AT", "BE", "BG", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"]);
 const quote = z.object({
-  ccyPair: z.enum(["USDINR", "EURUSD"]),
+  ccyPair: z.enum(["USDINR", "EURUSD", "USDSGD"]),
   sellAmount: z.number().finite().positive(),
   buyAmount: z.number().finite().positive(),
   clientRate: z.number().finite().positive(),
@@ -20,6 +21,10 @@ export function hasAirwallexPublicReference(input: PriceCheckInput): boolean {
   const usSender = context.country === "US" && context.direction === "send" && context.profile === "business"
     && (!context.paymentMethod || context.paymentMethod === "local_bank");
   if (input.destinationCurrency === "INR") return usSender && input.destinationCountry === "IN";
+  if (input.destinationCurrency === "SGD") {
+    return (!input.destinationCountry || input.destinationCountry === "SG")
+      && (usSender || (context.direction === "receive" && (context.country === "SG" || input.destinationCountry === "SG") && (context.paymentMethod === "transfer_service" || context.paymentMethod === "local_bank")));
+  }
   return input.destinationCurrency === "EUR" && (!input.destinationCountry || euroCountries.has(input.destinationCountry))
     && (usSender || (context.direction === "receive" && context.paymentMethod === "transfer_service"));
 }
@@ -29,6 +34,7 @@ export async function airwallexPublicReference(input: PriceCheckInput, fetcher: 
   if (!hasAirwallexPublicReference(input)) return null;
 
   const euro = input.destinationCurrency === "EUR";
+  const singapore = input.destinationCurrency === "SGD";
   const params = new URLSearchParams({ sellAmount: String(input.amount), sellCcy: "USD", buyCcy: input.destinationCurrency, feePercent: "0" });
   const response = await fetcher(`https://www.airwallex.com/api/fx/fxRate/indicativeQuote?${params}`, {
     headers: { Accept: "application/json" },
@@ -40,7 +46,7 @@ export async function airwallexPublicReference(input: PriceCheckInput, fetcher: 
   const parsed = quote.safeParse(await response.json());
   if (!parsed.success) return null;
   const fx = parsed.data;
-  if (fx.ccyPair !== (euro ? "EURUSD" : "USDINR")) return null;
+  if (fx.ccyPair !== (euro ? "EURUSD" : "USD" + input.destinationCurrency)) return null;
   const rate = euro ? 1 / fx.clientRate : fx.clientRate;
   const age = now.getTime() - fx.createdAt;
   if (Math.abs(fx.sellAmount - input.amount) > .000001 || age < -60_000 || age > 300_000
@@ -59,21 +65,24 @@ export async function airwallexPublicReference(input: PriceCheckInput, fetcher: 
     totalCostPct: null,
     partial: true,
     side: "payer",
+    ...(singapore ? { senderCountry: "US", paymentMethods: ["local_bank", "transfer_service"] as PriceRow["paymentMethods"] } : {}),
     delivery: null,
     ...(euro ? {
       taxNote: "The standard U.S. local transfer fee excludes applicable GST. Confirm the sender’s actual charges.",
       receipt: "Where available, the sender can download transfer confirmation from their account.",
     } : {}),
     observedAt: new Date(fx.createdAt).toISOString(),
-    source: { label: "Airwallex US public calculator", url: euro ? europeCalculator : indiaCalculator },
+    source: { label: "Airwallex US public calculator", url: euro ? europeCalculator : singapore ? singaporeCalculator : indiaCalculator },
     missing: ["Airwallex FX markup and payout fee"],
     notes: [
       euro
         ? "The conversion shown is before fees, for an eligible US business sending EUR to Europe."
-        : "The amount is Airwallex’s indicative USD-to-INR conversion before fees. It is shown for a US business sending money to India.",
+        : "The amount is Airwallex’s indicative conversion before fees for a US business sender.",
       euro
         ? `The current US fee schedule lists a 0.50% standard EUR FX margin and a $1 local EUR payout fee where applicable. Grow and Accelerate are exempt from the local payout fee. Check the applicable rate and payout rail in the sender’s account. ${usFees}`
-        : `The US schedule lists a $2 local INR payout fee where standard transfer fees apply. Grow and Accelerate are exempt from that fee. Check the applicable markup and total in your account. ${usFees}`,
+        : singapore
+          ? `For US business accounts, the fee schedule lists a 0.50% standard SGD FX margin and a $1 local payout where standard transfer fees apply. Grow and Accelerate are exempt from that payout fee. ${usFees}`
+          : `The US schedule lists a $2 local INR payout fee where standard transfer fees apply. Grow and Accelerate are exempt from that fee. Check the applicable markup and total in your account. ${usFees}`,
       ...(euro ? ["Airwallex transfer confirmations: https://help.airwallex.com/hc/en-gb/articles/17985003563279-How-to-view-and-manage-transfers"] : []),
     ],
   };

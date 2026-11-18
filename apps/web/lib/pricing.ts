@@ -8,6 +8,7 @@ import { getIntentOptions } from "./reference";
 import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
+import { loadPublicQuoteObservations } from "./public-quote-observations";
 import { priceDestination } from "./price-destination";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
@@ -76,6 +77,9 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
     const entry = result.unavailable.find(u => u.providerSlug === check.providerSlug);
     if (entry && check.status === "quoted") entry.reason = "Railor's backend FX observation is shown separately below. Connecting your own account is optional, for account-specific pricing.";
   }
+  const cachedQuotes = await loadPublicQuoteObservations(result.input).catch(() => []);
+  const found = new Set(result.rows.filter(row => row.basis !== "market_estimate" && row.recipientAmount !== null).map(row => row.providerSlug));
+  result.rows.push(...cachedQuotes.filter(row => !found.has(row.providerSlug)));
   const coverage = providerMarketCoverage(input);
   const captured = coverage.providers.length ? await db.select({
     providerSlug: providers.slug, summary: fees.summary, product: fees.product,

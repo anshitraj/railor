@@ -8,6 +8,7 @@ import { shared } from "./public-pricing/shared-cache.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
+import { usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
@@ -450,7 +451,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   // Injected fetchers (tests) bypass the shared cache.
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}:${input.destinationCountry ?? ""}`;
-  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic] = await Promise.all([
+  const usBankCurrency = usBankRemittanceCorridor(input);
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, isUsdToEur(input))).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
@@ -465,6 +467,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     cache(`mulya-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => mulyaPublicFx(input, fetcher, now)).catch(() => null),
     hasAirwallexPublicReference(input) ? cache(`airwallex-public-fx:${pair}`, 15_000, () => airwallexPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
     hasAlAnsariPublicReference(input) ? cache(`al-ansari-public-fx:${pair}`, 30_000, () => alAnsariPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
+    usBankCurrency ? cache(`us-bank-remittances:${pair}`, 60_000, () => usBankRemittanceRows(usBankCurrency, input.amount, fetcher, now)) : Promise.resolve([]),
   ]);
 
   for (const c of connected) {
@@ -474,7 +477,9 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
-  rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug)));
+  const liveRetailSlugs = new Set(usBankRows.map(row => row.providerSlug));
+  rows.push(...usBankRows.filter(row => !connectedSlugs.has(row.providerSlug)));
+  rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug) && !liveRetailSlugs.has(offer.providerSlug)));
   for (const fx of [airwallexPublic, alAnsariPublic]) {
     if (fx && !connectedSlugs.has(fx.providerSlug)) rows.push({ ...fx, notes: [...fx.notes] });
   }
@@ -676,9 +681,8 @@ export function applyPaymentMethod(input: PriceCheckInput, rows: PriceRow[], una
   for (let i = rows.length - 1; i >= 0; i -= 1) {
     const row = rows[i]!;
     const payerService = row.side === "payer";
-    // With USD → EUR bank collection selected, retain the bank-funded Wise
-    // sender quote as a labeled alternative. Its eligibility remains unconfirmed.
-    if (method === "local_bank" && payerService && row.product?.id === "wise:usd-eur-bank") continue;
+    // Keep sender prices when the quote explicitly identifies local bank funding.
+    if (method === "local_bank" && payerService && (row.paymentMethods?.includes("local_bank") || row.product?.id === "wise:usd-eur-bank")) continue;
     if (method === "transfer_service" ? !payerService : payerService) {
       rows.splice(i, 1);
       continue;

@@ -26,6 +26,7 @@ function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
 type Props = {
   rows: PriceRow[]; selected: PriceRow | null; best: PriceRow | null; onSelect: (slug: string) => void;
   candidates?: MarketCoverageProvider[]; selectedCandidate?: MarketCoverageProvider | null;
+  onGetQuote?: (slug: string, signal: AbortSignal) => Promise<{ message: string; source?: { url: string; title: string } } | null>;
   from: string; to: string; amount: number; loading: boolean; checked: string;
   /** The mid-market benchmark every cost is measured against. */
   reference?: { rate: number; source: string; observedAt: string } | null;
@@ -87,11 +88,32 @@ export function PriceProviderBrowser(props: Props) {
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>
       <motion.div id="price-panel-2" role="tabpanel" aria-labelledby="price-tab-2" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}>{tab === "Historical data" ? props.history : null}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} /> : <SelectedProvider key={selected ? `${selected.providerSlug}:${selected.observedAt}` : "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} /> : <SelectedProvider key={selected ? `${selected.providerSlug}:${selected.observedAt}` : "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} />}
   </>;
 }
 
-function UnpricedProvider({ provider }: { provider: MarketCoverageProvider }) {
+function UnpricedProvider({ provider, onGetQuote }: { provider: MarketCoverageProvider; onGetQuote?: Props["onGetQuote"] }) {
+  const [pending, setPending] = useState(false);
+  const [detail, setDetail] = useState<Awaited<ReturnType<NonNullable<Props["onGetQuote"]>>>>(null);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => controller.current?.abort(), []);
+
+  async function getQuote() {
+    if (!onGetQuote || pending) return;
+    const request = new AbortController();
+    controller.current = request;
+    setPending(true);
+    setDetail(null);
+    try {
+      const detail = await onGetQuote(provider.providerSlug, request.signal);
+      if (!request.signal.aborted && detail) setDetail(detail);
+    } catch {
+      if (!request.signal.aborted) setDetail({ message: "The quote check didn’t finish. Try again shortly." });
+    } finally {
+      if (!request.signal.aborted) setPending(false);
+    }
+  }
+
   const fees = provider.feeEvidence?.slice(0, 3) ?? [];
   const sources = provider.discoverySources?.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
@@ -102,6 +124,13 @@ function UnpricedProvider({ provider }: { provider: MarketCoverageProvider }) {
       <p>{provider.pricingStatus?.reason ?? "Ask the provider for your route and account price."}</p>
       {provider.pricingReviewedAt && <small>Reviewed <time dateTime={provider.pricingReviewedAt}>{provider.pricingReviewedAt}</time></small>}
     </div>
+    {onGetQuote ? <div className={styles.providerQuoteRequest}>
+      <button type="button" className={styles.providerAction} onClick={() => void getQuote()} disabled={pending} aria-busy={pending}>
+        {pending ? "Checking the provider…" : "Get quote"}{pending ? <Clock3 size={14} aria-hidden /> : <ArrowRight size={14} aria-hidden />}
+      </button>
+      <p role="status">{detail?.message ?? (pending ? "Checking the provider’s prices for this route. Allow about 30 seconds." : "Checks the provider for this route. Allow about 30 seconds.")}</p>
+      {detail?.source ? <a className={styles.sourceLink} href={detail.source.url} target="_blank" rel="noreferrer noopener">{detail.source.title}<ArrowUpRight size={12} /></a> : null}
+    </div> : null}
     {provider.websiteUrl
       ? <a className={styles.providerAction} href={provider.websiteUrl} target="_blank" rel="noreferrer noopener">Visit {provider.providerName}<ArrowUpRight size={14} /></a>
       : <p className={styles.noAction}>{provider.providerName} doesn’t publish a price for this route. Ask the provider for a quote.</p>}
