@@ -60,7 +60,7 @@ export async function routeInvoice(org: string, id: string, paymentMethod?: "loc
   if (balance.status === "recorded_paid") throw new InvoiceError("This invoice has already been recorded as paid.");
   const amount = Number(balance.outstanding);
   // Compare one way of paying at a time, as the price page does; a client invoice usually arrives by bank transfer.
-  const method = paymentMethod ?? (invoice.profile === "personal" ? "transfer_service" : "local_bank");
+  const method = paymentMethod ?? "local_bank";
   // A freelancer's service export is commercial collection, not a personal remittance.
   const query = CorridorQuery.parse({ entityCountry: invoice.accountCountry, customerType: "business", sourceCountry: invoice.clientCountry, sourceCurrency: invoice.currency, destinationCountry: invoice.accountCountry, destinationCurrency: invoice.settlementCurrency, product: "collection", endpointType: "bank_account", amount, amountCurrency: invoice.currency });
   const satisfiedRequirements = await getSatisfiedRequirements(org);

@@ -3,7 +3,9 @@ import { getSession } from "../../../lib/auth";
 import { loadPricePage } from "../../../lib/pricing";
 import { lockPriceCheck } from "../../../lib/price-lock";
 import { FxTicker } from "../../../components/app/fx-ticker";
-import { PriceCheckHeader, PriceHelpLinks } from "../../../components/app/price-panels";
+import { PriceCheckHeader, PriceHelpLinks, PriceModeTabs } from "../../../components/app/price-panels";
+import { StablecoinQuote } from "../../../components/price/stablecoin-quote";
+import { stablecoinInitial } from "../../../lib/stablecoin-routes";
 import { SwapQuote } from "../../../components/app/swap-quote";
 import { QuickQuote } from "../../../components/price/quick-quote";
 import styles from "../../../components/app/price-check.module.css";
@@ -28,14 +30,27 @@ const UNLOCKS = [
  * stays on the server until the visitor signs in.
  */
 export default async function PublicPricesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const session = await getSession();
-  const page = await loadPricePage(await searchParams, null, session?.organization?.entityCountry);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
+  // Stablecoin routes carry no prices (only verified facts and links), so they need no sign-in.
+  if (params.mode === "stablecoin") {
+    return (
+      <div className={styles.page}>
+        <FxTicker />
+        <PriceCheckHeader mode="public" />
+        <PriceModeTabs mode="stablecoin" base="/prices" />
+        <StablecoinQuote initial={stablecoinInitial(params)} />
+        <PriceHelpLinks />
+      </div>
+    );
+  }
+  const page = await loadPricePage(params, null, session?.organization?.entityCountry);
 
   if (!session) {
     return (
       <div className={styles.page}>
         <FxTicker />
         <PriceCheckHeader mode="public" />
+        <PriceModeTabs mode="bank" base="/prices" />
         <div className={styles.lockedLayout}>
           <QuickQuote
             variant="app"
@@ -66,6 +81,7 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
     <div className={styles.page}>
       <FxTicker />
       <PriceCheckHeader mode="public" />
+      <PriceModeTabs mode="bank" base="/prices" />
       <SwapQuote
         mode="public"
         basePath="/prices"

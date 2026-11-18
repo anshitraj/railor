@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Link2, Shuffle, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Coins, Landmark, Link2, Shuffle, Zap } from "lucide-react";
 import { cn } from "@railor/ui";
 import styles from "./price-check.module.css";
 
@@ -19,6 +19,16 @@ const TOOLS = {
 
 export function PriceCheckHeader({ mode }: { mode: "app" | "public" }) {
   return <header className={styles.pageHeader}><div><h1>Compare prices</h1><p>See what arrives, what it costs and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
+}
+
+/** Bank money and stablecoins are compared differently, so each has its own view. */
+export function PriceModeTabs({ mode, base }: { mode: "bank" | "stablecoin"; base: string }) {
+  return (
+    <nav className={styles.modeTabs} aria-label="What you are comparing">
+      <Link href={base} aria-current={mode === "bank" ? "page" : undefined} className="press"><Landmark size={14} aria-hidden />Bank transfer</Link>
+      <Link href={`${base}?mode=stablecoin`} aria-current={mode === "stablecoin" ? "page" : undefined} className="press"><Coins size={14} aria-hidden />Stablecoins</Link>
+    </nav>
+  );
 }
 
 export function PriceHelpLinks() {
