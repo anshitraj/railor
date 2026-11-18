@@ -6,14 +6,13 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   Activity,
-  Banknote,
+  ArrowUpRight,
   BadgeCheck,
   Building2,
   Bot,
   Calculator,
   ChevronsLeft,
   ChevronsRight,
-  ChevronDown,
   Code2,
   FileCheck2,
   FileSearch,
@@ -45,6 +44,7 @@ import { workspaceArea } from "../../lib/workspace-navigation";
 import { isCompanyPath } from "../../lib/workspace-profile";
 import { WorkspaceAreaNav } from "./workspace-area-nav";
 import mobileStyles from "./mobile-navigation.module.css";
+import sidebarStyles from "./workspace-sidebar.module.css";
 
 interface NavItem {
   href: string;
@@ -93,16 +93,19 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
   ] },
 ];
 
-/** The sidebar: six places, named for what you do there. */
-const PRIMARY_NAV = [{ title: null, items: [
-  { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
-  { href: "/app/prices", label: "Prices", icon: Calculator },
-  { href: "/app/search", label: "Routes", icon: Route },
-  { href: "/app/audit", label: "Company", icon: Building2 },
-  { href: "/app/payments", label: "Activity", icon: Activity },
-  { href: "/app/developers", label: "Developers", icon: Code2 },
-  { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" as const },
-] }] as typeof NAV_GROUPS;
+const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
+  { title: "Workspace", items: [
+    { href: "/app", label: "Home", icon: LayoutDashboard },
+    { href: "/app/prices", label: "Prices", icon: Calculator },
+    { href: "/app/search", label: "Routes", icon: Route },
+    { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
+  ] },
+  { title: "Operations", items: [
+    { href: "/app/audit", label: "Company", icon: Building2 },
+    { href: "/app/payments", label: "Activity", icon: Activity },
+    { href: "/app/developers", label: "Developers", icon: Code2 },
+  ] },
+];
 
 /** Phones get the four most-used places plus a way to everything else. */
 const MOBILE_NAV: NavItem[] = [
@@ -138,13 +141,13 @@ export function AppShell({
   const reduceMotion = useReducedMotion();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
   const [keyboard, setKeyboard] = useState({ open: false, height: 0 });
   const drawerRef = useModalFocus<HTMLElement>(mobileOpen, () => setMobileOpen(false));
   const currentGroup = NAV_GROUPS.find((group) => group.items.some((item) => isActive(pathname, item)));
   const groups = company ? NAV_GROUPS : NAV_GROUPS.filter((group) => !group.items.every((item) => isCompanyPath(item.href)));
   const primary = company ? PRIMARY_NAV : PRIMARY_NAV.map((group) => ({ ...group, items: group.items.filter((item) => !isCompanyPath(item.href)) }));
   const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? "Settings";
+  const compact = collapsed && !mobileOpen;
 
   useEffect(() => setMobileOpen(false), [pathname]);
   useEffect(() => {
@@ -163,10 +166,6 @@ export function AppShell({
     fit(); viewport.addEventListener("resize", fit); window.addEventListener("resize", fit); document.addEventListener("focusin", fit); document.addEventListener("focusout", fit);
     return () => { viewport.removeEventListener("resize", fit); window.removeEventListener("resize", fit); document.removeEventListener("focusin", fit); document.removeEventListener("focusout", fit); };
   }, []);
-  useEffect(() => {
-    const title = NAV_GROUPS.find((group) => group.title && group.items.some((item) => isActive(pathname, item)))?.title;
-    if (title) setOpenGroups((groups) => groups.includes(title) ? groups : [...groups, title]);
-  }, [pathname]);
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 768px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
@@ -221,156 +220,116 @@ export function AppShell({
     ...[...featuredProviders, ...providerItems.filter((i) => !featuredProviders.includes(i))].slice(0, 3),
   ];
 
-  const settingsActive = workspaceArea(pathname) === "Settings";
+  const area = workspaceArea(pathname);
+  const settingsActive = area === "Settings";
 
   return (
     <div className={cn("workspace-frame flex min-h-screen bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
       {mobileOpen ? (
         <button
           type="button"
-          aria-label="Close menu"
+          tabIndex={-1}
+          aria-hidden="true"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-[rgb(23_23_27/0.32)] backdrop-blur-[1px] md:hidden"
+          className={sidebarStyles.scrim}
         />
       ) : null}
 
       <aside
+        id="workspace-navigation"
         ref={drawerRef}
         role={mobileOpen ? "dialog" : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Workspace menu"
         tabIndex={-1}
-        className={cn(
-          "workspace-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[272px] shrink-0 flex-col gap-1 border-r border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-5 transition-[transform,visibility] duration-200 ease-out md:sticky md:top-0 md:z-0 md:visible md:translate-x-0",
-          mobileOpen ? "visible translate-x-0" : "invisible -translate-x-full",
-          collapsed ? "md:w-[72px]" : "md:w-[244px]",
-        )}
+        className={cn("workspace-sidebar", sidebarStyles.sidebar)}
+        data-open={mobileOpen}
+        data-compact={compact}
       >
-        <div className="mb-3 flex items-center gap-2 px-2">
-          <Link href="/app" aria-label="Railor overview" className="flex flex-1 items-center gap-2.5">
-            <RailorMark size={28} />
-            {!collapsed ? (
-              <span className="font-display text-[21px] font-bold tracking-[-0.03em]">Railor</span>
-            ) : null}
+        <div className={sidebarStyles.brandRow}>
+          <Link href="/app" aria-label="Railor overview" className={sidebarStyles.brand} onClick={() => setMobileOpen(false)}>
+            <span className={sidebarStyles.mark}><RailorMark size={24} /></span>
+            {!compact && <span>Railor</span>}
           </Link>
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-canvas)] md:hidden"
-          >
-            <X size={17} />
+          <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close menu" className={cn(sidebarStyles.control, sidebarStyles.close)}>
+            <X size={19} aria-hidden />
           </button>
-        </div>
-
-        {!collapsed ? (
-          <Link
-            href="/app/settings"
-            className="mb-2 flex items-center gap-2.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)] px-2.5 py-2 transition hover:border-[var(--color-line-strong)]"
-          >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ink)] text-[12px] font-bold text-white">
-              {orgName.trim().charAt(0) || "R"}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[13px] font-semibold">{orgName}</span>
-              <span className="block truncate text-[12.5px] text-[var(--color-muted)]">{userEmail}</span>
-            </span>
-          </Link>
-        ) : null}
-
-        <nav aria-label="Workspace" className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1 pb-2 [scrollbar-width:thin]">
-          {primary.map((group) => {
-            const open = !group.title || openGroups.includes(group.title);
-            const groupId = `nav-${group.title?.toLowerCase().replaceAll(" ", "-") ?? "main"}`;
-            return <div key={group.title ?? "root"} className={cn("flex flex-col gap-0.5", !group.title && "mb-4")}>
-              {group.title ? (
-                <button type="button" title={collapsed ? group.title : undefined} aria-label={collapsed ? group.title : undefined} aria-expanded={!collapsed && open} aria-controls={groupId}
-                  onClick={() => {
-                    if (collapsed) { setCollapsed(false); setOpenGroups((groups) => groups.includes(group.title!) ? groups : [...groups, group.title!]); }
-                    else setOpenGroups((groups) => groups.includes(group.title!) ? groups.filter((title) => title !== group.title) : [...groups, group.title!]);
-                  }}
-                  className={cn("sidebar-group-toggle flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 text-[13px] text-[var(--color-muted)] hover:bg-[var(--color-canvas)]", collapsed && "justify-center")}>
-                  {group.icon ? <group.icon size={17} aria-hidden /> : null}
-                  {!collapsed ? <><span className="flex-1 text-left">{group.title}</span><ChevronDown size={14} aria-hidden className={cn("transition-transform duration-200", open && "rotate-180")} /></> : null}
-                </button>
-              ) : null}
-              <div id={groupId} hidden={Boolean(group.title && (collapsed || !open))} className={cn(group.title && "sidebar-subnav")}>
-              {group.items.map((item) => {
-                const active = workspaceArea(pathname) === item.label;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={collapsed ? item.label : undefined}
-                    aria-label={collapsed ? item.label : undefined}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative flex min-h-11 items-center gap-3 rounded-xl px-2.5 py-2.5 text-[13px] transition-colors",
-                      active
-                        ? "font-semibold text-white"
-                        : "text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]",
-                      collapsed && "justify-center",
-                    )}
-                  >
-                    {active ? (
-                      <motion.span
-                        layoutId="sidebar-active"
-                        className="absolute inset-0 rounded-xl bg-[var(--color-ink)] shadow-[var(--shadow-soft)]"
-                        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 40 }}
-                        aria-hidden
-                      />
-                    ) : null}
-                    <item.icon size={19} strokeWidth={active ? 2.25 : 1.9} className={cn("relative shrink-0", active && "text-[var(--color-accent-light)]")} aria-hidden />
-                    {!collapsed ? (
-                      <span className="relative flex flex-1 items-center gap-1.5">
-                        {item.label}
-                        {item.stage ? <span className={cn("ml-auto", active && "[&>span]:border-white/20 [&>span]:bg-white/10 [&>span]:text-white/80")}><StageBadge stage={item.stage} /></span> : null}
-                      </span>
-                    ) : null}
-                  </Link>
-                );
-              })}
-              </div>
-            </div>;
-          })}
-        </nav>
-
-        <div className="flex flex-col gap-0.5 border-t border-[var(--color-line)] pt-2">
-          <Link
-            href="/app/settings"
-            title={collapsed ? "Settings" : undefined}
-            aria-label={collapsed ? "Settings" : undefined}
-            aria-current={settingsActive ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
-              settingsActive
-                ? "bg-[var(--color-lavender)] font-semibold text-[var(--color-orange-deep)]"
-                : "text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)]",
-              collapsed && "justify-center",
-            )}
-          >
-            <Settings size={16} strokeWidth={1.9} aria-hidden />
-            {!collapsed ? "Settings" : null}
-          </Link>
           <button
             type="button"
             onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn(
-              "hidden items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] text-[var(--color-muted)] hover:bg-[var(--color-canvas)] md:flex",
-              collapsed && "justify-center",
-            )}
+            aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
+            title={compact ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(sidebarStyles.control, sidebarStyles.collapse)}
           >
-            {collapsed ? <ChevronsRight size={16} aria-hidden /> : <ChevronsLeft size={16} aria-hidden />}
-            {!collapsed ? "Collapse" : null}
+            {compact ? <ChevronsRight size={16} aria-hidden /> : <ChevronsLeft size={16} aria-hidden />}
           </button>
+        </div>
+
+        <nav aria-label="Workspace" className={sidebarStyles.nav}>
+          {primary.map(({ title, items }) => (
+            <div key={title} className={sidebarStyles.group}>
+              {!compact && <p aria-hidden="true" className={sidebarStyles.groupTitle}>{title}</p>}
+              <ul aria-label={title}>
+                {items.map((item) => {
+                  const active = area === item.label;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        title={compact ? item.label : undefined}
+                        aria-label={compact ? item.label : undefined}
+                        aria-current={active ? "page" : undefined}
+                        className={sidebarStyles.link}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        {active && (
+                          <motion.span
+                            layoutId="sidebar-active"
+                            className={sidebarStyles.activePlate}
+                            transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 470, damping: 38 }}
+                            aria-hidden
+                          />
+                        )}
+                        <span className={sidebarStyles.linkIcon}><item.icon size={17} strokeWidth={active ? 2.15 : 1.8} aria-hidden /></span>
+                        {!compact && <>
+                          <span className={sidebarStyles.linkLabel}>{item.label}</span>
+                          {item.stage && <span className={sidebarStyles.stageBadge}><StageBadge stage={item.stage} /></span>}
+                          {active && !item.stage && <ArrowUpRight className={sidebarStyles.currentArrow} size={14} aria-hidden />}
+                        </>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        <div className={sidebarStyles.footer}>
+          <Link
+            href="/app/settings"
+            title={compact ? "Settings" : undefined}
+            aria-label={compact ? "Settings" : undefined}
+            aria-current={settingsActive ? "page" : undefined}
+            className={cn(sidebarStyles.link, sidebarStyles.settings)}
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className={sidebarStyles.linkIcon}><Settings size={17} strokeWidth={1.8} aria-hidden /></span>
+            {!compact && <span className={sidebarStyles.linkLabel}>Settings</span>}
+          </Link>
+          {!compact && (
+            <div className={sidebarStyles.account}>
+              <span className={sidebarStyles.avatar} aria-hidden>{orgName.trim().charAt(0).toUpperCase() || "R"}</span>
+              <span className={sidebarStyles.accountText}>
+                <strong title={orgName}>{orgName}</strong>
+                <small title={userEmail}>{userEmail}</small>
+              </span>
+            </div>
+          )}
           <form action="/api/auth/signout" method="post" className="md:hidden">
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] text-[var(--color-muted)] hover:bg-[var(--color-canvas)]"
-            >
-              <LogOut size={16} aria-hidden />
-              Sign out
+            <button type="submit" className={sidebarStyles.link}>
+              <span className={sidebarStyles.linkIcon}><LogOut size={17} aria-hidden /></span>
+              <span className={sidebarStyles.linkLabel}>Sign out</span>
             </button>
           </form>
         </div>
@@ -388,13 +347,11 @@ export function AppShell({
         <header className="workspace-topbar sticky top-0 z-30 flex min-h-[72px] items-center gap-2 border-b border-[var(--color-line)] bg-[var(--color-paper)]/95 px-3 py-3 backdrop-blur sm:gap-3 sm:px-7">
           <button
             type="button"
-            onClick={() => {
-              setCollapsed(false);
-              setMobileOpen(true);
-            }}
+            onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
             aria-expanded={mobileOpen}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] md:hidden"
+            aria-controls="workspace-navigation"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] md:hidden"
           >
             <Menu size={19} />
           </button>
@@ -431,13 +388,16 @@ export function AppShell({
       </div>
       <nav aria-label="Mobile navigation" hidden={mobileOpen || keyboard.open} className={mobileStyles.bottomNav}>
         {MOBILE_NAV.map(item => {
-          const active = workspaceArea(pathname) === item.label;
+          const active = area === item.label;
           return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={mobileStyles.item}>
-            <span className={mobileStyles.icon}><item.icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden /></span>
+            <span className={mobileStyles.icon}>
+              {active && <motion.span layoutId="mobile-current-icon" aria-hidden className={mobileStyles.pill} transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 460, damping: 36 }} />}
+              <item.icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden />
+            </span>
             <span>{item.label}</span>
           </Link>;
         })}
-        <button type="button" onClick={() => { setCollapsed(false); setMobileOpen(true); }} aria-label="More: rules, developers, agent and settings" className={mobileStyles.item}>
+        <button type="button" onClick={() => setMobileOpen(true)} aria-label="More workspace destinations" aria-expanded={mobileOpen} aria-controls="workspace-navigation" className={mobileStyles.item}>
           <span className={mobileStyles.icon}><Menu size={20} strokeWidth={1.8} aria-hidden /></span>
           <span>More</span>
         </button>

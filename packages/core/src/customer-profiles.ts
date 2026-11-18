@@ -161,13 +161,13 @@ function personalIntoIndia(provider: string, slug: string, request: { amount: nu
       ...unknown, status: tooLarge ? "not_supported" : "documented", priceApplicable: !tooLarge, reviewedAt: "2026-10-08",
       reasons: [tooLarge
         ? "Wise caps transfers to a private individual in India at INR 100 million each."
-        : "Your sender pays Wise and Wise pays INR into your Indian bank account or UPI ID. You don't need a Wise account."],
-      verification: ["Your sender verifies their identity with Wise. You only share your account details."],
-      fees: "This public quote includes Wise's fee for the pay-in method shown. Card pay-ins cost more; your bank may charge on receipt.",
-      limits: "Up to INR 100 million per transfer to a private individual in India. Your sender's own Wise limits also apply.",
-      corridors: "Into Indian bank accounts (including NRE and NRO) or a UPI ID.",
-      settlement: ["Indian bank account (name, 5–20 digit account number, 11-character IFSC) or UPI ID. Usually 1 working day after conversion."],
-      documents: ["Your sender picks the payment purpose. Transfers to India for investment or charitable donation aren't allowed."],
+        : "Your sender uses Wise. You receive INR without a Wise account."],
+      verification: ["The sender verifies their identity. You share your payout details."],
+      fees: "Wise's fee for the shown payment method is included. Cards cost more. Your bank may also charge.",
+      limits: "Up to INR 100 million per transfer to a private individual in India. Sender limits also apply.",
+      corridors: "Indian bank accounts (including NRE and NRO) or UPI.",
+      settlement: ["Share your UPI ID or bank account name, 5–20 digit account number and 11-character IFSC. Usually 1 working day after conversion."],
+      documents: ["The sender supplies the payment purpose."],
       purpose: "Personal transfers such as family support. Not investment or charitable donations.",
       sources: [{ label: "Wise: send money to India", url: WISE_SEND_INDIA }, { label: "Wise guide to INR transfers", url: WISE_INR_GUIDE }],
     };

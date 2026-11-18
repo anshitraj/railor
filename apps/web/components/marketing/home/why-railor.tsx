@@ -1,13 +1,13 @@
-import { Bell, Check, Link2, MessageSquareText, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { ArrowDownRight, Bell, Check, ChevronRight, Link2, MessageSquareText, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { ProviderLogo } from "../../app/provider-logo";
+import { RailorMark } from "../../brand";
 import { LoopOnView } from "./loop-on-view";
 import { DemoLock } from "./demo-lock";
 import home from "./home.module.css";
 import styles from "./why.module.css";
 
 /**
- * Why Railor, as six small working demos rather than six icons. Each tile
- * replays one thing the product really does; loops pause off screen.
+ * Each scene demonstrates one product behavior and settles into a readable still.
  */
 export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
   // Signed out, example amounts blur like every price on Railor.
@@ -24,14 +24,24 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
         </div>
 
         <ul className={styles.bento}>
-          <li className={`${styles.tile} ${styles.wide}`}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
-              <div className={styles.converge} aria-hidden>
-                {([["wise", "Wise"], ["remitly", "Remitly"], ["xoom", "Xoom"], ["revolut", "Revolut"], ["skydo", "Skydo"], ["payzoll", "PayZoll"]] as const).map(([slug, name], index) => (
-                  <span key={slug} className={styles.chip} data-anim style={{ animationDelay: `${index * 0.12}s`, "--from-x": `${(index % 3 - 1) * 90}px`, "--from-y": `${index < 3 ? -46 : 46}px` } as React.CSSProperties}>
-                    <ProviderLogo slug={slug} name={name} size={22} />{name}
-                  </span>
-                ))}
+          <li className={`${styles.tile} ${styles.wide}`} data-home-reveal>
+            <LoopOnView className={`${styles.stage} ${styles.networkStage}`} once>
+              <div className={styles.network} aria-hidden>
+                <div className={styles.networkInputs}>
+                  <div className={styles.converge}>
+                    {([["wise", "Wise"], ["remitly", "Remitly"], ["xoom", "Xoom"], ["revolut", "Revolut"], ["skydo", "Skydo"], ["payzoll", "PayZoll"]] as const).map(([slug, name], index) => (
+                      <span key={slug} className={styles.chip} style={{ "--beat": `${index * 65}ms` } as React.CSSProperties}>
+                        <ProviderLogo slug={slug} name={name} size={24} />{name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className={styles.connector}><i /><ChevronRight size={16} /><ArrowDownRight size={16} /></div>
+                <div className={styles.networkResult}>
+                  <span className={styles.networkMark}><RailorMark size={29} /></span>
+                  <span><strong>One comparison</strong><small>Price · speed · eligibility</small></span>
+                  <Check size={17} className={styles.networkCheck} />
+                </div>
               </div>
             </LoopOnView>
             <div className={styles.copy}>
@@ -40,13 +50,13 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </div>
           </li>
 
-          <li className={styles.tile}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
+          <li className={styles.tile} data-home-reveal>
+            <LoopOnView className={styles.stage} once>
               <div className={styles.filterList} aria-hidden>
                 <div className={styles.filterRow}><ProviderLogo slug="wise" name="Wise" size={22} /><span>Wise</span><Check size={15} className={styles.ok} /></div>
-                <div className={styles.filterRow} data-anim data-strike><ProviderLogo slug="revolut" name="Revolut" size={22} /><span>Revolut</span><X size={15} className={styles.bad} /></div>
+                <div className={styles.filterRow} data-strike><ProviderLogo slug="revolut" name="Revolut" size={22} /><span>Revolut</span><X size={15} className={styles.bad} /></div>
                 <div className={styles.filterRow}><ProviderLogo slug="remitly" name="Remitly" size={22} /><span>Remitly</span><Check size={15} className={styles.ok} /></div>
-                <span className={`sticker ${styles.stamp}`} data-tone="ink" data-anim style={{ "--tilt": "-8deg" } as React.CSSProperties}>Not for you</span>
+                <span className={styles.stamp}>Ineligible</span>
               </div>
             </LoopOnView>
             <div className={styles.copy}>
@@ -55,8 +65,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </div>
           </li>
 
-          <li className={styles.tile}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
+          <li className={styles.tile} data-home-reveal>
+            <LoopOnView className={styles.stage} once>
               <div className={styles.live} aria-hidden>
                 <span className={styles.ring} data-anim><RefreshCw size={16} /></span>
                 <div>
@@ -72,8 +82,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </div>
           </li>
 
-          <li className={styles.tile}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
+          <li className={styles.tile} data-home-reveal>
+            <LoopOnView className={styles.stage} once>
               <div className={styles.source} aria-hidden>
                 <span className={styles.sourcePrice}>Fee <span className={blur.trim() || undefined}>$11.26</span></span>
                 <span className={styles.sourceTip} data-anim><Link2 size={13} />wise.com · checked 4s ago</span>
@@ -86,8 +96,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </div>
           </li>
 
-          <li className={styles.tile}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
+          <li className={styles.tile} data-home-reveal>
+            <LoopOnView className={styles.stage} once>
               <div className={styles.alert} aria-hidden data-anim>
                 <span className={styles.alertIcon}><Bell size={15} /></span>
                 <div><strong>Fee change detected</strong><small>A provider on your route updated its pricing page.</small></div>
@@ -99,8 +109,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </div>
           </li>
 
-          <li className={`${styles.tile} ${styles.full}`}>
-            <LoopOnView className={`${styles.stage} ${styles.loop}`}>
+          <li className={`${styles.tile} ${styles.full}`} data-home-reveal>
+            <LoopOnView className={styles.stage} once>
               <div className={styles.chat} aria-hidden>
                 <p className={styles.ask} data-anim><MessageSquareText size={14} />Cheapest way to pay a supplier in the UAE?</p>
                 <div className={styles.answer} data-anim>

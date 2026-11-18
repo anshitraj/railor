@@ -18,7 +18,7 @@ export function CompanyRulesSection() {
     <section className={home.section} aria-labelledby="rules-title">
       <div className={home.container}>
         <div className={styles.layout}>
-          <div>
+          <div data-home-reveal>
             <p className={home.eyebrow}>For businesses</p>
             <h2 id="rules-title" className={home.title}>Set the rules once. Every payment follows them.</h2>
             <p className={home.lead}>Company rules turn your payment policy into checks Railor runs on every route — and a teammate signs off when an amount needs it.</p>

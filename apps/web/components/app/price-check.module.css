@@ -91,9 +91,111 @@
 .factList dd { color: var(--color-ink-soft); text-align: right; overflow-wrap: anywhere; }
 .detailNote { margin-top: 20px; padding: 12px; border: 1px solid var(--color-line); border-radius: 8px; background: var(--color-paper); color: var(--color-muted); font-size: 12.5px; line-height: 1.8; }
 .detailIntro { margin-bottom: 13px; color: var(--color-muted); font-size: 13px; line-height: 1.85; }
-.requirements { display: grid; gap: 17px; margin-top: 20px; }
-.requirements dt { color: var(--color-ink); font-size: 13px; font-weight: 600; }
-.requirements dd { margin-top: 5px; color: var(--color-muted); font-size: 13px; line-height: 1.8; }
+.requirementsPanel {
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+.requirementsSummary {
+  --requirement-tint: var(--color-lavender);
+  --requirement-ink: var(--color-orange-deep);
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--requirement-ink) 16%, var(--color-surface));
+  border-radius: 12px;
+  background: var(--requirement-tint);
+}
+.requirementsSummary[data-status="unconfirmed"] {
+  --requirement-tint: var(--color-warn-bg);
+  --requirement-ink: var(--color-warn);
+}
+.requirementsSummary[data-status="not_supported"] {
+  --requirement-tint: var(--color-bad-bg);
+  --requirement-ink: var(--color-bad);
+}
+.requirementsSummary h3 {
+  color: var(--color-ink);
+  font: 700 16px/1.25 var(--font-display);
+  letter-spacing: -.02em;
+}
+.requirementsSummary p {
+  margin-top: 4px;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.requirementSticker {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  background: var(--color-paper);
+  color: var(--color-ink-soft);
+  box-shadow: 0 0 0 1px var(--color-line), 0 2px 0 var(--color-line);
+  transform: rotate(-6deg);
+}
+.requirementsSummary .requirementSticker {
+  width: 36px;
+  height: 36px;
+  margin-top: 2px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--requirement-ink);
+}
+.requirementSticker[data-tone="orange"] { background: var(--color-lavender); color: var(--color-orange-deep); }
+.requirementSticker[data-tone="green"] { background: var(--color-ok-bg); color: var(--color-ok); }
+.requirements {
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+.requirementTopic {
+  position: relative;
+  min-height: 49px;
+  padding: 9px 12px 9px 48px;
+}
+.requirementTopic + .requirementTopic { border-top: 1px solid var(--color-line); }
+.requirementTopic .requirementSticker { position: absolute; top: 12px; left: 12px; }
+.requirementTopic dt { color: var(--color-ink); font-size: 13px; font-weight: 700; line-height: 1.35; }
+.requirementTopic dd { margin-top: 2px; color: var(--color-ink-soft); font-size: 13px; line-height: 1.45; text-wrap: pretty; }
+.requirementTopic dd + dd { margin-top: 5px; }
+.requirementsEvidence ul { display: flex; flex-wrap: wrap; gap: 0 12px; margin-bottom: 4px; }
+.requirementsEvidence a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  color: var(--color-orange-deep);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.requirementsEvidence a svg { flex: none; }
+.requirementsEvidence a:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; border-radius: 4px; }
+.requirementsEvidence p { color: var(--color-muted); font-size: 12px; line-height: 1.55; }
+.requirementsEvidence strong { color: var(--color-ink-soft); font-weight: 650; }
+@media (prefers-reduced-motion: no-preference) {
+  .requirementsPanel { animation: requirements-in 180ms var(--ease-out) both; }
+  .requirementsSummary .requirementSticker { animation: requirement-stamp 240ms var(--ease-out) both; }
+}
+@media (pointer: coarse) {
+  .requirementsEvidence a { min-height: 44px; }
+}
+@keyframes requirements-in {
+  from { opacity: .8; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes requirement-stamp {
+  from { transform: translateY(-3px) rotate(-14deg) scale(.9); }
+  64% { transform: rotate(-3deg) scale(1.04); }
+  to { transform: rotate(-6deg); }
+}
 .sourceLink { display: inline-flex; gap: 5px; align-items: center; margin: 10px 10px 0 0; color: var(--color-orange-deep); font-size: 13px; line-height: 1.6; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 35px 20px; text-align: center; color: var(--color-muted); }
 .empty > svg { color: var(--color-orange-deep); }

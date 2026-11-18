@@ -9,7 +9,7 @@ import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
-import { RemittanceSurveyPanel } from "./remittance-survey-panel";
+import { RateHistoryChart } from "../price/rate-history-chart";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
@@ -478,7 +478,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </ol>
             </details>
           ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
-        history={result?.historicalPricing ? <div className="price-surface p-3">{result?.historicalPricing ? <RemittanceSurveyPanel survey={result.historicalPricing} sourceCurrency={result.input.sourceCurrency} /> : null}</div> : <p className={styles.contextEmpty}>No historical survey was returned for this pair.</p>}
+        history={<RateHistoryChart mode="bank" from={from} to={to} amount={amount} />}
         coverage={null}
         webEvidence={selected?.webChecks?.length ? <div className="price-surface mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
       />

@@ -9,7 +9,7 @@ import { EXCHANGES_CHECKED, INDIA_EXCHANGES, TAX_TOOLS, depositSupport, exchange
 import { ALL_NETWORKS, NETWORKS, TOKENS, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
 import styles from "./stablecoin.module.css";
 
-type LockedExchange = Pick<ExchangeQuote, "slug" | "name" | "support" | "status">;
+export type LockedExchange = Pick<ExchangeQuote, "slug" | "name" | "support" | "status">;
 export type ExchangeResponse = { locked: true; exchanges: LockedExchange[] } | { locked: false; exchanges: ExchangeQuote[] };
 
 const REFRESH_MS = 30_000;
@@ -19,33 +19,32 @@ export const inr = (value: number) => `₹${value.toLocaleString("en-IN", { mini
 
 /** Live exchange quotes for the selection, re-checked every 30 seconds while the tab is visible. */
 export function useExchangeQuotes(asset: Stablecoin, network: Network, amount: number, enabled: boolean) {
-  const [data, setData] = useState<ExchangeResponse | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const key = `${asset}:${network}:${amount}`;
+  const active = enabled && amount > 0 && Number.isFinite(amount);
+  const [response, setResponse] = useState<{ key: string; data: ExchangeResponse | null; error: string; loading: boolean } | null>(null);
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!enabled || !(amount > 0)) {
-      setData(null);
+    if (!active) {
+      setResponse(null);
       return;
     }
+    setResponse({ key, data: null, error: "", loading: true });
     let timer: number | undefined;
     const load = async () => {
       controller.current?.abort();
       const ctl = new AbortController();
       controller.current = ctl;
-      setLoading(true);
+      setResponse({ key, data: null, error: "", loading: true });
       try {
         const res = await fetch(`/api/stablecoin?${new URLSearchParams({ asset, network, amount: String(amount) })}`, { signal: ctl.signal, cache: "no-store" });
         const body = (await res.json().catch(() => ({}))) as ExchangeResponse & { error?: string };
         if (ctl.signal.aborted) return;
         if (!res.ok) throw new Error(body.error ?? "Exchange prices couldn’t load right now.");
-        setData(body);
-        setError("");
+        if (typeof body.locked !== "boolean" || !Array.isArray(body.exchanges)) throw new Error("Exchange prices couldn’t load right now.");
+        setResponse({ key, data: body, error: "", loading: false });
       } catch (cause) {
-        if (!ctl.signal.aborted && (cause as Error).name !== "AbortError") setError((cause as Error).message || "Exchange prices couldn’t load right now.");
-      } finally {
-        if (controller.current === ctl) setLoading(false);
+        if (!ctl.signal.aborted && (cause as Error).name !== "AbortError") setResponse({ key, data: null, error: (cause as Error).message || "Exchange prices couldn’t load right now.", loading: false });
       }
     };
     const start = window.setTimeout(() => void load(), 300);
@@ -55,9 +54,10 @@ export function useExchangeQuotes(asset: Stablecoin, network: Network, amount: n
       window.clearInterval(timer);
       controller.current?.abort();
     };
-  }, [asset, network, amount, enabled]);
+  }, [asset, network, amount, active, key]);
 
-  return { data, error, loading };
+  const current = active && response?.key === key ? response : null;
+  return { data: current?.data ?? null, error: current?.error ?? "", loading: active && (!current || current.loading) };
 }
 
 function SupportPill({ support, asset, network, name }: { support: { status: DepositSupport; note: string }; asset: Stablecoin; network: Network; name: string }) {
@@ -72,9 +72,9 @@ function SupportPill({ support, asset, network, name }: { support: { status: Dep
 }
 
 /** Sell on an Indian exchange: what reaches the bank after fees and TDS, then after income tax. */
-export function IndiaExchangePanel({ asset, network, amount, issued, locked, signInHref }: { asset: Stablecoin; network: Network; amount: number; issued: boolean; locked: boolean; signInHref: string }) {
+export function IndiaExchangePanel({ asset, network, amount, issued, locked, signInHref, quotes }: { asset: Stablecoin; network: Network; amount: number; issued: boolean; locked: boolean; signInHref: string; quotes: ReturnType<typeof useExchangeQuotes> }) {
   const reduce = useReducedMotion();
-  const { data, error, loading } = useExchangeQuotes(asset, network, amount, issued);
+  const { data, error, loading } = quotes;
   const [costText, setCostText] = useState("");
   const cost = costText.trim() === "" ? null : Number(costText);
 
@@ -98,11 +98,11 @@ export function IndiaExchangePanel({ asset, network, amount, issued, locked, sig
         ) : null}
       </header>
       {error ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{error}</p> : null}
-      <ul className={styles.list} data-loading={loading || undefined}>
+      <ul className={styles.list} data-loading={loading || undefined} aria-busy={loading}>
         <AnimatePresence initial={false}>
           {exchanges.map((quote, index) => (
             <motion.li key={quote.slug} layout={!reduce} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1], delay: index * 0.05 }}>
-              <ExchangeCard quote={quote} asset={asset} network={network} amount={amount} cost={cost} locked={showLocked} best={!showLocked && index === 0 && quote.status === "priced"} signInHref={signInHref} />
+              <ExchangeCard quote={quote} asset={asset} network={network} amount={amount} cost={cost} locked={showLocked} loading={loading} best={!showLocked && !loading && index === 0 && quote.status === "priced" && "breakdown" in quote} signInHref={signInHref} />
             </motion.li>
           ))}
         </AnimatePresence>
@@ -111,7 +111,7 @@ export function IndiaExchangePanel({ asset, network, amount, issued, locked, sig
   );
 }
 
-function ExchangeCard({ quote, asset, network, amount, cost, locked, best, signInHref }: { quote: LockedExchange | ExchangeQuote; asset: Stablecoin; network: Network; amount: number; cost: number | null; locked: boolean; best: boolean; signInHref: string }) {
+export function ExchangeCard({ quote, asset, network, amount, cost, locked, loading, best, signInHref }: { quote: LockedExchange | ExchangeQuote; asset: Stablecoin; network: Network; amount: number; cost: number | null; locked: boolean; loading: boolean; best: boolean; signInHref: string }) {
   const exchange = exchangeBySlug(quote.slug)!;
   const full = "breakdown" in quote ? quote : null;
   const breakdown = full?.breakdown;
@@ -140,7 +140,7 @@ function ExchangeCard({ quote, asset, network, amount, cost, locked, best, signI
           <span className={styles.lockedRow}><span>After income tax</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
           <span className={styles.lockBadge}><LockKeyhole size={13} aria-hidden />Sign in to see the full price</span>
         </Link>
-      ) : quote.status !== "priced" || !breakdown || !tax ? (
+      ) : loading ? <p className={styles.quoteStatus}>Refreshing quote…</p> : quote.status !== "priced" || !breakdown || !tax ? (
         <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{"reason" in quote && quote.reason ? quote.reason : "No price right now."}</p>
       ) : (
         <>

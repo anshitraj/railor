@@ -3,6 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { fallbackFill } from "../marketing/logo-fallback";
 
+const LOCAL_LOGOS: Record<string, string> = {
+  coindcx: "coindcx.png", wazirx: "wazirx.png", xflow: "xflow.svg", circle: "circle.svg",
+  tether: "tether.png", uniswap: "uniswap.png", titan: "titan.ico", wise: "wise.png",
+  remitly: "remitly.png", xoom: "xoom.png", worldremit: "worldremit.svg", "world-remit": "worldremit.svg", instarem: "instarem.png",
+  koinly: "koinly.ico", cleartax: "cleartax.svg", incometax: "incometax.ico",
+};
+
 /**
  * A provider's own logo (resolved from its website by /api/logos), on a white
  * tile so marks of every colour read the same. If there is no logo — or it
@@ -26,21 +33,21 @@ export function ProviderLogo({
   /** Visible disclosure summaries need eager loading even while their details are closed. */
   loading?: "lazy" | "eager";
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const img = useRef<HTMLImageElement>(null);
+  const key = slug.replace(/^market:/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 64) || "provider";
+  const url = LOCAL_LOGOS[key] ? `/brand/providers/${LOCAL_LOGOS[key]}` : `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
   // A cached logo can finish while streamed HTML is still hydrating. Keep the
   // first render deterministic, then attach image-load handlers after mounting.
   useEffect(() => setReady(true), []);
   // An image that settled before hydration never fires onLoad/onError; check it once mounted.
   useEffect(() => {
     const el = img.current;
-    if (el?.complete && el.naturalWidth < 2) setFailed(true);
-  }, [ready, slug, src]);
-  const key = slug.replace(/^market:/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 64) || "provider";
-  const url = `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
+    if (el?.complete && el.naturalWidth < 2) setFailedUrl(url);
+  }, [ready, url]);
   const box = { width: size, height: size };
-  if (!ready || failed) {
+  if (!ready || failedUrl === url) {
     return (
       <span
         aria-hidden
@@ -55,6 +62,7 @@ export function ProviderLogo({
     <span style={box} className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[28%] bg-white ring-1 ring-[var(--color-line)] ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- same-origin, already optimized, and must fall back on error */}
       <img
+        key={url}
         ref={img}
         src={url}
         alt=""
@@ -62,9 +70,9 @@ export function ProviderLogo({
         height={size}
         loading={loading}
         decoding="async"
-        onError={() => setFailed(true)}
+        onError={() => setFailedUrl(url)}
         // "No logo" arrives as a 1×1 transparent pixel rather than an error.
-        onLoad={(e) => e.currentTarget.naturalWidth < 2 && setFailed(true)}
+        onLoad={(e) => e.currentTarget.naturalWidth < 2 && setFailedUrl(url)}
         className="h-[76%] w-[76%] object-contain"
       />
     </span>

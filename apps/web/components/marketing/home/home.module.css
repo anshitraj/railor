@@ -16,6 +16,26 @@
 .textLink svg { transition: transform .2s var(--ease-out); }
 .textLink:hover svg { transform: translateX(3px); }
 
+@keyframes homeReveal {
+  from { opacity: .84; translate: 0 24px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .motionPage :is(.head, .step, .provider, .mapViewport, .routeChips, .audience, .devCode, .basis, .faq, .final, .logos, :global([data-home-reveal])):not(:focus-within) {
+      animation: homeReveal var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 72%;
+    }
+  }
+  @supports not (animation-timeline: view()) {
+    .motionPage :global([data-home-entered]):not(:focus-within) {
+      animation: homeReveal 580ms var(--ease-out) both;
+    }
+  }
+}
+
 .hideSmall { display: inline; }
 @media (max-width: 479px) { .hideSmall { display: none; } }
 

@@ -10,6 +10,8 @@ import { ProvidersSection } from "../components/marketing/home/providers";
 import { RouteMapSection } from "../components/marketing/home/route-map";
 import { AudiencesSection, DevelopersSection, FaqSection, FinalCta, TrustSection } from "../components/marketing/home/sections";
 import { WhyRailor } from "../components/marketing/home/why-railor";
+import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
+import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
 import { QuickQuote, QuickQuoteSkeleton } from "../components/price/quick-quote";
@@ -51,7 +53,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   return (
     <>
       <MarketingNav signedIn={Boolean(session)} />
-      <main id="main">
+      <main id="main" className={homeStyles.motionPage}>
+        <HomeScrollMotion />
         <HomeHero calculator={<HeroCalculator signedIn={Boolean(session)} bank={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />} />
         <HowItWorks signedIn={Boolean(session)} />
         <WhyRailor signedIn={Boolean(session)} />
