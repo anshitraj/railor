@@ -14,7 +14,7 @@ export default async function DocsLayout({ children }: { children: React.ReactNo
   const key = session?.organization ? await getOrgTestKey(session.organization.id) : null;
 
   return (
-    <div className="grid grid-cols-1 gap-x-10 gap-y-7 lg:grid-cols-[13.5rem_minmax(0,1fr)] xl:grid-cols-[13.5rem_minmax(0,1fr)_11.5rem]">
+    <div className="grid grid-cols-1 gap-x-10 gap-y-7 pb-20 lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:pb-0 xl:grid-cols-[15.5rem_minmax(0,1fr)_11.5rem]">
       <DocsSidebar>
         <DocsKeyCard apiKey={key} />
       </DocsSidebar>

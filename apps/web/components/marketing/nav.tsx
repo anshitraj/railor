@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   Activity,
   ArrowRight,
@@ -11,6 +12,8 @@ import {
   Code2,
   History,
   Info,
+  KeyRound,
+  LayoutDashboard,
   Map as MapIcon,
   Menu,
   Package,
@@ -58,8 +61,23 @@ export function searchSignInHref(query: string) {
   return q ? `/login?intent=start&q=${encodeURIComponent(q)}` : "/login?intent=start";
 }
 
-export function MarketingNav() {
+/** The featured card in the Developers menu. */
+function DevelopersFeature({ signedIn, onPick }: { signedIn: boolean; onPick: () => void }) {
+  return (
+    <Link href={signedIn ? "/app/developers" : "/login?intent=start&next=%2Fapp%2Fdevelopers"} className={styles.feature} onClick={onPick}>
+      <span className={styles.featureIcon}><KeyRound size={16} aria-hidden /></span>
+      <strong>Free API key</strong>
+      <small>Compare prices from your own code, or let an AI agent do it.</small>
+      <code>POST /v1/prices</code>
+      <span className={styles.featureCta}>{signedIn ? "Open developer tools" : "Get a key"} <ArrowRight size={13} aria-hidden /></span>
+    </Link>
+  );
+}
+
+export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
   const pathname = usePathname();
+  const reduce = useReducedMotion();
+  const [hover, setHover] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -107,23 +125,27 @@ export function MarketingNav() {
           <span>Railor</span>
         </Link>
 
-        <ul className={styles.links}>
+        <ul className={styles.links} onMouseLeave={() => setHover(null)}>
           {LINKS.map((link) => "href" in link ? (
-            <li key={link.label}>
-              <Link href={link.href} className={styles.link} aria-current={pathname === link.href ? "page" : undefined}>{link.label}</Link>
+            <li key={link.label} onMouseEnter={() => setHover(link.label)}>
+              <Link href={link.href} className={styles.link} aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? "page" : undefined}>
+                {hover === link.label ? <motion.span layoutId="nav-hover" className={styles.hoverPill} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.3, bounce: 0 }} /> : null}
+                <span className={styles.linkText}>{link.label}</span>
+              </Link>
             </li>
           ) : (
-            <li key={link.label} className={styles.menuItem} onMouseEnter={() => openMenu(link.label)} onMouseLeave={closeSoon}>
+            <li key={link.label} className={styles.menuItem} onMouseEnter={() => { setHover(link.label); openMenu(link.label); }} onMouseLeave={closeSoon}>
               <button
                 type="button"
                 className={styles.link}
                 aria-expanded={open === link.label}
                 onClick={() => setOpen((current) => (current === link.label ? null : link.label))}
               >
-                {link.label}
+                {hover === link.label || open === link.label ? <motion.span layoutId="nav-hover" className={styles.hoverPill} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.3, bounce: 0 }} /> : null}
+                <span className={styles.linkText}>{link.label}</span>
                 <ChevronDown size={14} aria-hidden className={styles.chevron} data-open={open === link.label || undefined} />
               </button>
-              <div className={styles.menu} data-open={open === link.label || undefined} inert={open !== link.label}>
+              <div className={styles.menu} data-open={open === link.label || undefined} data-wide={link.label === "Developers" || undefined} inert={open !== link.label}>
                 <ul>
                   {link.menu.map((item) => (
                     <li key={item.href}>
@@ -137,6 +159,7 @@ export function MarketingNav() {
                     </li>
                   ))}
                 </ul>
+                {link.label === "Developers" ? <DevelopersFeature signedIn={signedIn} onPick={() => setOpen(null)} /> : null}
               </div>
             </li>
           ))}
@@ -146,10 +169,16 @@ export function MarketingNav() {
           <button type="button" className={styles.iconButton} aria-label="Search Railor" onClick={() => setSearchOpen(true)}>
             <Search size={18} aria-hidden />
           </button>
-          <Link href="/login" className={styles.signIn}>Sign in</Link>
-          <Link href="/login?intent=start" className={`${styles.cta} press`}>
-            Get started
-          </Link>
+          {signedIn ? (
+            <Link href="/app" className={`${styles.cta} press`}><LayoutDashboard size={15} aria-hidden />Open workspace</Link>
+          ) : (
+            <>
+              <Link href="/login" className={styles.signIn}>Sign in</Link>
+              <Link href="/login?intent=start" className={`${styles.cta} press`}>
+                Get started
+              </Link>
+            </>
+          )}
           <button
             type="button"
             className={styles.menuButton}
@@ -181,8 +210,14 @@ export function MarketingNav() {
             </div>
           ))}
           <div className={styles.sheetActions}>
-            <Link href="/login?intent=start" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Get started</Link>
-            <Link href="/login" className={styles.sheetSecondary} onClick={() => setMobileOpen(false)}>Sign in</Link>
+            {signedIn ? (
+              <Link href="/app" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Open workspace</Link>
+            ) : (
+              <>
+                <Link href="/login?intent=start" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Get started</Link>
+                <Link href="/login" className={styles.sheetSecondary} onClick={() => setMobileOpen(false)}>Sign in</Link>
+              </>
+            )}
           </div>
         </div>
       </div>

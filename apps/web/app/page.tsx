@@ -45,11 +45,11 @@ async function HeroQuote({ params }: { params: Record<string, string | undefined
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureMigrated();
-  const params = await searchParams;
+  const [params, session] = await Promise.all([searchParams, getSession()]);
 
   return (
     <>
-      <MarketingNav />
+      <MarketingNav signedIn={Boolean(session)} />
       <main id="main">
         <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <HowItWorks />

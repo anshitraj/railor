@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Code2, Package, Zap, type LucideIcon } from "lucide-react";
 import { CodeSample, TechnologyLogo, TechnologyLogoStack } from "@railor/ui";
 import { DocsHeader } from "../../../components/docs/docs-header";
+import { AnswerFlow, CapabilityCards } from "../../../components/docs/docs-visuals";
 import { getSession } from "../../../lib/auth";
 import { getOrgTestKey } from "../../../lib/org";
 
@@ -22,9 +23,17 @@ export default async function DocsIndex() {
   return (
     <>
       <DocsHeader eyebrow="Getting started" title="60 seconds to a real answer">
-        Railor answers one question: which providers can serve this corridor, why, and what
-        supports that answer. Everything below returns the same data the app renders.
+        Ask about a route. Railor tells you who can serve it, what it costs and why, with sources.
       </DocsHeader>
+
+      <AnswerFlow />
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-[20px] font-semibold">What you can ask</h2>
+        <CapabilityCards />
+      </section>
+
+      <h2 className="text-[20px] font-semibold">Your first call</h2>
 
       <CodeSample
         apiKey={key ?? undefined}
@@ -87,11 +96,13 @@ print(res.json()["counts"])`,
 
       <section className="flex flex-col gap-3">
         <h2 className="text-[20px] font-semibold">What comes back</h2>
-        <p className="text-[14.5px] leading-relaxed text-[var(--color-muted)]">
-          Each result carries an eligibility verdict, the reasons behind it (including what is
-          nonetheless true and what would change it), a confidence score, the time the underlying
-          claim was last verified, and the evidence it rests on.
-        </p>
+        <ul className="grid gap-2 text-[14px] text-[var(--color-ink-soft)] sm:grid-cols-2">
+          {["A verdict per provider", "The reasons, and what would change them", "A confidence score", "Evidence, with when it was last checked"].map((item) => (
+            <li key={item} className="flex items-center gap-2 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2.5"><span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-orange)]" />{item}</li>
+          ))}
+        </ul>
+        <details className="group rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-1 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-semibold">See a full response <span aria-hidden className="text-[var(--color-faint)] transition-transform duration-200 group-open:rotate-90">›</span></summary>
         <CodeSample
           variants={[
             {
@@ -131,6 +142,7 @@ print(res.json()["counts"])`,
             },
           ]}
         />
+        </details>
       </section>
 
       <section className="flex flex-col gap-4">

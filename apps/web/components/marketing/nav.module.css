@@ -1,17 +1,33 @@
-.header { position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--color-canvas) 0%, transparent); border-bottom: 1px solid transparent; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
-.header[data-scrolled] { background: color-mix(in srgb, var(--color-canvas) 86%, transparent); border-bottom-color: var(--color-line); backdrop-filter: saturate(150%) blur(14px); -webkit-backdrop-filter: saturate(150%) blur(14px); }
-.bar { display: flex; align-items: center; gap: 8px; width: min(1240px, calc(100% - 32px)); height: 68px; margin-inline: auto; }
+/* At the top the bar sits flush; once you scroll it lifts into a floating pill. The header stays 68px tall either way, so nothing below moves. */
+.header { position: sticky; top: 0; z-index: 60; height: 68px; padding-top: 0; transition: padding .3s var(--ease-out); }
+.header[data-scrolled] { padding-top: 7px; }
+.bar { display: flex; align-items: center; gap: 8px; width: min(1240px, calc(100% - 32px)); height: 68px; margin-inline: auto; padding: 0 2px; border: 1px solid transparent; border-radius: 22px; transition: height .3s var(--ease-out), width .3s var(--ease-out), padding .3s var(--ease-out), background-color .25s ease, border-color .25s ease, box-shadow .3s var(--ease-out); }
+.header[data-scrolled] .bar { width: min(1160px, calc(100% - 20px)); height: 54px; padding: 0 7px 0 14px; border-color: color-mix(in srgb, var(--color-line) 80%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 82%, transparent); box-shadow: 0 10px 30px -18px rgb(21 19 16 / .45), 0 1px 0 rgb(255 255 255 / .6) inset; backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px); }
+.header[data-scrolled] .cta, .header[data-scrolled] .signIn, .header[data-scrolled] .iconButton { height: 40px; }
 .brand { display: inline-flex; flex: none; align-items: center; gap: 10px; margin-right: 18px; color: var(--color-ink); font-size: 21px; font-weight: 700; letter-spacing: -.035em; }
 .links { display: none; align-items: center; gap: 2px; }
 .link { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 38px; padding: 0 12px; border-radius: 999px; color: var(--color-ink-soft); font-size: 14.5px; font-weight: 500; transition: background-color .15s ease, color .15s ease; }
-.link:hover, .link[aria-expanded="true"] { background: color-mix(in srgb, var(--color-sand) 75%, transparent); color: var(--color-ink); }
+.link:hover, .link[aria-expanded="true"] { color: var(--color-ink); }
+.link:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 2px; }
+.hoverPill { position: absolute; inset: 0; border-radius: 999px; background: color-mix(in srgb, var(--color-sand) 85%, transparent); }
+.linkText { position: relative; }
+.link > svg { position: relative; }
 .link[aria-current="page"] { color: var(--color-ink); font-weight: 600; }
+.link[aria-current="page"]::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--color-orange); transform: translateX(-50%); }
 .chevron { color: var(--color-faint); transition: transform .2s var(--ease-out); }
 .chevron[data-open] { transform: rotate(180deg); }
 .menuItem { position: relative; }
 .menu { position: absolute; top: calc(100% + 8px); left: -8px; width: 330px; padding: 8px; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-panel); opacity: 0; transform: translateY(-4px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s var(--ease-out), transform .2s var(--ease-out); }
 .menu::before { content: ""; position: absolute; inset: -12px 0 auto; height: 12px; }
 .menu[data-open] { opacity: 1; transform: none; pointer-events: auto; }
+.menu[data-wide] { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 8px; width: 560px; }
+.feature { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: linear-gradient(160deg, var(--color-ink), #2c2620); color: #fff; transition: transform .2s var(--ease-out); }
+.feature:hover { transform: translateY(-1px); }
+.featureIcon { display: inline-grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; background: rgb(255 255 255 / .1); color: var(--color-accent-light, #ffb08a); }
+.feature strong { margin-top: 4px; font-size: 15px; font-weight: 650; }
+.feature small { color: rgb(255 255 255 / .68); font-size: 12.5px; line-height: 1.45; }
+.feature code { margin-top: 4px; padding: 6px 8px; border-radius: 8px; background: rgb(255 255 255 / .08); color: #ffd7c2; font: 500 11px var(--font-mono, ui-monospace, monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.featureCta { display: inline-flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 6px; color: var(--color-accent-light, #ffb08a); font-size: 13px; font-weight: 650; }
 .menuLink { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; transition: background-color .15s ease; }
 .menuLink:hover { background: var(--color-canvas); }
 .menuLink strong { display: block; color: var(--color-ink); font-size: 14px; font-weight: 600; line-height: 1.3; }
@@ -22,12 +38,12 @@
 .iconButton:hover { background: color-mix(in srgb, var(--color-sand) 75%, transparent); color: var(--color-ink); }
 .signIn { display: none; height: 40px; align-items: center; padding: 0 14px; border-radius: 999px; color: var(--color-ink); font-size: 14.5px; font-weight: 600; transition: background-color .15s ease; }
 .signIn:hover { background: color-mix(in srgb, var(--color-sand) 75%, transparent); }
-.cta { display: inline-flex; height: 40px; align-items: center; justify-content: center; gap: 6px; padding: 0 18px; border-radius: 999px; background: var(--color-ink); color: #fff; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.cta { display: inline-flex; height: 42px; transition: height .3s var(--ease-out), background-color .15s ease; align-items: center; justify-content: center; gap: 6px; padding: 0 18px; border-radius: 999px; background: var(--color-ink); color: #fff; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
 .cta:hover { background: #2a2722; }
 .menuButton { display: grid; width: 42px; height: 42px; place-items: center; margin-right: -6px; border-radius: 999px; color: var(--color-ink); }
 .menuButton:hover { background: color-mix(in srgb, var(--color-sand) 75%, transparent); }
 
-.sheet { position: fixed; inset: 68px 0 0; z-index: 59; overflow-y: auto; overscroll-behavior: contain; background: var(--color-canvas); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s var(--ease-out), transform .24s var(--ease-out); }
+.sheet { position: fixed; inset: 75px 0 0; z-index: 59; overflow-y: auto; overscroll-behavior: contain; background: var(--color-canvas); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s var(--ease-out), transform .24s var(--ease-out); }
 .sheet[data-open] { opacity: 1; transform: none; pointer-events: auto; }
 .sheetInner { display: flex; min-height: 100%; flex-direction: column; gap: 22px; width: min(1240px, calc(100% - 32px)); margin-inline: auto; padding: 12px 0 calc(24px + env(safe-area-inset-bottom)); }
 .sheetLinks a { display: flex; align-items: center; justify-content: space-between; padding: 16px 2px; border-bottom: 1px solid var(--color-line); color: var(--color-ink); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
