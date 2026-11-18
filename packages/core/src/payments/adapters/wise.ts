@@ -129,7 +129,7 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
 }
 
 /** Wise's public price for anyone — not the customer's own pricing, and it cannot be used to send. */
-export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch): Promise<UnifiedQuote & { payInLabel: string; deliveryLabel?: string }> {
+export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch, preferBankTransfer = false): Promise<UnifiedQuote & { payInLabel: string; payInMethod?: string; deliveryLabel?: string }> {
   const sourceCurrency = assertFiat(request.sourceAsset);
   const response = await fetcher(`${PUBLIC_BASE}/v3/quotes`, {
     method: "POST",
@@ -139,9 +139,11 @@ export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fet
   });
   if (!response.ok) throw new Error(`Wise public quote failed (HTTP ${response.status}).`);
   const body = (await response.json()) as WiseQuoteBody;
-  const option = pickOption(body.paymentOptions, true);
+  const bank = preferBankTransfer ? body.paymentOptions?.find(o => !o.disabled && o.payIn === "BANK_TRANSFER" && o.payOut === "BANK_TRANSFER") : undefined;
+  const option = bank ?? pickOption(body.paymentOptions, true);
   return {
-    ...wiseQuoteToUnified(body, request, "public_published"),
+    ...wiseQuoteToUnified(bank ? { ...body, paymentOptions: [bank] } : body, request, "public_published"),
+    payInMethod: option?.payIn,
     payInLabel:
       option?.payIn === "BALANCE"
         ? option.disabled

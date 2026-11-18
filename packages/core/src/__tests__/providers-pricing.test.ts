@@ -308,12 +308,13 @@ describe("price check", () => {
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 5000 }, 5000)).toMatchObject({ amount: 34.22 });
     expect(skydo.fee({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 20000 }, 20000)).toMatchObject({ amount: 70.8 });
   });
-  it("uses PayZoll's current 1% headline without an unverified minimum or included partner costs", () => {
+  it("uses PayZoll's published USD minimum and percentage without assuming partner costs are included", () => {
     const p = PUBLISHED_PRICING.find(p => p.slug === "payzoll")!;
-    const input = { sourceCurrency: "EUR", destinationCurrency: "INR", amount: 500 };
-    expect(p.fee(input, 550)).toMatchObject({ amount: 5, currency: "EUR" });
+    const input = { sourceCurrency: "USD", destinationCurrency: "INR", amount: 500 };
+    expect(p.appliesTo({ ...input, sourceCurrency: "EUR" })).not.toBeNull();
+    expect(p.fee(input, null)).toMatchObject({ amount: 10, currency: "USD" });
+    expect(p.fee({ ...input, amount: 1000 }, 1000)).toMatchObject({ amount: 10 });
     expect(p.fee({ ...input, amount: 1001 }, 1001)).toMatchObject({ amount: 10.01 });
-    expect(p.fee(input, null)).toMatchObject({ amount: 5 });
     expect(p.partial).toBe(true);
   });
   it("does not display negative receiving amounts when published fees exceed the transfer", async () => {

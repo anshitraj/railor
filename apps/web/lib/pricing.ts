@@ -126,7 +126,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;
   if (from === to) error = "Pick two different currencies.";
-  else {
+  else if (context.direction !== "receive" || context.paymentMethod !== "card") {
     try {
       result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, amount, includeMarket: market, context });
     } catch (e) {

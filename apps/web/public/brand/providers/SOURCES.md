@@ -18,3 +18,6 @@ Downloaded from providers’ websites and their declared icon hosts on 2026-11-1
 - `koinly.ico`: https://koinly.io/favicon.ico
 - `cleartax.svg`: https://assets.clear.in/cleartax/images/1782294567_favicon.svg
 - `incometax.ico`: https://www.incometax.gov.in/iec/foportal/themes/custom/itdbase/favicon.ico
+- `payzoll.png`: https://payzoll.finance/favicon.png
+- `revolut.svg`: retail app icon from https://developer.revolut.com/docs/resources/open-banking-logo-guidelines
+- `skydo.png`: https://www.skydo.com/images/png/light_mode.png

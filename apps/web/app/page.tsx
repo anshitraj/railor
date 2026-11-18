@@ -18,7 +18,6 @@ import { QuickQuote, QuickQuoteSkeleton } from "../components/price/quick-quote"
 import { loadPricePage } from "../lib/pricing";
 import { getSession } from "../lib/auth";
 import { lockPriceCheck } from "../lib/price-lock";
-import { appOrigin } from "../lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +62,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <CompanyRulesSection />
         <AudiencesSection />
         <TestimonialsSection />
-        <DevelopersSection baseUrl={appOrigin()} />
+        <DevelopersSection />
         <TrustSection />
         <FaqSection />
         <FinalCta />

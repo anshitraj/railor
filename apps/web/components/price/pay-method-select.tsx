@@ -34,7 +34,7 @@ function MethodMark({ method, size }: { method: PayMethod; size: "sm" | "lg" }) 
 }
 
 /** How the payer funds it — prices are only compared within one method. */
-export function PayMethodSelect({ value, onChange, label = "Client pays by" }: { value: PayMethod; onChange: (value: PayMethod) => void; label?: string }) {
+export function PayMethodSelect({ value, onChange, label = "Client pays by", cardComingSoon = false }: { value: PayMethod; onChange: (value: PayMethod) => void; label?: string; cardComingSoon?: boolean }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -42,6 +42,7 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by" }: {
   const [cursor, setCursor] = useState(0);
   const currentIndex = Math.max(0, PAY_METHODS.findIndex((option) => option.value === value));
   const current = PAY_METHODS[currentIndex]!;
+  const currentLabel = cardComingSoon && value === "card" ? "Card · Coming soon" : current.label;
 
   function close(focus = false) { setPosition(null); if (focus) trigger.current?.focus(); }
   function choose(next: PayMethod) { if (next !== value) onChange(next); close(true); }
@@ -75,18 +76,18 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by" }: {
       ref={trigger}
       type="button"
       className={styles.payMethod}
-      title={current.hint}
+      title={currentLabel === current.label ? current.hint : "Card pricing is coming soon"}
       aria-haspopup="listbox"
       aria-expanded={Boolean(position)}
       aria-controls={position ? `${id}-list` : undefined}
-      aria-label={`${label}: ${current.label}`}
+      aria-label={`${label}: ${currentLabel}`}
       data-open={Boolean(position) || undefined}
       onClick={() => position ? close() : open()}
       onKeyDown={(event) => { if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); open(); } }}
     >
       <MethodMark method={current.value} size="sm" />
       <span className={styles.payMethodLabel}>{label}</span>
-      <span className={styles.payMethodValue}>{current.label}</span>
+      <span className={styles.payMethodValue}>{currentLabel}</span>
       <ChevronDown size={14} aria-hidden className={styles.payMethodChevron} />
     </button>
     {position && createPortal(
@@ -126,8 +127,8 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by" }: {
           >
             <MethodMark method={option.value} size="lg" />
             <span className={styles.methodText}>
-              <strong>{option.label.replace(/\s*\(.*\)$/, "")}</strong>
-              <small>{option.hint}</small>
+              <strong>{cardComingSoon && option.value === "card" ? "Card · Coming soon" : option.label.replace(/\s*\(.*\)$/, "")}</strong>
+              <small>{cardComingSoon && option.value === "card" ? "Card price comparisons are in development." : option.hint}</small>
               <span className={styles.methodRails} aria-hidden>
                 {METHOD_LOOK[option.value].rails.map((rail) => <span key={rail}>{rail}</span>)}
               </span>
@@ -139,4 +140,13 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by" }: {
       document.body,
     )}
   </>;
+}
+
+export function CardPricingComingSoon({ onCompare, personal }: { onCompare: () => void; personal: boolean }) {
+  const alternative = personal ? "transfer apps" : "local bank transfers";
+  return <section className={styles.cardComingSoon} aria-label="Card pricing">
+    <MethodMark method="card" size="lg" />
+    <div role="status"><h2>Card pricing is coming soon</h2><p>You can compare {alternative} for this route today.</p></div>
+    <button type="button" onClick={onCompare}>{personal ? "Compare transfer apps" : "Compare bank transfers"}</button>
+  </section>;
 }

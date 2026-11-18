@@ -7,6 +7,7 @@ const LOCAL_LOGOS: Record<string, string> = {
   coindcx: "coindcx.png", wazirx: "wazirx.png", xflow: "xflow.svg", circle: "circle.svg",
   tether: "tether.png", uniswap: "uniswap.png", titan: "titan.ico", wise: "wise.png",
   remitly: "remitly.png", xoom: "xoom.png", worldremit: "worldremit.svg", "world-remit": "worldremit.svg", instarem: "instarem.png",
+  payzoll: "payzoll.png", revolut: "revolut.svg", skydo: "skydo.png",
   koinly: "koinly.ico", cleartax: "cleartax.svg", incometax: "incometax.ico",
 };
 

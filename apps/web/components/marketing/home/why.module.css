@@ -126,6 +126,8 @@
 @container (max-width: 510px) {
   .networkStage { min-height: 237px; }
   .network { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 9px; padding-inline: 13px; }
+  .networkInputs { width: 100%; max-width: 370px; }
+  .chip { gap: 4px; padding-inline: 5px; font-size: 11px; }
   .converge { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .connector { width: 24px; height: 21px; }
   .connector::before { inset: 0 auto; width: 1px; height: 100%; }

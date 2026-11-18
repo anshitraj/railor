@@ -49,7 +49,7 @@ export function benchmarkCost(
   if (!(amount > 0)) return { kind: "gap", reason: "Enter an amount above zero." };
   if (!referenceRate || !(referenceRate > 0)) return { kind: "gap", reason: "No benchmark rate for this pair right now." };
   if (row.recipientAmount === null) return { kind: "gap", reason: "The source doesn’t give enough to calculate what arrives." };
-  if (row.partial || row.costComplete === false) return { kind: "gap", reason: row.missing?.[0] ?? "Some fees are unknown, so the all-in cost isn’t calculated." };
+  if (!(row.costComplete ?? !row.partial) || row.missing?.length) return { kind: "gap", reason: row.missing?.[0] ?? "Some fees are unknown, so the all-in cost isn’t calculated." };
   const amountMinor = toMinor(amount);
   const rateMicros = BigInt(Math.round(referenceRate * Number(RATE_SCALE)));
   const baselineMinor = divRound(amountMinor * rateMicros, RATE_SCALE);
@@ -61,9 +61,12 @@ export function benchmarkCost(
 }
 
 /** "₹500 · 50 bps" (or "₹120 better · −12 bps" when the route beats the benchmark). */
-export function formatBenchmarkCost(cost: BenchmarkCost): string {
+export function formatBenchmarkCost(cost: BenchmarkCost, unit: "bps" | "percent" = "bps"): string {
   const symbol = cost.currency === "INR" ? "₹" : "";
   const value = Math.abs(cost.costMinor) / Number(MINOR);
   const money = `${symbol}${value.toLocaleString("en-US", { minimumFractionDigits: value >= 100 ? 0 : 2, maximumFractionDigits: value >= 100 ? 0 : 2 })}${symbol ? "" : ` ${cost.currency}`}`;
-  return cost.costMinor >= 0 ? `${money} · ${cost.bps} bps` : `${money} better · ${cost.bps} bps`;
+  const rate = unit === "percent"
+    ? (cost.bps / 10_000).toLocaleString("en-US", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : `${cost.bps} bps`;
+  return cost.costMinor >= 0 ? `${money} · ${rate}` : `${money} better · ${rate}`;
 }
