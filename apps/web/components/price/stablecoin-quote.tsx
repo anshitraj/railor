@@ -7,6 +7,8 @@ import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
 import { toast } from "../toast";
 import { NETWORKS, STABLECOIN_CHECKED, TOKENS, networksFor, stablecoinRoutes, swapOption, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
+import { isExchangeCard, liveView, rankExchangeCards, type LiveView } from "../../lib/exchange-live";
+import { ExchangeLive, useExchangeRates } from "./exchange-live";
 import styles from "./stablecoin.module.css";
 
 const ASSETS: Stablecoin[] = ["USDT", "USDC"];
@@ -33,9 +35,11 @@ async function copy(text: string, label: string) {
  * Stablecoin routes: pick the coin and the network it sits on, then where it
  * should end up. Off-ramps show what's verified and "Price on request" — never
  * a 1:1 conversion — and swaps open the DEX itself, prefilled where the DEX
- * documents how.
+ * documents how. Each Indian exchange card also carries that exchange's live
+ * USDT/INR bid, for signed-in users only: a market reference worked out from
+ * the exchange's own public order data, shown locked to visitors.
  */
-export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; network: Network | null; destination: Destination; amount: number } }) {
+export function StablecoinQuote({ initial, signedIn }: { initial: { asset: Stablecoin; network: Network | null; destination: Destination; amount: number }; signedIn: boolean }) {
   const reduce = useReducedMotion();
   const [asset, setAsset] = useState<Stablecoin>(initial.asset);
   const available = networksFor(asset);
@@ -45,7 +49,14 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
   const [amountText, setAmountText] = useState(String(initial.amount));
   const amount = Number(amountText) || 0;
 
-  const routes = useMemo(() => stablecoinRoutes(asset, network, destination, amount), [asset, network, destination, amount]);
+  const found = useMemo(() => stablecoinRoutes(asset, network, destination, amount), [asset, network, destination, amount]);
+  const hasExchanges = found.some(isExchangeCard);
+  const rates = useExchangeRates(signedIn && hasExchanges);
+  // Each exchange card's live slot, and the cards in order of what a sale would leave (the bids differ by more than the fees do).
+  const views = useMemo(() => new Map<string, LiveView | null>(found.map((route) => [route.id, liveView(route, { signedIn, state: rates, amount })])), [found, signedIn, rates, amount]);
+  const routes = useMemo(() => rankExchangeCards(found, views), [found, views]);
+  const signInHref = `/login?intent=start&next=${encodeURIComponent(`/prices?${new URLSearchParams({ mode: "stablecoin", asset, network, dest: destination, amount: amount > 0 ? String(amount) : "" })}`)}`;
+  const reference = rates.status === "ready" ? rates.data.reference : null;
   const swap = useMemo(() => (destination === "EURC" ? swapOption(asset, network, amount) : null), [asset, network, destination, amount]);
   const count = routes.length + (swap && swap.kind !== "none" ? 1 : 0);
   const item = (index: number) => (reduce ? {} : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, transition: { duration: 0.12 } }, transition: { duration: 0.28, ease: [0.23, 1, 0.32, 1] as const, delay: index * 0.05 } });
@@ -108,14 +119,15 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
 
       <div className={styles.results} aria-live="polite">
         <p className={styles.resultsHead}><strong>{count} verified {count === 1 ? "route" : "routes"}</strong> for {asset} on {NETWORKS[network].label} → {destination === "INR" ? "INR" : "EURC"}</p>
-        {routes.some((route) => route.id.startsWith("exchange-")) ? <p className={styles.parity}><Info size={14} aria-hidden />Selling USDT you hold: each exchange withholds 1% TDS on the sale, and a sale on an exchange is not an inward remittance, so no bank FIRA or e-FIRC comes with it. If a client pays an invoice in USDT, Xflow’s collections route issues an e-FIRA.</p> : null}
+        {hasExchanges ? <p className={styles.parity}><Info size={14} aria-hidden />Selling USDT you hold: each exchange withholds 1% TDS on the sale, and a sale on an exchange is not an inward remittance, so no bank FIRA or e-FIRC comes with it. If a client pays an invoice in USDT, Xflow’s collections route issues an e-FIRA.</p> : null}
+        {hasExchanges && signedIn && rates.status === "ready" ? <p className={styles.parity}><Info size={14} aria-hidden />Live bids are read from each exchange’s own public market data and checked before they show. They’re market references, not quotes.{reference ? ` USDT isn’t 1 USD: the gap to Wise’s mid-market USD/INR (₹${reference.rate.toLocaleString("en-US", { maximumFractionDigits: 4 })}) is the market’s price for USDT, not a fee.` : ""}</p> : null}
         <ul className={styles.list}>
           <AnimatePresence initial={false} mode="popLayout">
             {swap ? <motion.li key={`swap:${asset}:${network}:${swap.kind}`} {...item(0)} layout={!reduce}>
               {swap.kind === "none" ? <div className={styles.empty}><TriangleAlert size={16} aria-hidden /><p><strong>No swap on {NETWORKS[network].label}</strong>{swap.reason}</p></div> : <SwapCard asset={asset} network={network} amount={amount} option={swap} />}
             </motion.li> : null}
             {routes.map((route, index) => (
-              <motion.li key={`${route.id}:${asset}:${destination}`} {...item(index + (swap ? 1 : 0))} layout={!reduce}><Route route={route} /></motion.li>
+              <motion.li key={`${route.id}:${asset}:${destination}`} {...item(index + (swap ? 1 : 0))} layout={!reduce}><Route route={route} live={views.get(route.id) ?? null} amount={amount} signInHref={signInHref} /></motion.li>
             ))}
             {!routes.length && !swap ? <motion.li key="none" {...item(0)}><div className={styles.empty}><TriangleAlert size={16} aria-hidden /><p><strong>No verified route yet</strong>Nothing from a first-party source covers this combination.</p></div></motion.li> : null}
           </AnimatePresence>
@@ -126,7 +138,7 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
   );
 }
 
-function Route({ route }: { route: RouteCard }) {
+function Route({ route, live, amount, signInHref }: { route: RouteCard; live: LiveView | null; amount: number; signInHref: string }) {
   return (
     <article className={styles.route}>
       <header>
@@ -135,6 +147,7 @@ function Route({ route }: { route: RouteCard }) {
         <span className={styles.price} data-request={route.price === "Price on request" || undefined}>{route.price}</span>
       </header>
       <p className={styles.delivers}><ArrowRight size={14} aria-hidden />{route.delivers}</p>
+      {live ? <ExchangeLive view={live} amount={amount} signInHref={signInHref} /> : null}
       <ul className={styles.points}>{route.points.map((point) => <li key={point}><Check size={13} aria-hidden />{point}</li>)}</ul>
       {route.caution ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{route.caution}</p> : null}
       {route.action ? <a className={`${styles.open} press`} href={route.action.url} target="_blank" rel="noreferrer noopener">{route.action.label}<ArrowUpRight size={14} aria-hidden /></a> : null}

@@ -11,6 +11,10 @@
  * trade at their own market price; redemption at par is a product of the
  * issuer, open only to verified accounts with their own fees and minimums.
  * Funds, keys, conversion and settlement stay with the provider.
+ *
+ * These cards are facts and links, so they are public. A card carries no INR
+ * amount: for signed-in users the quote component adds each Indian exchange's
+ * live bid and an estimate beside it (lib/exchange-live.ts), never a 1:1 figure.
  */
 import { exchangeCards } from "./indian-exchanges";
 

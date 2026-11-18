@@ -6,7 +6,9 @@ import type { Network, RouteCard } from "./stablecoin-routes";
  * (no blog roundup, aggregator or AI answer supplied a number).
  *
  * Fees are the entry tier on the INR market. The rate itself is the exchange's
- * live order book, which Railor never converts or guesses. Every sale of a
+ * live order book, which Railor never converts or guesses: signed-in users see
+ * each exchange's live bid from its own public endpoint (`usdtInrExchangeRates`
+ * in @railor/core), as a market reference and never as a quote. Every sale of a
  * virtual digital asset has 1% TDS withheld (Income-tax Act s.194S); each
  * exchange states it on its own pages.
  */
@@ -27,6 +29,11 @@ export interface ExchangeRail {
   feeUrl: string;
   /** Where to start the sale: the exchange's USDT/INR market or sell page. */
   marketUrl: string;
+  /**
+   * Why Railor shows no live price for this exchange: its public feed can't be
+   * used (checked 2026-11-18). Absent when `usdtInrExchangeRates` in core reads one.
+   */
+  noLivePrice?: string;
 }
 
 export const EXCHANGE_CHECKED = "2026-11-18";
@@ -45,6 +52,7 @@ export const EXCHANGES: ExchangeRail[] = [
     inrOut: "₹10 a withdrawal, charged by its banking partner; instant",
     networks: null,
     feeUrl: "https://suncrypto.in/fee-structure", marketUrl: "https://suncrypto.in/",
+    noLivePrice: "SunCrypto’s public ticker lists a bid above its ask for every market, so Railor can’t tell which side you would get, and its docs site didn’t load",
   },
   {
     slug: "giottus", name: "Giottus", entryFeePct: 0.4, gstIncluded: false,
@@ -80,8 +88,45 @@ export const EXCHANGES: ExchangeRail[] = [
     inrOut: "no fee; instant",
     networks: { listed: ["ethereum", "tron"], label: "Tron and Ethereum (its guide also names BNB Smart Chain)" },
     feeUrl: "https://mudrex.com/fee", marketUrl: "https://mudrex.com/off-ramp/usdt",
+    noLivePrice: "Mudrex’s public price API covers its futures markets only; it publishes no USDT/INR price",
   },
 ];
+
+const GST_RATE = 0.18;
+const TDS_RATE = 0.01;
+const paise = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+export interface SaleEstimate {
+  /** Amount × bid: the sale value if everything sells at the best bid. */
+  gross: number;
+  /** The exchange's entry-tier trading fee. */
+  fee: number;
+  /** 18% on the fee; nothing where the published fee already includes GST. */
+  gst: number;
+  /** 1% under section 194S, on the sale value after the fee and GST (CBDT Circular 13/2022). */
+  tds: number;
+  /** What is left in the exchange account, before any INR withdrawal fee. */
+  net: number;
+}
+
+/**
+ * INR from selling `amount` USDT at `bid`, after the exchange's published
+ * entry fee, GST and TDS. A market reference: the book is walked at its best
+ * bid, so a sale larger than that level can fill lower, and a higher fee tier
+ * or an INR withdrawal fee would take more.
+ */
+export function estimateSale(exchange: Pick<ExchangeRail, "entryFeePct" | "gstIncluded">, amount: number, bid: number): SaleEstimate | null {
+  if (!Number.isFinite(amount) || !(amount > 0) || !Number.isFinite(bid) || !(bid > 0)) return null;
+  const gross = paise(amount * bid);
+  const fee = paise(gross * exchange.entryFeePct / 100);
+  const gst = exchange.gstIncluded ? 0 : paise(fee * GST_RATE);
+  const tds = paise((gross - fee - gst) * TDS_RATE);
+  return { gross, fee, gst, tds, net: paise(gross - fee - gst - tds) };
+}
+
+export function exchangeBySlug(slug: string) {
+  return EXCHANGES.find((exchange) => exchange.slug === slug);
+}
 
 /** What the entry-tier fee costs once GST is on it. */
 export function allInPct(exchange: ExchangeRail) {

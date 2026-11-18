@@ -2,6 +2,7 @@ import { wisePublicQuote } from "./payments/adapters/wise.js";
 import { revolutPublicReference } from "./public-pricing/revolut.js";
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
+import { shared } from "./public-pricing/shared-cache.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
@@ -374,19 +375,6 @@ export const UNPRICED_PRODUCTS: Array<{ slug: string; name: string; product: str
   },
 ];
 
-// Public quotes are the same for everyone for a few seconds: share them, so a
-// page polling every 20s (or many viewers of the same pair) costs Wise one call.
-const publicCache = new Map<string, { at: number; value: Promise<unknown> }>();
-function shared<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-  const hit = publicCache.get(key);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as Promise<T>;
-  const value = load();
-  publicCache.set(key, { at: Date.now(), value });
-  value.catch(() => publicCache.delete(key));
-  if (publicCache.size > 500) publicCache.delete(publicCache.keys().next().value!);
-  return value;
-}
-
 function round(n: number, dp = 2) {
   const f = 10 ** dp;
   return Math.round(n * f) / f;
@@ -658,15 +646,27 @@ export interface TickerRate {
   observedAt: string;
 }
 
+async function tickerRate(from: string, to: string, fetcher?: typeof fetch): Promise<TickerRate> {
+  const q = await wisePublicQuote({ sourceAsset: from, destinationCurrency: to, amount: 1000 }, fetcher);
+  return { from, to, rate: Number(q.exchangeRate), observedAt: q.observedAt };
+}
+
 /** Mid-market rates for the ticker (Wise's public rate), shared for 60s across every viewer. */
 export async function fxTicker(pairs: Array<[string, string]> = TICKER_PAIRS): Promise<TickerRate[]> {
-  const settled = await Promise.allSettled(
-    pairs.map(([from, to]) =>
-      shared(`ticker:${from}:${to}`, 60_000, async () => {
-        const q = await wisePublicQuote({ sourceAsset: from, destinationCurrency: to, amount: 1000 });
-        return { from, to, rate: Number(q.exchangeRate), observedAt: q.observedAt };
-      }),
-    ),
-  );
+  const settled = await Promise.allSettled(pairs.map(([from, to]) => shared(`ticker:${from}:${to}`, 60_000, () => tickerRate(from, to))));
   return settled.flatMap((r) => (r.status === "fulfilled" && Number.isFinite(r.value.rate) && r.value.rate > 0 ? [r.value] : []));
+}
+
+/**
+ * Wise's public mid-market rate for one pair, read from the same 60s cache the
+ * ticker fills (so the exchange price route costs Wise no extra call). Null
+ * when the rate did not load. An injected fetcher (tests) bypasses the cache.
+ */
+export async function midMarketRate(from: string, to: string, fetcher?: typeof fetch): Promise<TickerRate | null> {
+  try {
+    const rate = await (fetcher ? tickerRate(from, to, fetcher) : shared(`ticker:${from}:${to}`, 60_000, () => tickerRate(from, to)));
+    return Number.isFinite(rate.rate) && rate.rate > 0 ? rate : null;
+  } catch {
+    return null;
+  }
 }

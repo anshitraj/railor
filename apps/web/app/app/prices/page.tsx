@@ -23,7 +23,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
         <FxTicker />
         <PriceCheckHeader mode="app" />
         <PriceModeTabs mode="stablecoin" base="/app/prices" />
-        <StablecoinQuote initial={stablecoinInitial(params)} />
+        <StablecoinQuote initial={stablecoinInitial(params)} signedIn />
         <PriceHelpLinks />
       </div>
     );
