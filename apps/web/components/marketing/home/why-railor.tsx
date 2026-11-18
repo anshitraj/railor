@@ -31,7 +31,7 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
                   <div className={styles.converge}>
                     {([["wise", "Wise"], ["remitly", "Remitly"], ["xoom", "Xoom"], ["revolut", "Revolut"], ["skydo", "Skydo"], ["payzoll", "PayZoll"]] as const).map(([slug, name], index) => (
                       <span key={slug} className={styles.chip} style={{ "--beat": `${index * 65}ms` } as React.CSSProperties}>
-                        <ProviderLogo slug={slug} name={name} size={24} />{name}
+                        <ProviderLogo slug={slug} name={name} size={24} loading="eager" />{name}
                       </span>
                     ))}
                   </div>
@@ -46,7 +46,7 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             </LoopOnView>
             <div className={styles.copy}>
               <h3>Every provider in one search</h3>
-              <p>Apps, banks and payment platforms side by side — no tabs, no spreadsheets.</p>
+              <p>Compare apps, banks and payment platforms side by side.</p>
             </div>
           </li>
 
@@ -68,10 +68,10 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
           <li className={styles.tile} data-home-reveal>
             <LoopOnView className={styles.stage} once>
               <div className={styles.live} aria-hidden>
-                <span className={styles.ring} data-anim><RefreshCw size={16} /></span>
+                <span className={styles.ring}><RefreshCw size={16} /></span>
                 <div>
                   <span className={styles.liveLabel}>Arrives</span>
-                  <strong className={`${styles.liveAmount}${blur}`}><span data-anim className={styles.liveOld}>₹92,341.20</span><span data-anim className={styles.liveNew}>₹92,369.57</span></strong>
+                  <strong className={`${styles.liveAmount}${blur}`}><span className={styles.liveOld}>₹92,341.20</span><span className={styles.liveNew}>₹92,369.57</span></strong>
                 </div>
               </div>
               {signedIn ? null : <DemoLock />}
@@ -86,7 +86,7 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
             <LoopOnView className={styles.stage} once>
               <div className={styles.source} aria-hidden>
                 <span className={styles.sourcePrice}>Fee <span className={blur.trim() || undefined}>$11.26</span></span>
-                <span className={styles.sourceTip} data-anim><Link2 size={13} />wise.com · checked 4s ago</span>
+                <span className={styles.sourceTip}><Link2 size={13} />wise.com · checked 4s ago</span>
               </div>
               {signedIn ? null : <DemoLock />}
             </LoopOnView>
@@ -98,7 +98,7 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
 
           <li className={styles.tile} data-home-reveal>
             <LoopOnView className={styles.stage} once>
-              <div className={styles.alert} aria-hidden data-anim>
+              <div className={styles.alert} aria-hidden>
                 <span className={styles.alertIcon}><Bell size={15} /></span>
                 <div><strong>Fee change detected</strong><small>A provider on your route updated its pricing page.</small></div>
               </div>
@@ -112,8 +112,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
           <li className={`${styles.tile} ${styles.full}`} data-home-reveal>
             <LoopOnView className={styles.stage} once>
               <div className={styles.chat} aria-hidden>
-                <p className={styles.ask} data-anim><MessageSquareText size={14} />Cheapest way to pay a supplier in the UAE?</p>
-                <div className={styles.answer} data-anim>
+                <p className={styles.ask}><MessageSquareText size={14} />Cheapest way to pay a supplier in the UAE?</p>
+                <div className={styles.answer}>
                   <ShieldCheck size={15} />
                   <span>3 providers can serve your company. The lowest known cost arrives in 1 day.</span>
                 </div>

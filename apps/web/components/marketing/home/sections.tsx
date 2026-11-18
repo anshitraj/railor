@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Bot, Check, Code2, Package } from "lucide-react";
-import { CodeSample } from "@railor/ui";
+import { DeveloperDemo } from "./developer-demo";
 import styles from "./home.module.css";
 
 const AUDIENCES = [
@@ -65,7 +65,7 @@ export function AudiencesSection() {
   );
 }
 
-export function DevelopersSection({ baseUrl }: { baseUrl: string }) {
+export function DevelopersSection() {
   return (
     <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="dev-title">
       <div className={styles.container}>
@@ -73,10 +73,10 @@ export function DevelopersSection({ baseUrl }: { baseUrl: string }) {
           <div>
             <p className={styles.eyebrow}>For developers</p>
             <h2 id="dev-title" className={styles.title}>The same prices, by API.</h2>
-            <p className={styles.lead}>Every price Railor shows is one request away, with its source and basis attached.</p>
+            <p className={styles.lead}>Get prices, fees, and the source behind each quote in one request.</p>
             <ul className={styles.devList}>
               <li><span><Code2 size={15} aria-hidden /></span>REST API with a free test key</li>
-              <li><span><Package size={15} aria-hidden /></span>TypeScript and Python SDKs</li>
+              <li><span><Package size={15} aria-hidden /></span>Node.js and Python SDKs</li>
               <li><span><Bot size={15} aria-hidden /></span>MCP server for Claude, Cursor and Codex</li>
             </ul>
             <div className={styles.devActions}>
@@ -85,54 +85,7 @@ export function DevelopersSection({ baseUrl }: { baseUrl: string }) {
             </div>
           </div>
           <div className={styles.devCode}>
-            <CodeSample
-              variants={[
-                {
-                  language: "ts",
-                  label: "TypeScript",
-                  code: `import { Railor } from "@railor/sdk";
-
-const railor = new Railor({ apiKey: "RAILOR_API_KEY" });
-
-const prices = await railor.prices.check({
-  sourceCurrency: "USD",
-  destinationCurrency: "INR",
-  amount: 1000,
-  context: {
-    profile: "freelancer",
-    country: "IN",
-    direction: "receive",
-    purpose: "services",
-  },
-});
-
-// Ranked by what arrives; each row says where its number came from.
-console.log(prices.data[0]);`,
-                },
-                {
-                  language: "curl",
-                  label: "cURL",
-                  code: `curl ${baseUrl}/v1/prices \\
-  -H "Authorization: Bearer RAILOR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "source_currency": "USD", "destination_currency": "INR", "amount": 1000 }'`,
-                },
-                {
-                  language: "python",
-                  label: "Python",
-                  code: `from railor import Railor
-
-railor = Railor(api_key="RAILOR_API_KEY")
-
-prices = railor.prices.check(
-    source_currency="USD",
-    destination_currency="INR",
-    amount=1000,
-)
-print(prices["data"][0])`,
-                },
-              ]}
-            />
+            <DeveloperDemo />
           </div>
         </div>
       </div>
@@ -217,10 +170,10 @@ export function FinalCta() {
       <div className={styles.container}>
         <div className={styles.final}>
           <div className={styles.finalCoins} aria-hidden>
-            <span className="coin" data-metal="gold" style={{ "--size": "92px", left: "6%", top: "18%", rotate: "-14deg" } as React.CSSProperties}>$</span>
-            <span className="coin" data-metal="silver" style={{ "--size": "66px", left: "12%", bottom: "14%", rotate: "10deg" } as React.CSSProperties}>€</span>
-            <span className="coin" data-metal="bronze" style={{ "--size": "72px", right: "8%", top: "16%", rotate: "12deg" } as React.CSSProperties}>₹</span>
-            <span className="coin" data-metal="gold" style={{ "--size": "58px", right: "14%", bottom: "16%", rotate: "-8deg" } as React.CSSProperties}>£</span>
+            <span className="coin" data-metal="gold">$</span>
+            <span className="coin" data-metal="silver">€</span>
+            <span className="coin" data-metal="bronze">₹</span>
+            <span className="coin" data-metal="gold">£</span>
           </div>
           <h2 id="final-title">Check before you send.</h2>
           <p>Two currencies and an amount is all it takes. Sign in free and every price is yours.</p>

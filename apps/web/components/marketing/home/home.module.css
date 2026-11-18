@@ -21,7 +21,7 @@
   to { opacity: 1; translate: 0 0; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (min-width: 720px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .motionPage :is(.head, .step, .provider, .mapViewport, .routeChips, .audience, .devCode, .basis, .faq, .final, .logos, :global([data-home-reveal])):not(:focus-within) {
       animation: homeReveal var(--ease-out) both;
@@ -212,7 +212,12 @@
 .final .btnPrimary { background: var(--color-ink); }
 .final .btnSecondary { border-color: rgb(255 255 255 / .5); background: transparent; color: #fff; }
 .final .btnSecondary:hover { border-color: #fff; }
+.finalCoins { position: absolute; inset: 0; pointer-events: none; }
 .finalCoins :global(.coin) { position: absolute; opacity: .9; }
+.finalCoins :global(.coin):nth-child(1) { --size: 92px; left: 6%; top: 18%; rotate: -14deg; }
+.finalCoins :global(.coin):nth-child(2) { --size: 66px; left: 12%; bottom: 14%; rotate: 10deg; }
+.finalCoins :global(.coin):nth-child(3) { --size: 72px; right: 8%; top: 16%; rotate: 12deg; }
+.finalCoins :global(.coin):nth-child(4) { --size: 58px; right: 14%; bottom: 16%; rotate: -8deg; }
 
 @media (min-width: 720px) {
   .steps, .audiences { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -238,14 +243,44 @@
 @media (max-width: 719px) {
   .section, .mapSection { padding: 64px 0; }
   .head { margin-bottom: 28px; }
+  .hero { isolation: isolate; }
+  .heroGlow { top: -80px; right: -46%; width: 136%; background: radial-gradient(closest-side, #fbd6c1b3, transparent 80%); }
   .heroActions .btn { flex: 1; }
-  .stepStage { height: 220px; }
+  .heroCalc { scroll-margin-top: 92px; }
+  .stepStage { height: auto; min-height: 220px; padding: 18px; }
+  .stepStage:has(.demoLock) { padding-bottom: 54px; }
+  .stepBody { padding: 18px 20px 22px; }
+  .stepBody h3 { margin-top: 10px; }
   .mapFrame { width: 145%; margin-left: -27%; }
   .logos { margin-top: 44px; }
   .logoRow { justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; mask-image: linear-gradient(90deg, black 85%, transparent); }
   .logoRow li { flex: none; }
-  .final { padding: 56px 20px; border-radius: 28px; }
-  .finalCoins { display: none; }
+  .dev { gap: 24px; padding: 28px 14px 14px; }
+  .dev > :first-child { padding-inline: 6px; }
+  .final { padding: 88px 20px 52px; border-radius: 28px; }
+  .finalCoins :global(.coin):nth-child(1) { --size: 46px; top: 24px; left: 14%; }
+  .finalCoins :global(.coin):nth-child(3) { --size: 39px; top: 20px; right: 15%; }
+  .finalCoins :global(.coin):nth-child(even) { display: none; }
+}
+
+@media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
+  .motionPage:global([data-mobile-motion]) .heroCalc { animation: none; }
+  .motionPage :global([data-scroll-scene]):focus-within { transform: none !important; opacity: 1 !important; }
+}
+
+@media (max-width: 360px) { .dev { padding-inline: 10px; } }
+
+@media (max-width: 719px) and (min-height: 540px) and (prefers-reduced-motion: no-preference) {
+  .motionPage:global([data-mobile-motion]) .steps { display: flex; flex-direction: column; gap: 30px; }
+  .motionPage:global([data-mobile-motion]) .step {
+    position: sticky;
+    top: 84px;
+    scroll-margin-top: 104px;
+    box-shadow: 0 10px 30px -18px #2f1e1660;
+  }
+  .motionPage:global([data-mobile-motion]) .step:nth-child(2) { top: 96px; }
+  .motionPage:global([data-mobile-motion]) .step:nth-child(3) { top: 108px; }
+  .motionPage:global([data-mobile-motion]) .steps:has(:focus-visible) .step { position: relative; top: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pill, .heroTitle > span, .heroLead, .heroActions, .heroProof, .heroCalc { animation: none; }

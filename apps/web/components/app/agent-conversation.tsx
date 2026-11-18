@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ArrowUp, ChevronDown, History, MessageSquare, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { ArrowRight, ArrowUp, History, MessageSquare, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { useModalFocus } from "@railor/ui";
 import type { SearchPreviewResult, draftPaymentIntent } from "@railor/core";
 import { RANKING_PRESET_LABEL, ProductType, PaymentMethod, type RankingPreset } from "@railor/types";
@@ -14,12 +14,13 @@ import { InfrastructureResults } from "./infrastructure-results";
 import { RailorMark } from "../brand";
 import { CHAT_HISTORY_LIMIT, CHAT_MESSAGE_LIMIT, chatTitle, parseAgentHistory, upsertAgentChat, type AgentChat, type ChatMessage } from "../../lib/agent-history";
 import { AgentStarters } from "./agent-starters";
+import { AgentRequestCard } from "./agent-request-card";
 import styles from "./agent-chat.module.css";
 import { exploreRouteHref } from "../../lib/explore-route";
 
 type DraftResult = ReturnType<typeof draftPaymentIntent>;
 type SearchReply = { state: "needs_input" | "needs_confirmation" | "needs_policy" | "ready"; draft: DraftResult; preview: SearchPreviewResult | null };
-const preferences: RankingPreset[] = ["balanced", "cheapest", "fastest", "most_reliable", "max_recipient_amount"];
+
 
 export function AgentConversation({ policies, options, entityCountry, defaultEmail, canDecide, historyScope, advancedTools }: {
   policies: Array<{ id: string; name: string }>; options: IntentOptions; entityCountry?: string; defaultEmail: string; canDecide: boolean; historyScope: string; advancedTools?: ReactNode;
@@ -187,10 +188,11 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         setPreference((reply.draft.draft.preference as RankingPreset) ?? "balanced");
         if (reply.preview) receivePreview(reply.preview);
         else {
-          setReviewOpen(true);
-          add("agent", reply.state === "needs_input" ? `I need a little more information: ${reply.draft.missing.map((field) => field.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}. Fill the fields below to continue.`
-            : reply.state === "needs_confirmation" ? "I’ve prepared the request. Please confirm the suggested destination values below before I compare providers."
-            : "Your request is ready. Review it below to explore provider coverage. Company rules can be added later.");
+          // Open the editor only when something is missing; otherwise the card is enough.
+          setReviewOpen(reply.state === "needs_input");
+          add("agent", reply.state === "needs_input" ? `Almost there. I still need the ${reply.draft.missing.map((field) => field.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}.`
+            : reply.state === "needs_confirmation" ? "Here’s what I understood. Check the destination, then compare."
+            : "Here’s what I understood. Compare when you’re ready.");
         }
       } catch { setError("The connection dropped. Please try again."); }
     });
@@ -213,16 +215,15 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     });
   }
 
-  const requestPanel = intent ? <section className={`agent-request ${styles.request}`}><div className="agent-request-summary"><div><span className="product-index">INTERPRETED REQUEST</span><p>{intent.amount?.toLocaleString() ?? "Amount needed"} {intent.sourceKind === "asset" ? intent.sourceAsset || "Asset needed" : intent.sourceCurrency || "Currency needed"}<ArrowRight size={17} />{intent.destinationCurrency || "Destination currency needed"}<span>{intent.sourceEntityCountry || "Origin needed"} → {intent.destinationCountry || "Destination needed"}{intent.namedRail ? ` · ${intent.namedRail}` : ""}</span></p></div>
-        <button type="button" onClick={() => setReviewOpen((open) => !open)} aria-expanded={reviewOpen}><SlidersHorizontal size={15} />Review fields<ChevronDown size={14} /></button></div>
-      <div className="agent-policy-controls"><label>Company policy<select disabled={pending || !policies.length} value={policyId} onChange={(event) => { const next = event.target.value; setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}>{!policies.length ? <option value="">Optional · explore coverage</option> : policies.map((policy) => <option value={policy.id} key={policy.id}>{policy.name}</option>)}</select></label>
-        <label>Compare by<select disabled={pending} value={preference} onChange={(event) => { const next = event.target.value as RankingPreset; setPreference(next); if (preview) searchDraft(next, policyId, `Compare by ${RANKING_PRESET_LABEL[next].toLowerCase()}.`); }}>{preferences.map((value) => <option key={value} value={value}>{RANKING_PRESET_LABEL[value]}</option>)}</select></label></div>
-      {reviewOpen ? <div className="agent-request-fields"><fieldset disabled={pending}><IntentBuilder value={intent} onChange={(next) => { setIntent(next); setPreview(null); }} options={options} detectedEntity={entityCountry} />
-        {product || method ? <div className="agent-policy-controls mt-5 !px-0 !pb-0"><label>Interpreted product<select value={product} onChange={(event) => { setProduct(event.target.value); setPreview(null); }}><option value="">Not specified</option>{ProductType.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label><label>Interpreted payment method<select value={method} onChange={(event) => { setMethod(event.target.value); setPreview(null); }}><option value="">Not specified</option>{PaymentMethod.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label></div> : null}
-        </fieldset>
-        {draft?.notes.map((note) => <p className="mt-3 text-xs text-[var(--color-muted)]" key={note}>{note}</p>)}
-        <div className="mt-5 flex flex-wrap items-center gap-3"><button type="button" className="comparison-primary-action" disabled={pending || missing.length > 0} onClick={() => searchDraft()}>Confirm fields & search <ArrowRight size={15} /></button>{missing.length ? <span className="text-xs text-[var(--color-muted)]">Still needed: {missing.join(", ")}.</span> : null}</div></div> : null}
-    </section> : null;
+  const editor = intent ? <fieldset disabled={pending}>
+      <IntentBuilder value={intent} onChange={(next) => { setIntent(next); setPreview(null); }} options={options} detectedEntity={entityCountry} compact />
+      {product || method ? <div className="agent-policy-controls mt-5 !px-0 !pb-0"><label>Product<select value={product} onChange={(event) => { setProduct(event.target.value); setPreview(null); }}><option value="">Not specified</option>{ProductType.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label><label>Payment method<select value={method} onChange={(event) => { setMethod(event.target.value); setPreview(null); }}><option value="">Not specified</option>{PaymentMethod.options.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label></div> : null}
+      {draft?.notes.map((note) => <p className="mt-3 text-xs text-[var(--color-muted)]" key={note}>{note}</p>)}
+    </fieldset> : null;
+  const requestPanel = intent ? <AgentRequestCard intent={intent} options={options} missing={missing} pending={pending} editing={reviewOpen} onEditing={setReviewOpen} editor={editor}
+      policies={policies} policyId={policyId} onPolicy={(next) => { setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}
+      preference={preference} onPreference={(next) => { setPreference(next); if (preview) searchDraft(next, policyId, `Compare by ${RANKING_PRESET_LABEL[next].toLowerCase()}.`); }}
+      onSearch={() => searchDraft()} hasResults={Boolean(preview)} /> : null;
   const comparison = preview ? <>{requestPanel}<InfrastructureResults preview={preview} canDecide={canDecide} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
       <div className="agent-followups"><span>Keep exploring</span><button type="button" disabled={pending} onClick={() => ask("Why is there no best option?")}>Explain the recommendation</button><button type="button" disabled={pending} onClick={() => ask("What information is missing?")}>What’s missing?</button><button type="button" disabled={pending} onClick={() => ask("Compare by price")}>Compare by price</button></div></> : null;
 

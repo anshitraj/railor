@@ -115,13 +115,17 @@ export function IntentBuilder({
   options,
   detectedEntity,
   section = "all",
+  compact = false,
 }: {
   value: IntentDraft;
   onChange: (next: IntentDraft) => void;
   options: IntentOptions;
   detectedEntity?: string;
   section?: "all" | "funding" | "destination" | "amount";
+  /** Hide the suggestion chip rows: each field keeps its value and its search picker. */
+  compact?: boolean;
 }) {
+  const suggestionCount = compact ? 0 : 5;
   const set = <K extends keyof IntentDraft>(key: K, next: IntentDraft[K]) => onChange({ ...value, [key]: next });
   const inferredCurrency = value.destinationCountry ? options.currencyByCountry[value.destinationCountry] : undefined;
   const fundingUnit = value.sourceKind === "fiat" ? value.sourceCurrency || "source currency" : value.sourceAsset || "asset";
@@ -175,7 +179,7 @@ export function IntentBuilder({
             value={value.sourceEntityCountry ? [value.sourceEntityCountry] : []}
             onChange={(next) => set("sourceEntityCountry", next[0] ?? "")}
             detected={detectedEntity}
-            suggestionCount={5}
+            suggestionCount={suggestionCount}
           />
           {value.sourceKind === "fiat" ? (
             <SmartPicker
@@ -184,7 +188,7 @@ export function IntentBuilder({
               value={value.sourceCurrency ? [value.sourceCurrency] : []}
               onChange={(next) => set("sourceCurrency", next[0] ?? "")}
               detected={options.currencyByCountry[value.sourceEntityCountry]}
-              suggestionCount={5}
+              suggestionCount={suggestionCount}
             />
           ) : (
             <>
@@ -194,7 +198,7 @@ export function IntentBuilder({
                 options={options.assets}
                 value={value.sourceAsset ? [value.sourceAsset] : []}
                 onChange={(next) => set("sourceAsset", next[0] ?? "")}
-                suggestionCount={5}
+                suggestionCount={suggestionCount}
               />
               <SmartPicker
                 label="Source network"
@@ -202,7 +206,7 @@ export function IntentBuilder({
                 options={options.networks}
                 value={value.sourceNetwork ? [value.sourceNetwork] : []}
                 onChange={(next) => set("sourceNetwork", next[0] ?? "")}
-                suggestionCount={5}
+                suggestionCount={suggestionCount}
               />
             </>
           )}
@@ -218,7 +222,7 @@ export function IntentBuilder({
               const currency = options.currencyByCountry[country];
               onChange({ ...value, destinationCountry: country, destinationCurrency: currency ?? value.destinationCurrency });
             }}
-            suggestionCount={5}
+            suggestionCount={suggestionCount}
           />
           <SmartPicker
             label="Destination currency"
@@ -226,7 +230,7 @@ export function IntentBuilder({
             value={value.destinationCurrency ? [value.destinationCurrency] : []}
             onChange={(next) => set("destinationCurrency", next[0] ?? "")}
             detected={inferredCurrency}
-            suggestionCount={5}
+            suggestionCount={suggestionCount}
           />
           <label className="block text-[12px] font-medium text-[var(--color-muted)]">Receiving endpoint
             <select className="product-field mt-1 w-full" value={value.endpointType} onChange={(event) => set("endpointType", event.target.value)}>

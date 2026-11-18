@@ -16,6 +16,7 @@ export function RouteArcs({ routes }: { routes: MapRoute[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const [inView, setInView] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [pulsing, setPulsing] = useState(false);
 
@@ -23,7 +24,15 @@ export function RouteArcs({ routes }: { routes: MapRoute[] }) {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const element = ref.current;
     if (!element) return;
-    const observer = new IntersectionObserver(([entry]) => { if (entry?.isIntersecting) { setInView(true); observer.disconnect(); } }, { threshold: 0.3 });
+    if (!("IntersectionObserver" in window)) {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      const onScreen = Boolean(entry && entry.intersectionRatio >= 0.3);
+      setVisible(onScreen);
+      if (onScreen) setInView(true);
+    }, { threshold: 0.3 });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -41,6 +50,11 @@ export function RouteArcs({ routes }: { routes: MapRoute[] }) {
       try { animation.beginElement(); } catch { /* SMIL unsupported: the static arcs still read. */ }
     });
   }, [pulsing]);
+  useEffect(() => {
+    if (!pulsing) return;
+    if (visible) svg.current?.unpauseAnimations?.();
+    else svg.current?.pauseAnimations?.();
+  }, [pulsing, visible]);
 
   const arcs = routes.flatMap((route, index) => {
     const from = projectCountry(route.from);
