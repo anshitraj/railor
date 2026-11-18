@@ -479,7 +479,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       {!cardComingSoon && <>
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
-        onGetQuote={mode === "app" && valid && !cardComingSoon ? getProviderQuote : undefined}
+        onGetQuote={valid && !cardComingSoon ? getProviderQuote : undefined}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
         reference={result?.reference ?? null}
         action={cta}
