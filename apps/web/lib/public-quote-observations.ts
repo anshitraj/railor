@@ -75,7 +75,7 @@ const xoomBrowserResult = z.object({
     feeUSD: z.number().finite().nonnegative(),
     recipientAmount: z.number().finite().positive(),
     rate: z.number().finite().positive(),
-    destinationCurrency: z.enum(["INR", "SGD"]),
+    destinationCurrency: z.string().regex(/^[A-Z]{3}$/),
     firstTransfer: z.boolean().nullable(),
     fundingMethod: z.literal("ACH"),
     payoutMethod: z.literal("bank_deposit"),

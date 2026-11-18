@@ -9,6 +9,10 @@ const LOCAL_LOGOS: Record<string, string> = {
   remitly: "remitly.png", xoom: "xoom.png", worldremit: "worldremit.svg", "world-remit": "worldremit.svg", instarem: "instarem.png",
   payzoll: "payzoll.png", revolut: "revolut.svg", skydo: "skydo.png",
   koinly: "koinly.ico", cleartax: "cleartax.svg", incometax: "incometax.ico",
+  "state-bank-of-india": "state-bank-of-india.png", "hdfc-bank": "hdfc-bank.png",
+  "idfc-first-bank": "idfc-first-bank.png", "canara-bank": "canara-bank.png",
+  lemfi: "lemfi.png", sendwave: "sendwave.png", nala: "nala.png",
+  koinbx: "koinbx.png", ledgerpe: "ledgerpe.png",
 };
 
 /**

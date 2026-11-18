@@ -9,8 +9,8 @@ import { whereAlpha2 } from "iso-3166-1";
  * researchCountry() refuses anything outside this set — not a soft
  * suggestion. Started as the 5 v1 countries; expanded to every country in
  * @railor/database's seeded `countries` table once those 5 were verified
- * (see packages/database/src/seed/data.ts — keep this list in sync with
- * that one). Still bounded, still deliberate: an unseeded country code
+ * (see the database reference seed and country coverage migration). Still
+ * bounded and deliberate: an unseeded country code
  * would fail the countries-table FK anyway, so this can never silently grow
  * to "the whole world."
  */
@@ -21,6 +21,7 @@ export const RESEARCHABLE_COUNTRIES = [
   "QA", "KW", "BH", "OM", "IL", "EG", "JP", "KR", "CN", "TW",
   "VN", "TH", "MY", "PK", "BD", "LK", "NZ", "GH", "MA", "TZ",
   "UG", "CI", "SN", "ET", "AR", "CO", "CL", "PE",
+  "NP", "KH", "RW", "DO", "JM",
 ] as const;
 export type ResearchableCountry = (typeof RESEARCHABLE_COUNTRIES)[number];
 
@@ -31,7 +32,7 @@ export function isResearchableCountry(code: string): code is ResearchableCountry
 /**
  * ISO3 is a deterministic lookup (iso-3166-1, standard ISO 3166 data), not
  * LLM-researched — a static fact doesn't need a paid call, and hand-typing
- * 58 alpha-3 codes is exactly the kind of transcription risk that library
+ * alpha-3 codes is exactly the kind of transcription risk that library
  * exists to avoid. countryName always comes from @railor/database's own
  * `countries.name` (the seeded name Railor already shows everywhere else),
  * never from this lookup, so wording never diverges from the rest of the app.

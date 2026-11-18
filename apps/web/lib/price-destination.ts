@@ -1,5 +1,10 @@
 import type { PriceCheckInput } from "@railor/core";
 
+/** Keep an account's country. For an anonymous outbound USD comparison use the US sender market. */
+export function defaultPriceCountry(entity: string | null | undefined, from: string, direction: "send" | "receive") {
+  return entity || (direction === "send" && from === "USD" ? "US" : "IN");
+}
+
 /** A unique local currency is a useful default; shared currencies need a country choice. */
 export function priceDestination(input: PriceCheckInput, currencyByCountry: Record<string, string>) {
   if (input.destinationCountry) return input.destinationCountry.toUpperCase();

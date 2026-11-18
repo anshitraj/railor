@@ -9,7 +9,7 @@ import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
 import { loadPublicQuoteObservations } from "./public-quote-observations";
-import { priceDestination } from "./price-destination";
+import { defaultPriceCountry, priceDestination } from "./price-destination";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -124,8 +124,10 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   // optional because Wise's consumer estimates are context, not executable
   // business quotes.
   const market = params.market === undefined ? true : params.market === "1";
+  const direction = (!entity || entity === "IN") && to === "INR" ? "receive" : "send";
+  const directionForCountry = params.direction === "send" || params.direction === "receive" ? params.direction : direction;
   const context = readCustomerContext((key) => params[key], {
-    profile, country: entity || "IN", direction: (!entity || entity === "IN") && to === "INR" ? "receive" : "send", purpose: profile === "personal" ? "personal" : "services",
+    profile, country: defaultPriceCountry(entity, from, directionForCountry), direction, purpose: profile === "personal" ? "personal" : "services",
   });
   let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
   let error: string | undefined;
