@@ -19,6 +19,13 @@ const OFFICIAL_REGULATOR_DOMAINS: Record<string, string[]> = {
   GB: ["bankofengland.co.uk", "fca.org.uk", "psr.org.uk"],
   SG: ["mas.gov.sg"],
   AE: ["centralbank.ae", "sca.gov.ae"],
+  PH: ["bsp.gov.ph"],
+  PK: ["sbp.org.pk"],
+  BD: ["bb.org.bd"],
+  NP: ["nrb.org.np"],
+  LK: ["cbsl.gov.lk"],
+  RW: ["bnr.rw"],
+  TZ: ["bot.go.tz"],
 };
 
 const OFFICIAL_NETWORK_DOMAINS = [
@@ -27,6 +34,8 @@ const OFFICIAL_NETWORK_DOMAINS = [
   "fasterpayments.org.uk",
   "pay.uk",
   "eurosystem.europa.eu",
+  "nchl.com.np",
+  "lankapay.net",
 ];
 
 const INTERNATIONAL_ORG_DOMAINS = ["imf.org", "bis.org", "fatf-gafi.org", "worldbank.org", "financialactiontaskforce.org"];

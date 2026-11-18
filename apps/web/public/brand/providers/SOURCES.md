@@ -21,3 +21,15 @@ Downloaded from providers’ websites and their declared icon hosts on 2026-11-1
 - `payzoll.png`: https://payzoll.finance/favicon.png
 - `revolut.svg`: retail app icon from https://developer.revolut.com/docs/resources/open-banking-logo-guidelines
 - `skydo.png`: https://www.skydo.com/images/png/light_mode.png
+
+Marks downloaded on 2026-11-19
+
+- `state-bank-of-india.png` from [SBI](https://sbi.bank.in/o/SBI-Theme/images/favicon.ico)
+- `hdfc-bank.png` from [HDFC Bank](https://www.hdfc.bank.in/favicon.ico)
+- `idfc-first-bank.png` from [IDFC FIRST Bank](https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/images/common/favicon.ico)
+- `canara-bank.png` from [Canara Bank](https://www.canarabank.bank.in/documents/20126/33915/fevicon.png/666e26af-cafc-b26d-eb4b-a33d3417c5ba)
+- `sendwave.png` from [Sendwave](https://www.sendwave.com/web-cms-sw-assets/next-assets/icons/icon-256x256.png)
+- `nala.png` from [NALA’s declared icon](https://cdn.prod.website-files.com/5f89ad61c0ef675e5948350e/5f8fc80f1a48011a5a9751c9_Group%20596.png)
+- `lemfi.png` from [LemFi’s published Android app listing](https://play.google.com/store/apps/details?id=com.lemonadeFinance.android)
+- `koinbx.png` from [KoinBX](https://koinbx.com/favicon.ico?favicon.110_9shxaquy2.ico)
+- `ledgerpe.png` from [SETTLE by LedgerPe](https://settle.ledgerpe.com/favicon.png)

@@ -12,6 +12,7 @@ import { BASIS_LABEL, priceView } from "../../lib/price-view";
 import { isLockedPriceCheck, type LockedPriceCheck } from "../../lib/price-lock";
 import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
 import { pricingSourceLabel } from "../../lib/price-display";
+import { defaultPriceCountry } from "../../lib/price-destination";
 import { CurrencyPicker } from "./currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "./pay-method-select";
 import styles from "./price.module.css";
@@ -76,7 +77,7 @@ function useTween(target: number | null, ms = 420) {
 }
 
 /** Same derivation as the full price page, so both screens price the same situation. */
-function contextFor(to: string, profile: Profile, entityCountry: string | null | undefined, previous: CustomerContext): CustomerContext {
+function contextFor(from: string, to: string, profile: Profile, entityCountry: string | null | undefined, previous: CustomerContext): CustomerContext {
   const entity = entityCountry ?? "";
   const direction = (!entity || entity === "IN") && to === "INR" ? "receive" : "send";
   // Personal money usually comes through the sender's transfer app; a client invoice by bank transfer.
@@ -84,7 +85,7 @@ function contextFor(to: string, profile: Profile, entityCountry: string | null |
   return {
     ...previous,
     profile,
-    country: entity || "IN",
+    country: defaultPriceCountry(entity, from, direction),
     direction,
     purpose: profile === "personal" ? "personal" : previous.purpose === "personal" ? "services" : previous.purpose,
     paymentMethod: direction === "receive" ? (profile === "personal" ? "transfer_service" : keepMethod ?? "local_bank") : undefined,
@@ -200,18 +201,22 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   }, [now, fetchedAt, loading, valid, cardComingSoon, error, load]);
   useEffect(() => () => controller.current?.abort(), []);
 
-  const setProfile = (profile: Profile) => setContext((previous) => contextFor(to, profile, entityCountry, previous));
+  const setProfile = (profile: Profile) => setContext((previous) => contextFor(from, to, profile, entityCountry, previous));
   const pickTo = (code: string) => {
     if (code === from) return swap();
     setTo(code);
-    setContext((previous) => contextFor(code, previous.profile as Profile, entityCountry, previous));
+    setContext((previous) => contextFor(from, code, previous.profile as Profile, entityCountry, previous));
   };
-  const pickFrom = (code: string) => (code === to ? swap() : setFrom(code));
+  const pickFrom = (code: string) => {
+    if (code === to) return swap();
+    setFrom(code);
+    setContext((previous) => contextFor(code, to, previous.profile as Profile, entityCountry, previous));
+  };
   function swap() {
     setSpin((value) => value + 1);
     setFrom(to);
     setTo(from);
-    setContext((previous) => contextFor(from, previous.profile as Profile, entityCountry, previous));
+    setContext((previous) => contextFor(to, from, previous.profile as Profile, entityCountry, previous));
   }
 
   const activeProfile: Profile = context.profile === "sole_proprietor" ? "freelancer" : (context.profile as Profile);

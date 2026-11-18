@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { priceDestination } from "./price-destination";
+import { defaultPriceCountry, priceDestination } from "./price-destination";
 
 describe("price comparison destination", () => {
   const currencies = { IN: "INR", MX: "MXN", DE: "EUR", FR: "EUR", US: "USD", EC: "USD" };
@@ -18,5 +18,10 @@ describe("price comparison destination", () => {
     const context = { country: "FR", profile: "business" as const, direction: "receive" as const, purpose: "services" as const };
     expect(priceDestination({ ...input, destinationCurrency: "EUR", context }, currencies)).toBe("FR");
     expect(priceDestination({ ...input, destinationCurrency: "EUR", context: { ...context, direction: "send" } }, currencies)).toBeUndefined();
+  });
+  it("defaults anonymous USD sending to the US and retains explicit account countries", () => {
+    expect(defaultPriceCountry(null, "USD", "send")).toBe("US");
+    expect(defaultPriceCountry(null, "USD", "receive")).toBe("IN");
+    expect(defaultPriceCountry("CA", "USD", "send")).toBe("CA");
   });
 });

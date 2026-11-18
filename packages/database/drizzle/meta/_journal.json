@@ -183,6 +183,13 @@
       "when": 1791452700000,
       "tag": "0025_web_fact_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795046400000,
+      "tag": "0026_country_payment_coverage",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,12 @@ describe("directional community provider discovery", () => {
     expect(matched(wire)).toEqual(expect.arrayContaining(["hdfc-bank", "idfc-first-bank", "canara-bank", "state-bank-of-india"]));
     expect(matched({ ...wire, context: { ...wire.context, paymentMethod: "local_bank" } })).not.toContain("hdfc-bank");
   });
+  it("finds the US-to-Ghana providers without inferring Ghana-to-US coverage", () => {
+    const providers = ["lemfi", "sendwave", "nala"];
+    expect(matched(request("USD", "GHS", "US"))).toEqual(expect.arrayContaining(providers));
+    expect(matched(request("GHS", "USD", "GH")).filter(slug => providers.includes(slug))).toEqual([]);
+    expect(matched(request("USD", "GHS", "US", "business"))).toEqual([]);
+  });
   it("makes discovery providers searchable without inventing numeric prices or erasing official limitations", () => {
     const coverage = providerMarketCoverage(request("AED", "INR", "AE"));
     expect(coverage.totalTracked).toBeGreaterThanOrEqual(112);

@@ -4,10 +4,25 @@ import type { PriceCheckInput, PriceRow } from "../pricing.js";
 const asporaSite = "https://www.aspora.com/";
 const asporaHelp = "https://www.aspora.com/help/us/transfers";
 const corridors = {
-  INR: { country: "IN", remitlyCountry: "IND", xoomPath: "india", source: "https://www.remitly.com/us/en/currency-converter/usd-to-inr-rate" },
-  SGD: { country: "SG", remitlyCountry: "SGP", xoomPath: "singapore", source: "https://www.remitly.com/us/en/money-transfer/send-money-to-singapore" },
+  INR: { country: "IN", xoomPath: "india", xoomPayoutIncrement: 1 },
+  SGD: { country: "SG", xoomPath: "singapore", xoomPayoutIncrement: 0.01 },
+  PHP: { country: "PH", xoomPath: "philippines", xoomPayoutIncrement: 0.01 },
+  MXN: { country: "MX", xoomPath: "mexico", xoomPayoutIncrement: 1 },
+  PKR: { country: "PK", xoomPath: "pakistan", xoomPayoutIncrement: 0.01 },
+  NPR: { country: "NP", xoomPath: "nepal", xoomPayoutIncrement: 0.01 },
+  BDT: { country: "BD", xoomPath: "bangladesh", xoomPayoutIncrement: 0.01 },
+  KES: { country: "KE", xoomPath: "kenya", xoomPayoutIncrement: 0.01 },
+  VND: { country: "VN", xoomPath: "vietnam", xoomPayoutIncrement: 100 },
+  IDR: { country: "ID", xoomPath: "indonesia", xoomPayoutIncrement: 1 },
+  DOP: { country: "DO", xoomPath: "dominican-republic", xoomPayoutIncrement: 1 },
+  LKR: { country: "LK", xoomPath: "sri-lanka", xoomPayoutIncrement: 1 },
+  RWF: { country: "RW", xoomPath: "rwanda", xoomPayoutIncrement: 1 },
 } as const;
 type Corridor = keyof typeof corridors;
+const remitlyCorridors = {
+  INR: { remitlyCountry: "IND", source: "https://www.remitly.com/us/en/currency-converter/usd-to-inr-rate" },
+  SGD: { remitlyCountry: "SGP", source: "https://www.remitly.com/us/en/money-transfer/send-money-to-singapore" },
+} as const;
 const xoomOrigin = "https://www.xoom.com";
 
 const asporaQuote = z.object({
@@ -47,8 +62,8 @@ const remitlyQuote = z.object({
 });
 
 export function usBankRemittanceCorridor(input: PriceCheckInput): Corridor | null {
-  if (input.destinationCurrency !== "INR" && input.destinationCurrency !== "SGD") return null;
-  const currency = input.destinationCurrency;
+  if (!Object.hasOwn(corridors, input.destinationCurrency)) return null;
+  const currency = input.destinationCurrency as Corridor;
   const { country } = corridors[currency];
   const context = input.context;
   return input.sourceCurrency === "USD" && (!input.destinationCountry || input.destinationCountry === country)
@@ -105,8 +120,8 @@ async function asporaBankQuote(amount: number, fetcher: typeof fetch, now: Date)
   };
 }
 
-async function remitlyBankQuote(currency: Corridor, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
-  const { remitlyCountry, source } = corridors[currency];
+async function remitlyBankQuote(currency: keyof typeof remitlyCorridors, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  const { remitlyCountry, source } = remitlyCorridors[currency];
   const params = new URLSearchParams({
     conduit: "USA:USD-" + remitlyCountry + ":" + currency, anchor: "SEND", amount: String(amount), purpose: "OTHER",
     customer_segment: "STANDARD", customer_recognition: "UNRECOGNIZED", strict_promo: "false",
@@ -151,8 +166,8 @@ async function remitlyBankQuote(currency: Corridor, amount: number, fetcher: typ
 const xoomMoney = z.object({ rawValue: numberString, currencyCode: z.string() });
 const xoomResponse = z.object({
   sourceCurrency: z.literal("USD"),
-  destinationCurrency: z.enum(["INR", "SGD"]),
-  destinationCountry: z.enum(["IN", "SG"]),
+  destinationCurrency: z.string().regex(/^[A-Z]{3}$/),
+  destinationCountry: z.string().regex(/^[A-Z]{2}$/),
   validations: z.array(z.unknown()).optional(),
   quote: z.object({ pricing: z.array(z.object({
     paymentType: z.object({ type: z.string() }),
@@ -173,7 +188,8 @@ export function xoomCalculatorUrl(currency: Corridor): string {
 export function xoomBankQuoteRow(currency: Corridor, amount: number, quote: {
   received: number; rate: number; fee: number; firstTransfer: boolean | null;
 }, now: Date): PriceRow | null {
-  const tolerance = currency === "INR" ? .51 : .011;
+  // The calculator rounds the recipient amount differently on each corridor.
+  const tolerance = corridors[currency].xoomPayoutIncrement / 2 + .01;
   if (!(quote.received > 0) || !(quote.rate > 0) || !(quote.fee >= 0)
     || Math.abs(amount * quote.rate - quote.received) > tolerance) return null;
   const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
@@ -231,7 +247,7 @@ async function xoomBankQuote(currency: Corridor, amount: number, fetcher: typeof
 export async function usBankRemittanceRows(currency: Corridor, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow[]> {
   const rows = await Promise.allSettled([
     currency === "INR" ? asporaBankQuote(amount, fetcher, now) : Promise.resolve(null),
-    remitlyBankQuote(currency, amount, fetcher, now),
+    currency === "INR" || currency === "SGD" ? remitlyBankQuote(currency, amount, fetcher, now) : Promise.resolve(null),
     xoomBankQuote(currency, amount, fetcher, now),
   ]);
   return rows.flatMap(result => result.status === "fulfilled" && result.value ? [result.value] : []);
