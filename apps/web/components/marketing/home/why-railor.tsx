@@ -1,6 +1,7 @@
 import { Bell, Check, Link2, MessageSquareText, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { ProviderLogo } from "../../app/provider-logo";
 import { LoopOnView } from "./loop-on-view";
+import { DemoLock } from "./demo-lock";
 import home from "./home.module.css";
 import styles from "./why.module.css";
 
@@ -8,7 +9,9 @@ import styles from "./why.module.css";
  * Why Railor, as six small working demos rather than six icons. Each tile
  * replays one thing the product really does; loops pause off screen.
  */
-export function WhyRailor() {
+export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
+  // Signed out, example amounts blur like every price on Railor.
+  const blur = signedIn ? "" : ` ${home.demoBlur}`;
   return (
     <section className={home.section} aria-labelledby="why-title">
       <div className={home.container}>
@@ -58,9 +61,10 @@ export function WhyRailor() {
                 <span className={styles.ring} data-anim><RefreshCw size={16} /></span>
                 <div>
                   <span className={styles.liveLabel}>Arrives</span>
-                  <strong className={styles.liveAmount}><span data-anim className={styles.liveOld}>₹92,341.20</span><span data-anim className={styles.liveNew}>₹92,369.57</span></strong>
+                  <strong className={`${styles.liveAmount}${blur}`}><span data-anim className={styles.liveOld}>₹92,341.20</span><span data-anim className={styles.liveNew}>₹92,369.57</span></strong>
                 </div>
               </div>
+              {signedIn ? null : <DemoLock />}
             </LoopOnView>
             <div className={styles.copy}>
               <h3>Live, not last week</h3>
@@ -71,9 +75,10 @@ export function WhyRailor() {
           <li className={styles.tile}>
             <LoopOnView className={`${styles.stage} ${styles.loop}`}>
               <div className={styles.source} aria-hidden>
-                <span className={styles.sourcePrice}>Fee $11.26</span>
+                <span className={styles.sourcePrice}>Fee <span className={blur.trim() || undefined}>$11.26</span></span>
                 <span className={styles.sourceTip} data-anim><Link2 size={13} />wise.com · checked 4s ago</span>
               </div>
+              {signedIn ? null : <DemoLock />}
             </LoopOnView>
             <div className={styles.copy}>
               <h3>A source on every number</h3>

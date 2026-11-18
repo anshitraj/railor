@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { networksFor, stablecoinRoutes, swapOption, TOKENS } from "./stablecoin-routes";
+import { networksFor, notIssuedReason, stablecoinRoutes, swapOption, TOKENS } from "./stablecoin-routes";
 
 describe("stablecoin swap links", () => {
   it("prefills Uniswap with the issuer addresses, chain and amount", () => {
@@ -26,8 +26,19 @@ describe("stablecoin swap links", () => {
   });
 
   it("only offers networks the issuer lists", () => {
-    expect(networksFor("USDT")).toEqual(["ethereum", "solana", "tron"]);
-    expect(networksFor("USDC")).toEqual(["ethereum", "base", "arbitrum", "polygon", "solana"]);
+    expect(networksFor("USDT")).toEqual(["ethereum", "avalanche", "solana", "tron", "ton", "aptos"]);
+    expect(networksFor("USDC")).toEqual(["ethereum", "base", "arbitrum", "optimism", "polygon", "avalanche", "arc", "solana", "aptos"]);
+  });
+
+  it("explains networks an issuer doesn't use, instead of hiding them", () => {
+    expect(notIssuedReason("USDT", "arc")).toContain("Tether doesn’t list USDT on Arc");
+    expect(notIssuedReason("USDT", "base")).toContain("bridged copy");
+    expect(notIssuedReason("USDC", "bnb")).toContain("Circle doesn’t issue USDC on BNB Chain");
+  });
+
+  it("swaps USDC to EURC on Arc only where a DEX link is verified", () => {
+    expect(swapOption("USDC", "arc", 100)).toMatchObject({ kind: "none", reason: expect.stringContaining("No verified swap link for Arc") });
+    expect(swapOption("USDC", "avalanche", 100).kind).toBe("uniswap");
   });
 });
 

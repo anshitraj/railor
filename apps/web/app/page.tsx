@@ -4,6 +4,7 @@ import { ensureMigrated } from "@railor/database";
 import { MarketingNav } from "../components/marketing/nav";
 import { MarketingFooter } from "../components/marketing/footer";
 import { HomeHero } from "../components/marketing/home/hero";
+import { HeroCalculator } from "../components/marketing/home/hero-calculator";
 import { HowItWorks } from "../components/marketing/home/how-it-works";
 import { ProvidersSection } from "../components/marketing/home/providers";
 import { RouteMapSection } from "../components/marketing/home/route-map";
@@ -51,9 +52,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     <>
       <MarketingNav signedIn={Boolean(session)} />
       <main id="main">
-        <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
-        <HowItWorks />
-        <WhyRailor />
+        <HomeHero calculator={<HeroCalculator signedIn={Boolean(session)} bank={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />} />
+        <HowItWorks signedIn={Boolean(session)} />
+        <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
         <CompanyRulesSection />

@@ -2,6 +2,7 @@ import { Check, LoaderCircle } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { ProviderLogo } from "../../app/provider-logo";
 import { LoopOnView } from "./loop-on-view";
+import { DemoLock } from "./demo-lock";
 import styles from "./home.module.css";
 
 const CHECKING = [
@@ -15,7 +16,9 @@ const CHECKING = [
  * Three short product loops, not illustrations: each card replays the real
  * calculator doing one job. Figures are an illustrative example, labelled as such.
  */
-export function HowItWorks() {
+export function HowItWorks({ signedIn = false }: { signedIn?: boolean }) {
+  // Signed out, example amounts blur like every price on Railor.
+  const blur = signedIn ? undefined : styles.demoBlur;
   return (
     <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="how-title">
       <div className={styles.container}>
@@ -60,12 +63,13 @@ export function HowItWorks() {
                     <span className={styles.miniStatus}>
                       <span className={styles.miniChecking} data-anim style={{ animationDelay: `${index * 0.28}s` }}><LoaderCircle size={14} aria-hidden style={{ display: "inline", verticalAlign: "-2px" }} /> Checking</span>
                       <span className={styles.miniDone} data-anim style={{ animationDelay: `${index * 0.28}s`, color: row.amount === "Hidden" ? "var(--color-muted)" : undefined }}>
-                        {row.amount === "Hidden" ? "Not for you" : <><Check size={14} aria-hidden />{row.amount}</>}
+                        {row.amount === "Hidden" ? "Not for you" : <><Check size={14} aria-hidden /><span className={blur}>{row.amount}</span></>}
                       </span>
                     </span>
                   </div>
                 ))}
               </div>
+              {signedIn ? null : <DemoLock />}
             </LoopOnView>
             <div className={styles.stepBody}>
               <span className={styles.stepNumber}>2</span>
@@ -83,10 +87,11 @@ export function HowItWorks() {
                 </div>
                 <dl className={styles.receipt}>
                   {[["Arrives", "₹92,369.57"], ["Fee", "$11.26"], ["Rate", "1 USD = 92.37 INR"], ["Source", "wise.com · 4s ago"]].map(([label, value], index) => (
-                    <div key={label} data-anim style={{ animationDelay: `${index * 0.22}s` }}><dt>{label}</dt><dd>{value}</dd></div>
+                    <div key={label} data-anim style={{ animationDelay: `${index * 0.22}s` }}><dt>{label}</dt><dd className={label === "Source" ? undefined : blur}>{value}</dd></div>
                   ))}
                 </dl>
               </div>
+              {signedIn ? null : <DemoLock />}
               <span className={`sticker ${styles.stageSticker}`} data-tone="orange" data-anim style={{ "--tilt": "-6deg", right: "12%", top: "14%" } as React.CSSProperties}>Best price</span>
             </LoopOnView>
             <div className={styles.stepBody}>

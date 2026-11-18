@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Check, Copy, Info, ShieldCheck, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Check, Copy, Info, LockKeyhole, ShieldCheck, TriangleAlert } from "lucide-react";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
 import { toast } from "../toast";
-import { NETWORKS, STABLECOIN_CHECKED, TOKENS, networksFor, stablecoinRoutes, swapOption, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
+import { ALL_NETWORKS, NETWORKS, STABLECOIN_CHECKED, TOKENS, notIssuedReason, stablecoinRoutes, swapOption, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
+import { IndiaExchangePanel, NetworkSupportTable, TaxTools } from "./stablecoin-inr";
 import styles from "./stablecoin.module.css";
 
 const ASSETS: Stablecoin[] = ["USDT", "USDC"];
@@ -35,19 +37,21 @@ async function copy(text: string, label: string) {
  * a 1:1 conversion — and swaps open the DEX itself, prefilled where the DEX
  * documents how.
  */
-export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; network: Network | null; destination: Destination; amount: number } }) {
+export function StablecoinQuote({ initial, locked = false }: { initial: { asset: Stablecoin; network: Network | null; destination: Destination; amount: number }; locked?: boolean }) {
   const reduce = useReducedMotion();
   const [asset, setAsset] = useState<Stablecoin>(initial.asset);
-  const available = networksFor(asset);
-  const [networkChoice, setNetwork] = useState<Network>(initial.network && networksFor(initial.asset).includes(initial.network) ? initial.network : networksFor(initial.asset)[0]!);
-  const network = available.includes(networkChoice) ? networkChoice : available[0]!;
+  const [network, setNetwork] = useState<Network>(initial.network ?? "ethereum");
+  const issued = Boolean(TOKENS[asset].addresses[network]);
   const [destination, setDestination] = useState<Destination>(initial.destination);
   const [amountText, setAmountText] = useState(String(initial.amount));
   const amount = Number(amountText) || 0;
 
-  const routes = useMemo(() => stablecoinRoutes(asset, network, destination, amount), [asset, network, destination, amount]);
-  const swap = useMemo(() => (destination === "EURC" ? swapOption(asset, network, amount) : null), [asset, network, destination, amount]);
-  const count = routes.length + (swap && swap.kind !== "none" ? 1 : 0);
+  const routes = useMemo(() => (issued ? stablecoinRoutes(asset, network, destination, amount) : []), [issued, asset, network, destination, amount]);
+  const swap = useMemo(() => (destination === "EURC" && issued ? swapOption(asset, network, amount) : null), [issued, asset, network, destination, amount]);
+  const exchangeCount = destination === "INR" && issued ? 2 : 0;
+  const count = routes.length + exchangeCount + (swap && swap.kind !== "none" ? 1 : 0);
+  const query = new URLSearchParams({ mode: "stablecoin", asset, network, dest: destination, amount: String(amount || 1000) });
+  const signInHref = `/login?intent=start&next=${encodeURIComponent(`/app/prices?${query}`)}`;
   const item = (index: number) => (reduce ? {} : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, transition: { duration: 0.12 } }, transition: { duration: 0.28, ease: [0.23, 1, 0.32, 1] as const, delay: index * 0.05 } });
 
   return (
@@ -70,17 +74,21 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
         <div className={styles.block}>
           <span className={styles.label} id="network-label">Network it’s on</span>
           <div role="radiogroup" aria-labelledby="network-label" className={styles.chips}>
-            {available.map((value) => (
-              <button key={value} type="button" role="radio" aria-checked={network === value} className={`${styles.chip} press`} data-family={NETWORKS[value].family} onClick={() => setNetwork(value)}>
-                <i aria-hidden />{NETWORKS[value].label}
+            {ALL_NETWORKS.map((value) => (
+              <button key={value} type="button" role="radio" aria-checked={network === value} className={`${styles.chip} press`} data-unissued={!TOKENS[asset].addresses[value] || undefined} title={TOKENS[asset].addresses[value] ? undefined : `${TOKENS[asset].issuer} doesn’t issue ${asset} on ${NETWORKS[value].label}`} onClick={() => setNetwork(value)}>
+                <i aria-hidden style={{ background: NETWORKS[value].color }} />{NETWORKS[value].label}
               </button>
             ))}
           </div>
-          <p className={styles.address}>
-            {asset} on {NETWORKS[network].label}: <code>{short(TOKENS[asset].addresses[network]!)}</code>
-            <button type="button" className={styles.copy} onClick={() => copy(TOKENS[asset].addresses[network]!, `${asset} address`)} aria-label={`Copy the ${asset} address on ${NETWORKS[network].label}`}><Copy size={12} /></button>
-            <a href={TOKENS[asset].source} target="_blank" rel="noreferrer noopener">{TOKENS[asset].issuer}’s list <ArrowUpRight size={11} /></a>
-          </p>
+          {issued ? (
+            <p className={styles.address}>
+              {asset} on {NETWORKS[network].label}: <code>{short(TOKENS[asset].addresses[network]!)}</code>
+              <button type="button" className={styles.copy} onClick={() => copy(TOKENS[asset].addresses[network]!, `${asset} address`)} aria-label={`Copy the ${asset} address on ${NETWORKS[network].label}`}><Copy size={12} /></button>
+              <a href={TOKENS[asset].source} target="_blank" rel="noreferrer noopener">{TOKENS[asset].issuer}’s list <ArrowUpRight size={11} /></a>
+            </p>
+          ) : (
+            <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{notIssuedReason(asset, network)}</p>
+          )}
         </div>
 
         <div className={styles.fields}>
@@ -108,6 +116,11 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
 
       <div className={styles.results} aria-live="polite">
         <p className={styles.resultsHead}><strong>{count} verified {count === 1 ? "route" : "routes"}</strong> for {asset} on {NETWORKS[network].label} → {destination === "INR" ? "INR" : "EURC"}</p>
+        {locked && destination === "INR" && issued ? (
+          <Link href={signInHref} className={styles.lockBanner}><LockKeyhole size={15} aria-hidden /><span><strong>Sign in to see what arrives</strong>Exchange prices, fees, TDS and tax are for free accounts.</span><ArrowRight size={15} aria-hidden /></Link>
+        ) : null}
+        {destination === "INR" ? <IndiaExchangePanel asset={asset} network={network} amount={amount} issued={issued} locked={locked} signInHref={signInHref} /> : null}
+        {destination === "INR" && routes.length ? <h3 className={styles.subhead}>Payment platforms and issuers</h3> : null}
         <ul className={styles.list}>
           <AnimatePresence initial={false} mode="popLayout">
             {swap ? <motion.li key={`swap:${asset}:${network}:${swap.kind}`} {...item(0)} layout={!reduce}>
@@ -116,9 +129,11 @@ export function StablecoinQuote({ initial }: { initial: { asset: Stablecoin; net
             {routes.map((route, index) => (
               <motion.li key={`${route.id}:${asset}:${destination}`} {...item(index + (swap ? 1 : 0))} layout={!reduce}><Route route={route} /></motion.li>
             ))}
-            {!routes.length && !swap ? <motion.li key="none" {...item(0)}><div className={styles.empty}><TriangleAlert size={16} aria-hidden /><p><strong>No verified route yet</strong>Nothing from a first-party source covers this combination.</p></div></motion.li> : null}
+            {!routes.length && !swap && !exchangeCount ? <motion.li key="none" {...item(0)}><div className={styles.empty}><TriangleAlert size={16} aria-hidden /><p><strong>No verified route yet</strong>{issued ? "Nothing from a first-party source covers this combination." : notIssuedReason(asset, network)}</p></div></motion.li> : null}
           </AnimatePresence>
         </ul>
+        {destination === "INR" ? <NetworkSupportTable asset={asset} network={network} /> : null}
+        {destination === "INR" ? <TaxTools /> : null}
         <p className={styles.footnote}>Railor doesn’t hold crypto, sign transactions or run swaps. Links open the provider; you confirm everything there, in your own account or wallet.</p>
       </div>
     </section>

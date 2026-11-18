@@ -10,38 +10,79 @@
  * Funds, keys, conversion and settlement stay with the provider.
  */
 export type Stablecoin = "USDT" | "USDC";
-export type Network = "ethereum" | "base" | "arbitrum" | "polygon" | "solana" | "tron";
+export type Network = "ethereum" | "base" | "arbitrum" | "optimism" | "polygon" | "avalanche" | "bnb" | "arc" | "solana" | "tron" | "ton" | "aptos";
 export type Destination = "INR" | "EURC";
 
 export const STABLECOIN_CHECKED = "2026-11-18";
 
-export const NETWORKS: Record<Network, { label: string; family: "evm" | "solana" | "tron"; uniswap?: string }> = {
-  ethereum: { label: "Ethereum", family: "evm", uniswap: "ethereum" },
-  base: { label: "Base", family: "evm", uniswap: "base" },
-  arbitrum: { label: "Arbitrum", family: "evm", uniswap: "arbitrum" },
-  polygon: { label: "Polygon", family: "evm" },
-  solana: { label: "Solana", family: "solana" },
-  tron: { label: "Tron", family: "tron" },
+/** Every network Railor shows, in picker order. A token is only offered where its issuer lists it. */
+export const NETWORKS: Record<Network, { label: string; family: "evm" | "solana" | "tron" | "other"; color: string; uniswap?: string }> = {
+  ethereum: { label: "Ethereum", family: "evm", color: "#627eea", uniswap: "ethereum" },
+  base: { label: "Base", family: "evm", color: "#0052ff", uniswap: "base" },
+  arbitrum: { label: "Arbitrum", family: "evm", color: "#28a0f0", uniswap: "arbitrum" },
+  optimism: { label: "OP Mainnet", family: "evm", color: "#ff0420", uniswap: "optimism" },
+  polygon: { label: "Polygon", family: "evm", color: "#8247e5", uniswap: "polygon" },
+  avalanche: { label: "Avalanche", family: "evm", color: "#e84142", uniswap: "avalanche" },
+  bnb: { label: "BNB Chain", family: "evm", color: "#f0b90b", uniswap: "bnb" },
+  arc: { label: "Arc", family: "evm", color: "#1a1a1a" },
+  solana: { label: "Solana", family: "solana", color: "#14f195" },
+  tron: { label: "Tron", family: "tron", color: "#eb0029" },
+  ton: { label: "TON", family: "other", color: "#0098ea" },
+  aptos: { label: "Aptos", family: "other", color: "#2ed8a7" },
 };
+export const ALL_NETWORKS = Object.keys(NETWORKS) as Network[];
 
-/** Issuer-published addresses. A token missing here is not offered on that network. */
+/** Issuer-published addresses (Tether's supported protocols; Circle's USDC and EURC lists). A token missing here is not offered on that network. */
 export const TOKENS: Record<Stablecoin | "EURC", { issuer: string; source: string; addresses: Partial<Record<Network, string>> }> = {
   USDT: {
     issuer: "Tether",
     source: "https://tether.to/en/supported-protocols/",
-    addresses: { ethereum: "0xdac17f958d2ee523a2206206994597c13d831ec7", tron: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", solana: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB" },
+    addresses: {
+      ethereum: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      avalanche: "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+      solana: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+      tron: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+      ton: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+      aptos: "0xf73e887a8754f540ee6e1a93bdc6dde2af69fc7ca5de32013e89dd44244473cb",
+    },
   },
   USDC: {
     issuer: "Circle",
     source: "https://developers.circle.com/stablecoins/usdc-contract-addresses",
-    addresses: { ethereum: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", arbitrum: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", polygon: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", solana: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
+    addresses: {
+      ethereum: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      arbitrum: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      optimism: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      polygon: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      avalanche: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+      arc: "0x3600000000000000000000000000000000000000",
+      solana: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      aptos: "0xbae207659db88bea0cbead6da0ed00aac12edcdda169e591cd41c94180b46f3b",
+    },
   },
   EURC: {
     issuer: "Circle",
     source: "https://developers.circle.com/stablecoins/eurc-contract-addresses",
-    addresses: { ethereum: "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c", base: "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42", solana: "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr" },
+    addresses: {
+      ethereum: "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c",
+      base: "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42",
+      avalanche: "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD",
+      arc: "0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1",
+      solana: "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr",
+    },
   },
 };
+
+/** Why a token isn't offered on a network, in the issuer's terms. */
+export function notIssuedReason(asset: Stablecoin, network: Network): string {
+  const label = NETWORKS[network].label;
+  const issued = networksFor(asset).map((value) => NETWORKS[value].label).join(", ");
+  if (asset === "USDT" && (network === "bnb" || network === "polygon" || network === "arbitrum" || network === "base" || network === "optimism"))
+    return `Tether doesn’t issue USDT on ${label}. USDT there is a bridged copy, not Tether’s own token. Tether issues it on ${issued}.`;
+  if (asset === "USDC" && network === "bnb") return `Circle doesn’t issue USDC on BNB Chain; tokens there are bridged copies. Circle issues it on ${issued}.`;
+  return `${TOKENS[asset].issuer} doesn’t list ${asset} on ${label}. It does on ${issued}.`;
+}
 
 /** The stablecoin view's starting state from the URL; anything unexpected falls back to a default. */
 export function stablecoinInitial(params: Record<string, string | undefined>): { asset: Stablecoin; network: Network | null; destination: Destination; amount: number } {
@@ -72,7 +113,10 @@ export function swapOption(asset: Stablecoin, network: Network, amount: number):
   const to = TOKENS.EURC.addresses[network];
   const label = NETWORKS[network].label;
   if (!from) return { kind: "none", reason: `${TOKENS[asset].issuer} doesn’t list ${asset} on ${label}.` };
-  if (!to) return { kind: "none", reason: `Circle doesn’t issue EURC on ${label}. Both tokens exist on Ethereum, Base and Solana${asset === "USDT" ? " (USDT: Ethereum and Solana)" : ""}.` };
+  if (!to) {
+    const both = (Object.keys(TOKENS.EURC.addresses) as Network[]).filter((value) => TOKENS[asset].addresses[value]).map((value) => NETWORKS[value].label);
+    return { kind: "none", reason: `Circle doesn’t issue EURC on ${label}. ${asset} and EURC are both issued on ${both.join(", ")}.` };
+  }
   if (network === "solana") return { kind: "titan", name: "Titan", url: "https://app.titan.exchange/swap", network, prefilled: false, mints: { from, to } };
   const chain = NETWORKS[network].uniswap;
   if (!chain) return { kind: "none", reason: `No verified swap link for ${label} yet.` };
@@ -125,7 +169,7 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
       ],
       price: "Price on request",
       priceNote: "Xflow doesn’t publish stablecoin fees or its conversion rate.",
-      ...(XFLOW_NAMED.includes(network) ? {} : { caution: `${NETWORKS[network].label} is an EVM chain Xflow doesn’t name. Confirm it before sending.` }),
+      ...(XFLOW_NAMED.includes(network) ? {} : { caution: NETWORKS[network].family === "evm" ? `${NETWORKS[network].label} is an EVM chain Xflow doesn’t name. Confirm it before sending.` : `Xflow doesn’t name ${NETWORKS[network].label}. Confirm it before sending.` }),
       sourceUrl: "https://www.xflowpay.com/products/stablecoins",
       checkedAt: STABLECOIN_CHECKED,
     });

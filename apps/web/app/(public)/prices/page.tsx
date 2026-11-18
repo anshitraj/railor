@@ -31,14 +31,14 @@ const UNLOCKS = [
  */
 export default async function PublicPricesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const [session, params] = await Promise.all([getSession(), searchParams]);
-  // Stablecoin routes carry no prices (only verified facts and links), so they need no sign-in.
+  // Exchange prices on the stablecoin view follow the same rule: routes and networks are public, amounts need sign-in.
   if (params.mode === "stablecoin") {
     return (
       <div className={styles.page}>
         <FxTicker />
         <PriceCheckHeader mode="public" />
         <PriceModeTabs mode="stablecoin" base="/prices" />
-        <StablecoinQuote initial={stablecoinInitial(params)} />
+        <StablecoinQuote initial={stablecoinInitial(params)} locked={!session} />
         <PriceHelpLinks />
       </div>
     );
