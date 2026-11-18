@@ -77,6 +77,8 @@ export const CURATED_TARGETS: Record<string, string[]> = {
   wise: [
     "https://wise.com/help/articles/2571942/which-currencies-can-i-use-with-wise",
     "https://wise.com/gb/pricing/",
+    "https://wise.com/in/pricing/business/receive",
+    "https://wise.com/help/articles/71lNXW0Ls3gEFhUH8PtodV/receiving-payments-for-indian-businesses",
   ],
   bvnk: [
     "https://docs.bvnk.com/docs/supported-currencies-and-networks",
@@ -95,8 +97,9 @@ export const CURATED_TARGETS: Record<string, string[]> = {
   airwallex: ["https://www.airwallex.com/docs/accounts/supported-regions-and-currencies"],
   payoneer: ["https://www.payoneer.com/en-in/multi-currency-account/", "https://www.payoneer.com/en-in/digital-firc/"],
   dashx: ["https://dashx.xyz/"],
-  skydo: ["https://www.skydo.com/features/global-remittances", "https://www.skydo.com/pricing"],
-  xflow: ["https://www.xflowpay.com/products/stablecoins"],
+  skydo: ["https://www.skydo.com/features/global-remittances", "https://www.skydo.com/send-money-to-india"],
+  xflow: ["https://www.xflowpay.com/products/stablecoins", "https://www.xflowpay.com/pricing"],
+  infinity: ["https://www.infinityapp.in/faqs/articles/what-infinity-charges-for-bank-transfer-payments", "https://www.infinityapp.in/blog/international-payments-india-startup-founders"],
   tether: ["https://tether.to/en/supported-protocols/"],
   ethena: ["https://docs.ethena.fi/"],
 };

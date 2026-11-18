@@ -29,7 +29,7 @@ describe("published pricing coverage", () => {
     const row = result.rows.find(row => row.providerSlug === "xflow");
     expect(row).toMatchObject({ basis: "published", feeAmount: 12, feeCurrency: "USD", recipientAmount: null, rate: null, partial: true });
     expect(row?.source.url).toBe("https://www.xflowpay.com/pricing");
-    expect(row?.observedAt).toContain("2026-10-29");
+    expect(row?.observedAt).toContain("2026-11-18");
     expect(row?.totalCostPct).toBeNull();
   });
 });

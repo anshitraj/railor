@@ -480,11 +480,11 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
         {(unavailable.length > 0 || excluded.length > 0) && <PriceDisclosure title="Unavailable providers & profile exclusions" description={String(unavailable.length + excluded.length) + " providers need more information or do not meet the documented rules."}><div className="price-surface p-4">{unavailable.length ? (
             <ul className="flex flex-col gap-1">
               {unavailable.map((u) => (
-                <li key={u.providerSlug} className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--color-line)] px-3 py-2.5">
+                <li key={`${u.providerSlug}:${u.product ?? ""}`} className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--color-line)] px-3 py-2.5">
                   <ProviderLogo slug={u.providerSlug} name={u.providerName} size={26} />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-[13px] font-semibold text-[var(--color-ink)]">{u.providerName}</span>
-                    <span className="text-[13px] text-[var(--color-muted)]">{u.reason}</span>
+                    <span className="text-[13px] font-semibold text-[var(--color-ink)]">{u.product ?? u.providerName}</span>
+                    <span className="text-[13px] text-[var(--color-muted)]">{u.reason}{u.sourceUrl ? <> <a className="font-semibold text-[var(--color-orange-deep)] underline-offset-2 hover:underline" href={u.sourceUrl} target="_blank" rel="noreferrer noopener">Source ↗</a></> : null}</span>
                   </span>
                   <ConnectionLink slug={u.providerSlug} name={u.providerName} mode={mode} connected={connected.includes(u.providerSlug)} />
                 </li>
