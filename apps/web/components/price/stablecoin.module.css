@@ -151,33 +151,14 @@
 .empty strong { display: block; color: var(--color-ink); font-weight: 650; }
 .footnote { color: var(--color-muted); font-size: 12px; line-height: 1.55; }
 
-/* An exchange card's live USDT/INR bid: a market reference for signed-in users, a locked stand-in for visitors. */
+/* A priced exchange's live bid: a market reference, with when it was observed and its gap to the mid-market rate. */
 .live { display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: var(--color-canvas); }
-.liveTop { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
-.liveLabel { color: var(--color-muted); font-size: 12.5px; font-weight: 600; }
-.liveAmount { color: var(--color-ink); font-size: 24px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .liveFacts { display: grid; gap: 3px; }
 .liveFacts > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 13px; }
 .liveFacts dt { color: var(--color-muted); }
 .liveFacts dd { color: var(--color-ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
 .liveFacts small { color: var(--color-muted); font-size: 12px; font-weight: 500; }
-.liveMath { color: var(--color-muted); font-size: 12.5px; }
-.liveMath summary { width: fit-content; color: var(--color-orange-deep); font-weight: 600; cursor: pointer; }
-.liveMath dl { display: grid; gap: 3px; margin-top: 8px; }
-.liveMath dl > div { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
-.liveMath dd { color: var(--color-ink-soft); text-align: right; white-space: nowrap; }
-.liveMath dl > div:last-child { padding-top: 5px; border-top: 1px solid var(--color-line); color: var(--color-ink); font-weight: 650; }
-.liveMath dl > div:last-child dd { color: var(--color-ink); }
 .liveNote { color: var(--color-muted); font-size: 12px; line-height: 1.5; }
-.liveNone { padding: 9px 12px; border-radius: 12px; background: var(--color-canvas); color: var(--color-muted); font-size: 12.5px; line-height: 1.5; }
-.liveNone strong { color: var(--color-ink-soft); font-weight: 650; }
-.liveNone[data-loading] { animation: livePulse 1.4s ease-in-out infinite; }
-.liveLocked { position: relative; display: flex; min-height: 52px; align-items: center; padding: 10px 14px; border-radius: 16px; background: var(--color-canvas); color: var(--color-ink); }
-.liveBlurred { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; filter: blur(7px); user-select: none; }
-.liveBadge { position: absolute; left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--color-ink); color: #fff; font-size: 13px; font-weight: 650; box-shadow: 0 8px 18px -10px rgb(21 19 16 / .6); transition: transform .16s var(--ease-out); }
-.liveLocked:hover .liveBadge { transform: translateY(-1px); }
-@keyframes livePulse { 50% { opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .liveNone[data-loading] { animation: none; } .liveBadge { transition: none; } }
 
 @media (max-width: 639px) {
   .card { padding: 14px; border-radius: 22px; }

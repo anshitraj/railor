@@ -2,22 +2,15 @@
  * Stablecoin routes, built only from first-party sources (re-read 2026-11-18):
  *   tokens    — Circle's USDC and EURC contract lists; Tether's supported protocols
  *   swaps     — Uniswap's documented prefill link; Titan's swap app on Solana
- *   off-ramps — Indian exchanges that sell USDT for INR (indian-exchanges.ts, each read
- *               from its own fee and help pages); Xflow's stablecoin collections; XEROF's
- *               Ethereum-funded INR payouts (read rendered on 2026-11-18); Tether and Circle
- *               issuer redemption
+ *   off-ramps — Xflow's stablecoin collections; XEROF's Ethereum-funded INR payouts (read
+ *               rendered on 2026-11-18); Tether and Circle issuer redemption. The Indian
+ *               exchanges that sell USDT or USDC for INR are priced separately (india-exchanges.ts).
  *
  * Railor never converts a stablecoin at 1:1 itself. USDT, USDC and EURC each
  * trade at their own market price; redemption at par is a product of the
  * issuer, open only to verified accounts with their own fees and minimums.
  * Funds, keys, conversion and settlement stay with the provider.
- *
- * These cards are facts and links, so they are public. A card carries no INR
- * amount: for signed-in users the quote component adds each Indian exchange's
- * live bid and an estimate beside it (lib/exchange-live.ts), never a 1:1 figure.
  */
-import { exchangeCards } from "./indian-exchanges";
-
 export type Stablecoin = "USDT" | "USDC";
 export type Network = "ethereum" | "base" | "arbitrum" | "optimism" | "polygon" | "avalanche" | "bnb" | "arc" | "solana" | "tron" | "ton" | "aptos";
 export type Destination = "INR" | "EURC";
@@ -151,8 +144,6 @@ export interface RouteCard {
   priceNote: string;
   /** A caveat for this exact selection, e.g. a network the provider names only generically. */
   caution?: string;
-  /** A link that starts the sale or payout on the provider's own site. */
-  action?: { label: string; url: string };
   sourceUrl: string;
   checkedAt: string;
 }
@@ -167,8 +158,6 @@ function usd(value: number) {
 export function stablecoinRoutes(asset: Stablecoin, network: Network, destination: Destination, amount: number): RouteCard[] {
   const cards: RouteCard[] = [];
   if (destination === "INR") {
-    // Selling USDT you hold on an Indian exchange is the route most people use; Indian exchanges list USDT/INR, not USDC/INR.
-    if (asset === "USDT") cards.push(...exchangeCards(network, NETWORKS[network].label));
     cards.push({
       id: "xflow-stablecoins",
       provider: "Xflow",

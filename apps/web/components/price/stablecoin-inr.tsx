@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Check, CircleHelp, Landmark, LockKeyhole, Minus, Receipt, TriangleAlert, X } from "lucide-react";
 import { ProviderLogo } from "../app/provider-logo";
-import { EXCHANGES_CHECKED, INDIA_EXCHANGES, TAX_TOOLS, depositSupport, exchangeBySlug, vdaTax, type DepositSupport, type ExchangeQuote } from "../../lib/india-exchanges";
+import { EXCHANGES_CHECKED, TAX_TOOLS, depositSupport, exchangeBySlug, exchangesFor, vdaTax, type DepositSupport, type ExchangeQuote, type LiveBid } from "../../lib/india-exchanges";
 import { ALL_NETWORKS, NETWORKS, TOKENS, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
 import styles from "./stablecoin.module.css";
 
 export type LockedExchange = Pick<ExchangeQuote, "slug" | "name" | "support" | "status">;
-export type ExchangeResponse = { locked: true; exchanges: LockedExchange[] } | { locked: false; exchanges: ExchangeQuote[] };
+export type ExchangeResponse = { locked: true; exchanges: LockedExchange[] } | { locked: false; exchanges: ExchangeQuote[]; reference?: { rate: number; source: string; observedAt: string } | null };
 
 const REFRESH_MS = 30_000;
 const CHECKED = new Date(`${EXCHANGES_CHECKED}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -79,7 +79,7 @@ export function IndiaExchangePanel({ asset, network, amount, issued, locked, sig
   const cost = costText.trim() === "" ? null : Number(costText);
 
   if (!issued) return null;
-  const exchanges: Array<LockedExchange | ExchangeQuote> = data?.exchanges ?? INDIA_EXCHANGES.map((exchange) => ({ slug: exchange.slug, name: exchange.name, support: depositSupport(exchange, asset, network), status: "priced" as const }));
+  const exchanges: Array<LockedExchange | ExchangeQuote> = data?.exchanges ?? exchangesFor(asset).map((exchange) => ({ slug: exchange.slug, name: exchange.name, support: depositSupport(exchange, asset, network), status: "priced" as const }));
   const showLocked = locked || data?.locked === true;
 
   return (
@@ -111,6 +111,30 @@ export function IndiaExchangePanel({ asset, network, amount, issued, locked, sig
   );
 }
 
+/** The exchange's live bid behind the quote, with when it was observed and how far it sits from the mid-market rate. */
+function LiveBidNote({ live, asset }: { live: LiveBid; asset: Stablecoin }) {
+  const date = new Date(live.observedAt);
+  const when = Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const gap = live.gapPct === null ? null : `${live.gapPct > 0 ? "+" : live.gapPct < 0 ? "−" : ""}${Math.abs(live.gapPct).toFixed(2)}%`;
+  return (
+    <div className={styles.live}>
+      <dl className={styles.liveFacts}>
+        <div>
+          <dt>Best bid</dt>
+          <dd>₹{live.bid.toFixed(2)} per {asset}{when ? <small title={live.clock === "exchange" ? "Time from the exchange’s own timestamp" : "When Railor read it; this exchange sends no time"}> · {live.clock === "exchange" ? "as of" : "read at"} {when}</small> : null}</dd>
+        </div>
+        {gap && live.referenceRate ? (
+          <div>
+            <dt>Against Wise mid-market</dt>
+            <dd>{gap}<small> of ₹{live.referenceRate.toLocaleString("en-US", { maximumFractionDigits: 4 })} per USD</small></dd>
+          </div>
+        ) : null}
+      </dl>
+      <p className={styles.liveNote}>Market reference, not a quote. {asset} isn’t 1 USD, so the gap is the market’s price for {asset}, not a fee.</p>
+    </div>
+  );
+}
+
 export function ExchangeCard({ quote, asset, network, amount, cost, locked, loading, best, signInHref }: { quote: LockedExchange | ExchangeQuote; asset: Stablecoin; network: Network; amount: number; cost: number | null; locked: boolean; loading: boolean; best: boolean; signInHref: string }) {
   const exchange = exchangeBySlug(quote.slug)!;
   const full = "breakdown" in quote ? quote : null;
@@ -118,8 +142,8 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
   const tax = breakdown ? vdaTax(breakdown, cost) : null;
   const rows: Array<[string, string, string?]> = breakdown && full?.fill ? [
     ["Sale value", inr(breakdown.gross), `${full.fill.filled.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${asset} at ₹${full.fill.averagePrice.toFixed(2)} average`],
-    [`Trading fee (${(exchange.feeRate * 100).toFixed(2)}%)`, `− ${inr(breakdown.tradingFee)}`],
-    ["GST on the fee (18%)", `− ${inr(breakdown.gst)}`],
+    [`Trading fee (${(exchange.feeRate * 100).toFixed(2)}%${exchange.gstIncluded ? ", GST included" : ""})`, `− ${inr(breakdown.tradingFee)}`],
+    ...(exchange.gstIncluded ? [] : [["GST on the fee (18%)", `− ${inr(breakdown.gst)}`] as [string, string]]),
     ["TDS (1%)", `− ${inr(breakdown.tds)}`, "Deducted by the exchange; it counts towards your tax"],
     ["INR withdrawal", breakdown.withdrawalFee ? `− ${inr(breakdown.withdrawalFee)}` : "Free"],
   ] : [];
@@ -134,13 +158,15 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
       <SupportPill support={quote.support} asset={asset} network={network} name={exchange.name} />
       {quote.support.status !== "yes" && quote.support.note ? <p className={styles.supportNote}>{quote.support.note}.</p> : null}
 
-      {locked ? (
+      {locked && !exchange.noLivePrice ? (
         <Link href={signInHref} className={styles.lockedQuote} aria-label={`Sign in to see what ${exchange.name} pays`}>
           <span className={styles.lockedRow}><span>In your bank</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
           <span className={styles.lockedRow}><span>After income tax</span><strong className={styles.blurred} aria-hidden>₹00,000.00</strong></span>
           <span className={styles.lockBadge}><LockKeyhole size={13} aria-hidden />Sign in to see the full price</span>
         </Link>
-      ) : loading ? <p className={styles.quoteStatus}>Refreshing quote…</p> : quote.status !== "priced" || !breakdown || !tax ? (
+      ) : loading && !exchange.noLivePrice ? <p className={styles.quoteStatus}>Refreshing quote…</p> : exchange.noLivePrice ? (
+        <p className={styles.caution}><TriangleAlert size={13} aria-hidden /><span><strong>No live price.</strong> {exchange.noLivePrice}.</span></p>
+      ) : quote.status !== "priced" || !breakdown || !tax ? (
         <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{"reason" in quote && quote.reason ? quote.reason : "No price right now."}</p>
       ) : (
         <>
@@ -148,6 +174,7 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
             <span><Landmark size={14} aria-hidden />In your bank</span>
             <strong>{inr(breakdown.inBank)}</strong>
           </div>
+          {full!.live ? <LiveBidNote live={full!.live} asset={asset} /> : null}
           <dl className={styles.breakdown}>
             {rows.map(([label, value, hint]) => (
               <div key={label}><dt>{label}{hint ? <small>{hint}</small> : null}</dt><dd>{value}</dd></div>
@@ -163,6 +190,7 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
             </dl>
             <div className={styles.afterTax}><span>Yours after tax{tax.worstCase ? " (most you could owe)" : ""}</span><strong>{inr(tax.afterTax)}</strong></div>
           </div>
+          {full!.live?.depth === "top" ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{exchange.name} publishes only its best bid, not its order book, so all {amount.toLocaleString("en-US")} {asset} is priced at that bid. A bigger sale can fill lower.</p> : null}
           {full!.fill!.short ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />The visible order book only holds {full!.fill!.filled.toLocaleString("en-US")} of your {amount.toLocaleString("en-US")} {asset}. A sale this big would fill lower, or in parts.</p> : null}
           {full!.belowMinimum ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />Below {exchange.name}’s ₹{exchange.withdrawalMin} minimum INR withdrawal.</p> : null}
           {full!.aboveMaximum ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />Above {exchange.name}’s ₹{exchange.withdrawalMax!.toLocaleString("en-IN")} limit per withdrawal, so it goes out in several.</p> : null}
@@ -170,7 +198,7 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
         </>
       )}
       <footer>
-        <span>Order book read live · fees checked {CHECKED}</span>
+        <span>{full?.live ? `${full.live.depth === "top" ? "Best bid" : "Order book"} read live · fees` : "Fees"} checked {CHECKED}</span>
         <span className={styles.links}>
           <a href={exchange.feeSource} target="_blank" rel="noreferrer noopener">Fees <ArrowUpRight size={11} /></a>
           <a href={exchange.networks[asset].source} target="_blank" rel="noreferrer noopener">Networks <ArrowUpRight size={11} /></a>
@@ -188,14 +216,14 @@ export function NetworkSupportTable({ asset, network }: { asset: Stablecoin; net
       <summary>Which networks each exchange takes for {asset}</summary>
       <div className={styles.matrixScroll}>
         <table>
-          <thead><tr><th scope="col">Network</th>{INDIA_EXCHANGES.map((exchange) => <th key={exchange.slug} scope="col">{exchange.name}</th>)}</tr></thead>
+          <thead><tr><th scope="col">Network</th>{exchangesFor(asset).map((exchange) => <th key={exchange.slug} scope="col">{exchange.name}</th>)}</tr></thead>
           <tbody>
             {ALL_NETWORKS.map((value) => {
               const issued = Boolean(TOKENS[asset].addresses[value]);
               return (
                 <tr key={value} data-current={value === network || undefined} data-unissued={!issued || undefined}>
                   <th scope="row"><i style={{ background: NETWORKS[value].color }} aria-hidden />{NETWORKS[value].label}</th>
-                  {INDIA_EXCHANGES.map((exchange) => {
+                  {exchangesFor(asset).map((exchange) => {
                     if (!issued) return <td key={exchange.slug} title={`${TOKENS[asset].issuer} doesn’t issue ${asset} here`}><Minus size={14} aria-label="Not issued" /></td>;
                     const support = depositSupport(exchange, asset, value);
                     return (

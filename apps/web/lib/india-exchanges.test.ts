@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { depositSupport, exchangeBySlug, exchangeCharges, fillBids, indiaExchangeQuotes, vdaTax } from "./india-exchanges";
+import { EXCHANGE_FEEDS, KNOWN_PROVIDER_SITES } from "@railor/core";
+import { INDIA_EXCHANGES, depositSupport, exchangeBySlug, exchangeCharges, exchangesFor, fillBids, vdaTax } from "./india-exchanges";
 
 const coindcx = exchangeBySlug("coindcx")!;
 const wazirx = exchangeBySlug("wazirx")!;
@@ -70,14 +71,52 @@ describe("deposit networks", () => {
   });
 });
 
-describe("live quotes", () => {
-  it("ranks by INR in the bank and survives one exchange failing", async () => {
-    const fetcher = (async (url: string) => {
-      if (url.includes("coindcx")) return new Response(JSON.stringify({ bids: { "103": "5000", "102": "5000" } }));
-      return new Response("down", { status: 503 });
-    }) as unknown as typeof fetch;
-    const quotes = await indiaExchangeQuotes("USDT", "ethereum", 1000, fetcher);
-    expect(quotes.map((quote) => [quote.slug, quote.status])).toEqual([["coindcx", "priced"], ["wazirx", "unavailable"]]);
-    expect(quotes[0]!.breakdown!.gross).toBe(103_000);
+describe("the seven exchanges", () => {
+  it("lists CoinDCX, WazirX, Giottus, Flitpay, ZebPay, SunCrypto and Mudrex, each with the page its fee was read from", () => {
+    expect(INDIA_EXCHANGES.map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "giottus", "flitpay", "zebpay", "suncrypto", "mudrex"]);
+    for (const exchange of INDIA_EXCHANGES) {
+      expect(exchange.feeSource, exchange.slug).toMatch(/^https:\/\//);
+      expect(exchange.withdrawalSource, exchange.slug).toMatch(/^https:\/\//);
+      expect(exchange.tradeUrl("USDT"), exchange.slug).toMatch(/^https:\/\//);
+      expect(exchange.feeRate, exchange.slug).toBeGreaterThan(0);
+    }
+  });
+
+  it("prices USDC only where the exchange lists it against INR", () => {
+    expect(exchangesFor("USDT")).toHaveLength(7);
+    expect(exchangesFor("USDC").map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx"]);
+  });
+
+  it("every exchange either has a live feed read in core or says why it has none, never both", () => {
+    const fed = new Set<string>(EXCHANGE_FEEDS.map((feed) => feed.slug));
+    for (const exchange of INDIA_EXCHANGES) expect(fed.has(exchange.slug) !== Boolean(exchange.noLivePrice), exchange.slug).toBe(true);
+    for (const slug of fed) expect(exchangeBySlug(slug), `${slug} is read but not listed`).toBeDefined();
+    expect(INDIA_EXCHANGES.filter((exchange) => exchange.noLivePrice).map((exchange) => exchange.slug)).toEqual(["suncrypto", "mudrex"]);
+    // The feeds that serve USDC are the exchanges that list USDC.
+    for (const feed of EXCHANGE_FEEDS) expect(feed.assets.includes("USDC"), feed.slug).toBe(exchangesFor("USDC").some((exchange) => exchange.slug === feed.slug));
+  });
+
+  it("has a logo site registered for every exchange", () => {
+    for (const exchange of INDIA_EXCHANGES) expect(KNOWN_PROVIDER_SITES[exchange.slug], exchange.slug).toMatch(/^https:\/\//);
+  });
+
+  it("Flitpay's published fee already includes GST, so none is added", () => {
+    const flitpay = exchangeBySlug("flitpay")!;
+    expect(flitpay.gstIncluded).toBe(true);
+    // 0.50% of ₹1,02,330 = ₹511.65; TDS 1% of the ₹1,01,818.35 left; ₹10 standard withdrawal.
+    expect(exchangeCharges(flitpay, 102_330)).toEqual({ gross: 102_330, tradingFee: 511.65, gst: 0, tds: 1018.18, withdrawalFee: 10, inBank: 100_790.17 });
+  });
+
+  it("Giottus, ZebPay and Mudrex: published fee plus GST, and their INR withdrawal", () => {
+    expect(exchangeCharges(exchangeBySlug("giottus")!, 100_000)).toMatchObject({ tradingFee: 400, gst: 72, tds: 995.28, withdrawalFee: 0, inBank: 98_532.72 });
+    expect(exchangeCharges(exchangeBySlug("zebpay")!, 100_000)).toMatchObject({ tradingFee: 450, gst: 81, withdrawalFee: 15 });
+    expect(exchangeCharges(exchangeBySlug("mudrex")!, 100_000)).toMatchObject({ tradingFee: 1000, gst: 180, withdrawalFee: 0 });
+  });
+
+  it("takes USDT on the networks each exchange lists, and says so when it publishes none", () => {
+    expect(depositSupport(exchangeBySlug("giottus")!, "USDT", "tron").status).toBe("yes");
+    expect(depositSupport(exchangeBySlug("zebpay")!, "USDT", "ethereum").status).toBe("yes");
+    expect(depositSupport(exchangeBySlug("giottus")!, "USDT", "solana").status).toBe("no");
+    expect(depositSupport(exchangeBySlug("suncrypto")!, "USDT", "ethereum")).toMatchObject({ status: "unknown", note: expect.stringContaining("doesn’t publish") });
   });
 });

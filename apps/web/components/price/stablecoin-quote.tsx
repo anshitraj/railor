@@ -9,7 +9,7 @@ import { ProviderLogo } from "../app/provider-logo";
 import { toast } from "../toast";
 import { NETWORKS, STABLECOIN_CHECKED, TOKENS, notIssuedReason, stablecoinRoutes, swapOption, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
 import { ExchangeCard, NetworkSupportTable, TaxTools, inr, useExchangeQuotes, type LockedExchange } from "./stablecoin-inr";
-import { INDIA_EXCHANGES, depositSupport, exchangeBySlug, type ExchangeQuote } from "../../lib/india-exchanges";
+import { depositSupport, exchangeBySlug, exchangesFor, type ExchangeQuote } from "../../lib/india-exchanges";
 import { StablecoinPicker } from "./stablecoin-picker";
 import { RateHistoryChart } from "./rate-history-chart";
 import comparisonStyles from "../app/price-check.module.css";
@@ -47,7 +47,7 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
   const amount = Number(amountText) || 0;
   const quotes = useExchangeQuotes(asset, network, amount, destination === "INR" && issued);
   const recommended = quotes.data && !quotes.data.locked && !locked
-    ? quotes.data.exchanges.find((quote) => quote.status === "priced" && quote.support.status === "yes" && quote.breakdown && Number.isFinite(quote.breakdown.inBank) && quote.breakdown.inBank > 0 && !quote.fill?.short && !quote.belowMinimum)
+    ? quotes.data.exchanges.find((quote) => quote.status === "priced" && quote.support.status === "yes" && quote.breakdown && Number.isFinite(quote.breakdown.inBank) && quote.breakdown.inBank > 0 && !quote.fill?.short && !quote.belowMinimum && quote.live?.depth !== "top")
     : undefined;
   const [picked, setPicked] = useState<{ context: string; id: string } | null>(null);
   const [tab, setTab] = useState<"prices" | "history">("prices");
@@ -61,7 +61,7 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
   const query = new URLSearchParams({ mode: "stablecoin", asset, network, dest: destination, amount: String(amount || 1000) });
   const signInHref = `/login?intent=start&next=${encodeURIComponent(`/app/prices?${query}`)}`;
   const exchanges: Array<LockedExchange | ExchangeQuote> = destination === "INR" && issued
-    ? quotes.data?.exchanges ?? INDIA_EXCHANGES.map((exchange) => ({ slug: exchange.slug, name: exchange.name, support: depositSupport(exchange, asset, network), status: "unavailable" as const }))
+    ? quotes.data?.exchanges ?? exchangesFor(asset).map((exchange) => ({ slug: exchange.slug, name: exchange.name, support: depositSupport(exchange, asset, network), status: "unavailable" as const }))
     : [];
   const entries = [
     ...exchanges.map((quote) => ({ id: quote.slug, slug: quote.slug, name: quote.name, hint: `${asset} on ${NETWORKS[network].label} → INR`, quote, route: undefined as RouteCard | undefined, dex: false })),
@@ -141,7 +141,7 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
               const full = entry.quote && "breakdown" in entry.quote ? entry.quote : undefined;
               return <li key={entry.id}><button type="button" className={`${comparisonStyles.providerRow} ${styles.quoteRow}`} aria-pressed={entry.id === selected?.id} aria-label={`Select ${entry.name}`} onClick={() => choose(entry.id)}>
                 <span className={comparisonStyles.providerName}><ProviderLogo slug={entry.slug} name={entry.name} size={29} /><span><strong>{entry.name}</strong>{entry.id === recommended?.slug ? <small>Most in your bank</small> : null}</span></span>
-                <span className={comparisonStyles.rowAmount}><strong>{showLocked && entry.quote ? "Sign in to see" : entry.quote && pending ? "Refreshing…" : full?.status === "priced" && full.breakdown ? inr(full.breakdown.inBank) : entry.dex ? "Live rate on DEX" : entry.route?.price ?? "Quote unavailable"}</strong></span>
+                <span className={comparisonStyles.rowAmount}><strong>{entry.quote && exchangeBySlug(entry.slug)?.noLivePrice ? "No live price" : showLocked && entry.quote ? "Sign in to see" : entry.quote && pending ? "Refreshing…" : full?.status === "priced" && full.breakdown ? inr(full.breakdown.inBank) : entry.dex ? "Live rate on DEX" : entry.route?.price ?? "Quote unavailable"}</strong></span>
                 <span className={styles.rowDescription}>{entry.hint}{entry.quote ? ` · ${entry.quote.support.status === "yes" ? "Network supported" : entry.quote.support.status === "no" ? "Network not supported" : "Check network support"}` : ""}</span>
               </button></li>;
             })}
