@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { networksFor, notIssuedReason, stablecoinRoutes, swapOption, TOKENS } from "./stablecoin-routes";
+import { networksFor, notIssuedReason, stablecoinInitial, stablecoinRoutes, swapOption, TOKENS } from "./stablecoin-routes";
 
 describe("stablecoin swap links", () => {
   it("prefills Uniswap with the issuer addresses, chain and amount", () => {
@@ -43,6 +43,17 @@ describe("stablecoin swap links", () => {
 });
 
 describe("stablecoin off-ramp routes", () => {
+  it("keeps bank EUR, on-chain EURC and MoneyGram cash pickup distinct", () => {
+    expect(stablecoinInitial({ dest: "eur" }).destination).toBe("EUR");
+    expect(stablecoinInitial({ dest: "EURC" }).destination).toBe("EURC");
+    expect(stablecoinInitial({ dest: "mxn" }).destination).toBe("MXN");
+    expect(stablecoinRoutes("USDC", "solana", "MXN", 1_000)).toMatchObject([
+      { slug: "moneygram", delivers: expect.stringContaining("MXN cash pickup"), price: "Quote in supported wallet" },
+    ]);
+    expect(stablecoinRoutes("USDT", "solana", "MXN", 1_000)).toEqual([]);
+    expect(stablecoinRoutes("USDC", "base", "MXN", 1_000)).toEqual([]);
+  });
+
   it("never prices a stablecoin at 1:1 — no route shows a computed INR amount", () => {
     const routes = stablecoinRoutes("USDT", "tron", "INR", 1700);
     expect(routes.map((route) => route.id).slice(-2)).toEqual(["xflow-stablecoins", "tether-redemption"]);

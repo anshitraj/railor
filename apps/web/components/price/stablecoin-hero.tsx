@@ -6,38 +6,41 @@ import { ArrowRight, Landmark, LockKeyhole, ShieldCheck } from "lucide-react";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
 import { vdaTax, type ExchangeQuote } from "../../lib/india-exchanges";
-import { NETWORKS, TOKENS, networksFor, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
-import { inr, useExchangeQuotes } from "./stablecoin-inr";
+import { NETWORKS, TOKENS, isCashOutCurrency, isCashPickupCurrency, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
+import { inr, useCashOutQuote, useExchangeQuotes } from "./stablecoin-inr";
+import { cashOutRestriction, fiat } from "../../lib/stablecoin-cash-out";
+import { StablecoinPicker } from "./stablecoin-picker";
 import priceStyles from "./price.module.css";
 import styles from "./stablecoin.module.css";
 
 const PRESETS = [500, 1000, 5000];
 
-/**
- * The homepage's stablecoin calculator: USDT or USDC on a network, sold on an
- * Indian exchange. Signed out, the amount stays blurred — the server sends no
- * number — and a tap opens sign-in.
- */
 export function StablecoinHero({ signedIn }: { signedIn: boolean }) {
   const [asset, setAsset] = useState<Stablecoin>("USDT");
   const [networkChoice, setNetwork] = useState<Network>("ethereum");
   const networks = networksFor(asset);
   const network = networks.includes(networkChoice) ? networkChoice : networks[0]!;
+  const [dest, setDestination] = useState<Destination>("INR");
   const [amountText, setAmountText] = useState("1000");
   const amount = Number(amountText) || 0;
-  const { data, loading, error } = useExchangeQuotes(asset, network, amount, true);
+  const { data, loading, error } = useExchangeQuotes(asset, network, amount, dest === "INR" && signedIn);
+  const currency = isCashOutCurrency(dest) ? dest : null;
+  const restriction = currency ? cashOutRestriction(asset, network, currency) : null;
+  const cash = useCashOutQuote(asset, network, amount, currency, signedIn && !restriction);
+  const bankAmount = currency && cash.data?.locked === false && cash.data.quote ? fiat(cash.data.quote.payout, currency) : null;
+  const needsSignIn = dest === "INR" || Boolean(currency && !restriction);
 
   const best = data && !data.locked ? (data.exchanges.find((quote) => quote.status === "priced") as ExchangeQuote | undefined) : undefined;
   const tax = best?.breakdown ? vdaTax(best.breakdown, null) : null;
-  const query = new URLSearchParams({ mode: "stablecoin", asset, network, dest: "INR", amount: String(amount || 1000) });
+  const query = new URLSearchParams({ mode: "stablecoin", asset, network, dest, amount: String(amount || 1000) });
   const fullHref = signedIn ? `/app/prices?${query}` : `/prices?${query}`;
   const signInHref = `/login?intent=start&next=${encodeURIComponent(`/app/prices?${query}`)}`;
-  const locked = !signedIn || data?.locked === true;
+  const locked = needsSignIn && (!signedIn || data?.locked === true || cash.data?.locked === true);
 
   return (
     <div className={priceStyles.quote} data-variant="hero">
       <div className={`${priceStyles.card} ${styles.heroCard}`}>
-        <div className={priceStyles.progress} data-active={loading || undefined} aria-hidden />
+        <div className={priceStyles.progress} data-active={loading || cash.loading || undefined} aria-hidden />
         <div className={styles.head}>
           <div role="group" aria-label="Stablecoin" className={styles.segment}>
             {(["USDT", "USDC"] as const).map((value) => (
@@ -74,29 +77,37 @@ export function StablecoinHero({ signedIn }: { signedIn: boolean }) {
         </div>
 
         <div className={styles.heroOut}>
-          <span className={styles.label}><Landmark size={13} aria-hidden /> In your Indian bank, after fees and 1% TDS</span>
+          <div className={styles.head}>
+            <span className={styles.label}><Landmark size={13} aria-hidden /> You receive</span>
+            <StablecoinPicker side="to" value={dest} network={network} onChange={setDestination} />
+          </div>
           {locked ? (
-            <Link href={signInHref} className={styles.heroLocked} aria-label="Sign in to see how much INR arrives">
-              <strong className={styles.blurred} aria-hidden>₹00,000.00</strong>
+            <Link href={signInHref} className={styles.heroLocked} aria-label={"Sign in to see how much " + dest + " arrives"}>
+              <strong className={styles.blurred} aria-hidden>0,000.00</strong>
               <span className={styles.lockBadgeInline}><LockKeyhole size={13} aria-hidden />Sign in to see the full price</span>
             </Link>
           ) : best?.breakdown ? (
             <>
               <strong className={styles.heroAmount}>{inr(best.breakdown.inBank)}</strong>
               <p className={styles.heroVia}>
-                <ProviderLogo slug={best.slug} name={best.name} size={18} /> via <b>{best.name}</b> at ₹{best.fill!.averagePrice.toFixed(2)} / {asset}
-                {tax ? <> · after 30% tax at most {inr(tax.afterTax)}</> : null}
+                <ProviderLogo slug={best.slug} name={best.name} size={18} /> via <b>{best.name}</b> after fees and estimated TDS
+                {tax ? <> · {inr(tax.afterTax)} after tax, assuming zero acquisition cost</> : null}
               </p>
             </>
+          ) : bankAmount ? (
+            <>
+              <strong className={styles.heroAmount}>{bankAmount}</strong>
+              <p className={styles.heroVia}>via <b>Kraken Pro</b> after known fees, before personal tax</p>
+            </>
           ) : (
-            <strong className={styles.heroAmount}>{error ? "—" : "…"}</strong>
+            <p className={styles.heroVia}>{restriction ?? (dest === "EURC" ? "Check the live rate on the DEX." : isCashPickupCurrency(dest) ? (asset === "USDC" && network === "solana" ? "Check the price in a MoneyGram-enabled wallet." : "Choose USDC on Solana for MoneyGram cash pickup.") : loading || cash.loading ? "Checking the live price…" : error || cash.error || "Quote unavailable for this selection.")}</p>
           )}
         </div>
 
         <Link href={fullHref} className={`${styles.cta} press`}>
-          {locked ? "See every route" : "See fees, TDS and tax"}<ArrowRight size={16} aria-hidden />
+          {locked ? "See every route" : "See rates and fees"}<ArrowRight size={16} aria-hidden />
         </Link>
-        <p className={styles.heroFoot}>{TOKENS[asset].issuer}’s {asset} on {NETWORKS[network].label}. CoinDCX and WazirX are compared; Railor never holds your crypto.</p>
+        <p className={styles.heroFoot}>{TOKENS[asset].issuer}’s {asset} on {NETWORKS[network].label}.</p>
       </div>
     </div>
   );

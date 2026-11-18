@@ -14,8 +14,10 @@ interface UniverseProvider {
   lastVerified: string | null;
 }
 
+type FeeEvidence = NonNullable<MarketCoverage["providers"][number]["feeEvidence"]>[number];
+
 type PricingReview = Pick<(typeof pricingReview.providers)[number], "slug" | "checkedAt" | "status" | "sourceUrl" | "summary" | "pricingReview"> & {
-  routeNotes?: Array<{ from?: string; to: string; label: string; reason: string; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
+  routeNotes?: Array<{ from?: string; origin?: string; to: string; label: string; reason: string; fees?: Array<Pick<FeeEvidence, "product" | "summary" | "sourceUrl">>; sources: NonNullable<MarketCoverage["providers"][number]["discoverySources"]> }>;
 };
 
 const reviewBySlug = new Map<string, PricingReview>(pricingReview.providers.map(entry => [entry.slug, entry]));
@@ -60,6 +62,7 @@ function primaryCategory(categories: string[]) {
  */
 export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
   const source = input.sourceCurrency.toUpperCase();
+  const senderCountry = input.context?.direction === "send" ? input.context.country : null;
   const destination = input.destinationCurrency.toUpperCase();
   const catalog = new Map((universe.providers as UniverseProvider[]).map((provider) => [provider.slug, { ...provider, currencies: [...provider.currencies] }]));
   for (const product of INDIA_RECEIVING_PRODUCTS) {
@@ -107,7 +110,7 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
     const review = reviewBySlug.get(provider.providerSlug);
     if (!review || review.status !== "readable") return provider;
     const finding = review.pricingReview;
-    const route = review.routeNotes?.find(note => note.to === destination && (!note.from || note.from === source));
+    const route = review.routeNotes?.find(note => note.to === destination && (!note.from || note.from === source) && (!note.origin || !senderCountry || note.origin === senderCountry.toUpperCase()));
     const sources = new Map<string, string>();
     for (const { label, url } of [...(provider.discoverySources ?? []), ...(route?.sources ?? []), { label: "Pricing research", url: finding.url }]) {
       if (!sources.has(url)) sources.set(url, label);
@@ -116,7 +119,11 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
       pricingStatus: route ? { label: route.label, reason: route.reason } : { label: finding.label, reason: finding.reason },
       pricingReviewedAt: finding.reviewedOn,
       ...("feeHighlight" in finding ? { feeHighlight: finding.feeHighlight } : {}),
-      feeEvidence: [...(provider.feeEvidence ?? []), ...(review.summary ? [{ summary: review.summary, product: "Published pricing components", sourceUrl: review.sourceUrl, observedAt: review.checkedAt }] : [])],
+      feeEvidence: [
+        ...(route?.fees ?? []).map(fee => ({ ...fee, observedAt: review.checkedAt })),
+        ...(provider.feeEvidence ?? []),
+        ...(!route?.fees?.length && review.summary ? [{ summary: review.summary, product: "Published pricing components", sourceUrl: review.sourceUrl, observedAt: review.checkedAt }] : []),
+      ],
       discoverySources: [...sources].map(([url, label]) => ({ url, label })),
     };
   };

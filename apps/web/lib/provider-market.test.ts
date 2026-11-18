@@ -43,6 +43,18 @@ describe("providerMarketCoverage", () => {
     expect(rows.find(provider => provider.providerSlug === "highnote")?.feeHighlight).toBeUndefined();
   });
 
+  it("shows MoneyGram’s scoped retail fee bands and remittance tax as evidence, without a payout number", () => {
+    const moneyGram = (currency: string) => providerMarketCoverage({ sourceCurrency: "USD", destinationCurrency: currency, amount: 1_000 })
+      .allProviders?.find(provider => provider.providerSlug === "moneygram");
+    const india = moneyGram("INR");
+    expect(india?.feeEvidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({ product: "Nevada agent fee schedule · India cash pickup", summary: expect.stringContaining("$13") }),
+      expect.objectContaining({ product: "U.S. federal remittance tax", summary: expect.stringContaining("1%") }),
+    ]));
+    expect(india).not.toHaveProperty("recipientAmount");
+    expect(moneyGram("EUR")?.feeEvidence?.some(fee => fee.product.includes("Nevada"))).toBe(false);
+  });
+
   it("returns only providers that list the selected destination currency", () => {
     const coverage = providerMarketCoverage({ sourceCurrency: "EUR", destinationCurrency: "PHP", amount: 500 });
 

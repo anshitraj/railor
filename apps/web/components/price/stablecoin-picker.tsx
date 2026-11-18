@@ -6,7 +6,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { NetworkLogo } from "../marketing/network-logo";
-import { NETWORKS, TOKENS, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
+import { CASH_OUT_CURRENCIES, CASH_PICKUP_CURRENCIES, DESTINATIONS, NETWORKS, TOKENS, isCashOutCurrency, isCashPickupCurrency, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
 import priceStyles from "./price.module.css";
 import styles from "./stablecoin.module.css";
 
@@ -22,10 +22,15 @@ function ChainIcon({ network, size }: { network: Network; size: number }) {
   return <NetworkLogo slug={network} size={size} />;
 }
 
+function fiatFlag(asset: Asset) {
+  return asset === "INR" ? "IN" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].flag : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].flag : undefined;
+}
+
 function AssetIcon({ asset, network }: { asset: Asset; network?: Network }) {
+  const flag = fiatFlag(asset);
   return <span className={styles.tokenIcon} aria-hidden>
-    {asset === "INR" ? <Flag code="IN" size={26} round /> : <CurrencyLogo symbol={asset} size={26} />}
-    {network && asset !== "INR" ? <span className={styles.networkBadge}><ChainIcon network={network} size={13} /></span> : null}
+    {flag ? <Flag code={flag} size={26} round /> : <CurrencyLogo symbol={asset} size={26} />}
+    {network && !flag ? <span className={styles.networkBadge}><ChainIcon network={network} size={13} /></span> : null}
   </span>;
 }
 
@@ -41,10 +46,10 @@ export function StablecoinPicker(props: Props) {
   const search = useRef<HTMLInputElement>(null);
   const id = useId();
   const label = side === "from" ? "Sending asset" : "Receive destination";
-  const subtitle = value === "INR" ? "Bank account" : NETWORKS[network].label;
-  const options: Asset[] = side === "from" ? ["USDT", "USDC"] : ["INR", "EURC"];
+  const subtitle = isCashPickupCurrency(value) ? "Cash pickup" : fiatFlag(value) ? "Bank account" : NETWORKS[network].label;
+  const options: Asset[] = side === "from" ? ["USDT", "USDC"] : DESTINATIONS;
   const filtered = options.filter((asset) => {
-    const names = asset === "INR" ? "Indian rupee bank account" : `${TOKENS[asset].issuer} ${asset === "EURC" ? "Euro" : "USD"} ${Object.keys(TOKENS[asset].addresses).map((chain) => NETWORKS[chain as Network].label).join(" ")}`;
+    const names = asset === "INR" ? "Indian rupee bank account" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].name + " bank account" : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].name + " cash pickup" : `${TOKENS[asset].issuer} ${asset === "EURC" ? "Euro" : "USD"} ${Object.keys(TOKENS[asset].addresses).map((chain) => NETWORKS[chain as Network].label).join(" ")}`;
     return `${asset} ${names}`.toLowerCase().includes(query.trim().toLowerCase());
   });
   const close = () => { setOpen(false); trigger.current?.focus({ preventScroll: true }); };
@@ -91,13 +96,13 @@ export function StablecoinPicker(props: Props) {
         }
       }}>
         <header className={styles.pickerHeading}><h3 id={`${id}-title`}>{side === "from" ? "Choose token & network" : "Choose destination"}</h3><button type="button" onClick={close} aria-label="Close asset picker"><X size={18} /></button></header>
-        <label className={priceStyles.pickerSearch}><Search size={16} aria-hidden /><input ref={search} aria-label="Search tokens or networks" placeholder="Search tokens or networks" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+        <label className={priceStyles.pickerSearch}><Search size={16} aria-hidden /><input ref={search} aria-label={side === "to" ? "Search currencies" : "Search tokens or networks"} placeholder={side === "to" ? "Search currencies" : "Search tokens or networks"} value={query} onChange={(event) => setQuery(event.target.value)} /></label>
         <div className={styles.assetOptions}>
           <p className={priceStyles.pickerGroup}>{side === "from" ? "Stablecoins" : "Receive as"}</p>
           {filtered.map((asset) => <div key={asset}>
             <button type="button" className={`${priceStyles.pickerOption} ${styles.tokenOption}`} data-active={draft === asset || undefined} aria-pressed={value === asset} aria-expanded={side === "from" ? draft === asset : undefined} onClick={() => chooseToken(asset)}>
               <AssetIcon asset={asset} />
-              <span className={styles.tokenName}><strong>{asset}</strong><small>{asset === "INR" ? "Indian rupee · Bank account" : asset === "EURC" ? `On-chain · ${NETWORKS[network].label}` : TOKENS[asset].issuer}</small></span>
+              <span className={styles.tokenName}><strong>{asset}</strong><small>{asset === "INR" ? "Indian rupee · Bank account" : isCashOutCurrency(asset) ? CASH_OUT_CURRENCIES[asset].name + " · Bank account" : isCashPickupCurrency(asset) ? CASH_PICKUP_CURRENCIES[asset].name + " · Cash pickup" : asset === "EURC" ? `On-chain · ${NETWORKS[network].label}` : TOKENS[asset].issuer}</small></span>
               {value === asset ? <Check size={16} className={priceStyles.pickerCheck} aria-label="Selected" /> : side === "from" ? <ChevronDown size={14} aria-hidden /> : null}
             </button>
             {side === "from" && draft === asset ? <div className={styles.networkOptions} role="group" aria-label={`${asset} networks`}>
@@ -107,7 +112,7 @@ export function StablecoinPicker(props: Props) {
               </button>)}
             </div> : null}
           </div>)}
-          {!filtered.length ? <p className={priceStyles.pickerEmpty}>No tokens or networks found.</p> : null}
+          {!filtered.length ? <p className={priceStyles.pickerEmpty}>No matching options.</p> : null}
         </div>
         {side === "to" ? <p className={styles.pickerHint}>EURC swaps use your sending network. Change it in “You have”.</p> : <p className={styles.pickerHint}>Only networks listed by the token’s issuer.</p>}
       </div>

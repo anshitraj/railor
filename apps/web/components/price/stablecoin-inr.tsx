@@ -6,7 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Check, CircleHelp, Landmark, LockKeyhole, Minus, Receipt, TriangleAlert, X } from "lucide-react";
 import { ProviderLogo } from "../app/provider-logo";
 import { EXCHANGES_CHECKED, TAX_TOOLS, depositSupport, exchangeBySlug, exchangesFor, vdaTax, type DepositSupport, type ExchangeQuote, type LiveBid } from "../../lib/india-exchanges";
-import { ALL_NETWORKS, NETWORKS, TOKENS, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
+import { ALL_NETWORKS, NETWORKS, TOKENS, type CashOutCurrency, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
+import type { CashOutResponse } from "../../lib/stablecoin-cash-out";
 import styles from "./stablecoin.module.css";
 
 export type LockedExchange = Pick<ExchangeQuote, "slug" | "name" | "support" | "status">;
@@ -19,9 +20,17 @@ export const inr = (value: number) => `₹${value.toLocaleString("en-IN", { mini
 
 /** Live exchange quotes for the selection, re-checked every 30 seconds while the tab is visible. */
 export function useExchangeQuotes(asset: Stablecoin, network: Network, amount: number, enabled: boolean) {
-  const key = `${asset}:${network}:${amount}`;
-  const active = enabled && amount > 0 && Number.isFinite(amount);
-  const [response, setResponse] = useState<{ key: string; data: ExchangeResponse | null; error: string; loading: boolean } | null>(null);
+  return useStablecoinRequest<ExchangeResponse>(asset, network, amount, enabled, "INR");
+}
+
+export function useCashOutQuote(asset: Stablecoin, network: Network, amount: number, destination: CashOutCurrency | null, enabled: boolean) {
+  return useStablecoinRequest<CashOutResponse>(asset, network, amount, enabled && destination !== null, destination ?? "INR");
+}
+
+function useStablecoinRequest<T extends ExchangeResponse | CashOutResponse>(asset: Stablecoin, network: Network, amount: number, enabled: boolean, destination: "INR" | CashOutCurrency) {
+  const key = `${asset}:${network}:${amount}:${destination}`;
+  const active = enabled && amount > 0 && amount <= 10_000_000;
+  const [response, setResponse] = useState<{ key: string; data: T | null; error: string; loading: boolean } | null>(null);
   const controller = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -37,12 +46,12 @@ export function useExchangeQuotes(asset: Stablecoin, network: Network, amount: n
       controller.current = ctl;
       setResponse({ key, data: null, error: "", loading: true });
       try {
-        const res = await fetch(`/api/stablecoin?${new URLSearchParams({ asset, network, amount: String(amount) })}`, { signal: ctl.signal, cache: "no-store" });
-        const body = (await res.json().catch(() => ({}))) as ExchangeResponse & { error?: string };
+        const res = await fetch(`/api/stablecoin?${new URLSearchParams({ asset, network, amount: String(amount), dest: destination })}`, { signal: ctl.signal, cache: "no-store" });
+        const body = (await res.json().catch(() => ({}))) as (ExchangeResponse | CashOutResponse) & { error?: string };
         if (ctl.signal.aborted) return;
         if (!res.ok) throw new Error(body.error ?? "Exchange prices couldn’t load right now.");
-        if (typeof body.locked !== "boolean" || !Array.isArray(body.exchanges)) throw new Error("Exchange prices couldn’t load right now.");
-        setResponse({ key, data: body, error: "", loading: false });
+        if (typeof body.locked !== "boolean" || (destination === "INR" && (!("exchanges" in body) || !Array.isArray(body.exchanges))) || (destination !== "INR" && !body.locked && !("quote" in body))) throw new Error("Exchange prices couldn’t load right now.");
+        setResponse({ key, data: body as T, error: "", loading: false });
       } catch (cause) {
         if (!ctl.signal.aborted && (cause as Error).name !== "AbortError") setResponse({ key, data: null, error: (cause as Error).message || "Exchange prices couldn’t load right now.", loading: false });
       }
@@ -54,7 +63,7 @@ export function useExchangeQuotes(asset: Stablecoin, network: Network, amount: n
       window.clearInterval(timer);
       controller.current?.abort();
     };
-  }, [asset, network, amount, active, key]);
+  }, [asset, network, amount, active, key, destination]);
 
   const current = active && response?.key === key ? response : null;
   return { data: current?.data ?? null, error: current?.error ?? "", loading: active && (!current || current.loading) };
@@ -87,13 +96,13 @@ export function IndiaExchangePanel({ asset, network, amount, issued, locked, sig
       <header className={styles.exchangesHead}>
         <div>
           <h3 id="exchanges-title">Sell on an Indian exchange</h3>
-          <p>Live {asset}/INR order books. Fees, GST, 1% TDS and the INR withdrawal come off; income tax is shown below.</p>
+          <p>Live {asset}/INR order books. Shows trading fees, GST where charged separately, estimated TDS and bank withdrawal fees. Income tax is shown separately.</p>
         </div>
         {!showLocked ? (
           <label className={styles.cost}>
             <span>What it cost you (₹, total)</span>
             <input inputMode="decimal" placeholder="Optional" value={costText} onChange={(event) => setCostText(event.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 14))} aria-describedby="cost-hint" />
-            <small id="cost-hint">The price you paid, or its INR value when you received it. Leave empty to see the most tax you could owe.</small>
+            <small id="cost-hint">The price you paid, or its INR value when you received it. Leave empty to see the estimate at zero acquisition cost.</small>
           </label>
         ) : null}
       </header>
@@ -144,7 +153,7 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
     ["Sale value", inr(breakdown.gross), `${full.fill.filled.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${asset} at ₹${full.fill.averagePrice.toFixed(2)} average`],
     [`Trading fee (${(exchange.feeRate * 100).toFixed(2)}%${exchange.gstIncluded ? ", GST included" : ""})`, `− ${inr(breakdown.tradingFee)}`],
     ...(exchange.gstIncluded ? [] : [["GST on the fee (18%)", `− ${inr(breakdown.gst)}`] as [string, string]]),
-    ["TDS (1%)", `− ${inr(breakdown.tds)}`, "Deducted by the exchange; it counts towards your tax"],
+    ["Estimated TDS (1%)", `− ${inr(breakdown.tds)}`, "Assumes the exchange withholds 1%. You can claim verified withholding as a tax credit."],
     ["INR withdrawal", breakdown.withdrawalFee ? `− ${inr(breakdown.withdrawalFee)}` : "Free"],
   ] : [];
 
@@ -184,11 +193,11 @@ export function ExchangeCard({ quote, asset, network, amount, cost, locked, load
             <p className={styles.taxTitle}><Receipt size={14} aria-hidden />Income tax on this sale</p>
             <dl className={styles.breakdown}>
               <div><dt>Gain{tax.worstCase ? <small>No cost entered, so the whole sale counts as gain</small> : <small>Sale value minus your cost. Fees can’t be deducted.</small>}</dt><dd>{inr(tax.gain)}</dd></div>
-              <div><dt>30% tax + 4% cess<small>Section 115BBH. Surcharge applies above ₹50 lakh income and isn’t included.</small></dt><dd>{inr(tax.tax)}</dd></div>
+              <div><dt>30% of gain + cess<small>Section 194, table item 4. Cess is 4% of the tax; the estimate excludes any applicable surcharge.</small></dt><dd>{inr(tax.tax)}</dd></div>
               <div><dt>Less TDS already deducted</dt><dd>− {inr(breakdown.tds)}</dd></div>
-              <div><dt>{tax.balance >= 0 ? "Still to pay when you file" : "Refund when you file"}</dt><dd>{inr(Math.abs(tax.balance))}</dd></div>
+              <div><dt>{tax.balance >= 0 ? "Still to pay when you file" : "TDS credit above this sale’s estimated tax"}</dt><dd>{inr(Math.abs(tax.balance))}</dd></div>
             </dl>
-            <div className={styles.afterTax}><span>Yours after tax{tax.worstCase ? " (most you could owe)" : ""}</span><strong>{inr(tax.afterTax)}</strong></div>
+            <div className={styles.afterTax}><span>Estimated after-tax proceeds{tax.worstCase ? " · zero acquisition cost assumed" : ""}</span><strong>{inr(tax.afterTax)}</strong></div>
           </div>
           {full!.live?.depth === "top" ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{exchange.name} publishes only its best bid, not its order book, so all {amount.toLocaleString("en-US")} {asset} is priced at that bid. A bigger sale can fill lower.</p> : null}
           {full!.fill!.short ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />The visible order book only holds {full!.fill!.filled.toLocaleString("en-US")} of your {amount.toLocaleString("en-US")} {asset}. A sale this big would fill lower, or in parts.</p> : null}
@@ -248,7 +257,7 @@ export function TaxTools() {
   return (
     <section className={styles.taxTools} aria-labelledby="tax-tools-title">
       <h3 id="tax-tools-title"><Receipt size={15} aria-hidden />Crypto tax and filing</h3>
-      <p>Every sale is reported in your ITR under Schedule VDA, at 30% plus cess on gains. Losses can’t be set off. The exchange’s TDS shows in Form 26AS and AIS and counts towards that tax.</p>
+      <p>Indian VDA gain is taxed at 30% plus applicable cess and surcharge. VDA losses cannot offset other income. Claim withholding that appears in your official tax records as a credit.</p>
       <ul>
         {TAX_TOOLS.map((tool) => (
           <li key={tool.slug}>
@@ -260,7 +269,7 @@ export function TaxTools() {
           </li>
         ))}
       </ul>
-      <p className={styles.footnote}>Railor isn’t a tax adviser and has no tie to these services. Sources: <a href="https://incometaxindia.gov.in/documents/20117/42998/Taxation-of-Virtual-Digital-Asset-VDA_2026-01-06_06-43-57_cfe04a_en.pdf/153706c8-7b5c-77d4-fc56-624c50ece1b0" target="_blank" rel="noreferrer noopener">VDA taxation</a> and <a href="https://wm.incometaxindia.gov.in/w/tds-on-payment-for-the-transfer-of-virtual-digital-assets-vdas-" target="_blank" rel="noreferrer noopener">TDS under 194S</a>, Income Tax Department.</p>
+      <p className={styles.footnote}>Railor isn’t a tax adviser and has no tie to these services. Sources: <a href="https://www.incometaxindia.gov.in/documents/20117/42998/Section-194_2026-01-06_03-25-24_661ea6_en.pdf/cd86c4da-c15b-f3b7-b25f-be125d2517f4" target="_blank" rel="noreferrer noopener">Income-tax Act section 194</a> and <a href="https://www.incometaxindia.gov.in/documents/20117/42998/Section-393_2026-03-27_10-53-24_00f77b_en.pdf/e3e175fc-b0b9-b1b1-b533-083cff93fcbd" target="_blank" rel="noreferrer noopener">TDS under section 393</a>, Income Tax Department.</p>
     </section>
   );
 }

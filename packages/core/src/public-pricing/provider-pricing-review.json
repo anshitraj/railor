@@ -396,7 +396,7 @@
       "pricingReview": {
         "reviewedOn": "2026-11-19",
         "label": "AED app quote",
-        "reason": "The UAE calculator shows an indicative exchange rate. The app confirms fee and rate for the funding and delivery methods.",
+        "reason": "The UAE calculator shows an indicative exchange rate. The app confirms fee and rate for the funding and delivery methods. International transfers require a UAE mobile number and Emirates ID for verification.",
         "url": "https://botim.me/international-transfer/india/",
         "feeHighlight": "First eligible AED→INR transfer: AED 0 fee"
       }
@@ -1065,14 +1065,78 @@
       "checkedAt": "2026-11-19",
       "status": "readable",
       "method": "official_pricing_review",
-      "summary": "MoneyGram advertises zero transfer fee for an eligible first online US-to-India transfer. FX and later transfer fees can differ.",
+      "summary": "Retail transfer fees depend on origin, funding, payout method and FX. MoneyGram publishes U.S. remittance tax rules and regional agent fee schedules. Live partner quotes include the fee, taxes, exchange rate and recipient total.",
       "pricingReview": {
         "reviewedOn": "2026-11-19",
         "label": "Retail calculator",
-        "reason": "MoneyGram prices by originating country, funding and pickup method. The transfer estimator is the source for a repeat-customer total.",
-        "url": "https://www.moneygram.com/us/en/corridor/india",
-        "feeHighlight": "First eligible US→IN transfer: USD 0 fee"
-      }
+        "reason": "MoneyGram’s calculator prices retail transfers by country, funding and payout method. A live API quote requires MoneyGram partner access.",
+        "url": "https://www.moneygram.com/us/en/corridor/india"
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "origin": "US",
+          "to": "INR",
+          "label": "Retail transfer fees · India",
+          "reason": "Personal remittance evidence for U.S. senders. Confirm exchange rate, recipient payout and location-specific fees with MoneyGram.",
+          "sources": [
+            {
+              "label": "Official U.S. remittance tax rules",
+              "url": "https://www.moneygram.com/us/en/help-center/faq/send-receive/us-federal-remittance-tax/what-is-the-u-s-federal-remittance-tax"
+            },
+            {
+              "label": "Partner quote fields",
+              "url": "https://developer.moneygram.com/moneygram-developer/docs/quote"
+            }
+          ],
+          "fees": [
+            {
+              "product": "Online first-transfer offer",
+              "summary": "USD 0 transfer fee for an eligible first U.S. online transfer to India. Credit cards are excluded. FX still applies.",
+              "sourceUrl": "https://www.moneygram.com/us/en/corridor/india"
+            },
+            {
+              "product": "Nevada agent fee schedule · India cash pickup",
+              "summary": "Published fees in USD: $11 on $0.01–$500, $13 on $500.01–$1,000, and $20 on $1,000.01–$2,500. India cash payout is capped at the equivalent of $2,500. The schedule says market-area fees may vary. FX and any applicable tax are separate.",
+              "sourceUrl": "https://company.moneygram.com/documents/PDF_Forms/Agent_License/Nevada/MoneyGram-Fee-Schedule.pdf"
+            },
+            {
+              "product": "U.S. federal remittance tax",
+              "summary": "1% of the send amount on qualifying U.S. transfers funded with cash, a money order, cashier’s check or similar physical instrument. Collected from the sender, separately from the transfer fee.",
+              "sourceUrl": "https://www.moneygram.com/us/en/help-center/faq/send-receive/us-federal-remittance-tax/what-is-the-u-s-federal-remittance-tax"
+            }
+          ]
+        },
+        {
+          "from": "USD",
+          "origin": "US",
+          "to": "PKR",
+          "label": "Retail transfer fees · Pakistan",
+          "reason": "Published Nevada agent fees for personal transfers. Confirm exchange rate, recipient payout and location-specific fees with MoneyGram.",
+          "sources": [
+            {
+              "label": "Official U.S. remittance tax rules",
+              "url": "https://www.moneygram.com/us/en/help-center/faq/send-receive/us-federal-remittance-tax/what-is-the-u-s-federal-remittance-tax"
+            },
+            {
+              "label": "Partner quote fields",
+              "url": "https://developer.moneygram.com/moneygram-developer/docs/quote"
+            }
+          ],
+          "fees": [
+            {
+              "product": "Nevada agent fee schedule · Pakistan cash pickup",
+              "summary": "Published fees in USD: $11 on $0.01–$500, $13 on $500.01–$1,000, $20 on $1,000.01–$2,500, and $30 from $2,500.01. The schedule says market-area fees may vary. FX and any applicable tax are separate.",
+              "sourceUrl": "https://company.moneygram.com/documents/PDF_Forms/Agent_License/Nevada/MoneyGram-Fee-Schedule.pdf"
+            },
+            {
+              "product": "U.S. federal remittance tax",
+              "summary": "1% of the send amount on qualifying U.S. transfers funded with cash, a money order, cashier’s check or similar physical instrument.",
+              "sourceUrl": "https://www.moneygram.com/us/en/help-center/faq/send-receive/us-federal-remittance-tax/what-is-the-u-s-federal-remittance-tax"
+            }
+          ]
+        }
+      ]
     },
     {
       "slug": "moonpay",

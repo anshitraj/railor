@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ quotes: vi.fn(), session: vi.fn(), limit: vi.fn() }));
+vi.mock("server-only", () => ({}));
 vi.mock("../../../lib/india-exchange-quotes", () => ({ indiaExchangeQuotes: mocks.quotes }));
 vi.mock("../../../lib/auth", () => ({ getSession: mocks.session }));
 vi.mock("../../../lib/rate-limit", () => ({ consumeLimit: mocks.limit, requestIdentity: () => "test" }));
@@ -19,7 +20,42 @@ beforeEach(() => {
   mocks.quotes.mockResolvedValue({ quotes: [priced, none], reference });
 });
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe("GET /api/stablecoin", () => {
+  it("returns no cash-out market data to a guest", async () => {
+    const fetchBook = vi.fn();
+    vi.stubGlobal("fetch", fetchBook);
+    mocks.session.mockResolvedValue(null);
+    const body = await (await GET(request("asset=USDC&network=solana&amount=1000&dest=EUR"))).json();
+    expect(body).toEqual({ locked: true });
+    expect(fetchBook).not.toHaveBeenCalled();
+    expect(mocks.quotes).not.toHaveBeenCalled();
+  });
+
+  it("fills the amount across bids and subtracts trading and withdrawal fees", async () => {
+    mocks.session.mockResolvedValue({ user: { id: "U" } });
+    const fetchBook = vi.fn().mockResolvedValue(Response.json({ error: [], result: { USDCEUR: { bids: [
+      ["0.90", "400", 1795017600], ["0.89", "1000", 1795017600],
+    ] } } }, { headers: { date: "Thu, 19 Nov 2026 00:00:00 GMT" } }));
+    vi.stubGlobal("fetch", fetchBook);
+    const body = await (await GET(request("asset=USDC&network=solana&amount=1000&dest=EUR"))).json();
+    expect(body).toMatchObject({ locked: false, quote: { gross: 894, averagePrice: 0.894, tradingFee: 1.79, withdrawalFee: 1, payout: 891.21 } });
+    expect(fetchBook).toHaveBeenCalledWith(expect.stringContaining("pair=USDCEUR"), expect.anything());
+    expect(mocks.quotes).not.toHaveBeenCalled();
+  });
+
+  it("checks regional restrictions and rejects insufficient order-book depth", async () => {
+    mocks.session.mockResolvedValue({ user: { id: "U" } });
+    const fetchBook = vi.fn().mockResolvedValue(Response.json({ error: [], result: { USDCCAD: { bids: [["1.38", "5", 1795017600]] } } }));
+    vi.stubGlobal("fetch", fetchBook);
+    const restricted = await (await GET(request("asset=USDT&network=solana&amount=1000&dest=CAD"))).json();
+    expect(restricted).toMatchObject({ quote: null, reason: expect.stringContaining("suspended USDT") });
+    expect(fetchBook).not.toHaveBeenCalled();
+    const insufficient = await (await GET(request("asset=USDC&network=solana&amount=1000&dest=CAD"))).json();
+    expect(insufficient).toMatchObject({ quote: null, reason: expect.stringContaining("visible bids") });
+  });
+
   it("gives a visitor which exchanges were checked and whether they take the network, and no price, bid, gap or reason", async () => {
     mocks.session.mockResolvedValue(null);
     const text = await (await GET(request())).text();
@@ -42,7 +78,7 @@ describe("GET /api/stablecoin", () => {
 
   it("rejects a bad selection before reading anything, and rate limits", async () => {
     mocks.session.mockResolvedValue(null);
-    for (const query of ["asset=DOGE&network=tron&amount=1", "asset=USDT&network=nowhere&amount=1", "asset=USDT&network=tron&amount=0", "asset=USDT&network=tron&amount=99999999"]) {
+    for (const query of ["asset=DOGE&network=tron&amount=1", "asset=USDT&network=nowhere&amount=1", "asset=USDT&network=tron&amount=0", "asset=USDT&network=tron&amount=99999999", "asset=USDC&network=solana&amount=1000&dest=EURC"]) {
       expect((await GET(request(query))).status, query).toBe(400);
     }
     mocks.limit.mockResolvedValueOnce(false);

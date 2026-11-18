@@ -2,24 +2,26 @@ import { NextResponse } from "next/server";
 import { getSession } from "../../../lib/auth";
 import { consumeLimit, requestIdentity } from "../../../lib/rate-limit";
 import { indiaExchangeQuotes } from "../../../lib/india-exchange-quotes";
-import { NETWORKS, type Network, type Stablecoin } from "../../../lib/stablecoin-routes";
+import { stablecoinCashOutQuote } from "../../../lib/stablecoin-cash-out-quotes";
+import { NETWORKS, isCashOutCurrency, type Network } from "../../../lib/stablecoin-routes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/stablecoin?asset=USDT&network=ethereum&amount=1000 — live INR sell
- * quotes from Indian exchanges' own public market data, each with its live bid,
- * the time it was observed and its gap to Wise's mid-market rate (a market
- * reference, not a quote). Like every price on Railor, the amounts are for
- * signed-in accounts: a visitor learns which exchanges were checked and whether
- * they take that network, never a number.
+ * Live sell estimates from public exchange data. INR is the default; other
+ * supported bank currencies use the Kraken order book and published rail fees.
+ * Amounts are available to signed-in accounts.
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const asset = params.get("asset")?.toUpperCase();
   const network = params.get("network") ?? "";
   const amount = Number(params.get("amount"));
+  const destination = params.get("dest")?.toUpperCase() ?? "INR";
+  if (destination !== "INR" && !isCashOutCurrency(destination)) {
+    return NextResponse.json({ error: "Pick a supported bank currency." }, { status: 400 });
+  }
   if ((asset !== "USDT" && asset !== "USDC") || !Object.hasOwn(NETWORKS, network) || !(amount > 0) || amount > 10_000_000) {
     return NextResponse.json({ error: "Pick USDT or USDC, a network and an amount above zero." }, { status: 400 });
   }
@@ -28,7 +30,12 @@ export async function GET(request: Request) {
   const allowed = await consumeLimit("stablecoin", org ? `org:${org}` : requestIdentity(request), org ? 120 : 30, 60_000);
   if (!allowed) return NextResponse.json({ error: "Too many price checks. Try again in a minute." }, { status: 429 });
 
-  const { quotes, reference } = await indiaExchangeQuotes(asset as Stablecoin, network as Network, amount);
+  if (isCashOutCurrency(destination)) {
+    if (!session) return NextResponse.json({ locked: true });
+    return NextResponse.json(await stablecoinCashOutQuote(asset, network as Network, destination, amount));
+  }
+
+  const { quotes, reference } = await indiaExchangeQuotes(asset, network as Network, amount);
   if (!session) {
     return NextResponse.json({
       locked: true,
