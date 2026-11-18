@@ -72,6 +72,17 @@
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes panelIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
 
+.ctaShort { display: none; }
+/* Small phones (and large text settings): the bar must never be wider than the screen, or the whole page scrolls sideways. */
+@media (max-width: 479px) {
+  .bar { gap: 4px; }
+  .brand { margin-right: 4px; font-size: 19px; }
+  .actions { min-width: 0; }
+  .cta { min-width: 0; padding: 0 14px; font-size: 14px; }
+  .ctaLong { display: none; }
+  .ctaShort { display: inline; }
+  .header[data-scrolled] .bar { padding: 0 4px 0 10px; }
+}
 @media (min-width: 640px) {
   .signIn { display: inline-flex; }
   .iconButton { display: grid; }
