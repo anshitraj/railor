@@ -249,13 +249,16 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </span>
         </div>
 
-        {context.direction === "receive" ? (
+        {context.direction === "receive" && (variant !== "hero" || activeProfile !== "personal") ? (
           <div className={styles.methodRow}>
-            <PayMethodSelect
-              value={context.paymentMethod ?? (activeProfile === "personal" ? "transfer_service" : "local_bank")}
-              onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
-              label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
-            />
+            {/* The landing hero keeps to amount and currencies: the payment-method choice lives in the app. The method still defaults in `context`, so the prices are unchanged. */}
+            {variant === "hero" ? null : (
+              <PayMethodSelect
+                value={context.paymentMethod ?? (activeProfile === "personal" ? "transfer_service" : "local_bank")}
+                onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
+                label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
+              />
+            )}
             {activeProfile !== "personal" ? (
               <Link href={invoiceHref} prefetch={false} className={`${styles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
                 <FileUp size={14} aria-hidden />
