@@ -7,7 +7,14 @@ export const CustomerContext = z.object({
   country: z.string().regex(/^[A-Z]{2}$/),
   direction: z.enum(["send", "receive"]),
   purpose: z.enum(["services", "goods", "salary", "personal"]),
+  /**
+   * How the payer funds the payment when receiving. A receiving account's
+   * published fee usually covers one method (a local bank transfer); a card or
+   * a wire can cost something else, and a transfer app is a different product.
+   */
+  paymentMethod: z.enum(["local_bank", "wire", "card", "transfer_service"]).optional(),
 });
+export type PaymentMethod = NonNullable<z.infer<typeof CustomerContext>["paymentMethod"]>;
 export type CustomerContext = z.infer<typeof CustomerContext>;
 export interface ProviderProfileAssessment {
   status: "documented" | "not_supported" | "unconfirmed";

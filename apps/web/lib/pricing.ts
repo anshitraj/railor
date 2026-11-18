@@ -143,13 +143,25 @@ export function parsePriceQuery(params: URLSearchParams | Record<string, string 
   const to = get("to")?.trim().toUpperCase();
   const amount = Number(get("amount"));
   if (!from || !to || !/^[A-Z]{3}$/.test(from) || !/^[A-Z]{3}$/.test(to) || from === to || !(amount > 0)) return null;
-  const hasContext = ["profile", "country", "direction", "purpose"].some((key) => get(key) !== undefined);
-  const parsed = CustomerContext.safeParse({ profile: get("profile"), country: get("country"), direction: get("direction"), purpose: get("purpose") });
+  const hasContext = ["profile", "country", "direction", "purpose", "paymentMethod"].some((key) => get(key) !== undefined);
+  const parsed = CustomerContext.safeParse({ profile: get("profile"), country: get("country"), direction: get("direction"), purpose: get("purpose"), paymentMethod: get("paymentMethod") || undefined });
   if (hasContext && !parsed.success) return null;
   return { sourceCurrency: from, destinationCurrency: to, amount: Math.min(10_000_000, amount), includeMarket: get("market") === "1", ...(hasContext && parsed.success ? { context: parsed.data } : {}) };
 }
 
 function readCustomerContext(get: (key: string) => string | undefined, fallback: CustomerContext): CustomerContext {
-  const parsed = CustomerContext.safeParse({ profile: get("profile") ?? fallback.profile, country: get("country")?.toUpperCase() ?? fallback.country, direction: get("direction") ?? fallback.direction, purpose: get("purpose") ?? fallback.purpose });
+  const direction = get("direction") ?? fallback.direction;
+  const profile = get("profile") ?? fallback.profile;
+  const parsed = CustomerContext.safeParse({ profile, country: get("country")?.toUpperCase() ?? fallback.country, direction, purpose: get("purpose") ?? fallback.purpose, paymentMethod: get("paymentMethod") || defaultPaymentMethod(direction, profile) });
   return parsed.success ? parsed.data : fallback;
+}
+
+/**
+ * When receiving, compare one way of paying at a time. Family money usually
+ * arrives through a transfer app the sender uses; a client invoice is usually
+ * paid by bank transfer into the recipient's account.
+ */
+export function defaultPaymentMethod(direction: string | undefined, profile: string | undefined): CustomerContext["paymentMethod"] {
+  if (direction !== "receive") return undefined;
+  return profile === "personal" ? "transfer_service" : "local_bank";
 }

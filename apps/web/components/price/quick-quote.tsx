@@ -7,10 +7,13 @@ import { ArrowDownUp, ArrowRight, CircleAlert, LockKeyhole, RefreshCw } from "lu
 import type { CustomerContext, PriceCheckResult, PriceRow } from "@railor/core";
 import { Flag, type PickerOption } from "@railor/ui";
 import { ProviderLogo } from "../app/provider-logo";
-import { priceResponseMatches } from "../../lib/price-response";
+import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { BASIS_LABEL, priceView } from "../../lib/price-view";
 import { isLockedPriceCheck, type LockedPriceCheck } from "../../lib/price-lock";
+import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
+import { pricingSourceLabel } from "../../lib/price-display";
 import { CurrencyPicker } from "./currency-picker";
+import { PayMethodSelect } from "./pay-method-select";
 import styles from "./price.module.css";
 
 /**
@@ -75,12 +78,16 @@ function useTween(target: number | null, ms = 420) {
 /** Same derivation as the full price page, so both screens price the same situation. */
 function contextFor(to: string, profile: Profile, entityCountry: string | null | undefined, previous: CustomerContext): CustomerContext {
   const entity = entityCountry ?? "";
+  const direction = (!entity || entity === "IN") && to === "INR" ? "receive" : "send";
+  // Personal money usually comes through the sender's transfer app; a client invoice by bank transfer.
+  const keepMethod = profile !== "personal" && previous.paymentMethod && previous.paymentMethod !== "transfer_service" ? previous.paymentMethod : undefined;
   return {
     ...previous,
     profile,
     country: entity || "IN",
-    direction: (!entity || entity === "IN") && to === "INR" ? "receive" : "send",
+    direction,
     purpose: profile === "personal" ? "personal" : previous.purpose === "personal" ? "services" : previous.purpose,
+    paymentMethod: direction === "receive" ? (profile === "personal" ? "transfer_service" : keepMethod ?? "local_bank") : undefined,
   };
 }
 
@@ -139,7 +146,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const midRate = result?.reference?.rate ?? null;
   const fromOption = currencies.find((option) => option.value === from);
   const toOption = currencies.find((option) => option.value === to);
-  const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...context }).toString();
+  const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...contextParams(context) }).toString();
   const compareHref = `${compareBase}?${query}`;
 
   const load = useCallback(async () => {
@@ -148,7 +155,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
     const ctl = new AbortController();
     controller.current = ctl;
     setLoading(true);
-    const q = new URLSearchParams({ from, to, amount: String(amount), market: "1", ...context });
+    const q = new URLSearchParams({ from, to, amount: String(amount), market: "1", ...contextParams(context) });
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
       const body = (await res.json().catch(() => ({}))) as (PriceCheckResult | LockedPriceCheck) & { error?: string };
@@ -239,6 +246,16 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </span>
         </div>
 
+        {context.direction === "receive" ? (
+          <div className={styles.methodRow}>
+            <PayMethodSelect
+              value={context.paymentMethod ?? (activeProfile === "personal" ? "transfer_service" : "local_bank")}
+              onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
+              label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
+            />
+          </div>
+        ) : null}
+
         <div className={styles.fields}>
           <div className={styles.field}>
             <label htmlFor={`${variant}-amount`} className={styles.fieldLabel}>Sending</label>
@@ -292,6 +309,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                 <>
                   via <strong>{top.providerName.split(" · ")[0]}</strong>
                   {top.feeAmount !== null ? <> · fee {money(top.feeAmount)} {top.feeCurrency ?? ""}</> : null}
+                  {(() => { const cost = benchmarkCost(top, amount, midRate, to); return cost.kind === "cost" ? <> · cost {formatBenchmarkCost(cost)}</> : null; })()}
                   {top.delivery ? <> · arrives {top.delivery}</> : null}
                 </>
               ) : midRate ? <>Mid-market rate 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}</> : <>&nbsp;</>}
@@ -353,11 +371,11 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                         <ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} size={30} />
                         <span className={styles.rowName}>
                           <strong>{row.providerName.split(" · ")[0]}</strong>
-                          <small>{row.basis === "market_estimate" ? collected(row.observedAt, now) : `${BASIS_LABEL[row.basis]}${row.delivery ? ` · ${row.delivery}` : ""}`}</small>
+                          <small>{row.basis === "market_estimate" ? collected(row.observedAt, now) : `${pricingSourceLabel(row)}${row.delivery ? ` · ${row.delivery}` : ""}`}</small>
                         </span>
                         <span className={styles.rowAmount}>
                           <strong>{money(row.recipientAmount)}</strong>
-                          <small>{isBest ? <span className={styles.bestTag}>{estimateBeatsBest ? "Best live price" : "Best price"}</span> : row.shortfall && row.shortfall > 0 ? `−${money(row.shortfall)}` : row.basis === "market_estimate" ? <span className={styles.estimateTag}>Estimate</span> : ""}</small>
+                          <small>{isBest ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span> : row.basis === "market_estimate" ? <span className={styles.estimateTag}>Market reference</span> : (() => { const cost = benchmarkCost(row, amount, midRate, to); return cost.kind === "cost" ? <span className={styles.costTag}>{formatBenchmarkCost(cost)}</span> : <span className={styles.estimateTag}>Cost unknown</span>; })()}</small>
                         </span>
                       </div>
                     </motion.li>

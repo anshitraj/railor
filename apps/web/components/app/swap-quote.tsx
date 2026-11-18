@@ -15,9 +15,11 @@ import { PriceProviderBrowser } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { providerSite } from "../../lib/provider-sites";
 import { CurrencyPicker } from "../price/currency-picker";
-import { priceResponseMatches } from "../../lib/price-response";
+import { PayMethodSelect } from "../price/pay-method-select";
+import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { providerIdentity } from "../../lib/price-display";
 import { priceView } from "../../lib/price-view";
+import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
 /**
@@ -182,7 +184,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     const ctl = new AbortController();
     controller.current = ctl;
     setLoading(true);
-    const q = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", ...context });
+    const q = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", ...contextParams(context) });
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
       const body = (await res.json()) as PriceCheckResult & { error?: string };
@@ -250,6 +252,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const receive = useTween(selected?.recipientAmount ?? null, 450, selected?.providerSlug ?? null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
+  const selectedCost = selected ? benchmarkCost(selected, amount, result?.reference?.rate, to) : null;
   const elapsed = (now - fetchedAt) / 1000;
   const sym = (code: string) => currencies.find((c) => c.value === code)?.emoji;
 
@@ -303,7 +306,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               {([{ value: "business", label: "Business" }, { value: "freelancer", label: "Freelancer" }, { value: "personal", label: "Personal" }] as const).map((option) => {
                 const active = context.profile === option.value || (option.value === "freelancer" && context.profile === "sole_proprietor");
                 return <button key={option.value} type="button" aria-pressed={active}
-                  onClick={() => setContext((c) => ({ ...c, profile: option.value, purpose: option.value === "personal" ? "personal" : c.purpose === "personal" ? "services" : c.purpose }))}
+                  onClick={() => setContext((c) => ({ ...c, profile: option.value, purpose: option.value === "personal" ? "personal" : c.purpose === "personal" ? "services" : c.purpose,
+                    paymentMethod: c.direction === "receive" ? (option.value === "personal" ? "transfer_service" : c.paymentMethod && c.paymentMethod !== "transfer_service" ? c.paymentMethod : "local_bank") : undefined }))}
                   className={cn("rounded-full px-3 py-1.5 text-[12px] font-semibold transition", active ? "bg-[var(--color-ink)] text-[#fff]" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]")}>
                   {option.label}
                 </button>;
@@ -311,6 +315,15 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </div>
             {!contextCurrent ? <span role="status" className="sr-only">Checking this profile…</span> : null}
           </div>
+          {context.direction === "receive" ? (
+            <div className="px-1 pb-1">
+              <PayMethodSelect
+                value={context.paymentMethod ?? (context.profile === "personal" ? "transfer_service" : "local_bank")}
+                onChange={(paymentMethod) => setContext((c) => ({ ...c, paymentMethod }))}
+                label={context.profile === "personal" ? "Sender pays by" : "Client pays by"}
+              />
+            </div>
+          ) : null}
 
           <div className="relative flex flex-col gap-1.5">
             <div className="rounded-2xl border border-transparent bg-[var(--color-canvas)] p-4 transition focus-within:border-[var(--color-ink)]">
@@ -382,12 +395,12 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </div>
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[var(--color-muted)]">
                 <span>
-                  {selected?.totalCostPct !== null && selected?.totalCostPct !== undefined ? (
+                  {selectedCost?.kind === "cost" ? (
                     <>
-                      ≈ <span className={cn("font-semibold", selected.totalCostPct <= 0.5 ? "text-[var(--color-ok)]" : selected.totalCostPct <= 1.5 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{selected.totalCostPct.toFixed(2)}%</span> all-in vs mid-market
+                      Cost <span className={cn("font-semibold", selectedCost.bps <= 50 ? "text-[var(--color-ok)]" : selectedCost.bps <= 150 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{formatBenchmarkCost(selectedCost)}</span> vs mid-market
                     </>
                   ) : selected?.partial ? (
-                    selected.publicOffer ? "First transfer · US bank funded" : "Fee reference · check account conditions"
+                    selected.publicOffer ? "First transfer · US bank funded" : selected.missing?.[0] ? `Missing: ${selected.missing[0]}` : "Partial estimate · a cost is unknown"
                   ) : (
                     " "
                   )}
@@ -441,6 +454,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
+        reference={result?.reference ?? null}
         action={cta}
         connection={selected && selected.side !== "payer" ? <ConnectionLink slug={selected.providerSlug} name={selected.providerName} mode={mode} connected={connected.includes(connectionProviderSlug(selected.providerSlug))} light /> : null}
         market={estimates.length ? <div className="price-surface p-3">{estimates.length ? (

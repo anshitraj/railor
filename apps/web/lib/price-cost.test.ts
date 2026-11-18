@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import { benchmarkCost, formatBenchmarkCost } from "./price-cost";
+
+const complete = { partial: false, costComplete: true } as const;
+
+describe("cost against a benchmark", () => {
+  it("matches the worked example: ₹100,000 baseline, ₹99,500 arrives → ₹500 and 50 bps", () => {
+    const cost = benchmarkCost({ ...complete, recipientAmount: 99_500 }, 1_000, 100, "INR");
+    expect(cost).toEqual({ kind: "cost", currency: "INR", baselineMinor: 10_000_000, netMinor: 9_950_000, costMinor: 50_000, bps: 50 });
+    expect(cost.kind === "cost" && formatBenchmarkCost(cost)).toBe("₹500 · 50 bps");
+  });
+
+  it("uses exact minor units for a real-world pair", () => {
+    // 1,700 USD at 93.4113 → ₹158,799.21 baseline; ₹157,973.41 arrives → ₹825.80, 52 bps.
+    const cost = benchmarkCost({ ...complete, recipientAmount: 157_973.41 }, 1_700, 93.4113, "INR");
+    expect(cost).toMatchObject({ kind: "cost", baselineMinor: 15_879_921, costMinor: 82_580, bps: 52 });
+  });
+
+  it("keeps a negative difference instead of treating it as an error", () => {
+    const cost = benchmarkCost({ ...complete, recipientAmount: 100_120 }, 1_000, 100, "INR");
+    expect(cost).toMatchObject({ kind: "cost", costMinor: -12_000, bps: -12 });
+    expect(cost.kind === "cost" && formatBenchmarkCost(cost)).toBe("₹120 better · -12 bps");
+  });
+
+  it("returns the gap, not a number, when fees are incomplete or the benchmark is missing", () => {
+    expect(benchmarkCost({ partial: true, costComplete: false, recipientAmount: 99_000, missing: ["Wire (SWIFT) fee not published"] }, 1_000, 100, "INR")).toEqual({ kind: "gap", reason: "Wire (SWIFT) fee not published" });
+    expect(benchmarkCost({ ...complete, recipientAmount: 99_000 }, 1_000, null, "INR")).toMatchObject({ kind: "gap" });
+    expect(benchmarkCost({ ...complete, recipientAmount: null }, 1_000, 100, "INR")).toMatchObject({ kind: "gap" });
+  });
+});

@@ -126,3 +126,14 @@
 .lockOverlay > span:last-child { color: var(--color-muted); font-size: 13px; }
 .lockIcon { display: grid; width: 40px; height: 40px; margin-bottom: 4px; place-items: center; border-radius: 50%; background: var(--color-ink); color: #fff; box-shadow: 0 10px 22px -12px rgb(21 19 16 / .7); }
 .footLink { color: var(--color-ink); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+
+/* How the payer funds it. */
+.methodRow { display: flex; margin: -4px 0 12px; }
+.payMethod { position: relative; display: inline-flex; max-width: 100%; height: 38px; align-items: center; gap: 8px; padding: 0 32px 0 12px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink-soft); font-size: 13px; transition: border-color .15s ease; }
+.payMethod:hover, .payMethod:focus-within { border-color: var(--color-ink); }
+.payMethod > svg:first-child { flex: none; color: var(--color-orange-deep); }
+.payMethodLabel { color: var(--color-muted); font-weight: 550; white-space: nowrap; }
+.payMethod select { min-width: 0; max-width: 220px; overflow: hidden; padding: 0 2px 0 0; border: 0; background: transparent; color: var(--color-ink); font: 650 13.5px var(--font-sans); text-overflow: ellipsis; outline: none; appearance: none; cursor: pointer; }
+.payMethodChevron { position: absolute; right: 12px; color: var(--color-faint); pointer-events: none; }
+
+.costTag { color: var(--color-muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }

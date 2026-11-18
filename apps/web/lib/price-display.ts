@@ -19,6 +19,15 @@ export function freshComparison(row: PriceRow, input: PriceCheckInput, now: numb
 }
 
 export function providerIdentity(slug: string): string { return slug.replace(/^market:/, "").toLowerCase(); }
+/**
+ * Data status in plain words: an account quote (from the customer's own
+ * connected account), a published estimate (the provider's published fees,
+ * complete), a partial estimate (published, with a cost still unknown), or a
+ * market reference (a public quote or a dated consumer price).
+ */
 export function pricingSourceLabel(row: PriceRow): string {
-  return row.publicOffer ? "First-transfer offer" : row.basis === "market_estimate" && row.publicComparison ? "Public comparison" : { exact: "Your account", live_public: "Public reference", published: "Published estimate", market_estimate: "Market estimate" }[row.basis];
+  if (row.publicOffer) return "First-transfer offer";
+  if (row.basis === "exact") return "Account quote";
+  if (row.basis === "published") return row.partial ? "Partial estimate" : "Published estimate";
+  return "Market reference";
 }

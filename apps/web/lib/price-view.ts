@@ -27,10 +27,10 @@ export function priceView(result: PriceCheckResult | null, now: number) {
   return { quotes, estimates, excluded, best };
 }
 
-/** Plain-language name for where a price came from. */
+/** Plain-language data status for a basis (rows with a known completeness use pricingSourceLabel). */
 export const BASIS_LABEL: Record<PriceRow["basis"], string> = {
-  exact: "Your account",
-  live_public: "Public quote",
-  published: "Published fees",
-  market_estimate: "Estimate",
+  exact: "Account quote",
+  live_public: "Market reference",
+  published: "Published estimate",
+  market_estimate: "Market reference",
 };
