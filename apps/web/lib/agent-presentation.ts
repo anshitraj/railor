@@ -1,7 +1,7 @@
 import type { SearchPreviewResult } from "@railor/core";
 import type { RankingPreset } from "@railor/types";
 
-export interface AgentAnswer { title: string; lines: string[]; reasonCodes: string[]; providerSlug?: string }
+export interface AgentAnswer { title: string; lines: string[]; reasonCodes: string[]; providerSlug?: string; /** Tappable follow-ups: an example request or a slash command. */ chips?: string[]; links?: Array<{ label: string; href: string }> }
 
 /** Presentation of a returned engine result. Every financial statement below
  * comes from this snapshot; questions never alter its policy or authorization. */

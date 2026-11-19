@@ -18,7 +18,10 @@ const Intent = z.object({
   sourceCurrency: short, sourceAsset: short, sourceNetwork: short, destinationCountry: short,
   destinationCurrency: short, endpointType: short, namedRail: short, amount: z.number().finite().optional(),
 });
-const Answer = z.object({ title: z.string().max(500), lines: z.array(z.string().max(10000)).max(40), reasonCodes: z.array(short).max(100), providerSlug: short.optional() });
+const Answer = z.object({ title: z.string().max(500), lines: z.array(z.string().max(10000)).max(40), reasonCodes: z.array(short).max(100), providerSlug: short.optional(),
+  chips: z.array(short).max(8).optional(),
+  // Only in-app links survive a reload, so a saved chat can't point anywhere else.
+  links: z.array(z.object({ label: short, href: z.string().max(300).regex(/^\/app\//) })).max(4).optional() });
 const Chat = z.object({
   id: short.min(1), title: short.min(1), createdAt: z.number().int().nonnegative(), updatedAt: z.number().int().nonnegative(),
   messages: z.array(z.object({ id: z.number().int().nonnegative(), role: z.enum(["user", "agent"]), text: z.string().max(20000), answer: Answer.optional() })).min(1).max(CHAT_MESSAGE_LIMIT),

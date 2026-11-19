@@ -17,6 +17,14 @@ export function agentPreference(text: string): RankingPreset | null {
   return null;
 }
 
+/** Who receives it, when the text says so: "a family member" or "a freelancer" is a person, "a supplier" a business. */
+export function beneficiaryFromText(text: string): "business" | "individual" | undefined {
+  const value = text.toLowerCase();
+  if (/\b(?:to|for|pay(?:ing)?|paid to)\s+(?:an?\s+|my\s+|our\s+)?(?:family(?:\s+member)?|mother|mom|mum|father|dad|parents?|wife|husband|spouse|son|daughter|brother|sister|friend|relative|freelancers?|contractors?|employees?|individuals?|person|myself|self)\b/.test(value)) return "individual";
+  if (/\b(?:to|for|pay(?:ing)?)\s+(?:an?\s+|our\s+)?(?:[a-z]+\s+){0,2}(?:supplier|vendor|company|business|manufacturer|distributor|partner firm)\b/.test(value)) return "business";
+  return undefined;
+}
+
 export function draftPaymentIntent(text: string, entityCountry?: string) {
   z.string().trim().min(1).max(2000).parse(text);
   const interpretation = interpretRules(text);
@@ -32,7 +40,7 @@ export function draftPaymentIntent(text: string, entityCountry?: string) {
     product: explicit("product") ? q.product : undefined, amount: q.amount,
     amountCurrency: q.sourceAsset ? undefined : q.sourceCurrency,
     namedRail: q.namedRail, paymentMethod: explicit("paymentMethod") ? q.paymentMethod : undefined,
-    endpointType: q.endpointType, preference,
+    endpointType: q.endpointType, preference, beneficiaryType: beneficiaryFromText(text),
   }).filter(([, v]) => v !== undefined));
   const parsed = PaymentIntent.safeParse(draft);
   const missing = [...new Set([...(parsed.success ? [] : parsed.error.issues.map((i) => i.path.join("."))),

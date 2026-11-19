@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Building2, Check, ChevronDown, CircleAlert, Pencil, ShieldCheck, User } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Building2, Check, ChevronDown, CircleAlert, Pencil, ShieldCheck, User } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { RANKING_PRESET_LABEL, type RankingPreset } from "@railor/types";
 import type { IntentDraft, IntentOptions } from "./intent-builder";
@@ -64,6 +64,14 @@ export function AgentRequestCard({
     const timer = window.setTimeout(() => editorRef.current?.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" }), 320);
     return () => window.clearTimeout(timer);
   }, [editing, reduce]);
+  // On phones the pills scroll sideways: keep the chosen one in view.
+  const pillsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = pillsRef.current;
+    const chosen = row?.querySelector<HTMLElement>('[aria-checked="true"]');
+    if (!row || !chosen || row.scrollWidth <= row.clientWidth) return;
+    row.scrollTo({ left: Math.max(0, chosen.offsetLeft - (row.clientWidth - chosen.offsetWidth) / 2), behavior: reduce ? "auto" : "smooth" });
+  }, [preference, reduce]);
   const from = intent.sourceKind === "asset" ? intent.sourceAsset : intent.sourceCurrency;
   const network = intent.sourceKind === "asset" ? options.networks.find((item) => item.value === intent.sourceNetwork)?.label ?? intent.sourceNetwork : "";
   const details = [network ? `${network} network` : "", intent.namedRail, intent.endpointType ? intent.endpointType.replaceAll("_", " ") : ""].filter(Boolean);
@@ -111,7 +119,7 @@ export function AgentRequestCard({
 
       <div className={styles.preference}>
         <span className={styles.label} id="agent-compare-by">Compare by</span>
-        <div role="radiogroup" aria-labelledby="agent-compare-by" className={styles.pills}>
+        <div role="radiogroup" aria-labelledby="agent-compare-by" className={styles.pills} ref={pillsRef}>
           {PREFERENCES.map((option) => (
             <button key={option.value} type="button" role="radio" aria-checked={preference === option.value} disabled={pending} onClick={() => onPreference(option.value)} title={RANKING_PRESET_LABEL[option.value]}>
               {preference === option.value ? <motion.span layoutId="agent-pref" className={styles.pillBg} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.3, bounce: 0 }} /> : null}
@@ -135,7 +143,7 @@ export function AgentRequestCard({
         )}
         {!hasResults ? (
           <button type="button" className={`${styles.primary} press`} disabled={pending || !ready} onClick={onSearch}>
-            {pending ? "Comparing…" : "Compare providers"}<ArrowRight size={16} aria-hidden />
+            {pending ? "Comparing…" : policies.length ? "Compare providers" : "Compare on Routes"}{policies.length ? <ArrowRight size={16} aria-hidden /> : <ArrowUpRight size={16} aria-hidden />}
           </button>
         ) : null}
       </footer>

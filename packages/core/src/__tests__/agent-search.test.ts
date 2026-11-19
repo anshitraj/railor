@@ -62,3 +62,22 @@ describe("reviewable Agent intents", () => {
     expect(agentPreference("Show available providers")).toBeNull();
   });
 });
+
+describe("everyday wording in Agent requests", () => {
+  it("reads a dollar sign as the funding currency", () => {
+    const result = draftPaymentIntent("Send $5,000 from our US company to a freelancer in India");
+    expect(result.draft).toMatchObject({ sourceCurrency: "USD", amount: 5000, destinationCountry: "IN", destinationCurrency: "INR", beneficiaryType: "individual" });
+    expect(result.missing).toEqual([]);
+  });
+  it("understands lakh and crore", () => {
+    expect(draftPaymentIntent("Our Indian company pays 10 lakh INR to a US vendor in USD").draft).toMatchObject({ amount: 1_000_000, sourceCurrency: "INR", destinationCurrency: "USD", beneficiaryType: "business" });
+    expect(draftPaymentIntent("send 2.5 crore INR to a supplier in UAE").draft.amount).toBe(25_000_000);
+  });
+  it("knows the Philippine peso and that family is a person", () => {
+    const result = draftPaymentIntent("send 50000 AED to Philippines PHP for a family member");
+    expect(result.draft).toMatchObject({ sourceCurrency: "AED", destinationCountry: "PH", destinationCurrency: "PHP", beneficiaryType: "individual" });
+  });
+  it("defaults a country to its own currency", () => {
+    expect(draftPaymentIntent("Pay 1000 USD to a supplier in Kenya").draft.destinationCurrency).toBe("KES");
+  });
+});
