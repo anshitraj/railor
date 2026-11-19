@@ -109,10 +109,11 @@ export async function findOrCreateUserByEmail(email: string, name?: string | nul
   if (!user) {
     await db.insert(users).values({ email: normalized, name: name ?? undefined, avatarUrl: avatarUrl ?? undefined }).onConflictDoNothing();
     [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
-  } else if ((avatarUrl && avatarUrl !== user.avatarUrl) || (name && !user.name)) {
-    // Signing in with Google or GitHub keeps the photo in step with that account;
-    // a name the person already set in Railor is never overwritten.
-    const patch = { ...(avatarUrl ? { avatarUrl } : {}), ...(name && !user.name ? { name } : {}) };
+  } else if ((avatarUrl && avatarUrl !== user.avatarUrl && !user.avatarUrl?.startsWith("data:")) || (name && !user.name)) {
+    // Signing in with Google or GitHub keeps the photo in step with that account,
+    // unless the person uploaded their own; a name they set is never overwritten.
+    const keepPhoto = Boolean(user.avatarUrl?.startsWith("data:"));
+    const patch = { ...(avatarUrl && !keepPhoto ? { avatarUrl } : {}), ...(name && !user.name ? { name } : {}) };
     [user] = await db.update(users).set(patch).where(eq(users.id, user.id)).returning();
   }
   return user ?? null;

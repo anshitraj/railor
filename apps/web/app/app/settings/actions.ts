@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSession, setActiveOrganization } from "../../../lib/auth";
 import { renameOrganization } from "../../../lib/org";
+import { validProfilePhoto } from "../../../lib/profile-photo";
 import {
   INVITE_ROLES,
   MEMBER_ROLES,
@@ -52,6 +53,21 @@ export async function updateProfileName(name: string) {
   const { eq } = await import("drizzle-orm");
   const db = await getDb();
   await db.update(users).set({ name: parsed.data }).where(eq(users.id, session.user.id));
+  revalidatePath("/app", "layout");
+  return { ok: true as const };
+}
+
+/**
+ * Your profile photo: a small square image made in the browser (or null to
+ * remove it). Stored inline, so it needs no file storage and no migration.
+ */
+export async function updateProfilePhoto(dataUrl: string | null) {
+  if (dataUrl !== null && !validProfilePhoto(dataUrl)) return { ok: false as const, error: "Use a JPG, PNG or WebP image." };
+  const session = await requireSession();
+  const { getDb, users } = await import("@railor/database");
+  const { eq } = await import("drizzle-orm");
+  const db = await getDb();
+  await db.update(users).set({ avatarUrl: dataUrl }).where(eq(users.id, session.user.id));
   revalidatePath("/app", "layout");
   return { ok: true as const };
 }

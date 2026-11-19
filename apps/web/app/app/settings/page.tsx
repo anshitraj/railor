@@ -5,8 +5,7 @@ import { getSession } from "../../../lib/auth";
 import { getOrgMembers } from "../../../lib/org";
 import { WorkspaceNameForm } from "../../../components/app/workspace-name-form";
 import { TeamPanel, WorkspaceSwitcher } from "../../../components/app/team-panel";
-import { UserAvatar } from "../../../components/app/user-avatar";
-import { ProfileNameForm, SettingsNav } from "../../../components/app/settings/settings-sections";
+import { ProfileNameForm, ProfilePhoto, SettingsNav } from "../../../components/app/settings/settings-sections";
 import { ConnectionsGrid } from "../../../components/app/settings/connections-grid";
 import { inviteUrl, listPendingInvites, listUserWorkspaces } from "../../../lib/invites";
 import { getEntitlement } from "../../../lib/entitlements";
@@ -72,13 +71,13 @@ export default async function SettingsPage() {
           <section id="profile" className={styles.section} aria-labelledby="profile-title">
             <h2 id="profile-title">Profile</h2>
             <div className={styles.profile}>
-              <UserAvatar src={user.avatarUrl} name={user.name} email={user.email} size={72} />
               <div className={styles.profileText}>
                 <strong>{user.name ?? user.email.split("@")[0]}</strong>
                 <span>{user.email}</span>
-                <small>{user.avatarUrl ? "Photo from the Google or GitHub account you sign in with." : "Sign in with Google to use your Google photo here."}</small>
+                <small>{user.avatarUrl?.startsWith("data:") ? "Your own photo." : user.avatarUrl ? "Photo from the Google or GitHub account you sign in with. Change it any time." : "Add a photo, or sign in with Google to use your Google one."}</small>
               </div>
             </div>
+            <Row label="Photo" hint="JPG, PNG or WebP. Cropped to a square."><ProfilePhoto initial={user.avatarUrl} name={user.name} email={user.email} /></Row>
             <Row label="Name" hint="Shown to your team and on your dashboard."><ProfileNameForm initialName={user.name ?? ""} /></Row>
             <Row label="Email" hint="Your sign-in address. It can’t be changed here."><span className={styles.mono}>{user.email}</span></Row>
           </section>

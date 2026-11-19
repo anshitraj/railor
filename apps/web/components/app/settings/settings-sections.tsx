@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Check } from "lucide-react";
-import { updateProfileName } from "../../../app/app/settings/actions";
+import { Camera, Check, Trash2 } from "lucide-react";
+import { updateProfileName, updateProfilePhoto } from "../../../app/app/settings/actions";
+import { UserAvatar } from "../user-avatar";
 import { toast } from "../../toast";
 import styles from "./settings.module.css";
 
@@ -66,5 +67,54 @@ export function ProfileNameForm({ initialName }: { initialName: string }) {
         {pending ? "Saving…" : !dirty && saved ? <><Check size={14} aria-hidden />Saved</> : "Save"}
       </button>
     </form>
+  );
+}
+
+const PHOTO_SIZE = 160;
+
+/** Crops the picked image to a centred square and shrinks it to 160px, in the browser. */
+async function squarePhoto(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = PHOTO_SIZE; canvas.height = PHOTO_SIZE;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("no canvas");
+  context.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, PHOTO_SIZE, PHOTO_SIZE);
+  bitmap.close();
+  const webp = canvas.toDataURL("image/webp", 0.85);
+  return webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.85);
+}
+
+/** Your photo, with Change and (for an uploaded one) Remove. */
+export function ProfilePhoto({ initial, name, email }: { initial: string | null; name: string | null; email: string }) {
+  const [photo, setPhoto] = useState(initial);
+  const [pending, start] = useTransition();
+  const input = useRef<HTMLInputElement>(null);
+  const uploaded = Boolean(photo?.startsWith("data:"));
+  const save = (next: string | null, done: string) => start(async () => {
+    const result = await updateProfilePhoto(next);
+    if (result.ok) { setPhoto(next); toast.success(done); }
+    else toast.error("Couldn’t save your photo", result.error);
+  });
+  return (
+    <div className={styles.photo}>
+      <button type="button" className={styles.photoButton} onClick={() => input.current?.click()} disabled={pending} aria-label="Change profile photo">
+        <UserAvatar src={photo} name={name} email={email} size={72} />
+        <span className={styles.photoCamera} aria-hidden><Camera size={14} /></span>
+      </button>
+      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        if (file.size > 10_000_000) { toast.error("That image is too large", "Pick one under 10 MB."); return; }
+        try { save(await squarePhoto(file), "Photo updated"); }
+        catch { toast.error("Couldn’t read that image", "Try a JPG, PNG or WebP."); }
+      }} />
+      <div className={styles.photoActions}>
+        <button type="button" className={styles.buttonGhost} onClick={() => input.current?.click()} disabled={pending}><Camera size={14} aria-hidden />{pending ? "Saving…" : "Change photo"}</button>
+        {uploaded ? <button type="button" className={styles.textButton} onClick={() => save(null, "Photo removed")} disabled={pending}><Trash2 size={13} aria-hidden />Remove</button> : null}
+      </div>
+    </div>
   );
 }
