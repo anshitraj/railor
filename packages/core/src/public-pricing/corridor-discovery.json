@@ -16,6 +16,9 @@
       "sources": [
         "https://support.lemfi.com/hc/en-us/articles/4417242333329-Where-can-I-send-money",
         "https://support.lemfi.com/hc/en-us/articles/45776845553809-What-fees-will-I-pay",
+        "https://lemfi.com/en-us/international-money-transfer/ghana",
+        "https://lemfi.com/en-us/international-money-transfer/kenya",
+        "https://lemfi.com/en-us/international-money-transfer/nigeria",
         "https://lemfi.com/en-us/international-money-transfer/nepal"
       ],
       "discovery": [
@@ -40,7 +43,8 @@
       "pricingNote": "Sendwave documents wallet payouts in Ghana, Kenya, Uganda, Tanzania and Bangladesh, and bank payouts in Kenya, Uganda, Bangladesh and Sri Lanka. Its Philippines product publishes separate delivery options and limits. Funding, delivery method, exchange rate and fees are shown for the selected transfer.",
       "sources": [
         "https://www.sendwave.com/en/countries/ghana",
-        "https://www.sendwave.com/en/countries/philippines"
+        "https://www.sendwave.com/en/countries/philippines",
+        "https://www.sendwave.com/en/support"
       ],
       "discovery": [
         "https://www.reddit.com/r/ghana/comments/1e0m3q9",
@@ -464,6 +468,18 @@
       "discovery": [
         "https://www.reddit.com/r/dubai/comments/1m20hi9/money_exchange_vs_bank_transfer/"
       ]
+    },
+    {
+      "slug": "remitbee",
+      "name": "RemitBee",
+      "website": "https://www.remitbee.com",
+      "reviewedAt": "2026-11-19",
+      "routes": [
+        { "from": "CAD", "to": "INR", "origin": "CA", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "RemitBee lists a CAD 2.99 fee below CAD 500 and zero at CAD 500 or more for Interac e-Transfer, EFT and bill payment. Debit card fees differ. Its Canada-to-India calculator shows the actual offered rate and payout.",
+      "sources": ["https://www.remitbee.com/send-money/india"],
+      "discovery": []
     },
     {
       "slug": "icici-bank",

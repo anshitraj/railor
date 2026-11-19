@@ -18,8 +18,9 @@ export function priceView(result: PriceCheckResult | null, now: number) {
     row.profileAssessment?.status !== "not_supported" &&
     (!row.expiresAt || Date.parse(row.expiresAt) > now) &&
     (!row.publicOffer || Date.parse(row.publicOffer.displayUntil) > now);
+  const currentProviders = new Set(result.rows.filter(row => row.basis !== "market_estimate" && row.recipientAmount !== null && visible(row)).map(row => providerIdentity(row.providerSlug)));
   const quotes = result.rows.filter((row) =>
-    (row.basis !== "market_estimate" || (freshComparison(row, result.input, now) && !result.rows.some((offer) => offer.publicOffer && visible(offer) && offer.providerSlug === providerIdentity(row.providerSlug)))) &&
+    (row.basis !== "market_estimate" || (freshComparison(row, result.input, now) && !currentProviders.has(providerIdentity(row.providerSlug)))) &&
     visible(row));
   const estimates = result.rows.filter((row) => row.basis === "market_estimate" && !quotes.some((quote) => quote.providerSlug === row.providerSlug) && visible(row));
   const excluded = result.rows.filter((row) => row.profileAssessment?.status === "not_supported");

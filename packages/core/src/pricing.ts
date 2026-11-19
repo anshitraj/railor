@@ -10,6 +10,7 @@ import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { asporaBankQuote, asporaQuoteCurrency, usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
+import { careemPublicPrice, lemfiPublicPrice, sendwavePublicPrice } from "./public-pricing/retail-calculators.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
@@ -455,7 +456,14 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const asporaCurrency = asporaQuoteCurrency(input);
   const indiaBankReference = input.context?.direction === "send" && input.context.country === "IN" && input.sourceCurrency === "INR";
   const preferWiseBank = isUsdToEur(input) || input.context?.paymentMethod === "local_bank" || indiaBankReference;
-  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic] = await Promise.all([
+  const consumerPair = [pair, input.context?.country, input.context?.direction, input.context?.paymentMethod].join(":");
+  const personal = input.context?.profile === "personal" && input.context.purpose === "personal";
+  const retailCalculators = personal ? Promise.allSettled([
+    cache(`sendwave:${consumerPair}`, 60_000, () => sendwavePublicPrice(input, fetcher, now)),
+    cache(`lemfi:${consumerPair}`, 60_000, () => lemfiPublicPrice(input, fetcher, now)),
+    careemPublicPrice(input, fetcher, now, !deps.fetcher),
+  ]) : Promise.resolve([]);
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic, retailReferences] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}:${preferWiseBank}:${indiaBankReference}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, preferWiseBank, indiaBankReference)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
@@ -472,6 +480,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     hasAlAnsariPublicReference(input) ? cache(`al-ansari-public-fx:${pair}`, 30_000, () => alAnsariPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
     usBankCurrency ? cache(`us-bank-remittances:${pair}`, 60_000, () => usBankRemittanceRows(usBankCurrency, input.amount, fetcher, now)) : Promise.resolve([]),
     asporaCurrency && !usBankCurrency ? cache(`aspora:${pair}`, 60_000, () => asporaBankQuote(asporaCurrency, input.amount, fetcher, now)).catch(() => null) : Promise.resolve(null),
+    retailCalculators,
   ]);
 
   for (const c of connected) {
@@ -481,7 +490,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
-  const liveRetail = asporaPublic ? [...usBankRows, asporaPublic] : usBankRows;
+  const liveRetail = [...usBankRows, ...(asporaPublic ? [asporaPublic] : []),
+    ...retailReferences.flatMap(reference => reference.status === "fulfilled" && reference.value ? [reference.value] : [])];
   const liveRetailSlugs = new Set(liveRetail.map(row => row.providerSlug));
   rows.push(...liveRetail.filter(row => !connectedSlugs.has(row.providerSlug)));
   rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug) && !liveRetailSlugs.has(offer.providerSlug)));

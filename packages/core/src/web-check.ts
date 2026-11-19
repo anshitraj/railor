@@ -172,7 +172,9 @@ export function priceCheckClaims(input: PriceCheckInput, rows: PriceRow[]): WebC
         : context?.direction === "send" ? `${PROFILE_SENDER[context.profile]} based in ${countryName(context.country)}`
         : "a customer";
       const destination = euroReference ? input.destinationCountry : country;
-      const into = destination ? `a bank account in ${countryName(destination)}` : euroReference ? "an eligible EUR bank account in Europe" : "the recipient's bank account";
+      const generalPayout = row.product?.id === "sendwave:public-calculator" || row.product?.id === "lemfi:public-calculator";
+      const into = generalPayout ? (destination ? `a supported payout method in ${countryName(destination)}` : "a supported payout method")
+        : destination ? `a bank account in ${countryName(destination)}` : euroReference ? "an eligible EUR bank account in Europe" : "the recipient's bank account";
       statement = `${name} lets ${sender} pay in ${currencyName(src)} (${src}) and have ${currencyName(dst)} (${dst}) paid into ${into}.`;
     }
     const kind = profile ? "profile" : "corridor";

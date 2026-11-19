@@ -11,6 +11,7 @@ import { attachMarketPricingEvidence } from "./market-pricing-evidence";
 import { loadPublicQuoteObservations, savePublicQuoteObservation } from "./public-quote-observations";
 import { defaultPriceCountry, priceDestination } from "./price-destination";
 import { providerIdentity } from "./price-display";
+import { money2IndiaEvidence } from "./money2india-evidence";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -19,7 +20,7 @@ const ACCOUNT_PRICED = [
   { slug: "xflow", name: "Xflow" },
   { slug: "dlocal", name: "dLocal" },
 ];
-const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora"]);
+const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora", "sendwave", "lemfi", "careem-pay"]);
 
 /**
  * Price check for a workspace: its own connected accounts first (production
@@ -29,6 +30,7 @@ const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora"]);
 export async function runPriceCheck(organizationId: string | null, input: PriceCheckInput) {
   const options = await getIntentOptions();
   input = { ...input, destinationCountry: priceDestination(input, options.currencyByCountry) };
+  const bankEvidence = money2IndiaEvidence(input).catch(() => []);
   const db = await getDb();
   const rows = await db.select({ id: providers.id, slug: providers.slug, name: providers.name }).from(providers).where(inArray(providers.slug, ACCOUNT_PRICED.map((p) => p.slug)));
   const connected = new Map<string, Record<string, string>>();
@@ -97,7 +99,8 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   }).from(fees).innerJoin(providers, eq(providers.id, fees.providerId))
     .leftJoin(evidence, eq(evidence.id, fees.evidenceId))
     .where(and(eq(providers.isDemo, false), inArray(providers.slug, coverage.providers.map(provider => provider.providerSlug)))) : [];
-  result.marketCoverage = attachMarketPricingEvidence(coverage, input.destinationCurrency, result.rows, result.unavailable, captured.map(fee => ({ ...fee, observedAt: fee.observedAt?.toISOString() ?? null })));
+  result.marketCoverage = attachMarketPricingEvidence(coverage, input.destinationCurrency, result.rows, result.unavailable,
+    [...await bankEvidence, ...captured.map(fee => ({ ...fee, observedAt: fee.observedAt?.toISOString() ?? null }))]);
   return result;
 }
 
