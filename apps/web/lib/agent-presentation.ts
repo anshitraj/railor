@@ -43,7 +43,9 @@ export function answerAgentQuestion(question: string, preview: SearchPreviewResu
         `Route: ${best.routeConfirmation ?? "unknown"}. Quote type: ${best.quoteType}.`,
         best.rankingConfidence === null ? "Ranking input confidence is not available." : `Ranking input confidence: ${Math.round(best.rankingConfidence * 100)}%.`,
         "Recording a decision evaluates current evidence and policy again."]
-        : [preview.permittedCandidates.length ? `${preview.permittedCandidates.length} options passed policy, but current data does not support the requested comparison.` : "No option has both a plausible route and a fully passing policy evaluation.",
+        : [preview.policyId === "explore"
+            ? `${preview.permittedCandidates.length} ${preview.permittedCandidates.length === 1 ? "option has" : "options have"} a plausible route, but current data does not support the requested comparison.`
+            : preview.permittedCandidates.length ? `${preview.permittedCandidates.length} ${preview.permittedCandidates.length === 1 ? "option" : "options"} passed your company rules, but current data does not support the requested comparison.` : "No option has both a plausible route and a fully passing check against your company rules.",
           preview.intent.preference === "most_reliable" ? "Reliability ranking needs observed provider health data. Strong route evidence alone is not proof of reliability."
             : preview.intent.preference === "cheapest" ? "Cheapest ranking needs complete, comparable costs from connected live quotes. Indicative and partial fees cannot win that ranking."
             : preview.intent.preference === "max_recipient_amount" ? "Maximum recipient amount needs comparable connected live payout quotes."

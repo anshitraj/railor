@@ -18,7 +18,6 @@ import { AgentRequestCard } from "./agent-request-card";
 import { AgentMessage, AgentWorking, CommandMenu } from "./agent-message";
 import { AGENT_COMMANDS, EXAMPLE_PROMPTS, findCommand, matchCommands, needsPaymentFacts, smallTalk, type AgentCommand } from "../../lib/agent-commands";
 import styles from "./agent-chat.module.css";
-import { exploreRouteHref } from "../../lib/explore-route";
 
 type DraftResult = ReturnType<typeof draftPaymentIntent>;
 type SearchReply = { state: "needs_input" | "needs_confirmation" | "needs_policy" | "ready"; draft: DraftResult; preview: SearchPreviewResult | null };
@@ -167,12 +166,12 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   function receivePreview(next: SearchPreviewResult) {
     setPreview(next); setReviewOpen(false); setRestored(false);
     const relevant = next.candidates.filter((c) => c.routeConfirmation === "confirmed" || c.routeConfirmation === "partially_confirmed");
-    setPreviewMessageId(add("agent", `I checked ${next.evidenceSummary.providersChecked} providers. ${relevant.length} have route evidence for this request; ${next.permittedCandidates.length} passed your policy. ${next.bestCandidate ? `${next.bestCandidate.provider} ranks first for ${RANKING_PRESET_LABEL[next.intent.preference].toLowerCase()}.` : "Current evidence does not support a best option for this comparison yet."}`));
+    const ruled = next.policyId !== "explore";
+    setPreviewMessageId(add("agent", `I checked ${next.evidenceSummary.providersChecked} providers. ${relevant.length} ${relevant.length === 1 ? "has" : "have"} route evidence for this request${ruled ? `; ${next.permittedCandidates.length} passed your company rules` : " (no company rules applied)"}. ${next.bestCandidate ? `${next.bestCandidate.provider} ranks first for ${RANKING_PRESET_LABEL[next.intent.preference].toLowerCase()}.` : "Current evidence does not support a best option for this comparison yet."}`));
   }
 
   function searchDraft(nextPreference = preference, nextPolicyId = policyId, message?: string) {
     if (!intent || missing.length) return;
-    if (!nextPolicyId) { router.push(exploreRouteHref({ ...intentFromDraft(intent), ...(product ? { product } : {}), ...(method ? { paymentMethod: method } : {}), preference: nextPreference }, nextPreference)); return; }
     setError(""); setPreview(null);
     if (message) add("user", message);
     start(async () => {
@@ -181,7 +180,8 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
           ...(product ? { product } : {}),
           ...(method ? { paymentMethod: method } : {}),
         };
-        const result = await controlCommand({ action: "search_preview", intent: value, policyId: nextPolicyId });
+        // No company rules: the server compares against none, right here in the chat.
+        const result = await controlCommand({ action: "search_preview", intent: value, ...(nextPolicyId ? { policyId: nextPolicyId } : {}) });
         if (!result.ok) setError(result.error ?? "Search failed. Please retry.");
         else receivePreview(result.data as SearchPreviewResult);
       } catch { setError("The connection dropped. Please try again."); }
@@ -295,7 +295,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
       policies={policies} policyId={policyId} onPolicy={(next) => { setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}
       preference={preference} onPreference={(next) => { setPreference(next); if (preview) searchDraft(next, policyId, `Compare by ${RANKING_PRESET_LABEL[next].toLowerCase()}.`); }}
       onSearch={() => searchDraft()} hasResults={Boolean(preview)} /> : null;
-  const comparison = preview ? <>{requestPanel}<InfrastructureResults preview={preview} canDecide={canDecide} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
+  const comparison = preview ? <>{requestPanel}<InfrastructureResults preview={preview} canDecide={canDecide && preview.policyId !== "explore"} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
       <div className="agent-followups"><span>Keep exploring</span><button type="button" disabled={pending} onClick={() => ask("Why is there no best option?")}>Explain the recommendation</button><button type="button" disabled={pending} onClick={() => ask("What information is missing?")}>What’s missing?</button><button type="button" disabled={pending} onClick={() => ask("Compare by price")}>Compare by price</button></div></> : null;
 
   return <div className={styles.workspace} ref={workspace}>
@@ -310,7 +310,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
       </header>
       <div className={styles.feed} ref={feed}>
         {messages.length ? <>
-          {restored ? <div className={styles.savedNotice}><span>Saved conversation. Earlier answers may be out of date.</span>{intent && policyId && !missing.length ? <button type="button" disabled={pending} onClick={() => searchDraft(preference, policyId, "Refresh this comparison using current evidence.")}>Refresh comparison</button> : <span>Review the request below to run a fresh comparison.</span>}</div> : null}
+          {restored ? <div className={styles.savedNotice}><span>Saved conversation. Earlier answers may be out of date.</span>{intent && !missing.length ? <button type="button" disabled={pending} onClick={() => searchDraft(preference, policyId, "Refresh this comparison using current evidence.")}>Refresh comparison</button> : <span>Review the request below to run a fresh comparison.</span>}</div> : null}
           <div className={styles.messages} role="log" aria-label="Conversation messages" aria-live="polite" aria-relevant="additions">{messages.map((message) => <Fragment key={message.id}>
             <AgentMessage message={message} fresh={message.id > seenUpTo} disabled={pending} onChip={(chip) => ask(chip)} />
             {previewMessageId === message.id ? comparison : null}</Fragment>)}</div>

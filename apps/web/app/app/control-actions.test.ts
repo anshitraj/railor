@@ -39,6 +39,13 @@ describe("read-only Agent boundary", () => {
     expect(await controlCommand({ action: "agent_search", text, policyId })).toMatchObject({ data: { state: "needs_policy", preview: null } });
     expect(mocks.defaultActive).not.toHaveBeenCalled(); expect(mocks.search).not.toHaveBeenCalled();
   });
+  it("compares in the chat against no rules when the workspace has no company rules", async () => {
+    mocks.defaultActive.mockResolvedValue(null);
+    const result = await controlCommand({ action: "agent_search", text });
+    expect(result).toMatchObject({ data: { state: "ready" } });
+    expect(mocks.search.mock.calls[0]?.[1]).toMatchObject({ policyId: "explore", rules: { requireExactRouteEvidence: false, providerDenylist: [] } });
+    expect(mocks.persist).not.toHaveBeenCalled();
+  });
   it("uses the existing default active policy resolver", async () => {
     await controlCommand({ action: "agent_search", text });
     expect(mocks.defaultActive).toHaveBeenCalledWith("org-A");

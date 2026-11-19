@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Building2, Check, ChevronDown, CircleAlert, Pencil, ShieldCheck, User } from "lucide-react";
+import { ArrowRight, Building2, Check, ChevronDown, CircleAlert, Pencil, ShieldCheck, User } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { RANKING_PRESET_LABEL, type RankingPreset } from "@railor/types";
 import type { IntentDraft, IntentOptions } from "./intent-builder";
@@ -143,7 +143,7 @@ export function AgentRequestCard({
         )}
         {!hasResults ? (
           <button type="button" className={`${styles.primary} press`} disabled={pending || !ready} onClick={onSearch}>
-            {pending ? "Comparing…" : policies.length ? "Compare providers" : "Compare on Routes"}{policies.length ? <ArrowRight size={16} aria-hidden /> : <ArrowUpRight size={16} aria-hidden />}
+            {pending ? "Comparing…" : "Compare providers"}<ArrowRight size={16} aria-hidden />
           </button>
         ) : null}
       </footer>

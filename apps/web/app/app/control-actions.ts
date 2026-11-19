@@ -16,7 +16,7 @@ const Command = z.discriminatedUnion("action", [
   z.object({ action: z.literal("activate_policy"), policyId: z.string().uuid(), versionId: z.string().uuid() }),
   z.object({ action: z.literal("simulate"), intent: PaymentIntent, rules: PolicyRules, baseline: PolicyRules }),
   z.object({ action: z.literal("decision"), intent: PaymentIntent, policyId: z.string().uuid(), mode: z.enum(["enforce", "optimize"]), provider: z.string().max(100).optional() }),
-  z.object({ action: z.literal("search_preview"), intent: PaymentIntent, policyId: z.string().uuid() }),
+  z.object({ action: z.literal("search_preview"), intent: PaymentIntent, policyId: z.string().uuid().optional() }),
   z.object({ action: z.literal("approval"), id: z.string().uuid(), review: z.enum(["approve", "reject", "revoke"]), comment: z.string().min(1).max(2000) }),
   z.object({ action: z.literal("revalidate"), id: z.string().uuid() }),
   z.object({ action: z.literal("review_discovery"), id: z.string().uuid(), status: z.enum(["investigate", "dismissed"]), comment: z.string().trim().min(1).max(2000) }),
@@ -27,6 +27,15 @@ const Command = z.discriminatedUnion("action", [
   z.object({ action: z.literal("agent_search"), text: z.string().trim().min(1).max(2000), policyId: z.string().uuid().optional() }),
   z.object({ action: z.literal("monitor_decisions") }),
 ]);
+
+/**
+ * Comparing without company rules: nothing is blocked by a rule. Used only to
+ * read and rank; recording a decision still needs real, active rules.
+ */
+const EXPLORE_POLICY_ID = "explore";
+function explorePolicy() {
+  return { policyId: EXPLORE_POLICY_ID, policyVersionId: EXPLORE_POLICY_ID, policyVersionNumber: 0, rules: PolicyRules.parse({}) };
+}
 
 export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error?: string; data?: unknown; href?: string }> {
   try {
@@ -43,11 +52,13 @@ export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error
       case "agent_search": {
         const draft = draftPaymentIntent(input.text, session.organization?.entityCountry ?? undefined);
         const policy = input.policyId ? await getActivePolicyVersion(org, input.policyId) : await getDefaultActivePolicy(org);
-        const state = !draft.valid ? "needs_input" : draft.needsReview ? "needs_confirmation" : !policy ? "needs_policy" : "ready";
-        const preview = state === "ready" && policy ? await searchPreview(PaymentIntent.parse(draft.draft), {
+        // With no company rules at all, the agent still compares in the chat, against none.
+        // Rules that were asked for but aren't usable never fall back to anything else.
+        const state = !draft.valid ? "needs_input" : draft.needsReview ? "needs_confirmation" : input.policyId && !policy ? "needs_policy" : "ready";
+        const preview = state === "ready" ? await searchPreview(PaymentIntent.parse(draft.draft), policy ? {
           policyId: policy.policy.id, policyVersionId: policy.version.id,
           policyVersionNumber: policy.version.versionNumber, rules: PolicyRules.parse(policy.version.rules),
-        }, { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() }) : null;
+        } : explorePolicy(), { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() }) : null;
         data = { kind: "agent_search", state, draft, preview };
         break;
       }
@@ -80,11 +91,11 @@ export async function controlCommand(raw: unknown): Promise<{ ok: boolean; error
       }
       case "simulate": data = await simulatePolicy(input.intent, input.baseline, input.rules, { organizationId: org }); break;
       case "search_preview": {
-        const policy = await getActivePolicyVersion(org, input.policyId);
-        if (!policy) throw new Error("active_policy_required");
-        data = await searchPreview(input.intent, { policyId: policy.policy.id,
+        const policy = input.policyId ? await getActivePolicyVersion(org, input.policyId) : null;
+        if (input.policyId && !policy) throw new Error("active_policy_required");
+        data = await searchPreview(input.intent, policy ? { policyId: policy.policy.id,
           policyVersionId: policy.version.id, policyVersionNumber: policy.version.versionNumber, rules: PolicyRules.parse(policy.version.rules),
-        }, { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() });
+        } : explorePolicy(), { organizationId: org, fetchQuote: buildFetchQuote(org, false, true), referenceQuoteProviders: platformQuoteProviders() });
         break;
       }
       case "decision": {
