@@ -8,7 +8,7 @@ import { shared } from "./public-pricing/shared-cache.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
-import { usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
+import { asporaBankQuote, asporaQuoteCurrency, usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
@@ -452,9 +452,12 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const cache = <T>(key: string, ttlMs: number, load: () => Promise<T>) => (deps.fetcher ? load() : shared(key, ttlMs, load));
   const pair = `${input.sourceCurrency}:${input.destinationCurrency}:${input.amount}:${input.destinationCountry ?? ""}`;
   const usBankCurrency = usBankRemittanceCorridor(input);
-  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows] = await Promise.all([
+  const asporaCurrency = asporaQuoteCurrency(input);
+  const indiaBankReference = input.context?.direction === "send" && input.context.country === "IN" && input.sourceCurrency === "INR";
+  const preferWiseBank = isUsdToEur(input) || input.context?.paymentMethod === "local_bank" || indiaBankReference;
+  const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
-    cache(`wise:${pair}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, isUsdToEur(input))).catch((error: Error) => error),
+    cache(`wise:${pair}:${preferWiseBank}:${indiaBankReference}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, preferWiseBank, indiaBankReference)).catch((error: Error) => error),
     input.includeMarket ? cache(`market:${pair}`, 60_000, () => marketEstimates(input, fetcher)).catch(() => []) : Promise.resolve([]),
     input.sourceCurrency === "USD"
       ? Promise.resolve(1)
@@ -468,6 +471,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     hasAirwallexPublicReference(input) ? cache(`airwallex-public-fx:${pair}`, 15_000, () => airwallexPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
     hasAlAnsariPublicReference(input) ? cache(`al-ansari-public-fx:${pair}`, 30_000, () => alAnsariPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
     usBankCurrency ? cache(`us-bank-remittances:${pair}`, 60_000, () => usBankRemittanceRows(usBankCurrency, input.amount, fetcher, now)) : Promise.resolve([]),
+    asporaCurrency && !usBankCurrency ? cache(`aspora:${pair}`, 60_000, () => asporaBankQuote(asporaCurrency, input.amount, fetcher, now)).catch(() => null) : Promise.resolve(null),
   ]);
 
   for (const c of connected) {
@@ -477,8 +481,9 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
-  const liveRetailSlugs = new Set(usBankRows.map(row => row.providerSlug));
-  rows.push(...usBankRows.filter(row => !connectedSlugs.has(row.providerSlug)));
+  const liveRetail = asporaPublic ? [...usBankRows, asporaPublic] : usBankRows;
+  const liveRetailSlugs = new Set(liveRetail.map(row => row.providerSlug));
+  rows.push(...liveRetail.filter(row => !connectedSlugs.has(row.providerSlug)));
   rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug) && !liveRetailSlugs.has(offer.providerSlug)));
   for (const fx of [airwallexPublic, alAnsariPublic]) {
     if (fx && !connectedSlugs.has(fx.providerSlug)) rows.push({ ...fx, notes: [...fx.notes] });
@@ -496,6 +501,13 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
         source: { label: "Wise public quote", url: "https://wise.com/" },
         notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`, ...(input.sourceCurrency === "AED" ? ["Wise's AED funding guide limits sending AED to money already held in a Wise balance. This public reference does not confirm a UAE bank-funded transfer or its complete cost. https://wise.com/help/articles/2932360/guide-to-aed-transfers"] : [])],
       });
+      if (wisePublic.payInMethod === "BANK_TRANSFER") wiseRow.paymentMethods = ["local_bank", "transfer_service"];
+      if (indiaBankReference && wisePublic.payInMethod === "BANK_TRANSFER") {
+        wiseRow.product = { id: "wise:india-bank", label: "Wise · Indian bank-funded transfer" };
+        wiseRow.source.url = input.destinationCurrency === "USD"
+          ? "https://wise.com/in/send-money/send-money-to-the-usa"
+          : "https://wise.com/help/articles/2932151/guide-to-inr-transfers";
+      }
       if (isUsdToEur(input)) {
         wiseRow.source.url = "https://wise.com/us/send-money/send-money-to-europe";
         if (wisePublic.payInMethod === "BANK_TRANSFER") {

@@ -16,7 +16,7 @@ export default async function SavedPage() {
     <div className={styles.page}>
       <header className={styles.head}>
         <h1>Saved</h1>
-        <p>Pairs you saved from Transfer. Open one to see today’s prices. Up to {SAVED_PAIR_LIMIT}.</p>
+        <p>Open a saved pair or provider corridor to check its current price. Up to {SAVED_PAIR_LIMIT} saved transfers.</p>
       </header>
       <SavedPairsList initial={pairs} />
     </div>

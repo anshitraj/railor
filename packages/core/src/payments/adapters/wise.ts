@@ -129,7 +129,7 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
 }
 
 /** Wise's public price for anyone — not the customer's own pricing, and it cannot be used to send. */
-export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch, preferBankTransfer = false): Promise<UnifiedQuote & { payInLabel: string; payInMethod?: string; deliveryLabel?: string }> {
+export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch, preferBankTransfer = false, allowIndiaBankReference = false): Promise<UnifiedQuote & { payInLabel: string; payInMethod?: string; deliveryLabel?: string }> {
   const sourceCurrency = assertFiat(request.sourceAsset);
   const response = await fetcher(`${PUBLIC_BASE}/v3/quotes`, {
     method: "POST",
@@ -140,14 +140,22 @@ export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fet
   if (!response.ok) throw new Error(`Wise public quote failed (HTTP ${response.status}).`);
   const body = (await response.json()) as WiseQuoteBody;
   const bank = preferBankTransfer ? body.paymentOptions?.find(o => !o.disabled && o.payIn === "BANK_TRANSFER" && o.payOut === "BANK_TRANSFER") : undefined;
-  const option = bank ?? pickOption(body.paymentOptions, true);
+  // The Indian domestic funding option can be disabled for a calculator request
+  // with no Indian account. Keep the published figure as a reference only.
+  const indianBank = !bank && allowIndiaBankReference && sourceCurrency === "INR"
+    ? body.paymentOptions?.find(o => o.disabled && o.payIn === "BANK_TRANSFER" && o.payOut === "BANK_TRANSFER"
+      && o.sourceAmount === request.amount && Number.isFinite(o.targetAmount) && o.targetAmount > 0)
+    : undefined;
+  const option = bank ?? indianBank ?? pickOption(body.paymentOptions, true);
+  const selectedBank = bank ?? (indianBank ? { ...indianBank, disabled: false } : undefined);
   return {
-    ...wiseQuoteToUnified(bank ? { ...body, paymentOptions: [bank] } : body, request, "public_published"),
+    ...wiseQuoteToUnified(selectedBank ? { ...body, paymentOptions: [selectedBank] } : body, request, "public_published"),
+    ...(indianBank ? { costPartial: true, costNote: "Public Indian bank-transfer calculator. Verify your transfer purpose, account eligibility and any applicable tax with Wise." } : {}),
     payInMethod: option?.payIn,
     payInLabel:
       option?.payIn === "BALANCE"
         ? option.disabled
-          ? `from a Wise ${sourceCurrency} balance (the only way Wise funds this pair; availability depends on your account's country)`
+          ? `from a Wise ${sourceCurrency} balance (${sourceCurrency === "AED" ? "the only way Wise funds this pair; " : ""}availability depends on your account's country)`
           : "from a Wise balance"
         : "by bank transfer into Wise",
     deliveryLabel: option?.formattedEstimatedDelivery,

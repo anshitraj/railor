@@ -9,6 +9,7 @@ import { stablecoinInitial } from "../../../lib/stablecoin-routes";
 import { SwapQuote } from "../../../components/app/swap-quote";
 import styles from "../../../components/app/price-check.module.css";
 import { onboardingPriceProfile } from "../../../lib/onboarding";
+import { savedProviderSlug } from "../../../lib/saved-transfer";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Price check" };
@@ -30,6 +31,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
     );
   }
   const [page, connected, savedPairs] = await Promise.all([loadPricePage(params, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id), listSavedPairs(org.id).catch(() => [])]);
+  const initialProvider = savedProviderSlug(params.provider);
 
   return (
     <div className={styles.page}>
@@ -37,6 +39,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
       <PriceCheckHeader mode="app" />
       <PriceModeTabs mode="bank" base="/app/prices" />
         <SwapQuote
+          key={JSON.stringify([page.initial, initialProvider])}
           mode="app"
           basePath="/app/prices"
           currencies={page.currencies}
@@ -45,6 +48,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           initialError={page.error}
           executable={page.executable}
           savedPairs={savedPairs}
+          initialProvider={initialProvider}
           connected={connected}
         />
       <PriceHelpLinks />

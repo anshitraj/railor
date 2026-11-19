@@ -149,7 +149,7 @@
       "slug": "careem-pay",
       "name": "Careem Pay",
       "website": "https://www.careem.com",
-      "reviewedAt": "2026-10-30",
+      "reviewedAt": "2026-11-19",
       "routes": [
         {
           "from": "AED",
@@ -170,8 +170,10 @@
           ]
         }
       ],
-      "pricingNote": "Fees depend on destination, subscription and transfer history; request the in-app FX rate and final fee. A free-transfer promotion is not standard pricing.",
+      "pricingNote": "Careem’s fee guide lists the first two UAE-to-India transfers free, then AED 5 on transfers below AED 1,000. Check the account’s rate and final fee. For UAE-to-US, its general FAQ lists the US but the current destination list omits it; confirm in the app.",
       "sources": [
+        "https://help.careem.com/hc/en-us/articles/12203235105043-Are-there-any-fees-for-sending-money-abroad",
+        "https://help.careem.com/hc/en-us/articles/12202826389651-Which-countries-can-I-send-money-to",
         "https://www.careem.com/en-AE/send-money-faqs/"
       ],
       "discovery": [
@@ -208,7 +210,7 @@
       "slug": "aspora",
       "name": "Aspora",
       "website": "https://www.aspora.com",
-      "reviewedAt": "2026-10-30",
+      "reviewedAt": "2026-11-19",
       "routes": [
         {
           "from": "AED",
@@ -236,11 +238,17 @@
           "profiles": [
             "personal"
           ]
-        }
+        },
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["personal"] },
+        { "from": "EUR", "to": "INR", "origin": "IE", "destination": "IN", "profiles": ["personal"] },
+        { "from": "EUR", "to": "INR", "origin": "IT", "destination": "IN", "profiles": ["personal"] }
       ],
       "pricingNote": "Sender-country funding rules and current fees apply. Historical zero-fee posts and referral promotions do not establish today's transfer cost.",
       "sources": [
-        "https://www.aspora.com/help/us/transfers"
+        "https://www.aspora.com/help/us/transfers",
+        "https://www.aspora.com/help/gb/transfers",
+        "https://www.aspora.com/help/ae/transfers",
+        "https://www.aspora.com/help/gb/referrals"
       ],
       "discovery": [
         "https://www.reddit.com/r/UAE/comments/1u7nn4i/whats_the_best_way_to_send_money_to_india_with/"
@@ -458,10 +466,45 @@
       ]
     },
     {
+      "slug": "icici-bank",
+      "name": "ICICI Bank",
+      "website": "https://www.icici.bank.in",
+      "reviewedAt": "2026-11-19",
+      "routes": [
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal"] },
+        { "from": "INR", "to": "GBP", "origin": "IN", "destination": "GB", "profiles": ["personal"] },
+        { "from": "INR", "to": "AUD", "origin": "IN", "destination": "AU", "profiles": ["personal"] },
+        { "from": "INR", "to": "CAD", "origin": "IN", "destination": "CA", "profiles": ["personal"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "ICICI offers Money2World for outbound remittances from India, with the exchange rate shown on its signed-in transaction page. Its FAQ lists a ₹1,000 charge plus GST for specified INR-funded, full-value USD, GBP, AUD and CAD payouts. Account type and tax treatment matter. For US-to-India Money2India transfers the bank publishes its own indicative rate and a USD 4 fee below USD 1,000; the published fee is zero at USD 1,000 and above.",
+      "sources": [
+        "https://www.icici.bank.in/personal-banking/accounts/outward-remittance/outward-remittance-faqs",
+        "https://www.icici.bank.in/nri-banking/money-transfer/money-transfer-rates"
+      ],
+      "discovery": []
+    },
+    {
+      "slug": "western-union",
+      "name": "Western Union",
+      "website": "https://www.westernunion.com",
+      "reviewedAt": "2026-11-19",
+      "routes": [
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Western Union publishes both directions. For India to the US it lists bank payout by the next banking day as an estimate, with a USD 10,000-equivalent education limit or USD 5,000 for other purposes. Use its calculator to check the fee and FX for the actual funding and pickup method.",
+      "sources": [
+        "https://www.westernunion.com/in/en/send-money-to-usa.html",
+        "https://www.westernunion.com/us/en/send-money-to-india.html"
+      ],
+      "discovery": []
+    },
+    {
       "slug": "remitly",
       "name": "Remitly",
       "website": "https://www.remitly.com",
-      "reviewedAt": "2026-10-30",
+      "reviewedAt": "2026-11-19",
       "routes": [
         {
           "from": "USD",
@@ -480,11 +523,15 @@
           "profiles": [
             "personal"
           ]
-        }
+        },
+        { "from": "USD", "to": "XAF", "origin": "US", "destination": "CM", "profiles": ["personal"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal"] }
       ],
       "pricingNote": "Personal remittance pricing depends on funding, delivery method and amount. New-customer exchange rates must not be used as standard ongoing prices. Business products need their own eligibility and pricing checks.",
       "sources": [
         "https://www.remitly.com/us/en/money-transfer/send-money-to-india",
+        "https://www.remitly.com/us/en/cameroon/pricing",
+        "https://www.remitly.com/us/en/currency-converter/usd-to-brl-rate",
         "https://news.remitly.com/company-and-product-news/remitly-on-whatsapp-just-got-an-upgrade/"
       ],
       "discovery": [
@@ -517,11 +564,15 @@
         { "from": "USD", "to": "DOP", "origin": "US", "destination": "DO", "profiles": ["personal"] },
         { "from": "USD", "to": "LKR", "origin": "US", "destination": "LK", "profiles": ["personal"] },
         { "from": "USD", "to": "RWF", "origin": "US", "destination": "RW", "profiles": ["personal"] },
+        { "from": "USD", "to": "XAF", "origin": "US", "destination": "CM", "profiles": ["personal"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal"] },
         { "from": "USD", "to": "SGD", "origin": "US", "destination": "SG", "profiles": ["personal"] }
       ],
       "pricingNote": "A sender's personal remittance product. Transfer fees depend on funding and amount; Xoom also earns from currency conversion. Eligible zero-transfer-fee transactions still need the offered FX rate.",
       "sources": [
         "https://www.xoom.com/india/send-money?locale=en-us",
+        "https://www.xoom.com/cameroon/send-money?locale=en-us",
+        "https://www.xoom.com/brazil/send-money?locale=en-us",
         "https://www.xoom.com/xoom-locations",
         "https://www.xoom.com/legal/xoom-transfer-fees"
       ],

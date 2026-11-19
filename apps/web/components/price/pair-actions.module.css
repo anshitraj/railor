@@ -13,7 +13,7 @@
 .strip li { flex: none; }
 .chip { display: inline-flex; height: 32px; align-items: center; overflow: hidden; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); }
 .chip[data-active] { border-color: var(--color-ink); }
-.chip > button:first-child { display: inline-flex; height: 100%; align-items: center; gap: 6px; padding: 0 4px 0 12px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
+.chip > a { display: inline-flex; height: 100%; align-items: center; gap: 6px; padding: 0 4px 0 12px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
 .chip small { color: var(--color-muted); font-size: 11.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .remove { display: grid; width: 26px; height: 100%; place-items: center; color: var(--color-muted); }
 .remove:hover { color: var(--color-bad); }

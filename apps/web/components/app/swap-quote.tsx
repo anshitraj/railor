@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { PairActions, SavedPairsStrip } from "../price/pair-actions";
+import { PairActions, SavedPairsStrip, TransferBookmarkButton } from "../price/pair-actions";
+import { savedProviderSlug } from "../../lib/saved-transfer";
 import type { SavedPair } from "../../lib/saved-pairs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -13,7 +14,7 @@ import { ProviderLogo } from "./provider-logo";
 import { PlatformQuotePanel } from "./platform-quote-panel";
 import { RateHistoryChart } from "../price/rate-history-chart";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
-import { PriceProviderBrowser } from "./price-provider-browser";
+import { PriceProviderBrowser, type ProviderQuoteAdvice } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { providerSite } from "../../lib/provider-sites";
 import { CurrencyPicker } from "../price/currency-picker";
@@ -147,7 +148,7 @@ export interface SwapQuoteProps {
   mode: "app" | "public";
   basePath: string;
   currencies: PickerOption[];
-  initial: { from: string; to: string; amount: number; market: boolean; context: CustomerContext };
+  initial: { from: string; to: string; amount: number; market: boolean; context: CustomerContext; destinationCountry?: string };
   initialResult: PriceCheckResult | null;
   initialError?: string;
   /** Providers Railor can execute payouts through. */
@@ -156,9 +157,10 @@ export interface SwapQuoteProps {
   connected: string[];
   /** Pairs saved from this calculator (signed-in dashboards only). */
   savedPairs?: SavedPair[];
+  initialProvider?: string;
 }
 
-export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs }: SwapQuoteProps) {
+export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider }: SwapQuoteProps) {
   const [saved, setSaved] = useState<SavedPair[]>(savedPairs ?? []);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -172,7 +174,11 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const serverTime = Date.parse(initialResult?.generatedAt ?? "") || 0;
   const [fetchedAt, setFetchedAt] = useState(serverTime);
   const [now, setNow] = useState(serverTime);
-  const [picked, setPicked] = useState<string | null>(null);
+  const destinationCountry = to === initial.to ? initial.destinationCountry : undefined;
+  const scope = JSON.stringify([from, to, context, destinationCountry]);
+  const [selection, setSelection] = useState(() => ({ scope, slug: initialProvider ?? null }));
+  const selectionRef = useRef(selection);
+  const picked = selection.scope === scope ? selection.slug : null;
   const [inverted, setInverted] = useState(false);
   const [flashes, setFlashes] = useState<Record<string, "up" | "down">>({});
   const controller = useRef<AbortController | null>(null);
@@ -182,8 +188,14 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const amount = Number(amountText);
   const valid = Boolean(from && to && from !== to && amount > 0);
   const cardComingSoon = context.direction === "receive" && context.paymentMethod === "card";
-  const result = priceResponseMatches(response, { from, to, amount, market, context }) ? response : null;
+  const result = priceResponseMatches(response, { from, to, amount, market, context, destinationCountry }) ? response : null;
   const contextCurrent = Boolean(result);
+
+  function setPicked(slug: string) {
+    const next = { scope, slug };
+    selectionRef.current = next;
+    setSelection(next);
+  }
 
   const load = useCallback(async () => {
     if (!valid || cardComingSoon) return;
@@ -192,6 +204,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     controller.current = ctl;
     setLoading(true);
     const q = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", ...contextParams(context) });
+    if (destinationCountry) q.set("destinationCountry", destinationCountry);
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
       const body = (await res.json()) as PriceCheckResult & { error?: string };
@@ -208,6 +221,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       setResult(body);
       setError("");
       setFetchedAt(Date.now());
+      const pin = selectionRef.current;
+      const savedSlug = pin.scope === scope ? savedProviderSlug(pin.slug) : undefined;
+      if (mode === "app" && savedSlug) q.set("provider", savedSlug);
       window.history.replaceState(null, "", `${basePath}?${q}`);
     } catch (e) {
       if (!ctl.signal.aborted && controller.current === ctl && (e as Error).name !== "AbortError") {
@@ -218,7 +234,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     } finally {
       if (controller.current === ctl) setLoading(false);
     }
-  }, [valid, cardComingSoon, from, to, amount, market, context, basePath]);
+  }, [valid, cardComingSoon, from, to, amount, market, context, destinationCountry, basePath, scope, mode]);
 
   // Re-quote on any input change (typing waits a beat); a new pair resets the flash baseline.
   useEffect(() => {
@@ -229,7 +245,6 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     }
     previous.current = {};
     controller.current?.abort();
-    setPicked(null);
     const t = window.setTimeout(load, 380);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,23 +267,25 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
   async function getProviderQuote(slug: string, signal: AbortSignal) {
     const query = new URLSearchParams({ from, to, amount: String(amount), market: market ? "1" : "0", provider: slug, ...contextParams(context) });
+    if (destinationCountry) query.set("destinationCountry", destinationCountry);
     const res = await fetch("/api/prices/provider?" + query, { method: "POST", signal, cache: "no-store" });
-    const payload = await res.json() as { quote?: PriceRow; message?: string; error?: string; source?: { url: string; title: string } };
-    if (!res.ok || !payload.quote) return { message: payload.error ?? payload.message ?? "No verified price was returned.", source: payload.source };
+    const payload = await res.json() as Partial<ProviderQuoteAdvice> & { quote?: PriceRow; error?: string };
+    if (!res.ok || !payload.quote) return { message: payload.error ?? payload.message ?? "The provider didn’t return a price for these inputs.", evidence: payload.evidence, researchPending: payload.researchPending };
     if (signal.aborted) return null;
     const quote = payload.quote;
-    setResult(previous => previous && priceResponseMatches(previous, { from, to, amount, market, context })
-      ? { ...previous, rows: [...previous.rows.filter(row => row.providerSlug !== slug), quote] }
+    setResult(previous => previous && priceResponseMatches(previous, { from, to, amount, market, context, destinationCountry })
+      ? { ...previous, rows: [...previous.rows.filter(row => row.providerSlug !== quote.providerSlug), quote] }
       : previous);
     return null;
   }
 
-  const visible = (r: PriceRow) => r.profileAssessment?.status !== "not_supported" && (!r.expiresAt || Date.parse(r.expiresAt) > now) && (!r.publicOffer || Date.parse(r.publicOffer.displayUntil) > now);
   const { quotes, estimates, excluded, best } = priceView(result, now);
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
   const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => providerIdentity(row.providerSlug) === candidate.providerSlug) && !quotes.some(row => providerIdentity(row.providerSlug) === candidate.providerSlug));
-  const selectedCandidate = picked && !quotes.some((row) => row.providerSlug === picked) ? candidates.find((candidate) => candidate.providerSlug === picked) ?? null : null;
-  const selected = selectedCandidate ? null : result?.rows.find((r) => r.providerSlug === picked && visible(r)) ?? best ?? quotes[0] ?? estimates[0] ?? null;
+  const pickedPrice = picked ? [...quotes, ...estimates].find(row => row.providerSlug === picked)
+    ?? [...quotes, ...estimates].find(row => providerIdentity(row.providerSlug) === providerIdentity(picked)) : null;
+  const selectedCandidate = picked && !pickedPrice ? candidates.find(candidate => candidate.providerSlug === providerIdentity(picked)) ?? null : null;
+  const selected = picked ? pickedPrice ?? null : best ?? quotes[0] ?? estimates[0] ?? null;
   const receive = useTween(selected?.recipientAmount ?? null, 450, selected?.providerSlug ?? null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
@@ -283,7 +300,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
   // A working next step: the chosen provider's own site, or the page its price came from.
   const chosenSlug = selected?.providerSlug ?? selectedCandidate?.providerSlug ?? null;
-  const chosenName = (selected?.providerName ?? selectedCandidate?.providerName ?? "").split(" · ")[0];
+  const chosenName = (selected?.providerName ?? selectedCandidate?.providerName ?? "").split(" · ")[0] ?? "";
+  const bookmarkSlug = savedProviderSlug(chosenSlug);
+  const transfer = { from, to, amount: amount || 0 };
+  const bookmark = bookmarkSlug ? { ...transfer, context, destinationCountry: result?.input.destinationCountry, provider: { slug: bookmarkSlug, name: chosenName } } : null;
   const site = chosenSlug ? providerSite(chosenSlug) : null;
   const sourceUrl = selected?.source?.url && /^https:\/\//.test(selected.source.url) ? selected.source.url : null;
   const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = !valid
@@ -299,7 +319,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     <div className={styles.comparisonLayout}>
       <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
-          {savedPairs ? <SavedPairsStrip saved={saved} active={{ from, to }} onSaved={setSaved} onPick={(pair) => { setFrom(pair.from); setTo(pair.to); setAmountText(String(pair.amount)); }} /> : null}
+          {savedPairs ? <SavedPairsStrip saved={saved} active={picked && bookmark ? bookmark : transfer} onSaved={setSaved} /> : null}
           {!cardComingSoon && <div className="flex items-center justify-between gap-2 px-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
               <span className="relative flex size-2">
@@ -473,7 +493,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               {cta.secondary.label}
             </Link>
           ) : null}
-          {savedPairs ? <PairActions from={from} to={to} amount={Number(amountText) || 0} profile={context.profile} saved={saved} onSaved={setSaved} /> : null}
+          {savedPairs ? <PairActions transfer={{ ...transfer, profile: context.profile }} saved={saved} onSaved={setSaved} /> : null}
           {error ? (
             <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">
               {error}
@@ -486,6 +506,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       {!cardComingSoon && <>
       <PriceProviderBrowser
         rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
+        bookmark={savedPairs && bookmark && valid ? <TransferBookmarkButton transfer={bookmark} saved={saved} onSaved={setSaved} /> : null}
         onGetQuote={valid && !cardComingSoon ? getProviderQuote : undefined}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
         reference={result?.reference ?? null}

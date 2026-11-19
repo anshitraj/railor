@@ -8,8 +8,9 @@ import { getIntentOptions } from "./reference";
 import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
-import { loadPublicQuoteObservations } from "./public-quote-observations";
+import { loadPublicQuoteObservations, savePublicQuoteObservation } from "./public-quote-observations";
 import { defaultPriceCountry, priceDestination } from "./price-destination";
+import { providerIdentity } from "./price-display";
 
 /** Fiat payout networks whose connected accounts return the customer's own price. */
 const ACCOUNT_PRICED = [
@@ -18,6 +19,7 @@ const ACCOUNT_PRICED = [
   { slug: "xflow", name: "Xflow" },
   { slug: "dlocal", name: "dLocal" },
 ];
+const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora"]);
 
 /**
  * Price check for a workspace: its own connected accounts first (production
@@ -78,8 +80,15 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
     if (entry && check.status === "quoted") entry.reason = "Railor's backend FX observation is shown separately below. Connecting your own account is optional, for account-specific pricing.";
   }
   const cachedQuotes = await loadPublicQuoteObservations(result.input).catch(() => []);
-  const found = new Set(result.rows.filter(row => row.basis !== "market_estimate" && row.recipientAmount !== null).map(row => row.providerSlug));
-  result.rows.push(...cachedQuotes.filter(row => !found.has(row.providerSlug)));
+  const cachedProviders = new Set(cachedQuotes.map(row => providerIdentity(row.providerSlug)));
+  const observations = result.rows.filter(row => row.basis === "live_public" && row.recipientAmount !== null
+    && row.profileAssessment?.status !== "not_supported" && PUBLIC_CALCULATORS.has(row.providerSlug)
+    && !cachedProviders.has(row.providerSlug));
+  if (observations.length) after(async () => {
+    await Promise.allSettled(observations.map(row => savePublicQuoteObservation(result.input, row)));
+  });
+  const found = new Set(result.rows.filter(row => row.profileAssessment?.status === "not_supported" || (row.basis !== "market_estimate" && row.recipientAmount !== null)).map(row => providerIdentity(row.providerSlug)));
+  result.rows.push(...cachedQuotes.filter(row => !found.has(providerIdentity(row.providerSlug))));
   const coverage = providerMarketCoverage(input);
   const captured = coverage.providers.length ? await db.select({
     providerSlug: providers.slug, summary: fees.summary, product: fees.product,
@@ -126,6 +135,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   const market = params.market === undefined ? true : params.market === "1";
   const direction = (!entity || entity === "IN") && to === "INR" ? "receive" : "send";
   const directionForCountry = params.direction === "send" || params.direction === "receive" ? params.direction : direction;
+  const destinationCountry = /^[A-Z]{2}$/.test(params.destinationCountry ?? "") ? params.destinationCountry : undefined;
   const context = readCustomerContext((key) => params[key], {
     profile, country: defaultPriceCountry(entity, from, directionForCountry), direction, purpose: profile === "personal" ? "personal" : "services",
   });
@@ -134,12 +144,12 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   if (from === to) error = "Pick two different currencies.";
   else if (context.direction !== "receive" || context.paymentMethod !== "card") {
     try {
-      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, amount, includeMarket: market, context });
+      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, destinationCountry, amount, includeMarket: market, context });
     } catch (e) {
       error = "Price comparison is temporarily unavailable. Please try again shortly.";
     }
   }
-  return { currencies, initial: { from, to, amount, market, context }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
+  return { currencies, initial: { from, to, amount, market, context, destinationCountry }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
 }
 
 /** Query string → price-check input, clamped; null when unusable. */
@@ -148,11 +158,13 @@ export function parsePriceQuery(params: URLSearchParams | Record<string, string 
   const from = get("from")?.trim().toUpperCase();
   const to = get("to")?.trim().toUpperCase();
   const amount = Number(get("amount"));
+  const destination = get("destinationCountry")?.trim().toUpperCase();
   if (!from || !to || !/^[A-Z]{3}$/.test(from) || !/^[A-Z]{3}$/.test(to) || from === to || !(amount > 0)) return null;
+  if (destination && !/^[A-Z]{2}$/.test(destination)) return null;
   const hasContext = ["profile", "country", "direction", "purpose", "paymentMethod"].some((key) => get(key) !== undefined);
   const parsed = CustomerContext.safeParse({ profile: get("profile"), country: get("country"), direction: get("direction"), purpose: get("purpose"), paymentMethod: get("paymentMethod") || undefined });
   if (hasContext && !parsed.success) return null;
-  return { sourceCurrency: from, destinationCurrency: to, amount: Math.min(10_000_000, amount), includeMarket: get("market") === "1", ...(hasContext && parsed.success ? { context: parsed.data } : {}) };
+  return { sourceCurrency: from, destinationCurrency: to, ...(destination ? { destinationCountry: destination } : {}), amount: Math.min(10_000_000, amount), includeMarket: get("market") === "1", ...(hasContext && parsed.success ? { context: parsed.data } : {}) };
 }
 
 function readCustomerContext(get: (key: string) => string | undefined, fallback: CustomerContext): CustomerContext {

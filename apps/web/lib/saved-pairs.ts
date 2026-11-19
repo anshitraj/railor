@@ -1,6 +1,8 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getDb, savedSearches } from "@railor/database";
+import { CustomerContext } from "@railor/core";
+import { getDb, organizations, savedSearches } from "@railor/database";
+import { savedProviderSlug, transferBookmarkKey, type TransferBookmark } from "./saved-transfer";
 
 /**
  * Currency pairs saved from the price calculator ("USD → INR, 1,000"). Stored
@@ -9,54 +11,71 @@ import { getDb, savedSearches } from "@railor/database";
  */
 export const SAVED_PAIR_LIMIT = 12;
 
-export interface SavedPair {
+export interface SavedPair extends TransferBookmark {
   id: string;
-  from: string;
-  to: string;
-  amount: number;
-  profile?: string;
   createdAt: string;
 }
 
 const CODE = /^[A-Z]{3,5}$/;
+const PRICE_BOOKMARK = sql`${savedSearches.query}->>'kind' = 'price_pair'`;
 
 export function pairLabel(pair: Pick<SavedPair, "from" | "to">) {
   return `${pair.from} → ${pair.to}`;
 }
 
-export function parsePairInput(input: { from?: unknown; to?: unknown; amount?: unknown; profile?: unknown }) {
+export function parsePairInput(input: { from?: unknown; to?: unknown; amount?: unknown; profile?: unknown; context?: unknown; provider?: unknown; destinationCountry?: unknown }): TransferBookmark | null {
+  if (!input || typeof input !== "object") return null;
   const from = String(input.from ?? "").toUpperCase();
   const to = String(input.to ?? "").toUpperCase();
   const amount = Number(input.amount);
   if (!CODE.test(from) || !CODE.test(to) || from === to) return null;
   const profile = typeof input.profile === "string" && /^[a-z_]{1,24}$/.test(input.profile) ? input.profile : undefined;
-  return { from, to, amount: Number.isFinite(amount) && amount > 0 && amount <= 1e9 ? Math.round(amount * 100) / 100 : 1000, ...(profile ? { profile } : {}) };
+  const pair = { from, to, amount: Number.isFinite(amount) && amount > 0 && amount <= 1e9 ? Math.round(amount * 100) / 100 : 1000, ...(profile ? { profile } : {}) };
+  if (input.provider === undefined) return pair;
+  if (!input.provider || typeof input.provider !== "object") return null;
+  const value = input.provider as { slug?: unknown; name?: unknown };
+  const slug = savedProviderSlug(value.slug);
+  const context = CustomerContext.safeParse(input.context);
+  if (!slug || !context.success || !Number.isFinite(amount) || amount < 1 || amount > 10_000_000) return null;
+  const name = typeof value.name === "string" ? value.name.trim().replace(/\s+/g, " ").slice(0, 100) : "";
+  const destinationCountry = typeof input.destinationCountry === "string" && /^[A-Z]{2}$/.test(input.destinationCountry) ? input.destinationCountry : undefined;
+  return { ...pair, context: context.data, provider: { slug, name: name || slug }, ...(destinationCountry ? { destinationCountry } : {}) };
+}
+
+function savedPair(row: typeof savedSearches.$inferSelect): SavedPair | null {
+  const pair = parsePairInput(row.query);
+  return pair ? { ...pair, id: row.id, createdAt: row.createdAt.toISOString() } : null;
 }
 
 export async function listSavedPairs(organizationId: string): Promise<SavedPair[]> {
   const db = await getDb();
   const rows = await db.select().from(savedSearches)
-    .where(and(eq(savedSearches.organizationId, organizationId), sql`${savedSearches.query}->>'kind' = 'price_pair'`))
+    .where(and(eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK))
     .orderBy(desc(savedSearches.createdAt)).limit(SAVED_PAIR_LIMIT);
-  return rows.flatMap((row) => {
-    const pair = parsePairInput(row.query);
-    return pair ? [{ id: row.id, ...pair, createdAt: row.createdAt.toISOString() }] : [];
-  });
+  return rows.map(savedPair).filter(pair => pair !== null);
 }
 
-/** Saves a pair once per dashboard: saving USD → INR again just updates its amount. */
+/** Upsert the same pair or provider corridor without disturbing other providers on it. */
 export async function savePair(organizationId: string, userId: string, input: Parameters<typeof parsePairInput>[0]): Promise<SavedPair | { error: string }> {
   const pair = parsePairInput(input);
-  if (!pair) return { error: "Pick two different currencies first." };
+  if (!pair) return { error: "Choose a valid transfer setup first." };
   const db = await getDb();
-  const existing = (await listSavedPairs(organizationId)).find((item) => item.from === pair.from && item.to === pair.to);
-  if (existing) await db.delete(savedSearches).where(and(eq(savedSearches.id, existing.id), eq(savedSearches.organizationId, organizationId)));
-  else if ((await listSavedPairs(organizationId)).length >= SAVED_PAIR_LIMIT) return { error: `You can save up to ${SAVED_PAIR_LIMIT} pairs. Remove one first.` };
-  const [row] = await db.insert(savedSearches).values({ organizationId, createdBy: userId, input: pairLabel(pair), query: { kind: "price_pair", ...pair } }).returning();
-  return { id: row!.id, ...pair, createdAt: row!.createdAt.toISOString() };
+  return db.transaction(async tx => {
+    await tx.select({ id: organizations.id }).from(organizations).where(eq(organizations.id, organizationId)).for("update");
+    const rows = await tx.select().from(savedSearches).where(and(eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK));
+    const key = transferBookmarkKey(pair);
+    const existing = rows.map(savedPair).find(item => item && transferBookmarkKey(item) === key);
+    if (!existing && rows.length >= SAVED_PAIR_LIMIT) return { error: `You can save up to ${SAVED_PAIR_LIMIT} transfers. Remove one first.` };
+    const title = pair.provider ? `${pairLabel(pair)} · ${pair.provider.name}` : pairLabel(pair);
+    const data = { input: title, query: { kind: "price_pair", ...pair } };
+    const [row] = existing
+      ? await tx.update(savedSearches).set(data).where(and(eq(savedSearches.id, existing.id), eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK)).returning()
+      : await tx.insert(savedSearches).values({ organizationId, createdBy: userId, ...data }).returning();
+    return row ? { ...pair, id: row.id, createdAt: row.createdAt.toISOString() } : { error: "This saved transfer changed. Try again." };
+  });
 }
 
 export async function removePair(organizationId: string, id: string) {
   const db = await getDb();
-  await db.delete(savedSearches).where(and(eq(savedSearches.id, id), eq(savedSearches.organizationId, organizationId)));
+  await db.delete(savedSearches).where(and(eq(savedSearches.id, id), eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK));
 }

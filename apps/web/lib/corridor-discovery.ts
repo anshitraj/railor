@@ -12,7 +12,7 @@ export function discoveredCoverage(input: PriceCheckInput): MarketCoverageProvid
       && (!method || input.context.paymentMethod === method)
       && input.context.country === (input.context.direction === "send" ? route.origin : route.destination)
       && (!input.destinationCountry || route.destination === input.destinationCountry));
-    const documented = match && provider.slug !== "global66";
+    const documented = match && provider.slug !== "global66" && !(provider.slug === "careem-pay" && input.destinationCurrency.toUpperCase() === "USD");
     const scope = provider.routes.map(route => `${route.from} → ${route.to} (${route.origin} → ${route.destination}; ${route.profiles.join("/")})`).filter((value, index, values) => values.indexOf(value) === index).join("; ");
     return {
       providerSlug: provider.slug, providerName: provider.name, websiteUrl: provider.website,

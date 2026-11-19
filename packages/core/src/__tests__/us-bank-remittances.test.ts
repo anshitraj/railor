@@ -30,6 +30,53 @@ function providerFetch(destinationCountry = "SG", method = "ACH") {
 }
 
 describe("US bank-funded remittances", () => {
+  it("keeps the Cameroon USD to XAF total past the promotion cap with an unspecified delivery method", async () => {
+    const fetcher: typeof fetch = async url => String(url).includes("remitly.com") ? Response.json({ estimate: {
+      conduit: { source_country: "USA", target_country: "CMR", source_currency: { alpha3: "USD" }, target_currency: { alpha3: "XAF" } },
+      pay_in_method: "BANK", pay_out_method: "", send_amount: "1000.00", receive_amount: "591020.00", total_charge_amount: "1000.00",
+      exchange_rate: { base_rate: "585.10", capped_promotional_exchange_rate_amount: "500.00", promotional_exchange_rate: "596.94" },
+      fee: { total_fee_amount: "0.00" }, discount: null, tax_details: null,
+    } }) : new Response(null, { status: 404 });
+    expect(await usBankRemittanceRows("XAF", 1000, fetcher, now)).toEqual([expect.objectContaining({
+      providerSlug: "remitly", recipientAmount: 591020, feeAmount: 0,
+      publicOffer: expect.objectContaining({ payoutMethod: "Confirm payout method at checkout" }),
+    })]);
+  });
+
+  it("keeps Remitly's bank-funded quote across the welcome-rate cap with Brazil tax and discount", async () => {
+    const fetcher: typeof fetch = async url => {
+      if (!String(url).includes("remitly.com")) return new Response(null, { status: 404 });
+      return Response.json({ estimate: {
+        conduit: { source_country: "USA", target_country: "BRA", source_currency: { alpha3: "USD" }, target_currency: { alpha3: "BRL" } },
+        pay_in_method: "BANK", pay_out_method: "BANK_DEPOSIT", send_amount: "1000.00",
+        receive_amount: "5988.08", total_charge_amount: "1003.89",
+        exchange_rate: { base_rate: "5.8536", capped_promotional_exchange_rate_amount: "750.00", promotional_exchange_rate: "6.0329" },
+        fee: { total_fee_amount: "3.99" }, discount: { fee_discount_amount: "3.99", send_discount_amount: "0.00" },
+        tax_details: [{ amount: "3.89", type: "IOF" }],
+      } });
+    };
+    const rows = await usBankRemittanceRows("BRL", 1000, fetcher, now);
+    expect(rows).toEqual([expect.objectContaining({
+      providerSlug: "remitly", recipientAmount: 5988.08, feeAmount: 3.89,
+      taxIncluded: true, taxNote: expect.stringContaining("3.89 IOF"), partial: true,
+    })]);
+  });
+
+  it("uses the disabled anonymous INR bank amount only as a conditional reference for a sender in India", async () => {
+    const fetcher: typeof fetch = async (url, options) => {
+      if (!String(url).includes("/v3/quotes")) return new Response(null, { status: 404 });
+      const { sourceAmount } = JSON.parse(String(options?.body));
+      return Response.json({ sourceCurrency: "INR", rate: 0.01, paymentOptions: [
+        { payIn: "BANK_TRANSFER", payOut: "BANK_TRANSFER", sourceAmount, targetAmount: 987, disabled: true, fee: { total: 1300 } },
+        { payIn: "BALANCE", payOut: "BANK_TRANSFER", sourceAmount, targetAmount: 988, disabled: true, fee: { total: 1200 } },
+      ] });
+    };
+    const result = await comparePrices({ sourceCurrency: "INR", destinationCurrency: "USD", amount: 100000, context: { country: "IN", profile: "personal", direction: "send", purpose: "personal", paymentMethod: "local_bank" } }, { fetcher, now });
+    expect(result.rows.find(row => row.providerSlug === "wise")).toMatchObject({
+      recipientAmount: 987, feeAmount: 1300, partial: true, costComplete: false, source: { url: "https://wise.com/in/send-money/send-money-to-the-usa" },
+    });
+  });
+
   it("keeps the exact bank-funded SGD reference in the local-bank view without ranking it", async () => {
     const result = await comparePrices(input, { fetcher: providerFetch(), now });
     expect(result.rows).toEqual(expect.arrayContaining([expect.objectContaining({

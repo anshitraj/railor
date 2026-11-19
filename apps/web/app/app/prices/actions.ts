@@ -3,8 +3,9 @@
 import { z } from "zod";
 import { requireSession } from "../../../lib/auth";
 import { removePair, savePair, type SavedPair } from "../../../lib/saved-pairs";
+import type { TransferBookmark } from "../../../lib/saved-transfer";
 
-export async function savePricePair(input: { from: string; to: string; amount: number; profile?: string }): Promise<{ ok: true; pair: SavedPair } | { ok: false; error: string }> {
+export async function savePricePair(input: TransferBookmark): Promise<{ ok: true; pair: SavedPair } | { ok: false; error: string }> {
   const session = await requireSession();
   if (!session.organization) return { ok: false, error: "Open your dashboard first." };
   const result = await savePair(session.organization.id, session.user.id, input);

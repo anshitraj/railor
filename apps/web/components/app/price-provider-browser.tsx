@@ -10,11 +10,12 @@ import { ProviderRequirements } from "./provider-requirements";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
 import { pricingSourceLabel } from "../../lib/price-display";
-import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
+import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
 function money(value: number | null) { return value === null || !Number.isFinite(value) ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 type DetailTab = "Details" | "Requirements" | "Source" | "Notes";
+export type ProviderQuoteAdvice = { message: string; evidence?: Array<{ url: string; title: string; text: string }>; researchPending?: boolean };
 function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
   if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
   const tabs = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="tab"]')];
@@ -26,7 +27,8 @@ function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
 type Props = {
   rows: PriceRow[]; selected: PriceRow | null; best: PriceRow | null; onSelect: (slug: string) => void;
   candidates?: MarketCoverageProvider[]; selectedCandidate?: MarketCoverageProvider | null;
-  onGetQuote?: (slug: string, signal: AbortSignal) => Promise<{ message: string; source?: { url: string; title: string } } | null>;
+  bookmark?: ReactNode;
+  onGetQuote?: (slug: string, signal: AbortSignal) => Promise<ProviderQuoteAdvice | null>;
   from: string; to: string; amount: number; loading: boolean; checked: string;
   /** The mid-market benchmark every cost is measured against. */
   reference?: { rate: number; source: string; observedAt: string } | null;
@@ -76,7 +78,11 @@ export function PriceProviderBrowser(props: Props) {
               {entry.providerSlug === (props.selectedCandidate?.providerSlug ?? selected?.providerSlug) && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
               <span className={styles.providerName}><ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} /><span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.providerSlug === best?.providerSlug ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
               <span className={styles.rowAmount}><motion.strong key={`${entry.providerSlug}:${entry.quote?.recipientAmount}`} initial={reduce ? false : { opacity: .5, y: 2 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0 : .2 }} data-move={flashes[entry.providerSlug]}>{entry.quote?.recipientAmount != null ? money(entry.quote.recipientAmount) : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</motion.strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
-              <span className={styles.rowFee}><strong title={entry.candidate?.feeHighlight}>{entry.quote?.feeAmount == null ? entry.candidate?.feeHighlight ?? (entry.candidate?.feeEvidence?.length ? "Fee details available" : "Research details") : `${money(entry.quote.feeAmount)} ${entry.quote.feeCurrency ?? ""}`}</strong>{entry.quote ? (() => { const cost = benchmarkCost(entry.quote, amount, props.reference?.rate, to); return <small>{cost.kind === "cost" ? `Cost ${formatBenchmarkCost(cost, 'percent')}` : "All-in cost unknown"}</small>; })() : null}</span>
+              <span className={styles.rowFee}><strong title={entry.candidate?.feeHighlight}>{entry.quote?.feeAmount == null ? entry.candidate?.feeHighlight ?? (entry.candidate?.feeEvidence?.length ? "Fee details available" : "Research details") : `${money(entry.quote.feeAmount)} ${entry.quote.feeCurrency ?? ""}`}</strong>{entry.quote ? (() => {
+                const cost = benchmarkCost(entry.quote, amount, props.reference?.rate, to);
+                const difference = benchmarkPayoutDifference(entry.quote.recipientAmount, amount, props.reference?.rate, to);
+                return <small>{cost.kind === "cost" ? `Cost ${formatBenchmarkCost(cost, "percent")}` : difference.kind === "cost" ? formatPayoutDifference(difference) : "No mid-market comparison"}</small>;
+              })() : null}</span>
               <span className={styles.rowSource}><i data-basis={entry.quote?.basis ?? "unavailable"} />{entry.quote ? pricingSourceLabel(entry.quote) : entry.candidate?.pricingReviewedAt ? "Public research" : "Provider pricing"}</span>
             </button>
           </li>)}
@@ -88,11 +94,11 @@ export function PriceProviderBrowser(props: Props) {
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>
       <motion.div id="price-panel-2" role="tabpanel" aria-labelledby="price-tab-2" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}>{tab === "Historical data" ? props.history : null}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} /> : <SelectedProvider key={selected ? `${selected.providerSlug}:${selected.observedAt}` : "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected?.providerSlug ?? "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
   </>;
 }
 
-function UnpricedProvider({ provider, onGetQuote }: { provider: MarketCoverageProvider; onGetQuote?: Props["onGetQuote"] }) {
+function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: MarketCoverageProvider; onGetQuote?: Props["onGetQuote"]; bookmark?: ReactNode }) {
   const [pending, setPending] = useState(false);
   const [detail, setDetail] = useState<Awaited<ReturnType<NonNullable<Props["onGetQuote"]>>>>(null);
   const controller = useRef<AbortController | null>(null);
@@ -118,6 +124,7 @@ function UnpricedProvider({ provider, onGetQuote }: { provider: MarketCoveragePr
   const sources = provider.discoverySources?.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
     <div className={styles.selectedHeader}><ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={39} /><div><h2>{provider.providerName}</h2><p>{provider.category}</p></div></div>
+    {bookmark}
     <div className={styles.pricingResearch}>
       <span>No payout quote for this setup</span>
       <h3>{provider.pricingStatus?.label ?? "Provider pricing"}</h3>
@@ -129,7 +136,10 @@ function UnpricedProvider({ provider, onGetQuote }: { provider: MarketCoveragePr
         {pending ? "Checking the provider…" : "Get quote"}{pending ? <Clock3 size={14} aria-hidden /> : <ArrowRight size={14} aria-hidden />}
       </button>
       <p role="status">{detail?.message ?? (pending ? "Checking the provider’s prices for this route. Allow about 30 seconds." : "Checks the provider for this route. Allow about 30 seconds.")}</p>
-      {detail?.source ? <a className={styles.sourceLink} href={detail.source.url} target="_blank" rel="noreferrer noopener">{detail.source.title}<ArrowUpRight size={12} /></a> : null}
+      {detail?.evidence?.map(item => <div key={`${item.url}:${item.text}`} className={styles.publishedFee}>
+        <p>{item.text}</p><a className={styles.sourceLink} href={item.url} target="_blank" rel="noreferrer noopener">{item.title}<ArrowUpRight size={12} /></a>
+      </div>)}
+      {detail?.researchPending ? <p>Official-source research is still running. Check again shortly.</p> : null}
     </div> : null}
     {provider.websiteUrl
       ? <a className={styles.providerAction} href={provider.websiteUrl} target="_blank" rel="noreferrer noopener">Visit {provider.providerName}<ArrowUpRight size={14} /></a>
@@ -146,8 +156,8 @@ function UnpricedProvider({ provider, onGetQuote }: { provider: MarketCoveragePr
 
 const METHOD_NAME: Record<string, string> = { local_bank: "Local bank transfer", wire: "International wire", card: "Card", transfer_service: "Transfer app" };
 
-function SelectedProvider({ row, best, reference, from, to, amount, checked, webEvidence, connection, action }: { row: PriceRow | null; best: PriceRow | null; reference: { rate: number; source: string; observedAt: string } | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"] }) {
-  // Keyed by provider and observation: every figure in this panel always comes from one row.
+function SelectedProvider({ row, best, reference, from, to, amount, checked, webEvidence, connection, action, bookmark }: { row: PriceRow | null; best: PriceRow | null; reference: { rate: number; source: string; observedAt: string } | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"]; bookmark?: ReactNode }) {
+  // The provider's tab and bookmark stay focused while their quote refreshes.
   const [tab, setTab] = useState<DetailTab>("Details");
   const reduce = useReducedMotion();
   if (!row) return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider"><div className={styles.empty}><FileSearch size={24} /><strong>Select a provider to explore its price</strong><p>Fees, eligibility and source evidence will appear here.</p></div></aside>;
@@ -161,17 +171,19 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
   const receipt = payment?.receipt?.detail ?? row.receipt;
   const delivery = row.basis === "exact" && row.delivery !== payment?.delivery?.label ? row.delivery : payment?.delivery?.detail ?? row.delivery;
   const cost = benchmarkCost(row, amount, reference?.rate, to);
+  const difference = benchmarkPayoutDifference(row.recipientAmount, amount, reference?.rate, to);
   const isBest = best?.providerSlug === row.providerSlug;
   const benchmark = reference ? `${reference.source}, 1 ${from} = ${reference.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}, observed ${new Date(reference.observedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC. A mid-market rate, not a consumer offer.` : "No benchmark rate available.";
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
     <div className={styles.selectedIdentity}><ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} loading="eager" size={42} /><div><h2>{row.providerName}</h2><p>{row.product?.label ?? <>{from} <ArrowRight size={10} /> {to}</>}</p></div><span className={styles.basisBadge} data-basis={row.basis}>{pricingSourceLabel(row)}</span></div>
-    <div className={styles.selectedMetrics}><div><span>{row.partial ? "Reference amount" : "Recipient gets (est.)"}</span><motion.strong key={`${row.providerSlug}:${row.recipientAmount}`} initial={reduce ? false : { opacity: .6 }} animate={{ opacity: 1 }} transition={{ duration: .2 }}>{money(row.recipientAmount)} <small>{to}</small></motion.strong></div><div><span>Cost vs mid-market</span><strong>{cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : "Unknown"}</strong></div></div>
+    <div className={styles.selectedMetrics}><div><span>{row.partial ? "Reference amount" : "Recipient gets (est.)"}</span><motion.strong key={`${row.providerSlug}:${row.recipientAmount}`} initial={reduce ? false : { opacity: .6 }} animate={{ opacity: 1 }} transition={{ duration: .2 }}>{money(row.recipientAmount)} <small>{to}</small></motion.strong></div><div><span>{cost.kind === "cost" ? "Cost vs mid-market" : "Payout vs mid-market"}</span><strong>{cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : difference.kind === "cost" ? formatPayoutDifference(difference) : "No benchmark"}</strong></div></div>
     {isBest ? <p className={styles.rankNote}>{row.basis === "exact" ? `Best account quote among comparable options${row.expiresAt ? `, valid until ${new Date(row.expiresAt).toLocaleTimeString("en-GB", { timeStyle: "short" })}` : ""}.` : `Highest estimated ${to} among comparable options.`}</p> : null}
     {cost.kind === "gap" ? <p className={styles.gapNote}><Info size={14} />{cost.reason}</p> : null}
     <div className={styles.selectedMeta}><span><Clock3 size={14} aria-hidden />{row.delivery ?? "Ask provider about delivery"}</span>{payment?.receipt && <span className={styles.receiptChip}><FileBadge size={14} aria-hidden />{payment.receipt.label}</span>}<span><ShieldCheck size={14} aria-hidden />{assessment?.status === "documented" ? "Documented profile" : "Confirm eligibility"}</span></div>
     {row.partial && <p className={styles.warning}><Info size={14} />{row.publicOffer ? `First-transfer offer for ${row.publicOffer.fundingMethod} → ${row.publicOffer.payoutMethod}. Subject to provider eligibility. Collected ${priceSourceTime(row.observedAt, row.basis).replace(/^Collected /, "")}; not a locked quote.` : row.costComplete && !row.missing?.length ? row.profileAssessment?.reasons[0] ?? "Confirm account eligibility and the final price with the provider." : "Some costs or account requirements are unconfirmed. This is not a complete executable quote."}</p>}
     {row.publicComparison && <p className={styles.detailIntro}>Public price observed for {row.publicComparison.sourceCountry ?? "an unspecified sender country"} → {row.publicComparison.destinationCountry ?? to}. Funding method and first-transfer offers may change your price. This reference is excluded from the complete-quote winner.</p>}
     {action.href && !action.disabled ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</Link> : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />{action.label}</button>}
+    {bookmark}
     {connection}
     <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>{(["Details", "Requirements", "Source", "Notes"] as const).map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}</div>
     {/* No exit animation: an outgoing panel must never show the previous provider's figures. */}

@@ -2,7 +2,13 @@ import { z } from "zod";
 import type { PriceCheckInput, PriceRow } from "../pricing.js";
 
 const asporaSite = "https://www.aspora.com/";
-const asporaHelp = "https://www.aspora.com/help/us/transfers";
+const asporaSources = {
+  USD: { senders: ["US"], help: "https://www.aspora.com/help/us/transfers" },
+  GBP: { senders: ["GB"], help: "https://www.aspora.com/help/gb/transfers" },
+  AED: { senders: ["AE"], help: "https://www.aspora.com/help/ae/transfers" },
+  EUR: { senders: ["DE", "IE", "IT"], help: "https://www.aspora.com/help/gb/referrals" },
+};
+type AsporaCurrency = keyof typeof asporaSources;
 const corridors = {
   INR: { country: "IN", xoomPath: "india", xoomPayoutIncrement: 1 },
   SGD: { country: "SG", xoomPath: "singapore", xoomPayoutIncrement: 0.01 },
@@ -17,16 +23,20 @@ const corridors = {
   DOP: { country: "DO", xoomPath: "dominican-republic", xoomPayoutIncrement: 1 },
   LKR: { country: "LK", xoomPath: "sri-lanka", xoomPayoutIncrement: 1 },
   RWF: { country: "RW", xoomPath: "rwanda", xoomPayoutIncrement: 1 },
+  XAF: { country: "CM", xoomPath: "cameroon", xoomPayoutIncrement: 1 },
+  BRL: { country: "BR", xoomPath: "brazil", xoomPayoutIncrement: 0.01 },
 } as const;
 type Corridor = keyof typeof corridors;
 const remitlyCorridors = {
   INR: { remitlyCountry: "IND", source: "https://www.remitly.com/us/en/currency-converter/usd-to-inr-rate" },
   SGD: { remitlyCountry: "SGP", source: "https://www.remitly.com/us/en/money-transfer/send-money-to-singapore" },
+  XAF: { remitlyCountry: "CMR", source: "https://www.remitly.com/us/en/cameroon/pricing" },
+  BRL: { remitlyCountry: "BRA", source: "https://www.remitly.com/us/en/currency-converter/usd-to-brl-rate" },
 } as const;
 const xoomOrigin = "https://www.xoom.com";
 
 const asporaQuote = z.object({
-  base_currency: z.literal("USD"),
+  base_currency: z.enum(["USD", "GBP", "AED", "EUR"]),
   quote_currency: z.literal("INR"),
   send_amount: z.number().finite().positive(),
   providers: z.array(z.object({
@@ -44,9 +54,9 @@ const remitlyQuote = z.object({
   estimate: z.object({
     conduit: z.object({
       source_country: z.literal("USA"),
-      target_country: z.enum(["IND", "SGP"]),
+      target_country: z.string().regex(/^[A-Z]{3}$/),
       source_currency: z.object({ alpha3: z.literal("USD") }),
-      target_currency: z.object({ alpha3: z.enum(["INR", "SGD"]) }),
+      target_currency: z.object({ alpha3: z.string().regex(/^[A-Z]{3}$/) }),
     }),
     pay_in_method: z.literal("BANK"),
     pay_out_method: z.string(),
@@ -54,10 +64,13 @@ const remitlyQuote = z.object({
     receive_amount: numberString,
     total_charge_amount: numberString,
     exchange_rate: z.object({
-      promotional_exchange_rate: numberString,
-      capped_promotional_exchange_rate_amount: numberString,
+      base_rate: numberString.nullish(),
+      promotional_exchange_rate: numberString.nullish(),
+      capped_promotional_exchange_rate_amount: numberString.nullish(),
     }),
     fee: z.object({ total_fee_amount: numberString }),
+    discount: z.object({ fee_discount_amount: numberString, send_discount_amount: numberString }).nullish(),
+    tax_details: z.array(z.object({ amount: numberString, type: z.string() })).nullish(),
   }),
 });
 
@@ -66,6 +79,7 @@ export function usBankRemittanceCorridor(input: PriceCheckInput): Corridor | nul
   const currency = input.destinationCurrency as Corridor;
   const { country } = corridors[currency];
   const context = input.context;
+  if (currency === "XAF" && !input.destinationCountry && (context?.direction !== "receive" || context.country !== "CM")) return null;
   return input.sourceCurrency === "USD" && (!input.destinationCountry || input.destinationCountry === country)
     && context?.profile === "personal" && context.purpose === "personal"
     && (context.direction === "receive" ? context.country === country || input.destinationCountry === country : context.country === "US")
@@ -85,11 +99,21 @@ function baseRow(): Pick<PriceRow, "basis" | "side" | "senderCountry" | "payment
   };
 }
 
-async function asporaBankQuote(amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+export function asporaQuoteCurrency(input: PriceCheckInput): AsporaCurrency | null {
+  const context = input.context;
+  if (input.destinationCurrency !== "INR" || (input.destinationCountry && input.destinationCountry !== "IN")
+    || context?.profile !== "personal" || context.purpose !== "personal"
+    || (context.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod))
+    || !Object.hasOwn(asporaSources, input.sourceCurrency)) return null;
+  const currency = input.sourceCurrency as AsporaCurrency;
+  return (context.direction === "send" ? asporaSources[currency].senders.includes(context.country) : context.country === "IN") ? currency : null;
+}
+
+export async function asporaBankQuote(currency: AsporaCurrency, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
   const response = await fetcher("https://api-z1.aspora.com/appserver/public-forex-provider/get-rates", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ base_currency: "USD", quote_currency: "INR", amount, payment_method: "" }),
+    body: JSON.stringify({ base_currency: currency, quote_currency: "INR", amount, payment_method: "" }),
     signal: AbortSignal.timeout(4_000),
     redirect: "error",
     cache: "no-store",
@@ -97,15 +121,17 @@ async function asporaBankQuote(amount: number, fetcher: typeof fetch, now: Date)
   if (!response.ok) return null;
 
   const parsed = asporaQuote.safeParse(await response.json());
-  if (!parsed.success || parsed.data.send_amount !== amount) return null;
+  if (!parsed.success || parsed.data.base_currency !== currency || parsed.data.send_amount !== amount) return null;
   const quote = parsed.data.providers.find(provider => provider.name === "Aspora")?.quote;
   if (!quote || quote.fee >= amount || Math.abs(quote.received_amount - (amount - quote.fee) * quote.rate) > .011) return null;
 
   return {
     ...baseRow(),
+    senderCountry: asporaSources[currency].senders.length === 1 ? asporaSources[currency].senders[0] : undefined,
+    feeCurrency: currency,
     providerSlug: "aspora",
     providerName: "Aspora",
-    product: { id: "aspora:usd-inr-bank", label: "Aspora · US bank-funded transfer" },
+    product: { id: `aspora:${currency.toLowerCase()}-inr-bank`, label: `Aspora · ${currency} to INR calculator` },
     recipientAmount: quote.received_amount,
     feeAmount: quote.fee,
     rate: quote.rate,
@@ -113,9 +139,9 @@ async function asporaBankQuote(amount: number, fetcher: typeof fetch, now: Date)
     source: { label: "Aspora public calculator", url: asporaSite },
     missing: ["Confirm the sender’s account price"],
     notes: [
-      "Aspora’s public calculator supplies the quoted fee and INR net of that fee. The US help centre describes funding from the sender’s own bank account.",
+      "The public calculator supplies the fee and payout after that fee. Confirm which funding option and rate apply in the sender’s account.",
       "This estimate uses the public comparison calculator. Aspora may show a different fee, first-transfer offer or rate in the sender’s account.",
-      asporaHelp,
+      asporaSources[currency].help,
     ],
   };
 }
@@ -137,28 +163,47 @@ async function remitlyBankQuote(currency: keyof typeof remitlyCorridors, amount:
   const parsed = remitlyQuote.safeParse(await response.json());
   if (!parsed.success) return null;
   const quote = parsed.data.estimate;
-  const rate = quote.exchange_rate.promotional_exchange_rate;
-  const fee = quote.fee.total_fee_amount;
+  const { base_rate: baseRate, promotional_exchange_rate: promoRate, capped_promotional_exchange_rate_amount: cap } = quote.exchange_rate;
+  const promoAmount = promoRate && cap ? Math.min(amount, cap) : 0;
+  const remaining = amount - promoAmount;
+  if (remaining > 0 && !(baseRate && baseRate > 0)) return null;
+  const received = promoAmount * (promoRate ?? 0) + remaining * (baseRate ?? 0);
+  const grossFee = quote.fee.total_fee_amount;
+  const feeDiscount = quote.discount?.fee_discount_amount ?? 0;
+  const sendDiscount = quote.discount?.send_discount_amount ?? 0;
+  const taxes = quote.tax_details ?? [];
+  const tax = taxes.reduce((total, entry) => total + entry.amount, 0);
+  const fee = Math.round((quote.total_charge_amount - amount) * 100) / 100;
   if (quote.conduit.target_country !== remitlyCountry || quote.conduit.target_currency.alpha3 !== currency
-    || quote.send_amount !== amount || amount > quote.exchange_rate.capped_promotional_exchange_rate_amount
-    || !(rate > 0) || !(quote.receive_amount > 0) || Math.abs(amount * rate - quote.receive_amount) > .011
-    || Math.abs(amount + fee - quote.total_charge_amount) > .011) return null;
+    || quote.send_amount !== amount || fee < 0 || feeDiscount > grossFee
+    || !(quote.receive_amount > 0) || Math.abs(received - quote.receive_amount) > (currency === "XAF" ? .51 : .011)
+    || Math.abs(grossFee + tax - feeDiscount - sendDiscount - fee) > .011) return null;
 
-  const payout = quote.pay_out_method === "BANK_DEPOSIT" ? "Bank deposit" : "Confirm bank deposit at checkout";
+  const payout = ({ BANK_DEPOSIT: "Bank deposit", CASH_PICKUP: "Cash pickup", MOBILE_MONEY: "Mobile money", DEBIT_CARD: "Debit card deposit" } as Record<string, string>)[quote.pay_out_method]
+    ?? "Confirm payout method at checkout";
+  const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
   return {
     ...baseRow(),
     providerSlug: "remitly",
     providerName: "Remitly",
-    product: { id: "remitly:usd-" + currency.toLowerCase() + "-bank", label: "Remitly · US bank-funded welcome offer" },
+    product: { id: "remitly:usd-" + currency.toLowerCase() + "-bank", label: promoAmount ? "Remitly · US bank-funded welcome offer" : "Remitly · US bank-funded transfer" },
     recipientAmount: quote.receive_amount,
     feeAmount: fee,
-    rate,
+    rate: received / amount,
     observedAt: now.toISOString(),
+    expiresAt,
     source: { label: "Remitly public calculator", url: source },
-    publicOffer: { kind: "first_transfer", fundingMethod: "US bank account", payoutMethod: payout, displayUntil: new Date(now.getTime() + 86_400_000).toISOString() },
+    ...(promoAmount ? { publicOffer: { kind: "first_transfer" as const, fundingMethod: "US bank account", payoutMethod: payout, displayUntil: expiresAt } } : {}),
+    ...(tax ? {
+      taxIncluded: true,
+      taxNote: `Remitly’s total includes ${taxes.map(entry => `USD ${entry.amount.toFixed(2)} ${entry.type}`).join(" + ")}.`,
+      feeBreakdown: `USD ${grossFee.toFixed(2)} quoted fee − USD ${feeDiscount.toFixed(2)} fee discount + USD ${tax.toFixed(2)} tax${sendDiscount ? ` − USD ${sendDiscount.toFixed(2)} transfer discount` : ""}`,
+    } : {}),
     notes: [
-      "For eligible first-time Remitly customers. The amount is funded from a US bank account.",
-      "Confirm bank deposit, the final rate, charges and delivery in the sender’s account.",
+      "The calculator used funding from a US bank account.",
+      ...(promoAmount ? ["Welcome rates are for eligible first transfers."] : []),
+      ...(promoAmount && remaining > 0 ? [`The calculator applied its welcome rate to the first USD ${cap} and its standard rate to the rest.`] : []),
+      `Payout method: ${payout}. Confirm final charges and delivery in the sender’s account.`,
     ],
   };
 }
@@ -183,6 +228,28 @@ const xoomResponse = z.object({
 
 export function xoomCalculatorUrl(currency: Corridor): string {
   return xoomOrigin + "/" + corridors[currency].xoomPath + "/send-money?locale=en-us";
+}
+
+export function remitlyCalculatorUrl(currency: Corridor): string | null {
+  return Object.hasOwn(remitlyCorridors, currency) ? remitlyCorridors[currency as keyof typeof remitlyCorridors].source : null;
+}
+
+export function remitlyBrowserQuoteRow(currency: Corridor, amount: number, quote: {
+  received: number; rate: number; fee: number; firstTransfer: boolean | null;
+}, now: Date): PriceRow | null {
+  const url = remitlyCalculatorUrl(currency);
+  if (!url || !(quote.received > 0) || !(quote.rate > 0) || !(quote.fee >= 0)
+    || Math.abs(amount * quote.rate - quote.received) > (currency === "XAF" ? .51 : .011)) return null;
+  const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
+  return {
+    ...baseRow(), providerSlug: "remitly", providerName: "Remitly",
+    product: { id: `remitly:usd-${currency.toLowerCase()}-bank`, label: "Remitly · US bank-funded deposit" },
+    recipientAmount: quote.received, rate: quote.rate, feeAmount: quote.fee,
+    observedAt: now.toISOString(), expiresAt,
+    source: { label: "Remitly public calculator", url },
+    ...(quote.firstTransfer ? { publicOffer: { kind: "first_transfer" as const, fundingMethod: "US bank account", payoutMethod: "Bank deposit", displayUntil: expiresAt } } : {}),
+    notes: ["Public US bank funding and bank deposit. Verify the final offer, charges and applicable taxes in the sender’s account."],
+  };
 }
 
 export function xoomBankQuoteRow(currency: Corridor, amount: number, quote: {
@@ -246,8 +313,8 @@ async function xoomBankQuote(currency: Corridor, amount: number, fetcher: typeof
 
 export async function usBankRemittanceRows(currency: Corridor, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow[]> {
   const rows = await Promise.allSettled([
-    currency === "INR" ? asporaBankQuote(amount, fetcher, now) : Promise.resolve(null),
-    currency === "INR" || currency === "SGD" ? remitlyBankQuote(currency, amount, fetcher, now) : Promise.resolve(null),
+    currency === "INR" ? asporaBankQuote("USD", amount, fetcher, now) : Promise.resolve(null),
+    Object.hasOwn(remitlyCorridors, currency) ? remitlyBankQuote(currency as keyof typeof remitlyCorridors, amount, fetcher, now) : Promise.resolve(null),
     xoomBankQuote(currency, amount, fetcher, now),
   ]);
   return rows.flatMap(result => result.status === "fulfilled" && result.value ? [result.value] : []);

@@ -8,7 +8,7 @@ describe("captured market pricing evidence", () => {
   it("surfaces relevant captured fees without producing a numeric quote", () => {
     const result = attachMarketPricingEvidence(coverage, "INR", [], [], [fee, fee, { ...fee, destinationCurrency: "PHP", summary: "Unrelated fee" }]);
     expect(result.providers[0]?.feeEvidence).toHaveLength(1);
-    expect(result.providers[0]?.pricingStatus?.label).toBe("Captured fee information");
+    expect(result.providers[0]?.pricingStatus?.label).toBe("Published fee details");
     expect(result.providers[0]).not.toHaveProperty("recipientAmount");
     expect(coverage.providers[0]).not.toHaveProperty("feeEvidence");
   });
@@ -17,10 +17,10 @@ describe("captured market pricing evidence", () => {
     expect(result.providers[0]?.pricingStatus?.reason).toBe("Production access required.");
     expect(result.providers[0]?.feeEvidence?.[0]?.sourceUrl).toBeNull();
   });
-  it("identifies price rows already shown while preserving partial-cost labels", () => {
-    const row = { providerSlug: "market:xflow", basis: "market_estimate", partial: true } as PriceRow;
+  it("directs the reader to the dated market price without describing it as a live quote", () => {
+    const row = { providerSlug: "market:xflow", basis: "market_estimate", recipientAmount: 91_000, partial: true } as PriceRow;
     const result = attachMarketPricingEvidence(coverage, "INR", [row], [], [fee]);
-    expect(result.providers[0]?.pricingStatus?.label).toBe("Market estimate above");
-    expect(result.providers[0]?.pricingStatus?.reason).toContain("unconfirmed");
+    expect(result.providers[0]?.pricingStatus?.label).toBe("Dated market reference");
+    expect(result.providers[0]?.pricingStatus?.reason).toContain("Market view");
   });
 });
