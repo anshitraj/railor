@@ -10,7 +10,7 @@ import { ProviderLogo } from "../app/provider-logo";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { BASIS_LABEL, priceView } from "../../lib/price-view";
 import { isLockedPriceCheck, type LockedPriceCheck } from "../../lib/price-lock";
-import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
+import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import { pricingSourceLabel } from "../../lib/price-display";
 import { defaultPriceCountry } from "../../lib/price-destination";
 import { CurrencyPicker } from "./currency-picker";
@@ -377,6 +377,8 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                 {[...shownQuotes, ...shownEstimates].map((row, index) => {
                   const isBest = row === best;
                   const firstEstimate = row === shownEstimates[0];
+                  const cost = benchmarkCost(row, amount, midRate, to);
+                  const difference = benchmarkPayoutDifference(row.recipientAmount, amount, midRate, to);
                   return (
                     <motion.li
                       key={row.providerSlug}
@@ -393,10 +395,18 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                         <span className={styles.rowName}>
                           <strong>{row.providerName.split(" · ")[0]}</strong>
                           <small>{row.basis === "market_estimate" ? collected(row.observedAt, now) : `${pricingSourceLabel(row)}${row.delivery ? ` · ${row.delivery}` : ""}`}</small>
+                          {row.feeAmount != null && row.feeCurrency ? <small>Quoted fee {money(row.feeAmount)} {row.feeCurrency}</small> : null}
                         </span>
                         <span className={styles.rowAmount}>
                           <strong>{money(row.recipientAmount)}</strong>
-                          <small>{isBest ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span> : row.basis === "market_estimate" ? <span className={styles.estimateTag}>Market reference</span> : (() => { const cost = benchmarkCost(row, amount, midRate, to); return cost.kind === "cost" ? <span className={styles.costTag}>{formatBenchmarkCost(cost, "percent")}</span> : <span className={styles.estimateTag}>Cost unknown</span>; })()}</small>
+                          <small>{isBest
+                            ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span>
+                            : cost.kind === "cost" && row.basis !== "market_estimate"
+                              ? <span className={styles.costTag}>{formatBenchmarkCost(cost, "percent")}</span>
+                              : difference.kind === "cost"
+                                ? <span className={styles.estimateTag} title="Based on the displayed payout. Additional fees may apply.">{formatPayoutDifference(difference)}</span>
+                                : <span className={styles.estimateTag}>{row.basis === "market_estimate" ? "Market reference" : "Cost unknown"}</span>}
+                          </small>
                         </span>
                       </div>
                     </motion.li>

@@ -171,20 +171,26 @@ function enqueue(claim: WebCheckClaim, deps?: WebCheckDeps) {
  */
 export async function priceWebChecks(claims: WebCheckClaim[], deps?: WebCheckDeps): Promise<{ results: WebCheckResult[]; pending: Set<string>; configured: boolean; paused: boolean }> {
   const configured = deps?.model !== undefined ? Boolean(deps.model) : webCheckConfigured();
-  const now = Date.now();
-  const results: WebCheckResult[] = [];
-  const missing: WebCheckClaim[] = [];
-  for (const claim of claims) {
-    const hit = memory.get(claim.key);
-    if (hit && hit.expiresAt > now) results.push(hit.value);
-    else missing.push(claim);
-  }
-  if (missing.length) results.push(...(await stored(missing.map((c) => c.key)).catch(() => [])));
+  const results = await readWebChecks(claims.map(claim => claim.key));
   const pending = new Set<string>();
   if (configured) {
-    for (const claim of missing) if (!results.some((r) => r.key === claim.key) && enqueue(claim, deps)) pending.add(claim.key);
+    for (const claim of claims) if (!results.some(r => r.key === claim.key) && enqueue(claim, deps)) pending.add(claim.key);
   }
   return { results, pending, configured, paused: configured && Date.now() < outage.until };
+}
+
+/** Reads completed checks without scheduling searches, including on public requests. */
+export async function readWebChecks(keys: string[]): Promise<WebCheckResult[]> {
+  const now = Date.now();
+  const results: WebCheckResult[] = [];
+  const missing: string[] = [];
+  for (const key of keys) {
+    const hit = memory.get(key);
+    if (hit && hit.expiresAt > now) results.push(hit.value);
+    else missing.push(key);
+  }
+  if (missing.length) results.push(...(await stored(missing).catch(() => [])));
+  return results;
 }
 
 /** Recent checks for review, newest first. */

@@ -46,18 +46,36 @@ export function benchmarkCost(
   referenceRate: number | null | undefined,
   currency: string,
 ): BenchmarkCost | BenchmarkGap {
+  const difference = benchmarkPayoutDifference(row.recipientAmount, amount, referenceRate, currency);
+  if (difference.kind === "gap") return difference;
+  if (!(row.costComplete ?? !row.partial) || row.missing?.length) return { kind: "gap", reason: row.missing?.[0] ?? "Some fees are unknown, so the all-in cost isn’t calculated." };
+  return difference;
+}
+
+/** Difference between the displayed payout and mid-market, even without an all-in fee. */
+export function benchmarkPayoutDifference(
+  recipientAmount: number | null,
+  amount: number,
+  referenceRate: number | null | undefined,
+  currency: string,
+): BenchmarkCost | BenchmarkGap {
   if (!(amount > 0)) return { kind: "gap", reason: "Enter an amount above zero." };
   if (!referenceRate || !(referenceRate > 0)) return { kind: "gap", reason: "No benchmark rate for this pair right now." };
-  if (row.recipientAmount === null) return { kind: "gap", reason: "The source doesn’t give enough to calculate what arrives." };
-  if (!(row.costComplete ?? !row.partial) || row.missing?.length) return { kind: "gap", reason: row.missing?.[0] ?? "Some fees are unknown, so the all-in cost isn’t calculated." };
+  if (recipientAmount === null) return { kind: "gap", reason: "The source doesn’t give enough to calculate what arrives." };
   const amountMinor = toMinor(amount);
   const rateMicros = BigInt(Math.round(referenceRate * Number(RATE_SCALE)));
   const baselineMinor = divRound(amountMinor * rateMicros, RATE_SCALE);
   if (baselineMinor === 0n) return { kind: "gap", reason: "The benchmark amount is too small to compare." };
-  const netMinor = toMinor(row.recipientAmount);
+  const netMinor = toMinor(recipientAmount);
   const costMinor = baselineMinor - netMinor;
   const bps = divRound(costMinor * 10_000n, baselineMinor);
   return { kind: "cost", currency, baselineMinor: Number(baselineMinor), netMinor: Number(netMinor), costMinor: Number(costMinor), bps: Number(bps) };
+}
+
+export function formatPayoutDifference(difference: BenchmarkCost): string {
+  if (!difference.costMinor) return "At mid-market";
+  const amount = new Intl.NumberFormat("en", { style: "currency", currency: difference.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(difference.costMinor) / Number(MINOR));
+  return `${amount} ${difference.costMinor < 0 ? "above" : "below"} mid-market`;
 }
 
 /** "₹500 · 50 bps" (or "₹120 better · −12 bps" when the route beats the benchmark). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { benchmarkCost, formatBenchmarkCost } from "./price-cost";
+import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "./price-cost";
 
 const complete = { partial: false, costComplete: true } as const;
 
@@ -32,5 +32,19 @@ describe("cost against a benchmark", () => {
     expect(benchmarkCost({ partial: true, costComplete: false, recipientAmount: 99_000, missing: ["Wire (SWIFT) fee not published"] }, 1_000, 100, "INR")).toEqual({ kind: "gap", reason: "Wire (SWIFT) fee not published" });
     expect(benchmarkCost({ ...complete, recipientAmount: 99_000 }, 1_000, null, "INR")).toMatchObject({ kind: "gap" });
     expect(benchmarkCost({ ...complete, recipientAmount: null }, 1_000, 100, "INR")).toMatchObject({ kind: "gap" });
+  });
+
+  it("compares the displayed payout even when all-in fees are unknown", () => {
+    const expected = [
+      [93_760, -41_250, "₹412.50 above mid-market"],
+      [93_133, 21_450, "₹214.50 below mid-market"],
+      [93_031, 31_650, "₹316.50 below mid-market"],
+    ] as const;
+    for (const [payout, minor, label] of expected) {
+      const difference = benchmarkPayoutDifference(payout, 1_000, 93.3475, "INR");
+      expect(difference).toMatchObject({ kind: "cost", costMinor: minor });
+      expect(difference.kind === "cost" && formatPayoutDifference(difference)).toBe(label);
+      expect(benchmarkCost({ partial: true, recipientAmount: payout }, 1_000, 93.3475, "INR").kind).toBe("gap");
+    }
   });
 });

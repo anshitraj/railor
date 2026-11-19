@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, CircleHelp, ClipboardCopy, FileCheck2, Link2, Minus } from "lucide-react";
 import { Flag } from "@railor/ui";
-import { shareRouteComparison } from "../../app/app/compare/actions";
-import type { ComparisonCandidate, RouteComparison } from "../../lib/route-comparison-model";
+import { refreshRouteComparison, shareRouteComparison } from "../../app/app/compare/actions";
+import { NEEDS_CONFIRMATION, type ComparisonCandidate, type RouteComparison } from "../../lib/route-comparison-model";
 import { ProviderLogo } from "./provider-logo";
 import styles from "./route-comparison.module.css";
 
@@ -35,16 +35,16 @@ function CandidateCard({ candidate, index }: { candidate: ComparisonCandidate; i
         {VERDICT[candidate.verdict]}
       </div>
       <p className={styles.reason}>{candidate.reason}</p>
-      <div className={styles.analysis}>
-        <section aria-label={`${candidate.name} advantages`}>
+      {candidate.advantages.length || candidate.considerations.length ? <div className={styles.analysis}>
+        {candidate.advantages.length ? <section aria-label={`${candidate.name} advantages`}>
           <h4><Check size={15} aria-hidden /> Advantages</h4>
-          {candidate.advantages.length ? <ul>{candidate.advantages.map(text => <li key={text}>{text}</li>)}</ul> : <p>Check what the provider offers for this route.</p>}
-        </section>
-        <section aria-label={`${candidate.name} trade-offs`}>
+          <ul>{candidate.advantages.map(text => <li key={text}>{text}</li>)}</ul>
+        </section> : null}
+        {candidate.considerations.length ? <section aria-label={`${candidate.name} trade-offs`} className={styles.tradeoffs}>
           <h4><Minus size={15} aria-hidden /> Trade-offs</h4>
-          {candidate.considerations.length ? <ul>{candidate.considerations.map(text => <li key={text}>{text}</li>)}</ul> : <p>Review product terms before transferring.</p>}
-        </section>
-      </div>
+          <ul>{candidate.considerations.map(text => <li key={text}>{text}</li>)}</ul>
+        </section> : null}
+      </div> : null}
       {candidate.webCheck ? <blockquote className={styles.webCheck}>
         <strong>{candidate.webCheck.verdict === "supported" ? "Official source supports the route" : "Official source flags a restriction"}</strong>
         <p>{candidate.webCheck.quote}</p>
@@ -61,14 +61,35 @@ function CandidateCard({ candidate, index }: { candidate: ComparisonCandidate; i
   );
 }
 
-export function RouteComparisonResults({ comparison, shareable = false }: { comparison: RouteComparison; shareable?: boolean }) {
+export function RouteComparisonResults({ comparison: initial, shareable = false }: { comparison: RouteComparison; shareable?: boolean }) {
+  const [latest, setLatest] = useState<RouteComparison | null>(null);
+  const comparison = latest ?? initial;
   const [differences, setDifferences] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [shareNote, setShareNote] = useState("");
-  const facts = comparison.candidates[0]?.facts ?? [];
-  const rows = facts.map(fact => ({ label: fact.label, values: comparison.candidates.map(candidate => candidate.facts.find(item => item.label === fact.label)) }))
-    .filter(row => !differences || new Set(row.values.map(value => JSON.stringify([value?.value, value?.detail]))).size > 1);
+  const labels = [...new Set(comparison.candidates.flatMap(candidate => candidate.facts.map(fact => fact.label)))];
+  const facts = labels.map(label => ({ label, values: comparison.candidates.map(candidate => candidate.facts.find(item => item.label === label)) }));
+  const documented = facts.filter(row => row.values.some(fact => fact && fact.value !== NEEDS_CONFIRMATION));
+  const missing = facts.filter(row => !documented.includes(row));
+  const rows = documented.filter(row => !differences || new Set(row.values.map(value => JSON.stringify([value?.value, value?.detail]))).size > 1);
+
+  useEffect(() => {
+    if (!shareable || !initial.pendingWebChecks) return;
+    let cancelled = false;
+    let timer: number;
+    let attempts = 0;
+    const poll = async () => {
+      const result = await refreshRouteComparison(initial.request).catch(() => null);
+      if (cancelled) return;
+      attempts++;
+      if (result) setLatest({ ...result, checkedAt: initial.checkedAt, pendingWebChecks: result.pendingWebChecks && attempts < 12 });
+      if (result?.pendingWebChecks && attempts < 12) timer = window.setTimeout(poll, 5000);
+      if (!result) setLatest(previous => ({ ...(previous ?? initial), pendingWebChecks: false }));
+    };
+    timer = window.setTimeout(poll, 3500);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [initial, shareable]);
 
   async function share() {
     setSharing(true);
@@ -101,6 +122,7 @@ export function RouteComparisonResults({ comparison, shareable = false }: { comp
         </div>
         {shareable ? <button className={styles.share} type="button" disabled={sharing} onClick={() => void share()}><ClipboardCopy size={16} aria-hidden /> {sharing ? "Creating link…" : "Share comparison"}</button> : null}
       </div>
+      {comparison.pendingWebChecks ? <p className={styles.shareNote} role="status">Checking official sources for missing details…</p> : null}
       {shareNote ? <p className={styles.shareNote} role="status">{shareNote} {shareUrl ? <a href={shareUrl} target="_blank" rel="noreferrer">Open shared comparison <ArrowUpRight size={13} aria-hidden /></a> : null}</p> : null}
       <div className={styles.candidateGrid}>{comparison.candidates.map((candidate, index) => <CandidateCard key={candidate.slug} candidate={candidate} index={index} />)}</div>
       <section className={styles.facts} aria-label="Comparison details">
@@ -113,10 +135,12 @@ export function RouteComparisonResults({ comparison, shareable = false }: { comp
           <tbody>{rows.map(row => <tr key={row.label}>
             <th scope="row">{row.label}</th>
             {row.values.map((value, index) => <td key={comparison.candidates[index]!.slug}>
-              <span>{value?.value ?? "Needs confirmation"}</span>{value?.detail ? <small>{value.detail}</small> : null}
+              <span>{value?.value ?? NEEDS_CONFIRMATION}</span>{value?.detail ? <small>{value.detail}</small> : null}
+              {value?.source ? <a className={styles.factSource} href={value.source.url} target="_blank" rel="noreferrer" aria-label={value.source.title}>Source <ArrowUpRight size={12} aria-hidden /></a> : null}
             </td>)}
           </tr>)}</tbody>
-        </table> : <p className={styles.noDifferences}>No documented differences in these details.</p>}
+        </table> : <p className={styles.noDifferences}>{differences ? "No documented differences in these details." : "No published details found for this setup yet."}</p>}
+        {missing.length && documented.length ? <p className={styles.noDifferences}>Still unverified for both providers · {missing.map(row => row.label).join(" · ")}</p> : null}
       </section>
     </section>
   );

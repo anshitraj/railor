@@ -112,6 +112,16 @@ describe("what a verdict does to a row", () => {
 });
 
 describe("a verdict only counts when Railor finds the quote itself", () => {
+  it("reads a missing detail from the provider's documented page only", async () => {
+    const claim = { ...wiseClaim, lookup: true, statement: "Find the INR bank account payout methods in India." };
+    const quote = "You can send INR to someone's bank account in India, including NRE and NRO accounts, or UPI ID.";
+    expect(await runWebCheck(claim, { model: model({ verdict: "supported", sourceId: 1, quote }), fetchSource }))
+      .toMatchObject({ verdict: "supported", official: true, quote });
+    const blog = model({ verdict: "supported", sourceId: 1, quote }, [{ uri: "https://blog.example.com/wise", title: "blog" }]);
+    expect(await runWebCheck(claim, { model: blog, fetchSource })).toMatchObject({ verdict: "unclear", quote: null });
+    expect(blog.judge).not.toHaveBeenCalled();
+  });
+
   it("accepts a sentence copied from the provider's own page", async () => {
     const result = await runWebCheck(wiseClaim, { model: model({ verdict: "supported", sourceId: 1, quote: "You can send INR to someone's bank account in India, including NRE and NRO accounts, or UPI ID." }), fetchSource, now: () => now });
     expect(result).toMatchObject({ verdict: "supported", official: true, sourceUrl: "https://wise.com/help/inr", searchQueries: ["wise usd to inr india"] });

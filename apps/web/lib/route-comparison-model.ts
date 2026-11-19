@@ -12,10 +12,19 @@ export const RouteComparisonRequest = z.object({
 });
 export type RouteComparisonRequest = z.infer<typeof RouteComparisonRequest>;
 
+export const NEEDS_CONFIRMATION = "Needs confirmation";
+
 export interface ComparisonSource {
   url: string;
   title: string;
   verifiedAt: string | null;
+}
+
+export interface ComparisonFact {
+  label: string;
+  value: string;
+  detail?: string;
+  source?: ComparisonSource;
 }
 
 export interface ComparisonCandidate {
@@ -23,11 +32,12 @@ export interface ComparisonCandidate {
   name: string;
   category: string;
   website: string | null;
+  product?: string | null;
   verdict: "supported" | "additional_requirements" | "unavailable" | "unknown";
   reason: string;
   advantages: string[];
   considerations: string[];
-  facts: Array<{ label: string; value: string; detail?: string }>;
+  facts: ComparisonFact[];
   sources: ComparisonSource[];
   webCheck?: {
     verdict: "supported" | "contradicted" | "unclear";
@@ -41,6 +51,7 @@ export interface RouteComparison {
   origin: string;
   destination: string;
   productLabel: string | null;
+  pendingWebChecks?: boolean;
   candidates: ComparisonCandidate[];
   checkedAt: string;
 }

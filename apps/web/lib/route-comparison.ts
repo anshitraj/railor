@@ -4,9 +4,9 @@ import { evaluateProvider, loadProviderBySlug, loadProviderInputs, loadReference
 import { evidence, getDb } from "@railor/database";
 import type { CorridorQuery } from "@railor/types";
 import { inArray } from "drizzle-orm";
-import type { ComparisonCandidate, ComparisonSource, RouteComparison, RouteComparisonRequest } from "./route-comparison-model";
+import { NEEDS_CONFIRMATION as UNKNOWN, type ComparisonCandidate, type ComparisonSource, type RouteComparison, type RouteComparisonRequest } from "./route-comparison-model";
+import { addPublishedComparisonFacts } from "./route-comparison-published";
 
-const UNKNOWN = "Needs confirmation";
 type Profile = NonNullable<Awaited<ReturnType<typeof loadProviderBySlug>>>;
 
 export function comparisonLink(value: string | null | undefined): string | null {
@@ -91,22 +91,18 @@ export async function buildRouteComparison(request: RouteComparisonRequest): Pro
     const productLabel = PRODUCT_TERMS.find(term => term.product === product)?.label;
     const feeSummary = [...new Set(fees.map(row => row.summary))].join(" • ");
     const limitSummary = [...new Set(limits.map(row => row.summary))].join(" • ");
-    const reason = primaryReason(evaluation);
+    const missingProductEvidence = evaluation.reasons[0]?.code === "product_unavailable" && !evaluation.evidence.length;
+    const verdict = missingProductEvidence ? "unknown" : evaluation.verdict;
+    const reason = missingProductEvidence ? "Railor has no catalog entry for this product on the selected route." : primaryReason(evaluation);
     const advantages = [
-      evaluation.verdict === "supported" && "The eligibility rules support this country pair.",
+      verdict === "supported" && "The eligibility rules support this country pair.",
       routeTiming && `Published settlement for the receiving method: ${routeTiming}.`,
       feeSummary && "Publishes pricing information for this product.",
-      provider.hasApi && "The provider documents an API.",
     ].filter((value): value is string => Boolean(value));
-    const considerations = [
-      evaluation.reasons.flatMap(row => row.wouldChange)[0],
-      !feeSummary && "Confirm fees and FX with the provider for this setup.",
-      !onboarding && "Confirm how long onboarding takes.",
-      !timing && "Confirm how long the transfer takes.",
-    ].filter((value): value is string => Boolean(value));
-    return {
-      slug: provider.slug, name: provider.name, category: provider.category, website: comparisonLink(provider.websiteUrl),
-      verdict: evaluation.verdict, reason, advantages, considerations, sources: [...sources.values()],
+    const considerations = missingProductEvidence ? [] : evaluation.reasons.flatMap(row => row.wouldChange).slice(0, 1);
+    return addPublishedComparisonFacts({
+      slug: provider.slug, name: provider.name, category: provider.category, website: comparisonLink(provider.websiteUrl), product,
+      verdict, reason, advantages, considerations, sources: [...sources.values()],
       facts: [
         { label: "Product reviewed", value: productLabel ?? UNKNOWN },
         { label: "KYC / KYB requirements", value: verificationRequirements.join(" · ") || UNKNOWN, detail: verificationRequirements.length ? "Published documents and eligibility conditions" : undefined },
@@ -114,10 +110,11 @@ export async function buildRouteComparison(request: RouteComparisonRequest): Pro
         { label: "Payout timing", value: timing ?? UNKNOWN, detail: routeTiming ? "Published for the receiving method" : timing ? "Provider-wide estimate" : undefined },
         { label: "Receiving method", value: evaluation.receivingMode?.namedRail ?? evaluation.receivingMode?.endpointType?.replaceAll("_", " ") ?? UNKNOWN },
         { label: "Published fees", value: feeSummary || UNKNOWN, detail: feeSummary ? productLabel : undefined },
+        { label: "Tax on transfer", value: UNKNOWN },
         { label: "Published limits", value: limitSummary || UNKNOWN, detail: limitSummary ? productLabel : undefined },
         { label: "Other requirements", value: otherRequirements.join(", ") || UNKNOWN },
       ],
-    };
+    }, request);
   });
   return {
     request, origin: from.name, destination: to.name, candidates, checkedAt: now.toISOString(),

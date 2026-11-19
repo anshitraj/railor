@@ -7,6 +7,7 @@ import { CompareBoard } from "../../../components/app/compare-table";
 import { RailorMark } from "../../../components/marketing/nav";
 import { buildRouteComparison } from "../../../lib/route-comparison";
 import { RouteComparisonRequest } from "../../../lib/route-comparison-model";
+import { addRouteComparisonResearch } from "../../../lib/route-comparison-research";
 import { RouteComparisonResults } from "../../../components/app/route-comparison-results";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,8 @@ export default async function SharedComparison({
   if (!shared) notFound();
 
   const route = RouteComparisonRequest.safeParse(shared.query.routeComparison);
-  const comparison = route.success ? await buildRouteComparison(route.data) : null;
+  const documented = route.success ? await buildRouteComparison(route.data) : null;
+  const comparison = documented ? await addRouteComparisonResearch(documented, "read").catch(() => documented) : null;
   const table = route.success ? null : await buildComparison(shared.providerSlugs);
   if (!comparison && !table) notFound();
 
@@ -52,13 +54,13 @@ export default async function SharedComparison({
       {table ? <CompareBoard table={table} selected={shared.providerSlugs} available={[]} readOnly /> : null}
 
       <p className="text-[12px] text-[var(--color-faint)]">
-        Generated from Railor&apos;s capability graph on{" "}
+        Shared on{" "}
         {shared.createdAt.toLocaleDateString(undefined, {
           day: "numeric",
           month: "short",
           year: "numeric",
         })}
-        . Each row is sourced; open the provider profile for the evidence behind it.
+        . Open the source links in the comparison to check the published terms.
       </p>
     </main>
   );
