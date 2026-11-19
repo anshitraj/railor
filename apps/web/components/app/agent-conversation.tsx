@@ -76,9 +76,24 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     catch { setStorageAvailable(false); }
   }, [historyLoaded, historyScope, activeChat, messages, intent, preference, policyId, product, method]);
 
+  // While working, follow the bottom. When an answer lands, start it at the top
+  // of the view, so a tall request card or result shows its first line, not its end.
   useEffect(() => {
-    if (feed.current) feed.current.scrollTop = messages.length ? feed.current.scrollHeight : 0;
-  }, [messages.length, pending]);
+    const element = feed.current;
+    if (!element) return;
+    if (!messages.length) { element.scrollTop = 0; return; }
+    if (pending) { element.scrollTop = element.scrollHeight; return; }
+    const frame = requestAnimationFrame(() => {
+      const answers = element.querySelectorAll<HTMLElement>('[data-role="agent"]');
+      // A fresh request card is the thing to act on: start the view at its top.
+      const card = !preview ? element.querySelector<HTMLElement>("section[aria-label='Your request']") : null;
+      const last = card ?? answers[answers.length - 1];
+      if (!last) { element.scrollTop = element.scrollHeight; return; }
+      const top = last.getBoundingClientRect().top - element.getBoundingClientRect().top + element.scrollTop;
+      element.scrollTop = Math.max(0, top - 12);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [messages.length, pending, preview]);
   useEffect(() => {
     const element = workspace.current;
     if (!element) return;
@@ -318,7 +333,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
               if (commands.length && event.key === "Escape") { event.preventDefault(); setText(""); return; }
               if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(commands.length ? commands[Math.min(commandIndex, commands.length - 1)]!.name : text); }
             }}
-            placeholder={messages.length ? "Ask a follow-up, or describe another movement…" : "Ask anything about moving money…"} />
+            placeholder={messages.length ? "Ask a follow-up…" : "Ask anything about moving money…"} />
           <div className={styles.composerBottom}><button type="button" className={styles.slashButton} onClick={() => { setText("/"); setCommandIndex(0); composer.current?.focus(); }} aria-label="Show commands" title="Commands">/</button><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Answers with sources"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
         </form>
         <p className={styles.composerHint}><span>Enter to send · Shift + Enter for a new line · / for commands</span><span>A decision is recorded only when you choose a provider.</span></p>

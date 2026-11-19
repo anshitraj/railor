@@ -57,14 +57,29 @@
 .editorInner { display: grid; gap: 16px; padding: 18px; }
 .editorInner > .primary { justify-self: end; }
 
+/* Phones: the whole card fits on one screen next to the composer. */
 @container (max-width: 560px) {
-  .amount { font-size: 25px; }
-  .route { gap: 8px; padding: 10px 12px; }
-  .foot { flex-direction: column; align-items: stretch; }
-  .primary { width: 100%; margin-left: 0; }
-  /* Every choice stays visible: the pills wrap rather than scroll the selected one away. */
-  .pills { flex-wrap: wrap; border-radius: 18px; }
-  .pills button { flex: 1 0 auto; }
+  .card { margin-top: 12px; border-radius: 20px; }
+  .head { padding: 12px 14px 0; }
+  .status { padding: 4px 9px; font-size: 12px; }
+  .edit { min-height: 32px; padding: 0 8px; font-size: 12.5px; }
+  .amount { gap: 2px 8px; padding: 8px 14px 0; font-size: 23px; }
+  .route { gap: 8px; margin: 10px 14px 0; padding: 9px 12px; border-radius: 14px; }
+  .party small { display: none; }
+  .partyMain strong { font-size: 14px; }
+  .partyType { font-size: 11.5px; }
+  .details { gap: 5px; padding: 8px 14px 0; }
+  .details li { padding: 3px 9px; font-size: 12px; }
+  .missing { width: calc(100% - 28px); margin: 10px 14px 0; }
+  .preference { gap: 6px; padding: 12px 14px 0; }
+  /* One row that scrolls sideways; the chosen pill is kept in view by the card. */
+  .pills { flex-wrap: nowrap; mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .pills button { flex: none; height: 32px; padding: 0 11px; font-size: 12.5px; }
+  .foot { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 14px 14px; }
+  .policy select { max-width: none; flex: 1; }
+  .policyNote { font-size: 12px; }
+  .primary { width: 100%; height: 42px; margin-left: 0; font-size: 14px; }
+  .editorInner { padding: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .connector i { animation: none; left: calc(50% - 4px); }
