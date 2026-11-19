@@ -55,7 +55,7 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
   }, [cursor, position, id]);
   return <>
     <button ref={trigger} id={`${id}-trigger`} type="button" aria-label={label} aria-haspopup="listbox" aria-expanded={Boolean(position)} aria-controls={position ? `${id}-list` : undefined} className={styles.trigger} onClick={() => position ? close() : open()} onKeyDown={event => { if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); open(); } }}>
-      {value && renderMark(value)}<span>{selected?.label ?? (value || placeholder)}</span><ChevronDown size={15} aria-hidden />
+      {value && <span className={styles.mark}>{renderMark(value)}</span>}<span className={styles.label}>{selected?.label ?? (value || placeholder)}</span><ChevronDown size={15} aria-hidden />
     </button>
     {position && createPortal(<div ref={panel} className={styles.panel} style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.height }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) close(); }}>
       <div className={styles.search}><Search size={15} aria-hidden /><input ref={input} role="combobox" aria-label={`Search ${label.toLowerCase()}`} aria-expanded aria-controls={`${id}-list`} aria-autocomplete="list" aria-activedescendant={active ? `${id}-option-${Math.min(cursor, choices.length - 1)}` : undefined} placeholder="Search by name or code" value={query} onChange={event => { setQuery(event.target.value); setCursor(0); }} onKeyDown={event => {
@@ -65,7 +65,7 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
         if (event.key === "Escape") { event.preventDefault(); close(true); }
       }} /></div>
       <ul id={`${id}-list`} role="listbox" aria-label={label} className={styles.options}>{choices.map((option, index) => <li key={option.value} id={`${id}-option-${index}`} role="option" aria-selected={value === option.value} data-active={cursor === index} onMouseEnter={() => setCursor(index)} onMouseDown={event => event.preventDefault()} onClick={() => choose(option.value)}>
-        {option.value && renderMark(option.value)}<span>{option.label}</span>{showCode && option.value && <small>{option.value}</small>}{value === option.value && <Check size={14} aria-hidden />}
+        {option.value && <span className={styles.mark}>{renderMark(option.value)}</span>}<span className={styles.label}>{option.label}</span>{showCode && option.value && <small>{option.value}</small>}{value === option.value && <Check size={14} aria-hidden />}
       </li>)}{!choices.length && query && <li className={styles.empty}>No matches. Try another name or code.</li>}</ul>
     </div>, document.body)}
   </>;

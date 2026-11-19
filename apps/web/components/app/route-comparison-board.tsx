@@ -111,7 +111,7 @@ export function RouteComparisonBoard({ providers, countries, initialProviders, i
                 <span className={styles.slotMark}>{provider ? <ProviderLogo slug={provider.value} name={provider.label} size={39} loading="eager" /> : <Building2 size={21} aria-hidden />}</span>
                 <div className={styles.slotContent}>
                   <h2>{label}</h2>
-                  <RouteOptionPicker label={label} options={providers.filter(item => item.value !== draft.providers[1 - index])} value={slug} menuWidth={300} showCode={false} placeholder="Choose provider" onChange={value => chooseProvider(index, value)} renderMark={value => <ProviderLogo slug={value} name={providers.find(item => item.value === value)?.label ?? value} size={22} localOnly />} />
+                  <RouteOptionPicker label={label} options={providers.filter(item => item.value !== draft.providers[1 - index])} value={slug} menuWidth={300} showCode={false} placeholder="Choose provider" onChange={value => chooseProvider(index, value)} renderMark={value => <ProviderLogo slug={value} name={providers.find(item => item.value === value)?.label ?? value} size={22} />} />
                   {provider ? <p>{provider.category}</p> : null}
                 </div>
               </div>;
