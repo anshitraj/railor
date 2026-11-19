@@ -19,6 +19,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#f6f3ed",
+  // Android: the on-screen keyboard shrinks the page instead of covering it,
+  // so sheets and the chat composer stay above the keyboard.
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

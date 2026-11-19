@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { Flag, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
@@ -21,6 +22,11 @@ export function CurrencyMark({ option, code, size = 24 }: { option?: PickerOptio
 /**
  * A currency pill that opens a searchable list. Popular currencies sit on
  * top so most people never type; on phones the list rises as a sheet.
+ *
+ * On phones the sheet is rendered into <body>: inside the page, a parent with
+ * containment or a transform would pin it to the page instead of the screen.
+ * The search box isn't focused there either, so the keyboard doesn't open
+ * over the list until you ask to type.
  */
 export function CurrencyPicker({ label, value, options, onChange, align = "end" }: {
   label: string;
@@ -35,6 +41,8 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [phone, setPhone] = useState(false);
   const listId = useId();
   const selected = options.find((option) => option.value === value);
 
@@ -49,8 +57,11 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
   useEffect(() => {
     if (!open) return;
     setActive(Math.max(0, list.findIndex((option) => option.value === value)));
-    const frame = window.requestAnimationFrame(() => search.current?.focus({ preventScroll: true }));
-    const away = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
+    const small = window.matchMedia("(max-width: 639px)").matches;
+    setPhone(small);
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    const frame = window.requestAnimationFrame(() => { if (!touch) search.current?.focus({ preventScroll: true }); });
+    const away = (event: PointerEvent) => { const target = event.target as Node; if (!root.current?.contains(target) && !panel.current?.contains(target)) setOpen(false); };
     document.addEventListener("pointerdown", away);
     return () => { window.cancelAnimationFrame(frame); document.removeEventListener("pointerdown", away); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,16 +97,16 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${label}: ${value}. Change currency`}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => { setPhone(window.matchMedia("(max-width: 639px)").matches); setOpen((current) => !current); }}
       >
         <CurrencyMark option={selected} code={value} size={24} />
         <span>{value}</span>
         <ChevronDown size={16} aria-hidden className={styles.pickerChevron} data-open={open || undefined} />
       </button>
-      {open ? (
-        <>
+      {open ? (() => {
+        const sheet = <>
           <button type="button" className={styles.pickerScrim} aria-label="Close currency list" onClick={() => setOpen(false)} />
-          <div className={styles.pickerPanel} data-align={align} role="dialog" aria-label={label}>
+          <div ref={panel} className={styles.pickerPanel} data-align={align} role="dialog" aria-label={label} onKeyDown={phone ? onKeyDown : undefined}>
             <label className={styles.pickerSearch}>
               <Search size={16} aria-hidden />
               <input
@@ -136,8 +147,9 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
               {!list.length ? <li className={styles.pickerEmpty}>No currency matches “{query}”.</li> : null}
             </ul>
           </div>
-        </>
-      ) : null}
+        </>;
+        return phone ? createPortal(sheet, document.body) : sheet;
+      })() : null}
     </div>
   );
 }

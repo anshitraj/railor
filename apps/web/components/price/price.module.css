@@ -22,8 +22,8 @@
 .pickerEmpty { padding: 18px 12px; color: var(--color-muted); font-size: 13.5px; }
 @keyframes pickerIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
 @media (max-width: 639px) {
-  .pickerScrim { position: fixed; inset: 0; z-index: 39; display: block; background: rgb(21 19 16 / .3); animation: scrimIn .18s ease both; }
-  .pickerPanel, .pickerPanel[data-align="end"], .pickerPanel[data-align="start"] { position: fixed; top: auto; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); left: 10px; width: auto; border-radius: 22px; transform-origin: bottom center; animation: sheetIn .26s var(--ease-drawer) both; }
+  .pickerScrim { position: fixed; inset: 0; z-index: 79; display: block; background: rgb(21 19 16 / .3); animation: scrimIn .18s ease both; }
+  .pickerPanel, .pickerPanel[data-align="end"], .pickerPanel[data-align="start"] { position: fixed; z-index: 80; top: auto; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); left: 10px; width: auto; border-radius: 22px; transform-origin: bottom center; animation: sheetIn .26s var(--ease-drawer) both; }
   .pickerList { max-height: min(56dvh, 440px); }
 }
 @keyframes scrimIn { from { opacity: 0; } }

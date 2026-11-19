@@ -98,7 +98,12 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     const element = workspace.current;
     if (!element) return;
     // Fit below the actual app header, including wrapped demo banners on mobile.
-    const fit = () => element.style.setProperty("--agent-top", `${Math.round(element.getBoundingClientRect().top + window.scrollY)}px`);
+    // The real visible height (100dvh can disagree with it on phones while the
+    // browser bar moves), so the chat fills the screen exactly and never scrolls the page.
+    const fit = () => {
+      element.style.setProperty("--agent-top", `${Math.round(element.getBoundingClientRect().top + window.scrollY)}px`);
+      element.style.setProperty("--agent-vh", `${Math.round(window.innerHeight)}px`);
+    };
     fit();
     const observer = new ResizeObserver(fit);
     if (element.parentElement) observer.observe(element.parentElement);
