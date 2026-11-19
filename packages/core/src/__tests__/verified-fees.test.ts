@@ -49,7 +49,9 @@ describe("first-party fee schedules (checked 2026-11-18)", () => {
     expect(xflow.product).toEqual({ id: "xflow:growth", label: "Xflow · Growth plan account" });
     expect(xflow.missing?.[0]).toContain("conversion rate");
     expect(xflow.taxNote).toContain("reverse charge");
-    expect(result.rows.find((row) => row.providerSlug === "infinity")).toMatchObject({ feeAmount: 20, taxIncluded: true, receipt: "FIRA (free, automatic)", recipientAmount: 358_200 });
+    expect(result.rows.find((row) => row.providerSlug === "infinity")).toMatchObject({ feeAmount: 20, taxIncluded: true, recipientAmount: 358_200,
+      // The receipt wording comes from Infinity's own FIRA help page (receiving-evidence.ts).
+      receipt: expect.stringContaining("Free bank-issued FIRA") });
   });
 
   it("lists Wise Business India receiving without a price, apart from 'Client sends with Wise'", async () => {
