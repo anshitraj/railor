@@ -15,9 +15,19 @@ describe("Google sign-in for personal and company accounts", () => {
     vi.stubGlobal("fetch", fetch);
     const { completeOAuthExchange } = await import("./oauth");
     expect(await completeOAuthExchange("google", "one-use-code", "https://www.railor.xyz/api/auth/oauth/google/callback"))
-      .toEqual({ email, name: "Test User" });
+      .toEqual({ email, name: "Test User", avatarUrl: null });
     expect(fetch.mock.calls[0]?.[0]).toBe("https://oauth2.googleapis.com/token");
     expect(fetch.mock.calls[1]?.[0]).toBe("https://openidconnect.googleapis.com/v1/userinfo");
+  });
+
+  it("keeps the Google profile photo, and only from Google's image host", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(Response.json({ access_token: "a" }))
+      .mockResolvedValueOnce(Response.json({ email: "p@gmail.com", email_verified: true, name: "P", picture: "https://lh3.googleusercontent.com/a/photo=s96-c" })));
+    const { completeOAuthExchange, providerAvatar } = await import("./oauth");
+    expect((await completeOAuthExchange("google", "c", "https://www.railor.xyz/cb")).avatarUrl).toBe("https://lh3.googleusercontent.com/a/photo=s96-c");
+    expect(providerAvatar("https://evil.example/x.png", /(^|\.)googleusercontent\.com$/)).toBeNull();
+    expect(providerAvatar("http://lh3.googleusercontent.com/x", /(^|\.)googleusercontent\.com$/)).toBeNull();
+    expect(providerAvatar("javascript:alert(1)", /(^|\.)googleusercontent\.com$/)).toBeNull();
   });
 
   it("refuses an unverified email", async () => {

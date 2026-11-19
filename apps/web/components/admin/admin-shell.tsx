@@ -78,7 +78,7 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
         <div className="mt-3 border-t border-white/10 pt-3 text-[13px] text-white/65">
           <p className="truncate">{email}</p>
           <Link href="/app" className="mt-1 inline-flex items-center gap-1 text-white/70 hover:text-white">
-            <FileClock size={12} /> Back to workspace
+            <FileClock size={12} /> Back to dashboard
           </Link>
         </div>
       </aside>
@@ -89,7 +89,7 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
           </button>
           <Link href="/admin" aria-label="Railor operations overview" className="shrink-0 md:hidden"><RailorMark size={23} /></Link>
           <span className="min-w-0 truncate text-[12px] text-[var(--color-muted)]"><span className="hidden sm:inline">Operations <span aria-hidden className="mx-2">/</span></span><span className="font-semibold text-[var(--color-ink)]">{NAV.find((item) => item.exact ? pathname === item.href : pathname.startsWith(item.href))?.label ?? "Overview"}</span></span>
-          <Link href="/app" className="ml-auto shrink-0 rounded-xl border border-[var(--color-line)] px-3 py-2 text-[12px] font-semibold hover:bg-[var(--color-surface)]">Workspace →</Link>
+          <Link href="/app" className="ml-auto shrink-0 rounded-xl border border-[var(--color-line)] px-3 py-2 text-[12px] font-semibold hover:bg-[var(--color-surface)]">Dashboard →</Link>
         </header>
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div key={pathname} className="railor-page-in mx-auto flex max-w-[1240px] flex-col gap-6">

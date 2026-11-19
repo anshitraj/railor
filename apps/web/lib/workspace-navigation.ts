@@ -9,13 +9,14 @@ export const RULE_PATHS = ["/app/policies", "/app/decisions", "/app/approvals", 
 export const ACTIVITY_PATHS = ["/app/payments", "/app/changes", "/app/monitoring", "/app/evidence", "/app/discovery", "/app/beneficiaries", "/app/routing", "/app/readiness"];
 export const DEVELOPER_PATHS = ["/app/developers", "/app/connectors", "/app/settings/connections"];
 
-export type WorkspaceArea = "Home" | "Prices" | "Routes" | "Company" | "Activity" | "Developers" | "Agent" | "Settings";
+export type WorkspaceArea = "Home" | "Saved" | "Transfer" | "Routes" | "Company" | "Activity" | "Developers" | "Agent" | "Settings";
 
 export const matchesPath = (pathname: string, path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
 export function workspaceArea(pathname: string): WorkspaceArea {
   if (pathname === "/app") return "Home";
-  if (PRICE_PATHS.some((path) => matchesPath(pathname, path))) return "Prices";
+  if (matchesPath(pathname, "/app/saved")) return "Saved";
+  if (PRICE_PATHS.some((path) => matchesPath(pathname, path))) return "Transfer";
   if (ROUTE_PATHS.some((path) => matchesPath(pathname, path))) return "Routes";
   if (RULE_PATHS.some((path) => matchesPath(pathname, path))) return "Company";
   if (DEVELOPER_PATHS.some((path) => matchesPath(pathname, path))) return "Developers";

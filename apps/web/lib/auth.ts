@@ -23,6 +23,8 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string | null;
+  /** Profile photo from Google or GitHub sign-in, if any. */
+  avatarUrl: string | null;
   isAdmin: boolean;
 }
 
@@ -99,14 +101,19 @@ export async function consumeMagicLink(value: string) {
 }
 
 /** Shared by magic-link and OAuth sign-in so "who counts as the same user" never diverges between paths. */
-export async function findOrCreateUserByEmail(email: string, name?: string | null) {
+export async function findOrCreateUserByEmail(email: string, name?: string | null, avatarUrl?: string | null) {
   await ensureMigrated();
   const db = await getDb();
   const normalized = email.trim().toLowerCase();
   let [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
   if (!user) {
-    await db.insert(users).values({ email: normalized, name: name ?? undefined }).onConflictDoNothing();
+    await db.insert(users).values({ email: normalized, name: name ?? undefined, avatarUrl: avatarUrl ?? undefined }).onConflictDoNothing();
     [user] = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  } else if ((avatarUrl && avatarUrl !== user.avatarUrl) || (name && !user.name)) {
+    // Signing in with Google or GitHub keeps the photo in step with that account;
+    // a name the person already set in Railor is never overwritten.
+    const patch = { ...(avatarUrl ? { avatarUrl } : {}), ...(name && !user.name ? { name } : {}) };
+    [user] = await db.update(users).set(patch).where(eq(users.id, user.id)).returning();
   }
   return user ?? null;
 }
@@ -196,6 +203,7 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
       id: row.user.id,
       email: row.user.email,
       name: row.user.name,
+      avatarUrl: row.user.avatarUrl,
       isAdmin: row.user.isAdmin,
     },
     organization: membership?.org ?? null,

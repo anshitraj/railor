@@ -5,6 +5,17 @@ export type OAuthProviderName = "google" | "github";
 interface ProviderProfile {
   email: string;
   name: string | null;
+  /** The account's own profile photo, only from the provider's image host. */
+  avatarUrl: string | null;
+}
+
+/** Keeps a profile photo only when it is served over https by the provider itself. */
+export function providerAvatar(value: unknown, hosts: RegExp): string | null {
+  if (typeof value !== "string" || value.length > 1000) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && hosts.test(url.hostname) && !url.username && !url.password ? url.toString() : null;
+  } catch { return null; }
 }
 
 interface ProviderConfig {
@@ -57,11 +68,11 @@ async function googleProfile(accessToken: string): Promise<ProviderProfile> {
     headers: { authorization: `Bearer ${accessToken}` },
   });
   if (!response.ok) throw new Error(`google userinfo failed: ${response.status}`);
-  const json = (await response.json()) as { email?: string; email_verified?: boolean; name?: string };
+  const json = (await response.json()) as { email?: string; email_verified?: boolean; name?: string; picture?: string };
   if (!json.email || json.email_verified !== true) {
     throw new Error("google account has no verified email");
   }
-  return { email: json.email.toLowerCase(), name: json.name ?? null };
+  return { email: json.email.toLowerCase(), name: json.name ?? null, avatarUrl: providerAvatar(json.picture, /(^|\.)googleusercontent\.com$/) };
 }
 
 async function githubExchange({
@@ -102,7 +113,7 @@ const githubHeaders = (accessToken: string) => ({
 async function githubProfile(accessToken: string): Promise<ProviderProfile> {
   const response = await fetch("https://api.github.com/user", { headers: githubHeaders(accessToken), signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`github user fetch failed: ${response.status}`);
-  const json = (await response.json()) as { email?: string | null; name?: string | null };
+  const json = (await response.json()) as { email?: string | null; name?: string | null; avatar_url?: string | null };
 
   let email: string | null = null;
   {
@@ -123,7 +134,7 @@ async function githubProfile(accessToken: string): Promise<ProviderProfile> {
     }
   }
   if (!email) throw new Error("github account has no verified email");
-  return { email, name: json.name ?? null };
+  return { email, name: json.name ?? null, avatarUrl: providerAvatar(json.avatar_url, /(^|\.)githubusercontent\.com$/) };
 }
 
 const PROVIDERS: Record<OAuthProviderName, ProviderConfig> = {

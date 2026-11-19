@@ -3,6 +3,7 @@ import { getSession } from "../../../lib/auth";
 import { loadPricePage, productionConnectedSlugs } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
 import { PriceCheckHeader, PriceHelpLinks, PriceModeTabs } from "../../../components/app/price-panels";
+import { listSavedPairs } from "../../../lib/saved-pairs";
 import { StablecoinQuote } from "../../../components/price/stablecoin-quote";
 import { stablecoinInitial } from "../../../lib/stablecoin-routes";
 import { SwapQuote } from "../../../components/app/swap-quote";
@@ -28,7 +29,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
       </div>
     );
   }
-  const [page, connected] = await Promise.all([loadPricePage(params, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id)]);
+  const [page, connected, savedPairs] = await Promise.all([loadPricePage(params, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id), listSavedPairs(org.id).catch(() => [])]);
 
   return (
     <div className={styles.page}>
@@ -43,6 +44,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           initialResult={page.result}
           initialError={page.error}
           executable={page.executable}
+          savedPairs={savedPairs}
           connected={connected}
         />
       <PriceHelpLinks />

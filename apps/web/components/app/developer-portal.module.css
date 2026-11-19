@@ -86,9 +86,14 @@
 }
 @media (max-width: 600px) {
   .card { padding: 18px; border-radius: 20px; }
-  .key { flex-wrap: wrap; padding: 12px; }
-  .key code { flex-basis: 100%; }
+  /* One row on phones: the key truncates, the buttons stay beside it. Revealed, it may wrap. */
+  .key { padding: 6px 6px 6px 12px; gap: 4px; }
+  .key code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  .key[data-revealed] { flex-wrap: wrap; }
+  .key[data-revealed] code { flex-basis: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .key .primary { padding: 0 12px; }
   .snippet { flex-direction: column; }
   .snippet pre { width: 100%; }
   .clients { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+@media (max-width: 380px) { .copyLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .key .primary { width: 38px; padding: 0; } }

@@ -6,8 +6,8 @@ import { matchesPath, workspaceArea, type WorkspaceArea } from "../../lib/worksp
 
 /** The tabs inside each workspace area: everything that lives there, one tap away. */
 const AREAS: Partial<Record<WorkspaceArea, Array<[label: string, href: string]>>> = {
-  Prices: [["Price check", "/app/prices"], ["Get paid · invoices", "/app/freelancer"]],
-  Routes: [["Find a route", "/app/search"], ["Saved routes", "/app/corridors"], ["Providers", "/app/providers"], ["Compare providers", "/app/compare"], ["Route map", "/app/map"]],
+  Transfer: [["Compare & send", "/app/prices"], ["Get paid · invoices", "/app/freelancer"]],
+  Routes: [["Find a route", "/app/search"], ["Providers", "/app/providers"], ["Compare providers", "/app/compare"], ["Route map", "/app/map"]],
   Company: [["Payment audit", "/app/audit"], ["Payroll pricing", "/app/payroll"], ["Company rules", "/app/policies"], ["Rule checks", "/app/decisions"], ["Team reviews", "/app/approvals"]],
   Activity: [["Payments", "/app/payments"], ["Changes", "/app/changes"], ["Monitoring", "/app/monitoring"], ["Evidence", "/app/evidence"]],
   Developers: [["API & AI tools", "/app/developers"], ["Provider accounts", "/app/settings/connections"], ["Self-hosted runtime", "/app/connectors"]],

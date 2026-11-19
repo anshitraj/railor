@@ -43,6 +43,19 @@ export async function updateWorkspaceName(name: string) {
   return { ok: true as const };
 }
 
+/** Your own display name. Your email is your sign-in, so it isn't editable here. */
+export async function updateProfileName(name: string) {
+  const parsed = z.string().trim().min(1).max(80).safeParse(name);
+  if (!parsed.success) return { ok: false as const, error: "Enter a name between 1 and 80 characters." };
+  const session = await requireSession();
+  const { getDb, users } = await import("@railor/database");
+  const { eq } = await import("drizzle-orm");
+  const db = await getDb();
+  await db.update(users).set({ name: parsed.data }).where(eq(users.id, session.user.id));
+  revalidatePath("/app", "layout");
+  return { ok: true as const };
+}
+
 export async function inviteTeammate(input: { email: string; role: string }) {
   return guarded(async () => {
     const parsed = z.object({ email: z.string().trim().email().max(320), role: z.enum(INVITE_ROLES) }).parse(input);

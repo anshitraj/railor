@@ -2,15 +2,15 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
-import { getDefaultActivePolicy, listPolicies, searchCorridors } from "@railor/core";
+import { getDefaultActivePolicy, listPolicies } from "@railor/core";
 import { apiKeys, getDb } from "@railor/database";
-import { CorridorQuery } from "@railor/types";
-import { ArrowRight, Bot, Check, ChevronRight, FileText, ListChecks, Radar, Route } from "lucide-react";
+import { ArrowRight, Bookmark, Bot, Check, ChevronRight, FileText, ListChecks, Radar, Route } from "lucide-react";
 import { getSession } from "../../lib/auth";
-import { getSatisfiedRequirements, getOrgAlerts, getSavedCorridors } from "../../lib/org";
+import { getOrgAlerts } from "../../lib/org";
+import { listSavedPairs } from "../../lib/saved-pairs";
+import { SavedPairsList } from "../../components/app/saved-pairs-list";
 import { loadPricePage } from "../../lib/pricing";
 import { onboardingPriceProfile } from "../../lib/onboarding";
-import { RoutePill } from "../../components/app/route-pill";
 import { ActivityCards } from "../../components/app/activity-cards";
 import { QuickQuote, QuickQuoteSkeleton } from "../../components/price/quick-quote";
 import styles from "../../components/app/home.module.css";
@@ -39,25 +39,20 @@ export default async function HomePage() {
   if (!session?.organization) redirect("/login");
   const org = session.organization;
   const db = await getDb();
-  const [corridors, alerts, satisfiedRequirements, activePolicy, policies, usedKeys, anyKeys] = await Promise.all([
-    getSavedCorridors(org.id), getOrgAlerts(org.id, 3), getSatisfiedRequirements(org.id), getDefaultActivePolicy(org.id), listPolicies(org.id),
+  const [savedPairs, alerts, activePolicy, policies, usedKeys, anyKeys] = await Promise.all([
+    listSavedPairs(org.id).catch(() => []), getOrgAlerts(org.id, 3), getDefaultActivePolicy(org.id), listPolicies(org.id),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt), isNotNull(apiKeys.lastUsedAt))).limit(1),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt))).limit(1),
   ]);
-  const routes = await Promise.all(corridors.slice(0, 4).map(async (corridor) => {
-    const query = CorridorQuery.parse(corridor.query);
-    const result = await searchCorridors(query, { satisfiedRequirements, recordTelemetry: false });
-    return { corridor, query, supported: result.counts.supported };
-  }));
   const name = (session.user.name ?? session.user.email.split("@")[0] ?? "there").split(" ")[0];
   const business = onboardingPriceProfile(org.building) === "business";
   const savedPolicy = activePolicy?.policy ?? policies.find((policy) => policy.status === "draft" || policy.status === "active") ?? null;
 
   // A real checklist: each step is done only when the workspace shows it.
   const steps = [
-    { done: true, title: "Create your workspace", href: "/app/settings", action: "Settings" },
+    { done: true, title: "Create your dashboard", href: "/app/settings", action: "Settings" },
     { done: Boolean(org.onboardingCompletedAt), title: "Tell us how you use Railor", href: "/welcome", action: "Answer 3 questions" },
-    { done: corridors.length > 0, title: "Save a route to watch", href: "/app/search", action: "Find a route" },
+    { done: savedPairs.length > 0, title: "Save a pair you use", href: "/app/prices", action: "Open Transfer" },
     ...(business ? [{ done: Boolean(activePolicy), title: "Set your company rules", href: savedPolicy ? `/app/policies/${savedPolicy.id}` : "/app/policies", action: savedPolicy ? "Finish rules" : "Set rules" }] : []),
     { done: usedKeys.length > 0, title: anyKeys.length ? "Make your first API request" : "Get your API key", href: "/app/developers", action: anyKeys.length ? "Try the API" : "Get a key" },
   ];
@@ -69,7 +64,7 @@ export default async function HomePage() {
       <header className={styles.welcome}>
         <div>
           <h1>Welcome back, {name}</h1>
-          <p>Check a price, keep an eye on your routes, or set up your tools.</p>
+          <p>Compare a transfer, open what you saved, or set up your tools.</p>
         </div>
       </header>
 
@@ -80,6 +75,7 @@ export default async function HomePage() {
           </Suspense>
         </div>
 
+        <div className={styles.rightCol}>
         <aside className={styles.setup} aria-label="Get set up">
           <div className={styles.setupHead}>
             <div>
@@ -98,6 +94,11 @@ export default async function HomePage() {
             ))}
           </ol>
         </aside>
+        <section className={styles.savedPanel} aria-labelledby="home-saved">
+          <header><h2 id="home-saved"><Bookmark size={16} aria-hidden />Saved</h2><Link href="/app/saved">View all<ChevronRight size={15} aria-hidden /></Link></header>
+          <SavedPairsList initial={savedPairs.slice(0, 3)} compact />
+        </section>
+        </div>
       </section>
 
       <nav aria-label="Shortcuts" className={styles.shortcuts}>
@@ -115,26 +116,7 @@ export default async function HomePage() {
         ))}
       </nav>
 
-      <section className={styles.lists} aria-label="Your workspace">
-        <div className={styles.panel}>
-          <header><h2><Route size={17} aria-hidden />Your routes</h2><Link href="/app/corridors">View all<ChevronRight size={15} aria-hidden /></Link></header>
-          {routes.length ? <ul className={styles.routes}>{routes.map(({ corridor, query, supported }) => (
-            <li key={corridor.id}>
-              <Link href={`/app/corridors?saved=${corridor.id}`} className={styles.route}>
-                <span className={styles.routeTokens}><RoutePill value={query.sourceAsset ?? query.sourceCurrency ?? "Unknown"} /><ArrowRight size={14} aria-hidden /><RoutePill value={query.destinationCurrency ?? query.destinationCountry ?? "Unknown"} /></span>
-                <span className={styles.routeLabel}>{corridor.label}</span>
-                <span className={styles.routeStatus} data-warning={!supported || undefined}>{supported ? `${supported} compatible` : "Review coverage"}</span>
-              </Link>
-            </li>
-          ))}</ul> : (
-            <div className={styles.empty}>
-              <Route size={24} aria-hidden />
-              <h3>No saved routes yet</h3>
-              <p>Save a route to see who serves it and get told when that changes.</p>
-              <Link href="/app/search" className={`${styles.emptyAction} press`}>Find a route<ArrowRight size={15} aria-hidden /></Link>
-            </div>
-          )}
-        </div>
+      <section className={`${styles.lists} ${styles.listsSingle}`} aria-label="Your dashboard">
         <div className={styles.panel}>
           <header><h2><Radar size={17} aria-hidden />Latest changes</h2><Link href="/app/changes">View all<ChevronRight size={15} aria-hidden /></Link></header>
           {alerts.length ? <ActivityCards items={alerts.map(({ alert, change, providerName, providerSlug }) => ({ id: alert.id, providerName, providerSlug, summary: change.summary, detectedAt: change.detectedAt }))} /> : (

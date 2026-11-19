@@ -187,8 +187,10 @@
   }
 }
 
+/* backwards, not both: once the rise ends the page keeps no transform, so
+   position: fixed sheets and drawers inside it stay pinned to the screen. */
 .railor-page-in {
-  animation: railor-page-in 0.22s var(--ease-out) both;
+  animation: railor-page-in 0.22s var(--ease-out) backwards;
 }
 
 

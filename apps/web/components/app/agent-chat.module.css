@@ -167,7 +167,9 @@
   .toolsBody { padding: 16px; }
 }
 @media (max-width: 767px) {
-  .workspace { height: calc(var(--workspace-viewport-height,100dvh) - var(--agent-top,96px) - var(--workspace-mobile-nav-height,0px) - 30px); min-height:240px; }
+  /* Fill the screen down to 8px above the tab bar; the negative margin cancels the
+     main area's bottom padding so the page itself has nothing left to scroll. */
+  .workspace { height: calc(min(var(--workspace-viewport-height,100dvh), var(--agent-vh,100dvh)) - var(--agent-top,96px) - var(--workspace-mobile-nav-height,0px) - 8px); min-height:240px; margin-bottom: -24px; }
 }
 @media (prefers-reduced-motion: reduce) { .feed { scroll-behavior: auto; } .welcome, .message, .artSignal, .working i { animation: none; } .starter, .composer, .send, .iconButton { transition: none; } .starter:hover { transform: none; } }
 
@@ -222,7 +224,6 @@
   /* The app header already carries the logo: keep the agent bar slim, like a chat app's title row. */
   .toolbar { padding: 0 0 8px; }
   .identity { font-size: 15px; }
-  .identity > :first-child { display: none; }
   .identity small { display: none; }
   .toolbarActions .iconButton { min-width: 34px; min-height: 34px; padding: 6px; border-color: transparent; background: transparent; }
   .toolbarActions .iconButton:hover { background: var(--color-sand); }

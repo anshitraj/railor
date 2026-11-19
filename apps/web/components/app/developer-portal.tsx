@@ -116,13 +116,13 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
         </div>
         {primary ? (
           <>
-            <div className={styles.key}>
+            <div className={styles.key} data-revealed={(revealed && secret) || undefined}>
               <code aria-label="API key">{revealed && secret ? secret : `${primary.prefix}${"•".repeat(22)}`}</code>
               <button type="button" className={`${styles.iconButton} press`} disabled={!secret} aria-label={revealed ? "Hide API key" : "Reveal API key"} title={secret ? undefined : "Only shown once when created"} onClick={() => setRevealed((value) => !value)}>
                 {revealed ? <EyeOff size={17} aria-hidden /> : <Eye size={17} aria-hidden />}
               </button>
               <button type="button" className={`${styles.primary} press`} disabled={!secret} onClick={() => copy(secret!, "key", "API key copied")}>
-                {copied === "key" ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}{copied === "key" ? "Copied" : "Copy"}
+                {copied === "key" ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}<span className={styles.copyLabel}>{copied === "key" ? "Copied" : "Copy"}</span>
               </button>
             </div>
             {!secret ? <p className={styles.note}>{canManage ? "Live keys are shown once when created. Use your saved copy, or regenerate it." : "Ask a workspace owner or admin for the key."}</p> : null}
