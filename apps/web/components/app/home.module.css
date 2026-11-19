@@ -61,3 +61,13 @@
   .top { grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); }
   .shortcuts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* Right column: set-up checklist, then your most recent saved pairs. */
+.rightCol { display: grid; gap: 18px; min-width: 0; align-content: start; }
+.savedPanel { padding: 18px; border: 1px solid var(--color-line); border-radius: 24px; background: var(--color-surface); box-shadow: var(--shadow-soft); }
+.savedPanel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.savedPanel h2 { display: inline-flex; align-items: center; gap: 7px; color: var(--color-ink); font-size: 16px; font-weight: 650; }
+.savedPanel h2 svg { color: var(--color-orange-deep); }
+.savedPanel header a { display: inline-flex; align-items: center; gap: 2px; color: var(--color-muted); font-size: 13px; font-weight: 600; text-decoration: none; }
+.savedPanel header a:hover { color: var(--color-ink); }
+@media (min-width: 0px) { .listsSingle { grid-template-columns: minmax(0, 1fr) !important; } }

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { PairActions, SavedPairsStrip } from "../price/pair-actions";
+import type { SavedPair } from "../../lib/saved-pairs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowDownUp, ArrowLeftRight, ArrowUpRight, ChevronDown, FileUp, Info, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, TriangleAlert } from "lucide-react";
@@ -152,9 +154,12 @@ export interface SwapQuoteProps {
   executable: string[];
   /** Providers this workspace has a production connection for. */
   connected: string[];
+  /** Pairs saved from this calculator (signed-in dashboards only). */
+  savedPairs?: SavedPair[];
 }
 
-export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected }: SwapQuoteProps) {
+export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs }: SwapQuoteProps) {
+  const [saved, setSaved] = useState<SavedPair[]>(savedPairs ?? []);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
   const [amountText, setAmountText] = useState(String(initial.amount));
@@ -281,6 +286,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     <div className={styles.comparisonLayout}>
       <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
+          {savedPairs ? <SavedPairsStrip saved={saved} active={{ from, to }} onSaved={setSaved} onPick={(pair) => { setFrom(pair.from); setTo(pair.to); setAmountText(String(pair.amount)); }} /> : null}
           {!cardComingSoon && <div className="flex items-center justify-between gap-2 px-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
               <span className="relative flex size-2">
@@ -454,6 +460,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               {cta.secondary.label}
             </Link>
           ) : null}
+          {savedPairs ? <PairActions from={from} to={to} amount={Number(amountText) || 0} profile={context.profile} saved={saved} onSaved={setSaved} /> : null}
           {error ? (
             <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">
               {error}

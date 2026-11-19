@@ -109,3 +109,26 @@
 .dots { fill: none; stroke: rgb(250 246 239 / .2); stroke-width: 3.1; stroke-linecap: round; pointer-events: none; }
 .flagPin { pointer-events: none; }
 .flagRing { fill: #fff; filter: drop-shadow(0 2px 3px rgb(0 0 0 / .45)); }
+
+/* ---- Motion: lines draw in, a light travels along priced routes, markers pop ---- */
+.routeGroup { transition: opacity .3s ease; }
+.routeGroup[data-dim] { opacity: .16; }
+.routeDraw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: routeDraw .9s cubic-bezier(.23, 1, .32, 1) var(--d, 0ms) forwards; }
+@keyframes routeDraw { to { stroke-dashoffset: 0; } }
+.signal { fill: none; stroke: #ffe1c7; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .05 .95; stroke-dashoffset: 1; opacity: 0; pointer-events: none; filter: drop-shadow(0 0 3px var(--map-coral)); animation: routeSignal 3.4s linear calc(var(--d, 0ms) + .9s + var(--s, 0s)) infinite; }
+.signal[data-active] { stroke: #fff4e8; stroke-width: 3; animation-duration: 2s; }
+@keyframes routeSignal { 0% { stroke-dashoffset: 1; opacity: 0; } 8% { opacity: .95; } 85% { opacity: .95; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.marker { transform-box: fill-box; transform-origin: center; animation: markerPop .45s cubic-bezier(.34, 1.56, .64, 1) var(--d, 150ms) backwards; transition: r .2s ease; }
+@keyframes markerPop { from { transform: scale(0); opacity: 0; } }
+.markerHalo { transform-box: fill-box; transform-origin: center; animation: haloPulse 1.8s ease-out infinite; }
+@keyframes haloPulse { 0% { transform: scale(.7); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+.flagPin { animation: pinDrop .5s cubic-bezier(.23, 1, .32, 1) .35s backwards; }
+@keyframes pinDrop { from { opacity: 0; transform: translateY(-6px); } }
+.markerButton:hover .marker { r: 5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .routeDraw { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+  .signal { display: none; }
+  .marker, .markerHalo, .flagPin { animation: none; }
+  .routeGroup { transition: none; }
+}

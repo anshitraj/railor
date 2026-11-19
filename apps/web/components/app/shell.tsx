@@ -10,6 +10,8 @@ import {
   BadgeCheck,
   Building2,
   Bot,
+  ArrowLeftRight,
+  Bookmark,
   Calculator,
   ChevronsLeft,
   ChevronsRight,
@@ -43,6 +45,7 @@ import { ProviderLogo } from "./provider-logo";
 import { workspaceArea } from "../../lib/workspace-navigation";
 import { isCompanyPath } from "../../lib/workspace-profile";
 import { WorkspaceAreaNav } from "./workspace-area-nav";
+import { UserAvatar } from "./user-avatar";
 import mobileStyles from "./mobile-navigation.module.css";
 import sidebarStyles from "./workspace-sidebar.module.css";
 
@@ -59,15 +62,15 @@ interface NavItem {
 export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items: NavItem[] }> = [
   { title: null, items: [
     { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
+    { href: "/app/saved", label: "Saved", icon: Bookmark },
     { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
   ] },
-  { title: "Prices", icon: Calculator, items: [
-    { href: "/app/prices", label: "Price check", icon: Calculator },
+  { title: "Transfer", icon: ArrowLeftRight, items: [
+    { href: "/app/prices", label: "Compare & send", icon: ArrowLeftRight },
     { href: "/app/freelancer", label: "Get paid · invoices", icon: FileText, stage: "beta" },
   ] },
   { title: "Routes", icon: Route, items: [
     { href: "/app/search", label: "Find a route", icon: ScanSearch },
-    { href: "/app/corridors", label: "Saved routes", icon: Route },
     { href: "/app/providers", label: "Providers", icon: Warehouse },
     { href: "/app/compare", label: "Compare providers", icon: GitCompare },
     { href: "/app/map", label: "Route map", icon: Globe2 },
@@ -94,9 +97,10 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
 ];
 
 const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
-  { title: "Workspace", items: [
+  { title: "Dashboard", items: [
     { href: "/app", label: "Home", icon: LayoutDashboard },
-    { href: "/app/prices", label: "Prices", icon: Calculator },
+    { href: "/app/saved", label: "Saved", icon: Bookmark },
+    { href: "/app/prices", label: "Transfer", icon: ArrowLeftRight },
     { href: "/app/search", label: "Routes", icon: Route },
     { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
   ] },
@@ -110,7 +114,7 @@ const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
 /** Phones get the four most-used places plus a way to everything else. */
 const MOBILE_NAV: NavItem[] = [
   { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
-  { href: "/app/prices", label: "Prices", icon: Calculator },
+  { href: "/app/prices", label: "Transfer", icon: ArrowLeftRight },
   { href: "/app/search", label: "Routes", icon: Route },
   { href: "/app/payments", label: "Activity", icon: Activity },
 ];
@@ -124,6 +128,8 @@ export function AppShell({
   children,
   orgName,
   userEmail,
+  userName = null,
+  userAvatar = null,
   isDemo = false,
   company = true,
   palette,
@@ -131,6 +137,9 @@ export function AppShell({
   children: React.ReactNode;
   orgName: string;
   userEmail: string;
+  userName?: string | null;
+  /** Google or GitHub profile photo. */
+  userAvatar?: string | null;
   isDemo?: boolean;
   /** Company tools (rules, reviews, audit, payroll) show only in company workspaces. */
   company?: boolean;
@@ -265,7 +274,7 @@ export function AppShell({
           </button>
         </div>
 
-        <nav aria-label="Workspace" className={sidebarStyles.nav}>
+        <nav aria-label="Dashboard" className={sidebarStyles.nav}>
           {primary.map(({ title, items }) => (
             <div key={title} className={sidebarStyles.group}>
               {!compact && <p aria-hidden="true" className={sidebarStyles.groupTitle}>{title}</p>}
@@ -318,13 +327,13 @@ export function AppShell({
             {!compact && <span className={sidebarStyles.linkLabel}>Settings</span>}
           </Link>
           {!compact && (
-            <div className={sidebarStyles.account}>
-              <span className={sidebarStyles.avatar} aria-hidden>{orgName.trim().charAt(0).toUpperCase() || "R"}</span>
+            <Link href="/app/settings" className={sidebarStyles.account} onClick={() => setMobileOpen(false)} aria-label="Your profile and settings">
+              <UserAvatar src={userAvatar} name={userName} email={userEmail} size={32} />
               <span className={sidebarStyles.accountText}>
-                <strong title={orgName}>{orgName}</strong>
+                <strong title={userName ?? orgName}>{userName ?? orgName}</strong>
                 <small title={userEmail}>{userEmail}</small>
               </span>
-            </div>
+            </Link>
           )}
           <form action="/api/auth/signout" method="post" className="md:hidden">
             <button type="submit" className={sidebarStyles.link}>
@@ -356,17 +365,17 @@ export function AppShell({
             <Menu size={19} />
           </button>
           <Link href="/app" aria-label="Railor overview" className="mr-1 shrink-0 md:hidden"><RailorMark size={23} /></Link>
-          <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{workspaceArea(pathname) === currentPage ? "Workspace" : workspaceArea(pathname)}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
+          <div className="mr-auto hidden min-w-0 items-center gap-2 text-[12px] lg:flex"><span className="text-[var(--color-muted)]">{workspaceArea(pathname) === currentPage ? "Dashboard" : workspaceArea(pathname)}</span><span aria-hidden className="text-[var(--color-faint)]">/</span><span className="truncate font-semibold">{currentPage}</span></div>
           <CommandPalette items={items} recent={recent} brand={<RailorMark size={22} />} />
           <span className="flex-1 lg:hidden" />
           <Link
             href="/app/prices"
-            aria-label="Check a price"
+            aria-label="New transfer"
             className="inline-flex min-h-10 shrink-0 items-center rounded-xl bg-[var(--color-action)] px-3 text-[12px] font-semibold text-white transition hover:bg-[var(--color-orange-deep)] sm:px-3.5"
           >
-            <Calculator size={16} aria-hidden className="mr-2" />
-            <span className="sm:hidden">Price</span>
-            <span className="hidden sm:inline">Check a price</span>
+            <ArrowLeftRight size={16} aria-hidden className="mr-2" />
+            <span className="sm:hidden">Transfer</span>
+            <span className="hidden sm:inline">New transfer</span>
           </Link>
           <form action="/api/auth/signout" method="post" className="hidden md:block">
             <button

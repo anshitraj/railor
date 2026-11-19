@@ -49,7 +49,7 @@ export function PaymentHistory({ mode, status, rows, summary, filters, paused, p
   const number = (value: number) => value.toLocaleString("en-US");
 
   return <div className={styles.page}>
-    <header className={styles.header}><p className="product-eyebrow">Workspace / activity</p><h1>History</h1><p>Your payment records, from first check to final status.<br className={styles.desktopBreak} /> Test runs and live activity stay separate.</p></header>
+    <header className={styles.header}><p className="product-eyebrow">Dashboard / activity</p><h1>History</h1><p>Your payment records, from first check to final status.<br className={styles.desktopBreak} /> Test runs and live activity stay separate.</p></header>
 
     <section className={styles.metrics} aria-label={`${mode === "test" ? "Test" : "Live"} history summary`}>
       <article className={styles.metric}><span className={styles.metricIcon} data-tone="good"><CheckCircle2 size={22} /></span><div><h2>Completed payments</h2><strong>{number(summary.completed)}</strong><p>Created in the last 30 days</p></div></article>

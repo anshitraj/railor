@@ -152,6 +152,9 @@ export function GlobalRouteMap({
   const undrawable = visible.filter((route) =>
     !projectCountry(route.entityCountry) || !projectCountry(route.destinationCountry)).length;
 
+  // Redraw the lines whenever the view changes, so each filter visibly re-maps the world.
+  const drawKey = `${focus ?? "all"}|${pricedOnly}|${showAll}`;
+
   const selectRoute = (route: GlobalRoute) => {
     setSelected(routeKey(route));
   };
@@ -225,16 +228,19 @@ export function GlobalRouteMap({
                 <clipPath id="map-flag-round" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5" /></clipPath>
               </defs>
               <path d={WORLD_DOTS_PATH} className={styles.dots} aria-hidden="true" />
-              <g fill="none">
-                {mapped.map((route) => {
+              <g fill="none" key={drawKey}>
+                {mapped.map((route, order) => {
                   const from = projectCountry(route.entityCountry);
                   const to = projectCountry(route.destinationCountry);
                   if (!from || !to) return null;
                   const key = routeKey(route);
                   const active = key === selected;
+                  // Lines draw in one after another, then a light travels along routes with a published fee.
+                  const delay = { "--d": `${Math.min(order, 24) * 45}ms`, "--s": `${(order % 7) * 0.45}s` } as React.CSSProperties;
                   return routePaths(from, to).map((path, index) => (
-                    <g key={`${key}-${index}`}>
-                      <path d={path} className={active ? styles.routeActive : route.cheapest ? styles.routePriced : styles.routeMuted} style={{ opacity: selected && !active ? 0.16 : undefined }} />
+                    <g key={`${key}-${index}`} className={styles.routeGroup} data-dim={selected && !active ? "" : undefined}>
+                      <path d={path} pathLength={1} className={`${active ? styles.routeActive : route.cheapest ? styles.routePriced : styles.routeMuted} ${styles.routeDraw}`} style={delay} />
+                      {route.cheapest || active ? <path d={path} pathLength={1} className={styles.signal} data-active={active ? "" : undefined} style={delay} aria-hidden="true" /> : null}
                       <path
                         d={path}
                         className={styles.routeHit}
@@ -255,7 +261,7 @@ export function GlobalRouteMap({
                 })}
               </g>
               <g>
-                {nodes.map((node) => {
+                {nodes.map((node, nodeIndex) => {
                   const active = node.code === focus;
                   const endpoint = node.code === selectedRoute?.entityCountry || node.code === selectedRoute?.destinationCountry;
                   return (
@@ -276,7 +282,7 @@ export function GlobalRouteMap({
                     >
                       <circle cx={node.point.x} cy={node.point.y} r={13} className={styles.markerHit} />
                       {active || endpoint ? <circle cx={node.point.x} cy={node.point.y} r={10} className={styles.markerHalo} /> : null}
-                      <circle cx={node.point.x} cy={node.point.y} r={active || endpoint ? 5.5 : 3.5} className={styles.marker} />
+                      <circle cx={node.point.x} cy={node.point.y} r={active || endpoint ? 5.5 : 3.5} className={styles.marker} style={{ "--d": `${Math.min(nodeIndex, 30) * 25 + 150}ms` } as React.CSSProperties} />
                       {labeled.has(node.code) ? (
                         <g className={styles.flagPin} aria-hidden="true">
                           <circle cx={node.point.x} cy={node.point.y - 19} r={10.5} className={styles.flagRing} />

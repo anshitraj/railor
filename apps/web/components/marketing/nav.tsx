@@ -170,7 +170,7 @@ export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
             <Search size={18} aria-hidden />
           </button>
           {signedIn ? (
-            <Link href="/app" className={`${styles.cta} press`} aria-label="Open workspace"><LayoutDashboard size={15} aria-hidden /><span className={styles.ctaLong}>Open workspace</span><span className={styles.ctaShort}>Workspace</span></Link>
+            <Link href="/app" className={`${styles.cta} press`} aria-label="Open dashboard"><LayoutDashboard size={15} aria-hidden /><span className={styles.ctaLong}>Open dashboard</span><span className={styles.ctaShort}>Dashboard</span></Link>
           ) : (
             <>
               <Link href="/login" className={styles.signIn}>Sign in</Link>
@@ -211,7 +211,7 @@ export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
           ))}
           <div className={styles.sheetActions}>
             {signedIn ? (
-              <Link href="/app" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Open workspace</Link>
+              <Link href="/app" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Open dashboard</Link>
             ) : (
               <>
                 <Link href="/login?intent=start" className={`${styles.cta} press`} onClick={() => setMobileOpen(false)}>Get started</Link>
