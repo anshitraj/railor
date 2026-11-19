@@ -27,7 +27,6 @@ import {
   ListChecks,
   LogOut,
   Menu,
-  Plug,
   Radar,
   Route,
   ScanSearch,
@@ -92,7 +91,6 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
   { title: "Developers", icon: Code2, items: [
     { href: "/app/developers", label: "API & AI tools", icon: Code2 },
     { href: "/app/settings/connections", label: "Provider accounts", icon: Link2 },
-    { href: "/app/connectors", label: "Self-hosted runtime", icon: Plug, stage: "beta" },
   ] },
 ];
 

@@ -271,8 +271,6 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
       </section>
 
       <p className={styles.footerLinks}>
-        <Link href="/app/connectors">Run provider requests in your own environment</Link>
-        <span aria-hidden>·</span>
         <Link href="/docs/pricing#routing">How routing and pricing work</Link>
       </p>
     </div>
