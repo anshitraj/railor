@@ -7,9 +7,10 @@ import type { PickerOption } from "@railor/ui";
 import styles from "./route-option-picker.module.css";
 
 /** Image-capable picker: native option menus cannot render country or currency marks. */
-export function RouteOptionPicker({ label, options, value, onChange, placeholder, renderMark }: {
+export function RouteOptionPicker({ label, options, value, onChange, placeholder, renderMark, menuWidth, showCode = true }: {
   label: string; options: PickerOption[]; value: string; onChange: (value: string) => void;
   placeholder: string; renderMark: (value: string) => ReactNode;
+  menuWidth?: number; showCode?: boolean;
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -19,7 +20,11 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const selected = options.find(option => option.value === value);
-  const choices = [...(query.trim() ? [] : [{ value: "", label: placeholder }]), ...options.filter(option => `${option.label} ${option.value}`.toLowerCase().includes(query.trim().toLowerCase()))];
+  const term = query.trim().toLowerCase();
+  const exact = (option: PickerOption) => option.label.toLowerCase() === term || option.value.toLowerCase() === term;
+  const choices = term
+    ? options.filter(option => `${option.label} ${option.value}`.toLowerCase().includes(term)).sort((a, b) => Number(exact(b)) - Number(exact(a)))
+    : [{ value: "", label: placeholder }, ...options];
   const active = choices[Math.min(cursor, choices.length - 1)];
   function close(focus = false) { setPosition(null); if (focus) trigger.current?.focus(); }
   function choose(next: string) { onChange(next); close(true); }
@@ -29,7 +34,8 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
     const below = window.innerHeight - rect.bottom - 12;
     const top = below >= Math.min(height, 220) ? rect.bottom + 6 : Math.max(12, rect.top - height - 6);
     setQuery(""); setCursor(Math.max(0, options.findIndex(option => option.value === value) + 1));
-    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - Math.min(rect.width, window.innerWidth - 24) - 12)), top, width: Math.min(rect.width, window.innerWidth - 24), height: Math.min(height, window.innerHeight - top - 12) });
+    const width = Math.min(Math.max(rect.width, menuWidth ?? 0), window.innerWidth - 24);
+    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top, width, height: Math.min(height, window.innerHeight - top - 12) });
   }
   useEffect(() => {
     if (!position) return;
@@ -59,7 +65,7 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
         if (event.key === "Escape") { event.preventDefault(); close(true); }
       }} /></div>
       <ul id={`${id}-list`} role="listbox" aria-label={label} className={styles.options}>{choices.map((option, index) => <li key={option.value} id={`${id}-option-${index}`} role="option" aria-selected={value === option.value} data-active={cursor === index} onMouseEnter={() => setCursor(index)} onMouseDown={event => event.preventDefault()} onClick={() => choose(option.value)}>
-        {option.value && renderMark(option.value)}<span>{option.label}</span>{option.value && <small>{option.value}</small>}{value === option.value && <Check size={14} aria-hidden />}
+        {option.value && renderMark(option.value)}<span>{option.label}</span>{showCode && option.value && <small>{option.value}</small>}{value === option.value && <Check size={14} aria-hidden />}
       </li>)}{!choices.length && query && <li className={styles.empty}>No matches. Try another name or code.</li>}</ul>
     </div>, document.body)}
   </>;

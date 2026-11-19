@@ -548,7 +548,9 @@ export async function loadProviderBySlug(slug: string) {
         description: requirementsTable.description,
         mandatory: providerRequirements.mandatory,
         note: providerRequirements.note,
+        customerType: providerRequirements.customerType,
         entityCountry: providerRequirements.entityCountry,
+        evidenceId: providerRequirements.evidenceId,
         lastVerifiedAt: providerRequirements.lastVerifiedAt,
       })
       .from(providerRequirements)

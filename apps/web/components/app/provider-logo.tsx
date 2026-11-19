@@ -28,6 +28,7 @@ export function ProviderLogo({
   size = 28,
   className = "",
   loading = "lazy",
+  localOnly = false,
 }: {
   slug: string;
   name: string;
@@ -37,12 +38,15 @@ export function ProviderLogo({
   className?: string;
   /** Visible disclosure summaries need eager loading even while their details are closed. */
   loading?: "lazy" | "eager";
+  /** Large pickers can show local marks and monograms without requesting every logo. */
+  localOnly?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const img = useRef<HTMLImageElement>(null);
   const key = slug.replace(/^market:/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 64) || "provider";
-  const url = LOCAL_LOGOS[key] ? `/brand/providers/${LOCAL_LOGOS[key]}` : `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
+  const local = LOCAL_LOGOS[key];
+  const url = local ? `/brand/providers/${local}` : localOnly ? null : `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
   // A cached logo can finish while streamed HTML is still hydrating. Keep the
   // first render deterministic, then attach image-load handlers after mounting.
   useEffect(() => setReady(true), []);
@@ -52,7 +56,7 @@ export function ProviderLogo({
     if (el?.complete && el.naturalWidth < 2) setFailedUrl(url);
   }, [ready, url]);
   const box = { width: size, height: size };
-  if (!ready || failedUrl === url) {
+  if (!ready || !url || failedUrl === url) {
     return (
       <span
         aria-hidden

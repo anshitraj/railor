@@ -5,6 +5,9 @@ import { getDb, sharedComparisons } from "@railor/database";
 import { buildComparison } from "../../../lib/compare";
 import { CompareBoard } from "../../../components/app/compare-table";
 import { RailorMark } from "../../../components/marketing/nav";
+import { buildRouteComparison } from "../../../lib/route-comparison";
+import { RouteComparisonRequest } from "../../../lib/route-comparison-model";
+import { RouteComparisonResults } from "../../../components/app/route-comparison-results";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +26,10 @@ export default async function SharedComparison({
     .limit(1);
   if (!shared) notFound();
 
-  const table = await buildComparison(shared.providerSlugs);
+  const route = RouteComparisonRequest.safeParse(shared.query.routeComparison);
+  const comparison = route.success ? await buildRouteComparison(route.data) : null;
+  const table = route.success ? null : await buildComparison(shared.providerSlugs);
+  if (!comparison && !table) notFound();
 
   return (
     <main id="main" className="mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-col gap-6 py-10">
@@ -42,7 +48,8 @@ export default async function SharedComparison({
         </Link>
       </header>
 
-      <CompareBoard table={table} selected={shared.providerSlugs} available={[]} readOnly />
+      {comparison ? <RouteComparisonResults comparison={comparison} /> : null}
+      {table ? <CompareBoard table={table} selected={shared.providerSlugs} available={[]} readOnly /> : null}
 
       <p className="text-[12px] text-[var(--color-faint)]">
         Generated from Railor&apos;s capability graph on{" "}
