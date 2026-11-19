@@ -57,7 +57,7 @@ export async function GET(request: Request, context: { params: Promise<{ provide
 
   try {
     const profile = await completeOAuthExchange(provider, code, redirectUri);
-    const user = await findOrCreateUserByEmail(profile.email, profile.name);
+    const user = await findOrCreateUserByEmail(profile.email, profile.name, profile.avatarUrl);
     if (!user) return clearState(new URL("/login?error=oauth_failed", url));
 
     await startSession(user.id);

@@ -58,6 +58,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       orgName={session.organization.name}
       userEmail={session.user.email}
+      userName={session.user.name}
+      userAvatar={session.user.avatarUrl}
       isDemo={session.user.email === DEMO_EMAIL}
       company={company}
       palette={company ? palette : palette.filter((item) => !isCompanyPath(item.href))}

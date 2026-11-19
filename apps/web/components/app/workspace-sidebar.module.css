@@ -84,3 +84,5 @@
   .sidebar, .link, .mark { transition: none; }
 }
 @keyframes scrimIn { from { opacity: 0; } }
+.account { color: inherit; text-decoration: none; transition: background-color .15s ease, border-color .15s ease; }
+.account:hover { border-color: color-mix(in srgb, var(--nav-border) 60%, #fff 40%); }
