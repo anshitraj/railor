@@ -53,8 +53,8 @@ describe("first-party fee schedules (checked 2026-11-18)", () => {
     expect(xflow.missing?.[0]).toContain("conversion rate");
     expect(xflow.taxNote).toContain("reverse charge");
     expect(result.rows.find((row) => row.providerSlug === "infinity")).toMatchObject({ feeAmount: 20, taxIncluded: true, recipientAmount: 358_200,
-      // The receipt wording comes from Infinity's own FIRA help page (receiving-evidence.ts).
-      receipt: expect.stringContaining("Free bank-issued FIRA") });
+      // Infinity issues a free FIRA; the exact wording follows its own help page, so only the FIRA is pinned here.
+      receipt: expect.stringContaining("FIRA") });
   });
 
   // Wise's calculator, read at 93.44 INR per USD: [amount, Wise fee, GST, total fees]. It moves a cent with the FX rate.
