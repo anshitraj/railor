@@ -119,6 +119,7 @@ export const COUNTRY_CENTROIDS: Record<string, LatLng> = {
   PA: { lat: 8.5, lng: -80.1 },
   GT: { lat: 15.8, lng: -90.2 },
   DO: { lat: 18.7, lng: -70.2 },
+  JM: { lat: 18.1, lng: -77.3 },
 };
 
 /** Map viewBox the projection targets. Matches the world outline's own box. */
@@ -138,6 +139,10 @@ export function project(point: LatLng): { x: number; y: number } {
   const x = ((point.lng + 180) / 360) * MAP_WIDTH;
   const y = ((LAT_TOP - point.lat) / (LAT_TOP - LAT_BOTTOM)) * MAP_HEIGHT;
   return { x, y };
+}
+
+export function unproject(point: { x: number; y: number }): LatLng {
+  return { lng: point.x / MAP_WIDTH * 360 - 180, lat: LAT_TOP - point.y / MAP_HEIGHT * (LAT_TOP - LAT_BOTTOM) };
 }
 
 export function projectCountry(code: string): { x: number; y: number } | null {

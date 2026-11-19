@@ -22,6 +22,11 @@ export interface RouteProviderRef {
   name: string;
 }
 
+export interface RouteMapProvider extends RouteProviderRef {
+  status: "supported" | "additional_requirements";
+  feeBps: number | null;
+}
+
 /**
  * The cheapest option on a route, and — when there isn't one — why not.
  * `feeBps` is only ever a number Railor actually holds a fee record for:
@@ -43,6 +48,9 @@ export interface GlobalRoute {
   conditional: number;
   /** Highest-scoring supported provider under the requested preset. */
   best: RouteProviderRef | null;
+  /** Preview list. The corridor explorer holds the complete results. */
+  providers: RouteMapProvider[];
+  rankScore: number | null;
   cheapest: RouteCheapest | null;
   /** Set when no supported provider on this route publishes a fee Railor can compare. */
   cheapestUnknownReason: string | null;
@@ -86,17 +94,26 @@ export function evaluateRoute(
   let best: RouteProviderRef | null = null;
   let bestScore = -Infinity;
   let cheapest: RouteCheapest | null = null;
+  const ranked: Array<{ provider: RouteMapProvider; score: number }> = [];
   /** Supported providers that simply have no fee on record — drives the honest empty state. */
   let supportedWithoutPricing = 0;
 
   for (const provider of inputs) {
     const evaluation = evaluateProvider(provider, query, { now });
 
+    if (evaluation.verdict !== "supported" && evaluation.verdict !== "additional_requirements") continue;
+    const { score } = scoreProvider(provider, evaluation, preset);
+    ranked.push({
+      score,
+      provider: {
+        slug: provider.slug, name: provider.name, status: evaluation.verdict,
+        feeBps: evaluation.verdict === "supported" ? provider.feeCostBps ?? null : null,
+      },
+    });
     if (evaluation.verdict === "additional_requirements") conditional += 1;
     if (evaluation.verdict !== "supported") continue;
     supported += 1;
 
-    const { score } = scoreProvider(provider, evaluation, preset);
     if (score > bestScore) {
       bestScore = score;
       best = { slug: provider.slug, name: provider.name };
@@ -125,12 +142,17 @@ export function evaluateRoute(
           : `None of the ${supportedWithoutPricing} providers on this route publish a comparable fee.`;
   }
 
+  ranked.sort((a, b) => Number(b.provider.status === "supported") - Number(a.provider.status === "supported")
+    || b.score - a.score || a.provider.name.localeCompare(b.provider.name));
+
   return {
     entityCountry,
     destinationCountry,
     supported,
     conditional,
     best,
+    providers: ranked.slice(0, 8).map(({ provider }) => provider),
+    rankScore: best ? bestScore : null,
     cheapest,
     cheapestUnknownReason,
   };

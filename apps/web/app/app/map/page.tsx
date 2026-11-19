@@ -33,7 +33,7 @@ export default async function MapPage({
       routes={map.routes}
       countries={reference.countries
         .filter((c) => touched.has(c.code))
-        .map((c) => ({ code: c.code, name: c.name, flag: c.flag ?? "" }))}
+        .map((c) => ({ code: c.code, name: c.name }))}
       preset={preset}
       presets={RankingPreset.options.map((value) => ({
         value,
