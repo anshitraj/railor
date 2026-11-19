@@ -9,7 +9,9 @@
  */
 import { relations, sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
+  check,
   foreignKey,
   index,
   integer,
@@ -2328,5 +2330,85 @@ export const freelancerReceipts = pgTable("freelancer_receipts", {
   retryIdx: uniqueIndex("freelancer_receipts_retry_idx").on(t.organizationId, t.requestId),
   invoiceIdx: index("freelancer_receipts_invoice_idx").on(t.organizationId, t.invoiceId),
 }));
+
+/* -------------------------------------------------------------------------- */
+/* Wallet: prepaid Railor credit                                               */
+/* -------------------------------------------------------------------------- */
+
+export const WALLET_ENTRY_KINDS = ["signup_credit", "top_up", "promo_credit", "usage", "refund", "adjustment"] as const;
+export type WalletEntryKind = (typeof WALLET_ENTRY_KINDS)[number];
+export const WALLET_ENTRY_STATUSES = ["completed", "pending", "failed"] as const;
+export type WalletEntryStatus = (typeof WALLET_ENTRY_STATUSES)[number];
+
+/**
+ * Append-only credit ledger, one per organization. The balance is always the
+ * sum of completed entries — there is no mutable balance column. Amounts are
+ * signed integer US cents. A database trigger rejects updates (except the
+ * user_id → NULL that a deleted user's foreign key performs), so history can
+ * only grow. `seq` gives a stable order when entries share a timestamp.
+ */
+export const walletEntries = pgTable(
+  "wallet_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity().notNull(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    /** Who caused the entry (signed-in member, or null for system entries). */
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    kind: text("kind").$type<WalletEntryKind>().notNull(),
+    status: text("status").$type<WalletEntryStatus>().default("completed").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").default("USD").notNull(),
+    label: text("label").notNull(),
+    /** Promo code, metered action or payment reference. */
+    reference: text("reference"),
+    /** Unique per organization: retries and races collapse to one entry. */
+    idempotencyKey: text("idempotency_key").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    idempotencyIdx: uniqueIndex("wallet_entries_idempotency_idx").on(t.organizationId, t.idempotencyKey),
+    signupOrgIdx: uniqueIndex("wallet_entries_signup_org_idx").on(t.organizationId).where(sql`kind = 'signup_credit'`),
+    signupUserIdx: uniqueIndex("wallet_entries_signup_user_idx").on(t.userId).where(sql`kind = 'signup_credit'`),
+    historyIdx: index("wallet_entries_history_idx").on(t.organizationId, t.createdAt, t.seq),
+    kindCheck: check("wallet_entries_kind_check", sql`kind in ('signup_credit','top_up','promo_credit','usage','refund','adjustment')`),
+    statusCheck: check("wallet_entries_status_check", sql`status in ('completed','pending','failed')`),
+    currencyCheck: check("wallet_entries_currency_check", sql`currency = 'USD'`),
+    signCheck: check(
+      "wallet_entries_sign_check",
+      sql`amount_cents <> 0 and (kind = 'adjustment' or (kind = 'usage' and amount_cents < 0) or (kind <> 'usage' and amount_cents > 0))`,
+    ),
+  }),
+);
+
+/** Codes a workspace can redeem once for credit. Redemptions are wallet entries. */
+export const walletPromoCodes = pgTable(
+  "wallet_promo_codes",
+  {
+    code: text("code").primaryKey(),
+    amountCents: integer("amount_cents").notNull(),
+    label: text("label").notNull(),
+    maxRedemptions: integer("max_redemptions"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    active: boolean("active").default(true).notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    codeCheck: check("wallet_promo_codes_code_check", sql`code = upper(code) and code ~ '^[A-Z0-9-]{3,32}$'`),
+    amountCheck: check("wallet_promo_codes_amount_check", sql`amount_cents > 0`),
+  }),
+);
+
+/** Per-workspace wallet preferences. Auto-reload is off until a member turns it on. */
+export const walletSettings = pgTable("wallet_settings", {
+  organizationId: uuid("organization_id").primaryKey().references(() => organizations.id, { onDelete: "cascade" }),
+  autoReloadEnabled: boolean("auto_reload_enabled").default(false).notNull(),
+  autoReloadThresholdCents: integer("auto_reload_threshold_cents").default(500).notNull(),
+  autoReloadAmountCents: integer("auto_reload_amount_cents").default(2000).notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: updated(),
+});
 
 export const schemaVersion = sql`3`;

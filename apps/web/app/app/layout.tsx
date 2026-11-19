@@ -3,6 +3,7 @@ import { loadProviderNavigation } from "@railor/core";
 import { getSession } from "../../lib/auth";
 import { DEMO_EMAIL } from "../../lib/demo";
 import { getSavedCorridors } from "../../lib/org";
+import { shellWalletBalance } from "../../lib/wallet";
 import { AppShell } from "../../components/app/shell";
 import { isCompanyPath, isCompanyWorkspace } from "../../lib/workspace-profile";
 
@@ -13,9 +14,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) redirect("/login");
   if (!session.organization) redirect("/welcome");
 
-  const [providers, corridors] = await Promise.all([
+  const [providers, corridors, walletBalanceCents] = await Promise.all([
     loadProviderNavigation(),
     getSavedCorridors(session.organization.id),
+    // First signed-in visit also grants the one-time signup credit.
+    shellWalletBalance(session.organization.id, session.user.id),
   ]);
 
   const company = isCompanyWorkspace(session.organization.building);
@@ -62,6 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       userAvatar={session.user.avatarUrl}
       isDemo={session.user.email === DEMO_EMAIL}
       company={company}
+      walletBalanceCents={walletBalanceCents}
       palette={company ? palette : palette.filter((item) => !isCompanyPath(item.href))}
     >
       {children}

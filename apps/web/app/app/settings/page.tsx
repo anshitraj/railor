@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ArrowUpRight, BellRing, Building2, Clock, KeyRound, LogOut, Mail, PlugZap, RotateCcw, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BellRing, Building2, Clock, KeyRound, LogOut, Mail, PlugZap, RotateCcw, ShieldCheck, Sparkles, Users, Wallet } from "lucide-react";
 import { getSession } from "../../../lib/auth";
 import { getOrgMembers } from "../../../lib/org";
 import { WorkspaceNameForm } from "../../../components/app/workspace-name-form";
@@ -122,6 +122,9 @@ export default async function SettingsPage() {
               <li><strong>{entitlement.limits.monitors}</strong><span>monitors</span></li>
               <li><strong>{entitlement.limits.apiRequests.toLocaleString("en-US")}</strong><span>API requests a month</span></li>
             </ul>
+            <div className={styles.links} style={{ marginTop: 12 }}>
+              <LinkRow href="/app/wallet" icon={Wallet} label="Wallet & billing" hint="Credit balance, promo codes, auto-reload and billing history." />
+            </div>
           </section>
 
           <section id="notifications" className={styles.section} aria-labelledby="notifications-title">

@@ -37,6 +37,8 @@
     "v5-1-targeted-ingest": "tsx src/seed/v5-1-targeted-ingest.ts",
     "v5-2-fiat-leg-ingest": "tsx src/seed/v5-2-fiat-leg-ingest.ts",
     "reset": "tsx src/seed/reset.ts",
+    "wallet-promo-codes": "tsx src/seed/wallet.ts",
+    "test": "node --import tsx --test src/wallet.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -34,6 +34,7 @@ import {
   Settings,
   Shuffle,
   Users,
+  Wallet,
   Warehouse,
   X,
   type LucideIcon,
@@ -46,6 +47,8 @@ import { isCompanyPath } from "../../lib/workspace-profile";
 import { WorkspaceAreaNav } from "./workspace-area-nav";
 import { UserAvatar } from "./user-avatar";
 import mobileStyles from "./mobile-navigation.module.css";
+import walletStyles from "./wallet/wallet.module.css";
+import { formatCents } from "../../lib/wallet-options";
 import sidebarStyles from "./workspace-sidebar.module.css";
 
 interface NavItem {
@@ -130,6 +133,7 @@ export function AppShell({
   userAvatar = null,
   isDemo = false,
   company = true,
+  walletBalanceCents = null,
   palette,
 }: {
   children: React.ReactNode;
@@ -141,6 +145,8 @@ export function AppShell({
   isDemo?: boolean;
   /** Company tools (rules, reviews, audit, payroll) show only in company workspaces. */
   company?: boolean;
+  /** Prepaid credit shown in the sidebar pill; null hides it (wallet unavailable). */
+  walletBalanceCents?: number | null;
   palette: Array<{ id: string; label: string; group: string; href: string; hint?: string; keywords?: string }>;
 }) {
   const pathname = usePathname();
@@ -153,7 +159,8 @@ export function AppShell({
   const currentGroup = NAV_GROUPS.find((group) => group.items.some((item) => isActive(pathname, item)));
   const groups = company ? NAV_GROUPS : NAV_GROUPS.filter((group) => !group.items.every((item) => isCompanyPath(item.href)));
   const primary = company ? PRIMARY_NAV : PRIMARY_NAV.map((group) => ({ ...group, items: group.items.filter((item) => !isCompanyPath(item.href)) }));
-  const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? "Settings";
+  const walletActive = pathname === "/app/wallet" || pathname.startsWith("/app/wallet/");
+  const currentPage = currentGroup?.items.find((item) => isActive(pathname, item))?.label ?? (walletActive ? "Wallet" : "Settings");
   const compact = collapsed && !mobileOpen;
 
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -205,8 +212,8 @@ export function AppShell({
     href: item.href,
   }));
   const navItems = NAV_GROUPS.flatMap((group) => group.items);
-  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }].map((p) => {
-    const Icon = p.id === "action:invite" ? Users : navItems.find((item) => item.href === p.href || (!item.exact && p.href.startsWith(`${item.href}/`)))?.icon;
+  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }, { id: "page:/app/wallet", label: "Wallet & billing", group: "Go to", href: "/app/wallet", keywords: "credit balance top up add money promo code billing history auto reload" }].map((p) => {
+    const Icon = p.id === "page:/app/wallet" ? Wallet : p.id === "action:invite" ? Users : navItems.find((item) => item.href === p.href || (!item.exact && p.href.startsWith(`${item.href}/`)))?.icon;
     return {
       id: p.id,
       label: p.label,
@@ -228,7 +235,7 @@ export function AppShell({
   ];
 
   const area = workspaceArea(pathname);
-  const settingsActive = area === "Settings";
+  const settingsActive = area === "Settings" && !walletActive;
 
   return (
     <div className={cn("workspace-frame flex min-h-screen bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
@@ -324,6 +331,23 @@ export function AppShell({
             <span className={sidebarStyles.linkIcon}><Settings size={17} strokeWidth={1.8} aria-hidden /></span>
             {!compact && <span className={sidebarStyles.linkLabel}>Settings</span>}
           </Link>
+          {walletBalanceCents !== null ? (
+            <Link
+              href="/app/wallet"
+              className={walletStyles.pillLink}
+              data-compact={compact}
+              aria-current={walletActive ? "page" : undefined}
+              aria-label={`Wallet, ${formatCents(walletBalanceCents)} credit`}
+              title={compact ? `Wallet ${formatCents(walletBalanceCents)}` : undefined}
+              onClick={() => setMobileOpen(false)}
+            >
+              <span className={walletStyles.pillIcon}><Wallet size={15} aria-hidden /></span>
+              {!compact && <>
+                <span className={walletStyles.pillLabel}>Wallet</span>
+                <span className={walletStyles.pillAmount}>{formatCents(walletBalanceCents)}</span>
+              </>}
+            </Link>
+          ) : null}
           {!compact && (
             <Link href="/app/settings" className={sidebarStyles.account} onClick={() => setMobileOpen(false)} aria-label="Your profile and settings">
               <UserAvatar src={userAvatar} name={userName} email={userEmail} size={32} />

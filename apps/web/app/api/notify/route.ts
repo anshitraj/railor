@@ -17,6 +17,7 @@ const NOTIFY_FEATURES = [
   "alerts-webhook",
   "provider_connection",
   "execution",
+  "wallet-top-up",
 ] as const;
 
 const Body = z.object({

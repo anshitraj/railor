@@ -12,3 +12,20 @@ export {
   type RailorDb,
 } from "./client.js";
 export { seedDemoData, type SeedSummary } from "./seed/run.js";
+export {
+  SIGNUP_CREDIT_CENTS,
+  appendWalletEntry,
+  debitWalletUsage,
+  formatWalletCents,
+  grantSignupCredit,
+  normalizePromoCode,
+  redeemWalletPromoCode,
+  walletBalanceCents,
+  walletHistory,
+  walletTotals,
+  type NewWalletEntry,
+  type PromoRedemption,
+  type UsageDebit,
+  type WalletEntry,
+  type WalletTotals,
+} from "./wallet.js";

@@ -14,6 +14,7 @@ import { sql } from "drizzle-orm";
 import { SOURCE_BASE_CONFIDENCE, type ProductType, type SourceType } from "@railor/types";
 import { ensureMigrated, getDb, getDbHandle } from "../client.js";
 import * as s from "../schema.js";
+import { seedWalletPromoCodes } from "./wallet.js";
 import {
   assetNetworks,
   assets,
@@ -455,6 +456,9 @@ export async function seedDemoData(): Promise<SeedSummary> {
       affects: c.affects as Record<string, string>,
     });
   }
+
+  // Test promo codes for the wallet page; never into a production database.
+  if (process.env.NODE_ENV !== "production") await seedWalletPromoCodes(db);
 
   return {
     providers: providerSpecs.length,
