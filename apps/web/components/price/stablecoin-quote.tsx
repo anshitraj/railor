@@ -4,12 +4,13 @@ import { useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, Copy, Info, ShieldCheck, TriangleAlert } from "lucide-react";
+import type { SettleInrReference } from "@railor/core";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
 import { toast } from "../toast";
-import { NETWORKS, STABLECOIN_CHECKED, TOKENS, isCashOutCurrency, isCashPickupCurrency, notIssuedReason, stablecoinRoutes, swapOption, type CashOutCurrency, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
+import { NETWORKS, SETTLE_MODELED_FEE, STABLECOIN_CHECKED, TOKENS, isCashOutCurrency, isCashPickupCurrency, notIssuedReason, stablecoinRoutes, swapOption, type CashOutCurrency, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
 import { ExchangeCard, NetworkSupportTable, TaxTools, inr, useCashOutQuote, useExchangeQuotes, type LockedExchange } from "./stablecoin-inr";
-import { depositSupport, exchangeBySlug, exchangesFor, type ExchangeQuote } from "../../lib/india-exchanges";
+import { depositSupport, exchangeBySlug, exchangesFor, isBankPayoutEstimate, type ExchangeQuote } from "../../lib/india-exchanges";
 import { CASH_OUT_RAILS, KRAKEN_CANADA, KRAKEN_EEA, KRAKEN_FEES, KRAKEN_NETWORKS, KRAKEN_TAKER_RATE, KRAKEN_WITHDRAWALS, cashOutRestriction, fiat, type CashOutQuote } from "../../lib/stablecoin-cash-out";
 import { StablecoinPicker } from "./stablecoin-picker";
 import { RateHistoryChart } from "./rate-history-chart";
@@ -52,7 +53,7 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
   const krakenUrl = "https://pro.kraken.com/app/trade/" + asset.toLowerCase() + "-" + destination.toLowerCase();
   const quotes = useExchangeQuotes(asset, network, amount, destination === "INR" && issued);
   const recommended = quotes.data && !quotes.data.locked && !locked
-    ? quotes.data.exchanges.find((quote) => quote.status === "priced" && quote.support.status === "yes" && quote.breakdown && Number.isFinite(quote.breakdown.inBank) && quote.breakdown.inBank > 0 && !quote.fill?.short && !quote.belowMinimum && quote.live?.depth !== "top")
+    ? quotes.data.exchanges.find(isBankPayoutEstimate)
     : undefined;
   const [picked, setPicked] = useState<{ context: string; id: string } | null>(null);
   const [tab, setTab] = useState<"prices" | "history">("prices");
@@ -76,8 +77,16 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
   ];
   const count = entries.length;
   const selected = entries.find((entry) => entry.id === (picked?.context === context ? picked.id : recommended?.slug)) ?? entries[0];
-  const selectedQuote = selected?.quote && "breakdown" in selected.quote ? selected.quote : undefined;
-  const pricedSelection = !showLocked && selectedQuote?.support.status === "yes" && !selectedQuote.fill?.short && !selectedQuote.belowMinimum && selectedQuote.breakdown && Number.isFinite(selectedQuote.breakdown.inBank) && selectedQuote.breakdown.inBank > 0 ? selectedQuote : undefined;
+  const selectedQuote = selected?.quote && "checkedAt" in selected.quote ? selected.quote : undefined;
+  const pricedSelection = !showLocked && selectedQuote && isBankPayoutEstimate(selectedQuote) ? selectedQuote : undefined;
+  const settle = !showLocked && quotes.data?.locked === false && asset === "USDT" ? quotes.data.settle : undefined;
+  const settleEstimate = settle ? amount * settle.rate * (1 - SETTLE_MODELED_FEE) : undefined;
+  const selectedEstimate = selected?.id === "settle-inr" ? settleEstimate : undefined;
+  const selectedTrade = !showLocked ? selectedQuote?.trade : undefined;
+  const selectedGross = !showLocked && selectedQuote?.status === "market_reference" && !selectedQuote.fill?.short ? selectedQuote.fill?.gross : undefined;
+  const receiveAmount = pricedSelection?.breakdown?.inBank ?? selectedEstimate ?? selectedGross ?? selectedTrade?.price;
+  const receiveLabel = selectedTrade ? "Last trade per token" : selectedEstimate !== undefined ? "Calculator estimate" : selectedGross !== undefined ? "Gross sale estimate" : "You receive";
+  const selectedExchange = selected?.quote ? exchangeBySlug(selected.slug) : undefined;
   const choose = (id: string) => {
     setPicked({ context, id });
     requestAnimationFrame(() => {
@@ -107,20 +116,20 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
           </div>
           <span className={`${priceStyles.swap} ${styles.direction}`} aria-hidden><ArrowDown size={16} /></span>
           <div className={`${priceStyles.field} ${styles.swapField}`} data-output>
-            <span className={priceStyles.fieldLabel}>You receive</span>
+            <span className={priceStyles.fieldLabel}>{receiveLabel}</span>
             <div className={priceStyles.fieldRow}>
-              <output className={`${priceStyles.amount} ${styles.receiveAmount}`} data-status={(!pricedSelection && !cashOutLabel) || undefined} aria-live="polite" aria-busy={pending}>
-                {pending ? "Refreshing…" : showLocked ? "Sign in to see" : cashOutLabel ?? (pricedSelection?.breakdown ? pricedSelection.breakdown.inBank.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "Quote unavailable")}
+              <output className={`${priceStyles.amount} ${styles.receiveAmount}`} data-status={(!cashOutLabel && receiveAmount === undefined) || undefined} aria-live="polite" aria-busy={pending}>
+                {pending ? "Refreshing…" : showLocked ? "Sign in to see" : cashOutLabel ?? (receiveAmount?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "Quote unavailable")}
               </output>
               <StablecoinPicker side="to" value={destination} network={network} onChange={setDestination} />
             </div>
-            <p className={styles.rowHint}>{showLocked ? "Free account · see exchange prices" : pricedSelection ? <>via <strong>{pricedSelection.name}</strong> · after fees and estimated TDS</> : cashOutLabel ? <>via <strong>Kraken Pro</strong> · after known fees, before personal tax</> : pickupHint ?? cashRestriction ?? (cashPickup ? "Check the FX rate and fees in a MoneyGram-enabled wallet." : destination === "EURC" ? "Check the live rate on the DEX before confirming." : pending ? "Checking this amount, token and network…" : "No usable price for this selection.")}</p>
+            <p className={styles.rowHint}>{showLocked ? "Free account · see exchange prices" : pricedSelection ? <>via <strong>{pricedSelection.name}</strong> · after fees and estimated TDS</> : selectedEstimate !== undefined ? "SETTLE’s USD/INR reference · before wallet fees and taxes" : selectedTrade ? `INR per ${asset} · latest reported trade` : selectedGross !== undefined ? "Order book estimate before fees and taxes" : cashOutLabel ? <>via <strong>Kraken Pro</strong> · after known fees, before personal tax</> : selected?.route && destination === "INR" ? "Open the provider for the amount and fees for your account." : pickupHint ?? cashRestriction ?? (cashPickup ? "Check the FX rate and fees in a MoneyGram-enabled wallet." : destination === "EURC" ? "Check the live rate on the DEX before confirming." : pending ? "Checking this amount, token and network…" : "No usable price for this selection.")}</p>
           </div>
         </div>
 
         {destination === "INR" ? (
           showLocked ? <Link href={signInHref} className={`${priceStyles.compare} ${styles.cardCta} press`}>Sign in to see prices<ArrowRight size={16} aria-hidden /></Link>
-          : pricedSelection ? <a className={`${priceStyles.compare} ${styles.cardCta} press`} href={exchangeBySlug(pricedSelection.slug)!.tradeUrl(asset)} target="_blank" rel="noreferrer noopener">Go to {pricedSelection.name}<ArrowUpRight size={16} aria-hidden /></a>
+          : selectedExchange && (pricedSelection || selectedTrade || selectedGross !== undefined || selectedExchange.noLivePrice) ? <a className={PRICE_CTA} href={selectedExchange.tradeUrl(asset)} target="_blank" rel="noreferrer noopener">Go to {selectedExchange.name}<ArrowUpRight size={16} aria-hidden /></a>
           : selected?.route ? <a className={PRICE_CTA} href={selected.route.sourceUrl} target="_blank" rel="noreferrer noopener">Open {selected.name}<ArrowUpRight size={16} aria-hidden /></a>
           : <button type="button" disabled={pending || !quotes.retry} className={PRICE_CTA} onClick={quotes.retry}>{pending ? "Checking exchange prices…" : quotes.retry ? "Get quote" : "Quote unavailable"}</button>
         ) : cashCurrency && showLocked ? (
@@ -145,15 +154,42 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
           <button type="button" role="tab" id="stablecoin-tab-history" aria-controls="stablecoin-panel-history" aria-selected={tab === "history"} tabIndex={tab === "history" ? 0 : -1} onClick={() => setTab("history")}>Historical data</button>
         </div>
         <div id="stablecoin-panel-prices" role="tabpanel" aria-labelledby="stablecoin-tab-prices" hidden={tab !== "prices"}>
-          <p className={styles.selectionSummary}><strong>{count} {cashCurrency ? "provider" : "verified route"}{count === 1 ? "" : "s"}</strong> for {asset} on {NETWORKS[network].label} → {destination}</p>
-          <div className={comparisonStyles.tableHeader} aria-hidden><span>Provider</span><span>You receive</span></div>
+          <p className={styles.selectionSummary}><strong>{count} {cashCurrency || destination === "INR" ? "provider" : "verified route"}{count === 1 ? "" : "s"}</strong> for {asset} on {NETWORKS[network].label} → {destination}</p>
+          <div className={comparisonStyles.tableHeader} aria-hidden><span>Provider</span><span>{destination === "INR" ? "Price or rate" : "You receive"}</span></div>
           <ol className={comparisonStyles.providerRows} aria-label="Stablecoin provider prices" aria-busy={pending}>
             {entries.map((entry) => {
               const full = entry.quote && "checkedAt" in entry.quote ? entry.quote : undefined;
               const marketReference = full?.status === "market_reference" && full.fill;
+              const calculator = entry.id === "settle-inr" ? settleEstimate : undefined;
+              let value = entry.route?.price ?? "Quote unavailable";
+              let basis: string | undefined;
+              if (entry.quote) {
+                if (exchangeBySlug(entry.slug)?.noLivePrice) value = "Check sell rate in app";
+                else if (showLocked) value = "Sign in to see";
+                else if (pending) value = "Refreshing…";
+                else if (full?.trade) {
+                  value = `${inr(full.trade.price)} / ${asset}`;
+                  basis = "Latest reported trade";
+                } else if (full?.fill?.short) {
+                  value = "Partial market depth";
+                } else if (full?.status === "priced" && full.breakdown) {
+                  value = inr(full.breakdown.inBank);
+                  basis = isBankPayoutEstimate(full) ? "Estimated bank payout" : "Market estimate";
+                } else if (marketReference) {
+                  value = inr(marketReference.gross);
+                  basis = "Before fees and tax";
+                }
+              } else if (calculator !== undefined) {
+                value = inr(calculator);
+                basis = "Calculator estimate";
+              } else if (entry.id === "kraken") {
+                value = pending ? "Refreshing…" : showLocked ? "Sign in to see" : cashOutLabel ?? value;
+              } else if (entry.dex) {
+                value = "Live rate on DEX";
+              }
               return <li key={entry.id}><button type="button" className={`${comparisonStyles.providerRow} ${styles.quoteRow}`} aria-pressed={entry.id === selected?.id} aria-label={`Select ${entry.name}`} onClick={() => choose(entry.id)}>
                 <span className={comparisonStyles.providerName}><ProviderLogo slug={entry.slug} name={entry.name} size={29} /><span><strong>{entry.name}</strong>{entry.id === recommended?.slug ? <small>Most in your bank</small> : null}</span></span>
-                <span className={comparisonStyles.rowAmount}><strong>{entry.quote && exchangeBySlug(entry.slug)?.noLivePrice ? "No live price" : showLocked && entry.quote ? "Sign in to see" : entry.quote && pending ? "Refreshing…" : full?.status === "priced" && full.breakdown ? inr(full.breakdown.inBank) : marketReference && !marketReference.short ? inr(marketReference.gross) : marketReference ? "Partial market depth" : entry.id === "kraken" ? (pending ? "Refreshing…" : showLocked ? "Sign in to see" : cashOutLabel ?? "Quote unavailable") : entry.dex ? "Live rate on DEX" : entry.route?.price ?? "Quote unavailable"}</strong>{marketReference && !showLocked && !pending ? <small>Before fees and tax</small> : null}</span>
+                <span className={comparisonStyles.rowAmount}><strong>{value}</strong>{basis ? <small>{basis}</small> : null}</span>
                 <span className={styles.rowDescription}>{entry.hint}{entry.quote ? ` · ${entry.quote.support.status === "yes" ? "Network supported" : entry.quote.support.status === "no" ? "Network not supported" : "Check network support"}` : ""}</span>
               </button></li>;
             })}
@@ -170,9 +206,9 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
         {selected ? <>
           <p className={styles.detailSelection}>{asset} on {NETWORKS[network].label} → {destination === "EURC" ? `EURC on ${NETWORKS[network].label}` : `${destination} · ${cashPickup || selected.id === "moneygram-ramps" ? "Cash pickup" : "Bank account"}`}</p>
           {cashCurrency ? <CashOutDetails asset={asset} currency={cashCurrency} quote={cashQuote} reason={cashReason} /> : selected.quote ? <>
-            {!showLocked ? <label className={`${styles.cost} ${styles.detailCost}`}><span>What it cost you (₹, total)</span><input inputMode="decimal" placeholder="Optional" value={costText} onChange={(event) => setCostText(event.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 14))} /><small>Optional acquisition cost for the income-tax breakdown.</small></label> : null}
+            {!showLocked && selectedQuote?.breakdown ? <label className={`${styles.cost} ${styles.detailCost}`}><span>What it cost you (₹, total)</span><input inputMode="decimal" placeholder="Optional" value={costText} onChange={(event) => setCostText(event.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 14))} /><small>Optional acquisition cost for the income-tax breakdown.</small></label> : null}
             <ExchangeCard key={selected.id} quote={selected.quote} asset={asset} network={network} amount={amount} cost={cost} locked={showLocked} loading={pending} best={selected.id === recommended?.slug} signInHref={signInHref} />
-          </> : selected.dex && swap && swap.kind !== "none" ? <SwapCard key={selected.id} asset={asset} network={network} amount={amount} option={swap} /> : selected.route ? <Route key={selected.id} route={selected.route} /> : null}
+          </> : selected.dex && swap && swap.kind !== "none" ? <SwapCard key={selected.id} asset={asset} network={network} amount={amount} option={swap} /> : selected.route ? <Route key={selected.id} route={selected.route} reference={selectedEstimate === undefined ? undefined : settle} estimate={selectedEstimate} /> : null}
         </> : <div className={styles.empty}><TriangleAlert size={16} aria-hidden /><p><strong>Quote unavailable</strong>{swap?.kind === "none" ? swap.reason : pickupHint ?? "No provider covers this selection yet."}</p></div>}
       </aside>
       <div className={comparisonStyles.moreContext}>
@@ -212,7 +248,8 @@ function CashOutDetails({ asset, currency, quote, reason }: { asset: Stablecoin;
   </article>;
 }
 
-function Route({ route }: { route: RouteCard }) {
+function Route({ route, reference, estimate }: { route: RouteCard; reference?: SettleInrReference; estimate?: number }) {
+  const checked = new Date(`${route.checkedAt}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   return (
     <article className={styles.route}>
       <header>
@@ -221,9 +258,13 @@ function Route({ route }: { route: RouteCard }) {
         <span className={styles.price} data-request={route.price === "Price on request" || undefined}>{route.price}</span>
       </header>
       <p className={styles.delivers}><ArrowRight size={14} aria-hidden />{route.delivers}</p>
+      {reference && estimate !== undefined ? <>
+        <div className={styles.inBank}><span>SETTLE calculator estimate</span><strong>{inr(estimate)}</strong></div>
+        <p className={styles.liveNote}>Uses the provider’s USD/INR reference of {inr(reference.rate)} and a modelled 0.50% fee. Rate as of {new Date(reference.observedAt).toLocaleString("en-IN")}. Wallet costs and taxes are separate.</p>
+      </> : null}
       <ul className={styles.points}>{route.points.map((point) => <li key={point}><Check size={13} aria-hidden />{point}</li>)}</ul>
       {route.caution ? <p className={styles.caution}><TriangleAlert size={13} aria-hidden />{route.caution}</p> : null}
-      <footer><span>{route.priceNote}</span><a href={route.sourceUrl} target="_blank" rel="noreferrer noopener">Source · checked {CHECKED} <ArrowUpRight size={11} /></a></footer>
+      <footer><span>{route.priceNote}</span><a href={route.sourceUrl} target="_blank" rel="noreferrer noopener">Source · checked {checked} <ArrowUpRight size={11} /></a></footer>
     </article>
   );
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ArrowRight, Landmark, LockKeyhole, ShieldCheck } from "lucide-react";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
-import { vdaTax, type ExchangeQuote } from "../../lib/india-exchanges";
+import { isBankPayoutEstimate, vdaTax } from "../../lib/india-exchanges";
 import { NETWORKS, TOKENS, isCashOutCurrency, isCashPickupCurrency, networksFor, type Destination, type Network, type Stablecoin } from "../../lib/stablecoin-routes";
 import { inr, useCashOutQuote, useExchangeQuotes } from "./stablecoin-inr";
 import { cashOutRestriction, fiat } from "../../lib/stablecoin-cash-out";
@@ -30,7 +30,7 @@ export function StablecoinHero({ signedIn }: { signedIn: boolean }) {
   const bankAmount = currency && cash.data?.locked === false && cash.data.quote ? fiat(cash.data.quote.payout, currency) : null;
   const needsSignIn = dest === "INR" || Boolean(currency && !restriction);
 
-  const best = data && !data.locked ? (data.exchanges.find((quote) => quote.status === "priced") as ExchangeQuote | undefined) : undefined;
+  const best = data && !data.locked ? data.exchanges.find(isBankPayoutEstimate) : undefined;
   const tax = best?.breakdown ? vdaTax(best.breakdown, null) : null;
   const query = new URLSearchParams({ mode: "stablecoin", asset, network, dest, amount: String(amount || 1000) });
   const fullHref = signedIn ? `/app/prices?${query}` : `/prices?${query}`;

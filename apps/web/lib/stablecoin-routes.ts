@@ -179,6 +179,11 @@ const SETTLE_NETWORKS: Record<Stablecoin, Network[]> = {
   USDT: ["ethereum", "polygon", "bnb", "solana", "arbitrum", "base"],
   USDC: ["ethereum", "solana", "bnb", "polygon", "arbitrum", "base", "optimism", "avalanche"],
 };
+export const SETTLE_MODELED_FEE = 0.005;
+
+export function hasSettleInrRoute(asset: Stablecoin, network: Network) {
+  return Boolean(TOKENS[asset].addresses[network]) && SETTLE_NETWORKS[asset].includes(network);
+}
 
 function usd(value: number) {
   return `USD ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
@@ -209,7 +214,7 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
   }
   if (isCashPickupCurrency(destination)) return cards;
   if (destination === "INR") {
-    if (TOKENS[asset].addresses[network] && SETTLE_NETWORKS[asset].includes(network)) {
+    if (hasSettleInrRoute(asset, network)) {
       cards.push({
         id: "settle-inr",
         provider: "SETTLE by LedgerPe",
@@ -224,7 +229,26 @@ export function stablecoinRoutes(asset: Stablecoin, network: Network, destinatio
         price: "0.50% illustrative fee",
         priceNote: "SETTLE's public calculator uses 0.50%. Final rate, fees and what reaches the bank are shown in its quote.",
         sourceUrl: `https://settle.ledgerpe.com/convert/${asset.toLowerCase()}-inr`,
-        checkedAt: "2026-11-19",
+        checkedAt: "2026-11-20",
+      });
+    }
+    if (asset === "USDT" && network === "tron") {
+      cards.push({
+        id: "disburz-inr",
+        provider: "Disburz",
+        slug: "disburz",
+        title: "Cash out TRC20 USDT through Trans Ramp",
+        delivers: "INR to your own Indian bank account by IMPS, NEFT or RTGS",
+        price: "Fee ₹50 + 3 USDT",
+        priceNote: "The public calculator shows a ₹50 payout fee and a 3 USDT network deduction. It excludes the sending wallet’s own charges. Confirm the current rate, minimum and fees before proceeding.",
+        points: [
+          "USDT on Tron only. The calculator displayed a 13.95 USDT minimum when reviewed.",
+          "Disburz collects name, email, phone and bank details. Trans Ramp handles the payout and may ask for further verification.",
+          "Disburz estimates IMPS in minutes or NEFT within a few hours after the on-chain payment clears.",
+          "The displayed payout is before any applicable TDS and income tax.",
+        ],
+        sourceUrl: "https://disburz.money/usdt-to-inr-calculator",
+        checkedAt: "2026-11-20",
       });
     }
     cards.push({

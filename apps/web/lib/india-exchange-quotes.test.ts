@@ -15,6 +15,8 @@ const books = {
   zebpay: { data: { bids: [["103.309", "647.54"]], asks: [["103.431", "1014.68"]], timestamp: (NOW - 1_500) / 1000 }, statusCode: 200 },
   flitpay: [{ at: (NOW - 3_000) / 1000, symbol: "INR_USDT", "bid price": "102.33", ask_price: "102.44" }],
   koinbx: { status: "1", data: { timestamp: (NOW - 2000) / 1000, bids: [[101.519, 500], [101.453, 600]], asks: [[101.521, 1589.58]] } },
+  suncrypto: [{ time: NOW - 120_000, price: "102.263", qty: "170.06" }],
+  coinswitch: { success: true, data: { s: "USDT,INR", timestamp: NOW - 5000, bids: [["103.86", "123.93"], ["103.7", "3545.54"]], asks: [["104.19", "33.98"]] } },
 };
 
 type Overrides = Partial<Record<keyof typeof books, () => Response>>;
@@ -23,7 +25,8 @@ function fetcherFor(overrides: Overrides = {}) {
   const impl = (async (input: RequestInfo | URL) => {
     const url = String(input);
     calls.push(url);
-    const slug = (Object.keys(books) as Array<keyof typeof books>).find((name) => url.includes(`${name === "zebpay" ? "sapi.zebpay" : `api.${name}`}.`));
+    const host = new URL(url).hostname;
+    const slug = (Object.keys(books) as Array<keyof typeof books>).find((name) => host.split(".").includes(name));
     if (!slug) return new Response("{}", { status: 503 });
     return overrides[slug]?.() ?? new Response(JSON.stringify(books[slug]), { status: 200 });
   }) as unknown as typeof fetch;
@@ -38,9 +41,12 @@ describe("quotes on Indian exchanges", () => {
     expect(quotes.map((quote) => quote.slug).slice(0, 4)).toEqual(["coindcx", "wazirx", "flitpay", "giottus"]);
     for (const slug of ["coindcx", "wazirx", "flitpay", "giottus"]) expect(bySlug[slug]!.status, slug).toBe("priced");
     expect(bySlug.zebpay).toMatchObject({ status: "unavailable", reason: expect.stringContaining("refuses requests from Railor’s server") });
-    expect(bySlug.suncrypto).toMatchObject({ status: "unavailable", reason: expect.stringContaining("bid above its ask") });
-    expect(bySlug.mudrex).toMatchObject({ status: "unavailable", reason: expect.stringContaining("futures markets only") });
-    expect(quotes).toHaveLength(8);
+    expect(bySlug.suncrypto).toMatchObject({ status: "last_trade", trade: { price: 102.263, size: 170.06 } });
+    expect(bySlug.suncrypto).not.toHaveProperty("breakdown");
+    expect(bySlug.mudrex).toMatchObject({ status: "unavailable", reason: expect.stringContaining("buy rate") });
+    expect(bySlug.coinswitch).toMatchObject({ status: "market_reference", fill: { filled: 1000, gross: 103719.83 }, support: { status: "unknown" } });
+    expect(bySlug.coinswitch).not.toHaveProperty("breakdown");
+    expect(quotes).toHaveLength(9);
   });
 
   it("walks the order book for the amount and carries the live bid, its time and its gap to Wise's mid-market", async () => {
@@ -94,7 +100,7 @@ describe("quotes on Indian exchanges", () => {
     const down = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
     const { quotes, reference } = await indiaExchangeQuotes("USDT", "tron", 1000, { fetcher: down, now: new Date(NOW) });
     expect(reference).toBeNull();
-    expect(quotes).toHaveLength(8);
+    expect(quotes).toHaveLength(9);
     expect(quotes.every((quote) => quote.status === "unavailable" && quote.reason)).toBe(true);
   });
 

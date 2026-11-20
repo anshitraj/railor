@@ -54,11 +54,11 @@ describe("stablecoin off-ramp routes", () => {
     expect(stablecoinRoutes("USDC", "base", "MXN", 1_000)).toEqual([]);
   });
 
-  it("never prices a stablecoin at 1:1 — no route shows a computed INR amount", () => {
+  it("keeps payout amounts out of static route cards", () => {
     const routes = stablecoinRoutes("USDT", "tron", "INR", 1700);
     expect(routes.map((route) => route.id).slice(-2)).toEqual(["xflow-stablecoins", "tether-redemption"]);
     expect(routes.find((route) => route.id === "xflow-stablecoins")).toMatchObject({ price: "Price on request", delivers: "INR in your Indian bank account" });
-    expect(routes.every((route) => !/₹|INR \d/.test(route.price))).toBe(true);
+    expect(routes.every((route) => !/^(?:₹|INR \d)/.test(route.price))).toBe(true);
   });
 
   it("applies Tether's published minimum and fee", () => {
@@ -102,6 +102,11 @@ describe("stablecoin off-ramp routes", () => {
     expect(route).toMatchObject({ price: "0.50% illustrative fee", sourceUrl: "https://settle.ledgerpe.com/convert/usdc-inr" });
     expect(stablecoinRoutes("USDT", "base", "INR", 1000).some(entry => entry.id === "settle-inr")).toBe(Boolean(TOKENS.USDT.addresses.base));
     expect(stablecoinRoutes("USDC", "base", "EURC", 1000).some(entry => entry.id === "settle-inr")).toBe(false);
+  });
+
+  it("lists Disburz’s published fee only on the USDT Tron route", () => {
+    expect(stablecoinRoutes("USDT", "tron", "INR", 1000).find(entry => entry.id === "disburz-inr")).toMatchObject({ price: "Fee ₹50 + 3 USDT" });
+    expect(stablecoinRoutes("USDT", "ethereum", "INR", 1000).some(entry => entry.id === "disburz-inr")).toBe(false);
   });
 
   it("offers Circle Mint for USDC only, and no INR route when the goal is EURC", () => {

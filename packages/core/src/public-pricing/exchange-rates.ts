@@ -16,10 +16,10 @@ import { shared } from "./shared-cache.js";
  *   ZebPay   GET sapi.zebpay.com/api/v2/market/orderbook?symbol=USDT-INR (github.com/zebpay/zebpay-api-references) book, USDT
  *   Flitpay  GET api.flitpay.com/v1/tickers/24hr/?symbol=INR_USDT         (api.flitpay.com/public-api-of-flitpay) top, USDT
  *   KoinBX   GET api.koinbx.com/orderbook?market_pair=USDT_INR&depth=50   (koinbx.com/publicapi)    book, USDT + USDC
+ *   CoinSwitch PRO uses a separate public order book for its web market.
  *
- * SunCrypto's /public/tickers answers, but lists a bid above its ask on every
- * pair, so which side is which cannot be told; Mudrex's public price API covers
- * its futures only. Neither is read: those cards stay facts-only.
+ * SunCrypto publishes timestamped trades. These are shown as trades because
+ * its ticker lists a crossed spread and cannot establish a current sell bid.
  *
  * ZebPay documents its endpoint as public, and it answered a plain curl, but its
  * Cloudflare returned 403 to Node's fetch on 2026-11-18, so from this server it
@@ -30,7 +30,7 @@ import { shared } from "./shared-cache.js";
  * unreadable or implausible becomes an "unavailable" entry with the reason.
  */
 
-export type ExchangeFeedSlug = "wazirx" | "coindcx" | "giottus" | "zebpay" | "flitpay" | "koinbx";
+export type ExchangeFeedSlug = "wazirx" | "coindcx" | "giottus" | "zebpay" | "flitpay" | "koinbx" | "suncrypto" | "coinswitch";
 export type ExchangeAsset = "USDT" | "USDC";
 /** [price in INR, size in tokens] */
 export type BookLevel = [price: number, size: number];
@@ -71,7 +71,16 @@ export interface ExchangeBidUnavailable {
   detail: string;
 }
 
-export type ExchangeRate = ExchangeBid | ExchangeBidUnavailable;
+export interface ExchangeTradeReference {
+  status: "last_trade";
+  slug: ExchangeFeedSlug;
+  price: number;
+  size: number;
+  observedAt: string;
+  source: ExchangeBid["source"];
+}
+
+export type ExchangeRate = ExchangeBid | ExchangeBidUnavailable | ExchangeTradeReference;
 
 export interface InrExchangeRates {
   pair: `${ExchangeAsset}/INR`;
@@ -95,6 +104,7 @@ const RETRY_AFTER_BLOCK_MS = 300_000;
 const MAX_BODY_CHARS = 2_000_000;
 /** An exchange timestamp older than this is a frozen feed. */
 export const MAX_BID_AGE_MS = 120_000;
+const MAX_TRADE_AGE_MS = 30 * 60_000;
 /** Clock skew allowed before an exchange timestamp counts as invalid. */
 const MAX_FUTURE_MS = 60_000;
 /** Rejected as a unit slip when this far from Wise's mid-market USD/INR. USDT has sat near 10% above it; this only catches nonsense. */
@@ -102,7 +112,7 @@ export const MAX_GAP_FROM_REFERENCE = 0.3;
 /** INR per USDT, for the moment there is no reference to compare with. */
 const PLAUSIBLE_INR = { min: 20, max: 500 };
 
-interface Reading {
+interface BidReading {
   bid: number;
   ask: number;
   /** The bids of a book, or null when the feed gives only a best bid and ask. */
@@ -110,6 +120,14 @@ interface Reading {
   /** The exchange's own time in milliseconds, when its response has one. */
   at: number | null;
 }
+
+interface TradeReading {
+  price: number;
+  size: number;
+  at: number;
+}
+
+type Reading = BidReading | TradeReading;
 
 class FeedError extends Error {
   constructor(readonly problem: ExchangeRateProblem, message: string) {
@@ -171,7 +189,7 @@ const pairsOf = (side: unknown): Array<[unknown, unknown]> | null =>
   Array.isArray(side) ? side.map((level): [unknown, unknown] => (Array.isArray(level) ? [level[0], level[1]] : [null, null])) : null;
 
 /** A book reading: the best bid and ask come from the levels, the bids are kept to walk. */
-function bookReading(bids: Array<[unknown, unknown]>, asks: Array<[unknown, unknown]>, at: number | null): Reading {
+function bookReading(bids: Array<[unknown, unknown]>, asks: Array<[unknown, unknown]>, at: number | null): BidReading {
   const bidLevels = levelsOf(bids, "bid");
   const askLevels = levelsOf(asks, "ask");
   return { bid: bidLevels[0]?.[0] ?? Number.NaN, ask: askLevels[0]?.[0] ?? Number.NaN, levels: bidLevels, at };
@@ -254,6 +272,40 @@ const FEEDS: Feed[] = [
       return bookReading(bids, asks, at);
     },
   },
+  {
+    slug: "suncrypto", name: "SunCrypto", label: "SunCrypto recent trades", assets: ["USDT"],
+    url: () => "https://suncrypto.in/public/historical_trades?ticker_id=USDT_INR",
+    docs: "https://docs.suncrypto.in/",
+    read(body) {
+      if (!Array.isArray(body)) throw unreadable("SunCrypto", "a trade list");
+      let latest: TradeReading | undefined;
+      for (const entry of body) {
+        const trade = record(entry);
+        const at = toMillis(trade?.time);
+        const price = num(trade?.price);
+        const size = num(trade?.qty);
+        if (at !== null && Number.isFinite(price) && price > 0 && Number.isFinite(size) && size > 0 && (!latest || at > latest.at)) {
+          latest = { price, size, at };
+        }
+      }
+      if (!latest) throw new FeedError("invalid_price", "SunCrypto has no usable USDT/INR trades.");
+      return latest;
+    },
+  },
+  {
+    slug: "coinswitch", name: "CoinSwitch PRO", label: "CoinSwitch PRO public order book", assets: ["USDT"],
+    url: () => "https://coinswitch.co/pro/api/v1/realtime-rates/depth?symbol=usdt,inr&exchange=csx",
+    docs: "https://coinswitch.co/pro/usdt-inr/csx",
+    read(body) {
+      const envelope = record(body);
+      const book = record(envelope?.data);
+      const bids = pairsOf(book?.bids);
+      const asks = pairsOf(book?.asks);
+      const at = toMillis(book?.timestamp);
+      if (envelope?.success !== true || book?.s !== "USDT,INR" || !bids || !asks || at === null) throw unreadable("CoinSwitch PRO", "a USDT/INR order book");
+      return bookReading(bids, asks, at);
+    },
+  },
 ];
 
 /** The feeds Railor reads, for pages that cite them. */
@@ -302,6 +354,8 @@ const outcomeTtl = (outcome: Outcome) =>
   outcome.ok ? FRESH_MS : outcome.problem === "rate_limited" ? BACKOFF_AFTER_429_MS : outcome.problem === "blocked" ? RETRY_AFTER_BLOCK_MS : RETRY_AFTER_FAILURE_MS;
 
 const round = (value: number, places: number) => Math.round(value * 10 ** places) / 10 ** places;
+const plausible = (price: number, reference: number | null) =>
+  price >= PLAUSIBLE_INR.min && price <= PLAUSIBLE_INR.max && (reference === null || Math.abs(price / reference - 1) <= MAX_GAP_FROM_REFERENCE);
 
 /**
  * Strict checks on a reading, made each time it is served (a cached reading
@@ -311,11 +365,20 @@ const round = (value: number, places: number) => Math.round(value * 10 ** places
 function judge(feed: Feed, outcome: Outcome, now: number, reference: number | null): ExchangeRate {
   const fail = (problem: ExchangeRateProblem, detail: string): ExchangeBidUnavailable => ({ status: "unavailable", slug: feed.slug, problem, detail });
   if (!outcome.ok) return fail(outcome.problem, outcome.detail);
+  const source = { label: feed.label, url: feed.docs };
+  if ("price" in outcome.reading) {
+    const { price, size, at } = outcome.reading;
+    if (!plausible(price, reference)) return fail("out_of_range", `${feed.name} returned a trade price outside the expected INR range.`);
+    if (at - now > MAX_FUTURE_MS || now - at > MAX_TRADE_AGE_MS) {
+      return fail("stale", `${feed.name} has no usable trade timestamp in the past 30 minutes.`);
+    }
+    return { status: "last_trade", slug: feed.slug, price, size, observedAt: new Date(Math.min(at, now)).toISOString(), source };
+  }
   const { bid, at, levels } = outcome.reading;
   const ask = Number.isFinite(outcome.reading.ask) && outcome.reading.ask > 0 ? outcome.reading.ask : null;
   if (!Number.isFinite(bid) || !(bid > 0)) return fail("invalid_price", `${feed.name} has no bid right now.`);
   if (ask !== null && bid > ask) return fail("crossed", `${feed.name} lists a bid above its ask, so its bid can't be trusted.`);
-  if (bid < PLAUSIBLE_INR.min || bid > PLAUSIBLE_INR.max || (reference !== null && Math.abs(bid / reference - 1) > MAX_GAP_FROM_REFERENCE)) {
+  if (!plausible(bid, reference)) {
     return fail("out_of_range", `${feed.name}'s bid is too far from the mid-market rate to be a real USDT/INR price.`);
   }
   let observed = outcome.readAt;
@@ -336,7 +399,7 @@ function judge(feed: Feed, outcome: Outcome, now: number, reference: number | nu
     depth: levels ? "book" : "top",
     bids: levels ?? [],
     gapPct: reference !== null ? round((bid / reference - 1) * 100, 2) : null,
-    source: { label: feed.label, url: feed.docs },
+    source,
   };
 }
 
@@ -368,4 +431,38 @@ export async function inrExchangeRates(asset: ExchangeAsset, deps: ExchangeRateD
   const reference = mid ? { rate: mid.rate, source: "Wise's public rate (mid-market)", observedAt: mid.observedAt } : null;
   const rates = Object.fromEntries(feeds.map((feed, index) => [feed.slug, judge(feed, outcomes[index]!, now, reference?.rate ?? null)])) as InrExchangeRates["rates"];
   return { pair: `${asset}/INR`, reference, rates, generatedAt: new Date(now).toISOString() };
+}
+
+const SETTLE_REFERENCE_URL = "https://settle.ledgerpe.com/api/quote/forex-rate";
+
+export interface SettleInrReference {
+  /** USD/INR input used by SETTLE's public USDT calculator. */
+  rate: number;
+  observedAt: string;
+}
+
+/** This is the calculator's rate input. The authenticated wallet quote is a separate product. */
+export async function settleInrReference(fetcher: typeof fetch = fetch, now?: Date): Promise<SettleInrReference | null> {
+  const load = async () => {
+    try {
+      const response = await fetcher(SETTLE_REFERENCE_URL, {
+        headers: { accept: "application/json", "user-agent": PUBLIC_FEED_USER_AGENT },
+        signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+        cache: "no-store",
+        redirect: "error",
+      });
+      if (!response.ok) return null;
+      const body = record(await response.json());
+      if (body?.success !== true || body.stale !== false || typeof body.timestamp !== "string") return null;
+      const rate = num(body.usdToInr);
+      const at = Date.parse(body.timestamp);
+      return Number.isFinite(at) && plausible(rate, null) ? { rate, observedAt: new Date(at).toISOString() } : null;
+    } catch {
+      return null;
+    }
+  };
+  const result = now ? await load() : await shared("settle-inr-reference", FRESH_MS, load);
+  if (!result) return null;
+  const age = (now?.getTime() ?? Date.now()) - Date.parse(result.observedAt);
+  return age >= -MAX_FUTURE_MS && age <= MAX_BID_AGE_MS ? result : null;
 }

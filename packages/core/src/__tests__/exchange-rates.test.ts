@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EXCHANGE_FEEDS, MAX_BID_AGE_MS, PUBLIC_FEED_USER_AGENT, inrExchangeRates, type ExchangeAsset, type ExchangeFeedSlug, type ExchangeRate, type InrExchangeRates } from "../public-pricing/exchange-rates.js";
+import { EXCHANGE_FEEDS, MAX_BID_AGE_MS, PUBLIC_FEED_USER_AGENT, inrExchangeRates, settleInrReference, type ExchangeAsset, type ExchangeFeedSlug, type ExchangeRate, type InrExchangeRates } from "../public-pricing/exchange-rates.js";
 import { clearSharedCache } from "../public-pricing/shared-cache.js";
 
 // Response shapes are trimmed from real calls to each exchange's public endpoint on 2026-11-18;
@@ -38,12 +38,14 @@ const koinbx = (timestamp = (NOW - 2_000) / 1000) => ({
 });
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-const HOSTS: Record<string, ExchangeFeedSlug> = { "api.wazirx.com": "wazirx", "api.coindcx.com": "coindcx", "api.giottus.com": "giottus", "sapi.zebpay.com": "zebpay", "api.flitpay.com": "flitpay", "api.koinbx.com": "koinbx" };
+const suncrypto = [{ time: NOW - 120_000, price: "102.263000000000", qty: "170.060000000000", isBuyerMaker: false }];
+const coinswitch = { success: true, data: { s: "USDT,INR", timestamp: NOW - 5000, bids: [["103.86", "123.93"], ["103.7", "3545.54"]], asks: [["104.19", "33.98"]] } };
+const HOSTS: Record<string, ExchangeFeedSlug> = { "api.wazirx.com": "wazirx", "api.coindcx.com": "coindcx", "api.giottus.com": "giottus", "sapi.zebpay.com": "zebpay", "api.flitpay.com": "flitpay", "api.koinbx.com": "koinbx", "suncrypto.in": "suncrypto", "coinswitch.co": "coinswitch" };
 
 type Answer = unknown | (() => Response | Promise<Response>);
 /** A fetch that answers each exchange's host with a body (or a function building the response) and records every call. */
 function exchangeFetch(overrides: Partial<Record<ExchangeFeedSlug, Answer>> = {}) {
-  const answers: Record<ExchangeFeedSlug, Answer> = { wazirx: wazirx(), coindcx: coindcx(), giottus: giottus(), zebpay: zebpay(), flitpay: flitpay(), koinbx: koinbx(), ...overrides };
+  const answers: Record<ExchangeFeedSlug, Answer> = { wazirx: wazirx(), coindcx: coindcx(), giottus: giottus(), zebpay: zebpay(), flitpay: flitpay(), koinbx: koinbx(), suncrypto, coinswitch, ...overrides };
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const impl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -92,8 +94,8 @@ describe("live USDT/INR prices from each exchange's own endpoint", () => {
 
   it("cites each exchange's own documentation for the number", async () => {
     const { rates } = await run(exchangeFetch());
-    const links = Object.values(rates).map((rate) => rate.status === "ok" && new URL(rate.source.url).hostname);
-    expect(links).toEqual(["docs.wazirx.com", "docs.coindcx.com", "api.giottus.com", "github.com", "api.flitpay.com", "koinbx.com"]);
+    const links = Object.values(rates).map((rate) => rate.status !== "unavailable" && new URL(rate.source.url).hostname);
+    expect(links).toEqual(["docs.wazirx.com", "docs.coindcx.com", "api.giottus.com", "github.com", "api.flitpay.com", "koinbx.com", "docs.suncrypto.in", "coinswitch.co"]);
     expect(EXCHANGE_FEEDS.every((feed) => new URL(feed.endpoint).protocol === "https:")).toBe(true);
   });
 
@@ -252,8 +254,31 @@ it("uses KoinBX's timestamped bid depth and rejects an old book", async () => {
   expect((await run(exchangeFetch({ koinbx: koinbx((NOW - 180_000) / 1000) }))).rates.koinbx).toMatchObject({ status: "unavailable", problem: "stale" });
 });
 
+it("uses SunCrypto’s latest reported trade without inventing a sell bid", async () => {
+  const older = { time: NOW - 210_000, price: "101.92", qty: "13" };
+  const { rates } = await run(exchangeFetch({ suncrypto: [older, ...suncrypto] }));
+  expect(rates.suncrypto).toMatchObject({ status: "last_trade", price: 102.263, size: 170.06, observedAt: new Date(NOW - 120_000).toISOString() });
+  expect(rates.suncrypto).not.toHaveProperty("bid");
+  expect((await run(exchangeFetch({ suncrypto: [{ ...older, time: NOW - 1_801_000 }] }))).rates.suncrypto).toMatchObject({ status: "unavailable", problem: "stale" });
+});
+
+it("reads CoinSwitch PRO’s public spot depth and rejects the wrong trading pair", async () => {
+  expect((await run(exchangeFetch())).rates.coinswitch).toMatchObject({ status: "ok", depth: "book", bid: 103.86, ask: 104.19, bids: [[103.86, 123.93], [103.7, 3545.54]] });
+  const wrong = { ...coinswitch, data: { ...coinswitch.data, s: "USDC,INR" } };
+  expect((await run(exchangeFetch({ coinswitch: wrong }))).rates.coinswitch).toMatchObject({ status: "unavailable", problem: "unreadable" });
+});
+
+it("reads the SETTLE calculator reference and declines stale observations", async () => {
+  const observedAt = new Date(NOW - 2000).toISOString();
+  const body = { success: true, stale: false, usdToInr: "101.04", timestamp: observedAt };
+  const response = (over: Record<string, unknown> = {}) => vi.fn(async () => json({ ...body, ...over }));
+  await expect(settleInrReference(response(), new Date(NOW))).resolves.toEqual({ rate: 101.04, observedAt });
+  await expect(settleInrReference(response({ stale: true }), new Date(NOW))).resolves.toBeNull();
+  await expect(settleInrReference(response(), new Date(NOW + 180_000))).resolves.toBeNull();
+});
+
 describe("what is sent", () => {
-  it("calls each exchange's documented public URL with a plain GET, an honest bot agent and no credentials", async () => {
+  it("calls each exchange’s public URL with a plain GET, an honest bot agent and no credentials", async () => {
     const fetcher = exchangeFetch();
     await run(fetcher);
     expect(fetcher.calls.map((call) => call.url)).toEqual([
@@ -263,6 +288,8 @@ describe("what is sent", () => {
       "https://sapi.zebpay.com/api/v2/market/orderbook?symbol=USDT-INR&limit=100",
       "https://api.flitpay.com/v1/tickers/24hr/?symbol=INR_USDT",
       "https://api.koinbx.com/orderbook?market_pair=USDT_INR&depth=50",
+      "https://suncrypto.in/public/historical_trades?ticker_id=USDT_INR",
+      "https://coinswitch.co/pro/api/v1/realtime-rates/depth?symbol=usdt,inr&exchange=csx",
     ]);
     for (const { init } of fetcher.calls) {
       expect(init?.method ?? "GET").toBe("GET");

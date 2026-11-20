@@ -76,6 +76,21 @@ describe("GET /api/stablecoin", () => {
     expect(mocks.quotes).toHaveBeenCalledWith("USDC", "ethereum", 2500);
   });
 
+  it("includes the public SETTLE calculator reference only for signed-in USDT users on supported networks", async () => {
+    const observedAt = new Date().toISOString();
+    const fetchReference = vi.fn(async () => Response.json({ success: true, stale: false, usdToInr: "101.04", timestamp: observedAt }));
+    vi.stubGlobal("fetch", fetchReference);
+    const eth = request("asset=USDT&network=ethereum&amount=1000");
+    mocks.session.mockResolvedValue(null);
+    expect(await (await GET(eth)).json()).not.toHaveProperty("settle");
+    expect(fetchReference).not.toHaveBeenCalled();
+
+    mocks.session.mockResolvedValue({ user: { id: "U" } });
+    expect(await (await GET(request())).json()).not.toHaveProperty("settle");
+    expect(fetchReference).not.toHaveBeenCalled();
+    expect(await (await GET(eth)).json()).toMatchObject({ settle: { rate: 101.04, observedAt } });
+  });
+
   it("rejects a bad selection before reading anything, and rate limits", async () => {
     mocks.session.mockResolvedValue(null);
     for (const query of ["asset=DOGE&network=tron&amount=1", "asset=USDT&network=nowhere&amount=1", "asset=USDT&network=tron&amount=0", "asset=USDT&network=tron&amount=99999999", "asset=USDC&network=solana&amount=1000&dest=EURC"]) {

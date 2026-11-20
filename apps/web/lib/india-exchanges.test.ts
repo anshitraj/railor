@@ -73,7 +73,7 @@ describe("deposit networks", () => {
 
 describe("Indian exchanges", () => {
   it("lists the exchanges with fee sources and identifies those missing a bank payout price", () => {
-    expect(INDIA_EXCHANGES.map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "giottus", "flitpay", "zebpay", "suncrypto", "mudrex", "koinbx"]);
+    expect(INDIA_EXCHANGES.map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "giottus", "flitpay", "zebpay", "suncrypto", "mudrex", "koinbx", "coinswitch"]);
     for (const exchange of INDIA_EXCHANGES) {
       expect(exchange.feeSource, exchange.slug).toMatch(/^https:\/\//);
       expect(exchange.withdrawalSource, exchange.slug).toMatch(/^https:\/\//);
@@ -84,7 +84,7 @@ describe("Indian exchanges", () => {
   });
 
   it("prices USDC only where the exchange lists it against INR", () => {
-    expect(exchangesFor("USDT")).toHaveLength(8);
+    expect(exchangesFor("USDT")).toHaveLength(9);
     expect(exchangesFor("USDC").map((exchange) => exchange.slug)).toEqual(["coindcx", "wazirx", "koinbx"]);
   });
 
@@ -92,7 +92,7 @@ describe("Indian exchanges", () => {
     const fed = new Set<string>(EXCHANGE_FEEDS.map((feed) => feed.slug));
     for (const exchange of INDIA_EXCHANGES) expect(fed.has(exchange.slug) !== Boolean(exchange.noLivePrice), exchange.slug).toBe(true);
     for (const slug of fed) expect(exchangeBySlug(slug), `${slug} is read but not listed`).toBeDefined();
-    expect(INDIA_EXCHANGES.filter((exchange) => exchange.noLivePrice).map((exchange) => exchange.slug)).toEqual(["suncrypto", "mudrex"]);
+    expect(INDIA_EXCHANGES.filter((exchange) => exchange.noLivePrice).map((exchange) => exchange.slug)).toEqual(["mudrex"]);
     // The feeds that serve USDC are the exchanges that list USDC.
     for (const feed of EXCHANGE_FEEDS) expect(feed.assets.includes("USDC"), feed.slug).toBe(exchangesFor("USDC").some((exchange) => exchange.slug === feed.slug));
   });
@@ -118,6 +118,8 @@ describe("Indian exchanges", () => {
     expect(depositSupport(exchangeBySlug("giottus")!, "USDT", "tron").status).toBe("yes");
     expect(depositSupport(exchangeBySlug("zebpay")!, "USDT", "ethereum").status).toBe("yes");
     expect(depositSupport(exchangeBySlug("giottus")!, "USDT", "solana").status).toBe("no");
-    expect(depositSupport(exchangeBySlug("suncrypto")!, "USDT", "ethereum")).toMatchObject({ status: "unknown", note: expect.stringContaining("doesn’t publish") });
+    expect(depositSupport(exchangeBySlug("suncrypto")!, "USDT", "tron").status).toBe("yes");
+    expect(depositSupport(exchangeBySlug("suncrypto")!, "USDT", "ethereum").status).toBe("yes");
+    expect(depositSupport(exchangeBySlug("suncrypto")!, "USDT", "polygon").status).toBe("unknown");
   });
 });

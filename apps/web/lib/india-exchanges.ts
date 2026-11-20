@@ -23,7 +23,8 @@
  *   SunCrypto — suncrypto.in/fee-structure: 0.40% on INR pairs plus GST; INR out ₹10.
  *   Mudrex    — mudrex.com/fee: 1% on USDT sales plus GST; INR out free.
  *
- * SunCrypto and Mudrex have no public price Railor can use (`noLivePrice`).
+ * SunCrypto is shown with its latest reported trade. Mudrex has a public
+ * calculator, but the rate behind it is tagged BUY.
  *
  * Tax (incometaxindia.gov.in): 1% TDS under Section 194S on the consideration
  * net of the exchange's charges (CBDT Circular 13/2022); income from a VDA
@@ -33,9 +34,10 @@
  *
  * Railor only reads public prices. It never holds crypto or INR.
  */
+import type { ExchangeTradeReference } from "@railor/core";
 import type { Network, Stablecoin } from "./stablecoin-routes";
 
-export type ExchangeSlug = "coindcx" | "wazirx" | "giottus" | "flitpay" | "zebpay" | "suncrypto" | "mudrex" | "koinbx";
+export type ExchangeSlug = "coindcx" | "wazirx" | "giottus" | "flitpay" | "zebpay" | "suncrypto" | "mudrex" | "koinbx" | "coinswitch";
 export type DepositSupport = "yes" | "no" | "unknown";
 
 export const EXCHANGES_CHECKED = "2026-11-18";
@@ -67,7 +69,7 @@ export interface IndiaExchange {
   assets?: Stablecoin[];
   /**
    * Why Railor shows no live price for this exchange: its public feed can't be
-   * used (checked 2026-11-18). Absent when `inrExchangeRates` in core reads one.
+   * used. Absent when `inrExchangeRates` in core reads one.
    */
   noLivePrice?: string;
 }
@@ -186,13 +188,13 @@ export const INDIA_EXCHANGES: IndiaExchange[] = [
     feeNote: "On INR pairs, plus 18% GST. Its 0.25% USDT-pair fee is crypto to crypto and never reaches rupees.",
     feeSource: "https://suncrypto.in/fee-structure",
     withdrawalFee: 10,
-    withdrawalMin: 0,
-    withdrawalNote: "₹10 a withdrawal, charged by its banking partner; instant.",
-    withdrawalSource: "https://suncrypto.in/fee-structure",
+    withdrawalMin: null,
+    withdrawalNote: "SunCrypto’s withdrawal guide lists a ₹10 banking-partner fee and up to 24–48 hours for bank processing. Confirm the current charge in the app.",
+    withdrawalSource: "https://help.suncrypto.in/support/solutions/articles/82000885009-how-to-withdrawal-inr-",
     assets: ["USDT"],
-    noLivePrice: "SunCrypto’s public ticker lists a bid above its ask for every market, so Railor can’t tell which side you would get, and its docs site didn’t load",
+    reviewedAt: "2026-11-20",
     networks: {
-      USDT: { listed: [], unknown: "all", source: "https://suncrypto.in/fee-structure", noNote: "", unknownNote: "SunCrypto doesn’t publish the networks it takes for USDT. Its deposit screen shows them" },
+      USDT: { listed: ["tron", "ethereum", "bnb"], unknown: "all", source: "https://suncrypto.in/blog/suncrypto-announcements/how-to-deposit-crypto/", noNote: "", unknownNote: "Confirm the USDT network on SunCrypto’s deposit screen" },
       USDC: usdtOnly("SunCrypto", "https://suncrypto.in/fee-structure"),
     },
   },
@@ -206,13 +208,14 @@ export const INDIA_EXCHANGES: IndiaExchange[] = [
     feeNote: "1% on USDT sales, plus 18% GST. Its fee page lists this; some Mudrex blog posts say USDT sales are free, so the fee page is the source.",
     feeSource: "https://mudrex.com/fee",
     withdrawalFee: 0,
-    withdrawalMin: 0,
-    withdrawalNote: "No fee; instant.",
-    withdrawalSource: "https://mudrex.com/fee",
+    withdrawalMin: 500,
+    withdrawalNote: "Free INR withdrawal. Mudrex lists a 5 USDT minimum sale and a ₹500 minimum withdrawal. It credits INR Funds first and advises allowing a few hours for bank receipt.",
+    withdrawalSource: "https://mudrex.com/off-ramp/usdt",
     assets: ["USDT"],
-    noLivePrice: "Mudrex’s public price API covers its futures markets only; it publishes no USDT/INR price",
+    noLivePrice: "Mudrex’s public calculator reads a USDT buy rate. The app shows the sell rate before confirmation",
+    reviewedAt: "2026-11-20",
     networks: {
-      USDT: { listed: ["ethereum", "tron"], source: "https://mudrex.com/off-ramp/usdt", noNote: "Not in Mudrex’s guide to USDT networks (Tron and Ethereum; it also names BNB Smart Chain)", unknownNote: "" },
+      USDT: { listed: ["ethereum", "tron", "bnb"], source: "https://mudrex.com/off-ramp/usdt", noNote: "Outside Mudrex’s published USDT network list (Tron, Ethereum and BNB Smart Chain)", unknownNote: "" },
       USDC: usdtOnly("Mudrex", "https://mudrex.com/off-ramp/usdt"),
     },
   },
@@ -227,12 +230,32 @@ export const INDIA_EXCHANGES: IndiaExchange[] = [
     feeSource: "https://api.koinbx.com/asset",
     withdrawalFee: null,
     withdrawalMin: null,
-    withdrawalNote: "Confirm the INR withdrawal fee and limit in your KoinBX account.",
-    withdrawalSource: "https://koinbxsupport.freshdesk.com/support/solutions/articles/82000883077-how-to-withdraw-inr-from-koinbx-wallet-",
-    reviewedAt: "2026-11-19",
+    withdrawalNote: "KoinBX lists a ₹5,00,000 daily INR withdrawal limit for standard verified users. Check your account for the fee and current limit.",
+    withdrawalSource: "https://koinbxsupport.freshdesk.com/support/solutions/articles/82000078256-1-how-much-can-i-deposit-withdraw-from-at-once-",
+    reviewedAt: "2026-11-20",
     networks: {
       USDT: { listed: [], unknown: "all", source: "https://koinbx.com/publicapi", noNote: "", unknownNote: "Check which USDT networks accept deposits in your KoinBX account" },
       USDC: { listed: [], unknown: "all", source: "https://koinbx.com/publicapi", noNote: "", unknownNote: "Check which USDC networks accept deposits in your KoinBX account" },
+    },
+  },
+  {
+    slug: "coinswitch",
+    name: "CoinSwitch PRO",
+    site: "https://coinswitch.co",
+    tradeUrl: () => "https://coinswitch.co/pro/usdt-inr/csx",
+    assets: ["USDT"],
+    feeRate: null,
+    feeLabel: "0.10% published standard taker fee",
+    feeNote: "CoinSwitch publishes a 0.10% standard spot taker fee. Check applicable fees and tax in the trade preview.",
+    feeSource: "https://coinswitch.co/switch/crypto/crypto-coinswitch-pro-review/",
+    withdrawalFee: null,
+    withdrawalMin: 100,
+    withdrawalNote: "CoinSwitch lists INR bank withdrawals from ₹100 up to ₹5,00,000 per day. Check your account for the current fee and limits.",
+    withdrawalSource: "https://coinswitch.co/switch/crypto/crypto-to-cash-withdrawals/",
+    reviewedAt: "2026-11-20",
+    networks: {
+      USDT: { listed: [], unknown: "all", source: "https://coinswitch.co/pro/crypto-deposit", noNote: "", unknownNote: "CoinSwitch PRO verifies ownership of the sending wallet. Check whether your approved account accepts USDT on this network" },
+      USDC: usdtOnly("CoinSwitch PRO", "https://coinswitch.co/pro/crypto-deposit"),
     },
   },
 ];
@@ -345,14 +368,21 @@ export interface ExchangeQuote {
   slug: ExchangeSlug;
   name: string;
   support: { status: DepositSupport; note: string };
-  status: "priced" | "market_reference" | "unavailable";
+  status: "priced" | "market_reference" | "last_trade" | "unavailable";
   reason?: string;
   fill?: BookFill;
   breakdown?: ExchangeBreakdown;
   live?: LiveBid;
+  trade?: ExchangeTradeReference;
   belowMinimum?: boolean;
   aboveMaximum?: boolean;
   checkedAt: string;
+}
+
+export function isBankPayoutEstimate(quote: ExchangeQuote) {
+  return quote.status === "priced" && quote.support.status === "yes" && !!quote.breakdown
+    && Number.isFinite(quote.breakdown.inBank) && quote.breakdown.inBank > 0
+    && quote.live?.depth === "book" && !quote.fill?.short && !quote.belowMinimum && !quote.aboveMaximum;
 }
 
 /** Crypto tax help Railor links to. Railor has no tie to any of them. */

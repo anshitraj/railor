@@ -26,6 +26,7 @@ export async function indiaExchangeQuotes(asset: Stablecoin, network: Network, a
     const rate = exchange.slug in market.rates ? market.rates[exchange.slug as keyof InrExchangeRates["rates"]] : undefined;
     if (!rate) return { ...base, status: "unavailable", reason: `${exchange.name} has no public price feed Railor can read.` };
     if (rate.status === "unavailable") return { ...base, status: "unavailable", reason: `Live price unavailable. ${rate.detail}` };
+    if (rate.status === "last_trade") return { ...base, status: "last_trade", trade: rate };
     // A feed with only a best bid can't be walked: the amount is priced at that bid, and the live block says so.
     const fill: BookFill | null = rate.depth === "book" ? fillBids(rate.bids, amount) : amount > 0 ? { filled: amount, gross: paise(amount * rate.bid), averagePrice: rate.bid, bestBid: rate.bid, short: false } : null;
     if (!fill) return { ...base, status: "unavailable", reason: `${exchange.name}’s ${asset}/INR book is empty right now.` };
@@ -44,6 +45,11 @@ export async function indiaExchangeQuotes(asset: Stablecoin, network: Network, a
       ...(exchange.withdrawalMax && breakdown.inBank > exchange.withdrawalMax ? { aboveMaximum: true } : {}),
     };
   });
-  const rank = (quote: ExchangeQuote) => quote.breakdown?.inBank ?? (quote.status === "market_reference" ? 0 : -1);
-  return { quotes: quotes.sort((a, b) => rank(b) - rank(a)), reference: market.reference };
+  const group = (quote: ExchangeQuote) => {
+    if (quote.status === "priced") return 0;
+    if (quote.status === "market_reference") return 1;
+    if (quote.status === "last_trade") return 2;
+    return 3;
+  };
+  return { quotes: quotes.sort((a, b) => group(a) - group(b) || (b.breakdown?.inBank ?? 0) - (a.breakdown?.inBank ?? 0)), reference: market.reference };
 }

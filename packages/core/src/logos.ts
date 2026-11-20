@@ -53,6 +53,8 @@ export const KNOWN_PROVIDER_SITES: Record<string, string> = {
   titan: "https://titan.exchange",
   xerof: "https://xerof.com",
   coindcx: "https://coindcx.com",
+  coinswitch: "https://coinswitch.co",
+  disburz: "https://disburz.money",
   payoneer: "https://www.payoneer.com",
   paypal: "https://www.paypal.com",
   stripe: "https://stripe.com",

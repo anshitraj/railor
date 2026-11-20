@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { settleInrReference } from "@railor/core";
 import { getSession } from "../../../lib/auth";
 import { consumeLimit, requestIdentity } from "../../../lib/rate-limit";
 import { indiaExchangeQuotes } from "../../../lib/india-exchange-quotes";
 import { stablecoinCashOutQuote } from "../../../lib/stablecoin-cash-out-quotes";
-import { NETWORKS, isCashOutCurrency, type Network } from "../../../lib/stablecoin-routes";
+import { NETWORKS, hasSettleInrRoute, isCashOutCurrency, type Network } from "../../../lib/stablecoin-routes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export async function GET(request: Request) {
     return NextResponse.json(await stablecoinCashOutQuote(asset, network as Network, destination, amount));
   }
 
-  const { quotes, reference } = await indiaExchangeQuotes(asset, network as Network, amount);
+  const [{ quotes, reference }, settle] = await Promise.all([
+    indiaExchangeQuotes(asset, network as Network, amount),
+    session && asset === "USDT" && hasSettleInrRoute(asset, network as Network) ? settleInrReference() : null,
+  ]);
   if (!session) {
     return NextResponse.json({
       locked: true,
@@ -44,5 +48,5 @@ export async function GET(request: Request) {
         .sort((a, b) => a.name.localeCompare(b.name)),
     });
   }
-  return NextResponse.json({ locked: false, exchanges: quotes, reference });
+  return NextResponse.json({ locked: false, exchanges: quotes, reference, ...(settle ? { settle } : {}) });
 }
