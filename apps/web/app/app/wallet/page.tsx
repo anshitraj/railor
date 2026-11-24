@@ -1,6 +1,7 @@
+import "@fontsource/manrope/latin-800.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, Gift, Plus, RotateCcw, SlidersHorizontal, Ticket, Wallet, type LucideIcon } from "lucide-react";
+import { Activity, ArrowUpRight, Building2, Gift, History, Plus, RotateCcw, SlidersHorizontal, Ticket, Wallet, type LucideIcon } from "lucide-react";
 import type { WalletEntry } from "@railor/database";
 import { getSession } from "../../../lib/auth";
 import { ensureWallet, getAutoReload, listWalletEntries, walletTestModeEnabled } from "../../../lib/wallet";
@@ -36,8 +37,9 @@ function EntryRow({ entry }: { entry: WalletEntry }) {
         <time dateTime={entry.createdAt.toISOString()}>{dateFormat.format(entry.createdAt)} · {timeFormat.format(entry.createdAt)} UTC</time>
       </span>
       <span className={styles.pill} data-status={entry.status}>{STATUS_LABEL[entry.status] ?? entry.status}</span>
-      <span className={styles.amount} data-sign={entry.amountCents > 0 ? "plus" : "minus"} data-muted={!counted} aria-label={`${entry.amountCents > 0 ? "Credit" : "Debit"} ${formatCents(Math.abs(entry.amountCents))}${counted ? "" : ", not counted"}`}>
-        {formatCents(entry.amountCents, { signed: true })}
+      <span className={styles.amount} data-sign={entry.amountCents > 0 ? "plus" : "minus"} data-muted={!counted}>
+        <span className="sr-only">{entry.amountCents > 0 ? "Credit " : entry.amountCents < 0 ? "Debit " : ""}{formatCents(Math.abs(entry.amountCents))}{counted ? "" : ", excluded from balance"}</span>
+        <span aria-hidden>{formatCents(entry.amountCents, { signed: true })}</span>
       </span>
     </li>
   );
@@ -65,68 +67,77 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
       <header className={styles.header}>
         <div>
           <h1>Wallet</h1>
-          <p>Prepaid Railor credit for {session.organization.name}. Everything below adds up to your balance.</p>
+          <p>Manage prepaid credit and see what went into your balance.</p>
         </div>
+        <span className={styles.workspace}><Building2 size={15} aria-hidden />{session.organization.name}</span>
       </header>
 
-      <section className={styles.hero} aria-labelledby="wallet-balance-label">
-        <div>
-          <p id="wallet-balance-label" className={styles.balanceLabel}><Wallet size={16} aria-hidden />Available balance</p>
-          <p className={styles.balance}>{formatCents(totals.balanceCents)}<small>USD</small></p>
-          <p className={styles.balanceNote}>
-            Credit will pay for metered checks and API calls as they launch. Nothing draws from it yet, so your balance only grows.
-          </p>
-        </div>
-        <div className={styles.heroActions}>
-          <AddMoneyButton balanceCents={totals.balanceCents} testMode={walletTestModeEnabled()} canManage={canManage} />
-          <a href="#promo" className={styles.secondary}><Ticket size={16} aria-hidden />Redeem a code</a>
-        </div>
-        <dl className={styles.stats}>
-          <div className={styles.stat}><dt><span>Added</span></dt><dd><strong>{formatCents(totals.addedCents)}</strong></dd></div>
-          <div className={styles.stat}><dt><span>Free credit</span></dt><dd><strong>{formatCents(totals.creditsCents)}</strong></dd></div>
-          <div className={styles.stat}><dt><span>Used</span></dt><dd><strong>{formatCents(totals.usedCents)}</strong></dd></div>
-        </dl>
-      </section>
-
       <div className={styles.grid}>
-        <AutoReloadCard initial={autoReload} canManage={canManage} />
-        <PromoCard initialCode={promoFromLink} canRedeem={canRedeem} />
-      </div>
+        <section className={styles.hero} aria-labelledby="wallet-balance-label">
+          <div className={styles.balanceSurface}>
+            <h2 id="wallet-balance-label" className={styles.balanceLabel}><Wallet size={17} aria-hidden />Available balance</h2>
+            <p className={styles.balance}>{formatCents(totals.balanceCents)} <small>USD</small></p>
+            <p className={styles.balanceNote}>Use credit for eligible price checks and API calls as they become available.</p>
+            <div className={styles.heroActions}>
+              <AddMoneyButton balanceCents={totals.balanceCents} testMode={walletTestModeEnabled()} canManage={canManage} />
+              {canRedeem ? <a href="#promo" className={styles.secondary}>Redeem a code<ArrowUpRight size={15} aria-hidden /></a> : null}
+            </div>
+          </div>
+          <dl className={styles.stats}>
+            <div className={styles.stat}><dt>Added</dt><dd>{formatCents(totals.addedCents)}</dd></div>
+            <div className={styles.stat}><dt>Free credit</dt><dd>{formatCents(totals.creditsCents)}</dd></div>
+            <div className={styles.stat}><dt>Used</dt><dd>{formatCents(totals.usedCents)}</dd></div>
+          </dl>
+        </section>
 
-      <section className={`${styles.card} ${styles.history}`} aria-labelledby="wallet-history-title">
-        <div className={styles.historyHead}>
-          <div>
-            <h2 id="wallet-history-title">Billing history</h2>
-            <p>Every credit and charge, newest first.</p>
-          </div>
-          <nav className={styles.ranges} aria-label="Date range">
-            {(Object.keys(WALLET_RANGES) as WalletRange[]).map((key) => (
-              <Link
-                key={key}
-                href={key === "all" ? "/app/wallet" : `/app/wallet?range=${key}`}
-                scroll={false}
-                aria-current={key === range ? "true" : undefined}
-                className={styles.range}
-              >
-                {WALLET_RANGES[key]}
-              </Link>
-            ))}
-          </nav>
+        <div className={styles.controls}>
+          <AutoReloadCard initial={autoReload} canManage={canManage} />
+          <PromoCard initialCode={promoFromLink} canRedeem={canRedeem} />
         </div>
-        {entries.length ? (
-          <ol className={styles.entries}>
-            {entries.map((entry) => <EntryRow key={entry.id} entry={entry} />)}
-          </ol>
-        ) : (
-          <div className={styles.empty}>
-            <strong>Nothing in this range</strong>
-            <span>Pick “All time” to see every entry.</span>
+
+        <section className={`${styles.card} ${styles.history}`} aria-labelledby="wallet-history-title">
+          <div className={styles.historyHead}>
+            <div className={styles.titleRow}>
+              <span className={styles.cardIcon}><History size={18} aria-hidden /></span>
+              <div>
+                <h2 id="wallet-history-title">Billing history</h2>
+                <p>Credits and charges, newest first.</p>
+              </div>
+            </div>
+            <nav className={styles.ranges} aria-label="Date range">
+              {(Object.keys(WALLET_RANGES) as WalletRange[]).map((key) => (
+                <Link
+                  key={key}
+                  href={key === "all" ? "/app/wallet" : `/app/wallet?range=${key}`}
+                  scroll={false}
+                  aria-current={key === range ? "true" : undefined}
+                  className={styles.range}
+                >
+                  {WALLET_RANGES[key]}
+                </Link>
+              ))}
+            </nav>
           </div>
-        )}
-        <p className={styles.historyFoot}>
-          {entries.length} {entries.length === 1 ? "entry" : "entries"} · {WALLET_RANGES[range]} · Pending and failed entries don’t count toward the balance.
-        </p>
-      </section>
+          {entries.length ? (
+            <>
+              <div className={styles.historyColumns} aria-hidden><span>Transaction</span><span>Status</span><span>Amount</span></div>
+              <ol className={styles.entries} role="list">
+                {entries.map((entry) => <EntryRow key={entry.id} entry={entry} />)}
+              </ol>
+            </>
+          ) : (
+            <div className={styles.empty}>
+              <span className={styles.cardIcon}><History size={18} aria-hidden /></span>
+              <strong>{range === "all" ? "No wallet activity yet" : "No activity in this range"}</strong>
+              {range !== "all" ? <Link href="/app/wallet" scroll={false}>View all activity</Link> : null}
+            </div>
+          )}
+          <p className={styles.historyFoot}>
+            <span>{entries.length} {entries.length === 1 ? "entry" : "entries"}</span>
+            <span>Only completed entries count toward your balance.</span>
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
