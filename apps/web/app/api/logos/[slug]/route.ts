@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import { KNOWN_PROVIDER_SITES, resolveProviderLogo, resolveRemoteLogo, type ResolvedLogo } from "@railor/core";
 import { getDb, providers } from "@railor/database";
+import audit from "../../../../../../packages/core/src/public-pricing/provider-source-audit.json";
+import discovery from "../../../../../../packages/core/src/public-pricing/corridor-discovery.json";
 
 export const runtime = "nodejs";
 
@@ -27,9 +29,13 @@ const inflight = (globalThis.__railorLogoInflight ??= new Map());
 const FOUND_TTL = 24 * 3_600_000;
 const NO_LOGO = Uint8Array.from(Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64"));
 const MISSING_TTL = 3_600_000;
+const researchSites = new Map([...audit.providers, ...discovery.providers]
+  .flatMap(({ slug, website }) => website ? [[slug, website] as const] : []));
 
 async function siteFor(slug: string): Promise<string | null> {
-  if (KNOWN_PROVIDER_SITES[slug]) return KNOWN_PROVIDER_SITES[slug]!;
+  if (Object.hasOwn(KNOWN_PROVIDER_SITES, slug)) return KNOWN_PROVIDER_SITES[slug]!;
+  const researchSite = researchSites.get(slug);
+  if (researchSite) return researchSite;
   const db = await getDb();
   const [row] = await db.select({ websiteUrl: providers.websiteUrl, isDemo: providers.isDemo }).from(providers).where(eq(providers.slug, slug)).limit(1);
   // Demo providers are fictional; their "websites" are not real brands.

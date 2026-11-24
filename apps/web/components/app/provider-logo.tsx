@@ -1,25 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import logoManifest from "../../lib/provider-logo-manifest.json";
 import { fallbackFill } from "../marketing/logo-fallback";
 
-const LOCAL_LOGOS: Record<string, string> = {
-  coindcx: "coindcx.png", wazirx: "wazirx.png", xflow: "xflow.svg", circle: "circle.svg",
-  tether: "tether.png", uniswap: "uniswap.png", titan: "titan.ico", wise: "wise.png",
-  remitly: "remitly.png", xoom: "xoom.png", worldremit: "worldremit.svg", "world-remit": "worldremit.svg", instarem: "instarem.png",
-  payzoll: "payzoll.png", revolut: "revolut.svg", skydo: "skydo.png",
-  koinly: "koinly.ico", cleartax: "cleartax.svg", incometax: "incometax.ico",
-  "state-bank-of-india": "state-bank-of-india.png", "hdfc-bank": "hdfc-bank.png",
-  "idfc-first-bank": "idfc-first-bank.png", "canara-bank": "canara-bank.png",
-  lemfi: "lemfi.png", sendwave: "sendwave.png", nala: "nala.png",
-  koinbx: "koinbx.png", ledgerpe: "ledgerpe.png",
-};
+const localLogos: Readonly<Record<string, string>> = logoManifest;
 
 /**
- * A provider's own logo (resolved from its website by /api/logos), on a white
- * tile so marks of every colour read the same. If there is no logo — or it
- * fails to load — a stable-coloured monogram takes its place, never a broken
- * image.
+ * A bundled brand mark or the provider's same-origin logo endpoint.
+ * A monogram fills the tile if the image is unavailable.
  */
 export function ProviderLogo({
   slug,
@@ -42,21 +31,17 @@ export function ProviderLogo({
   localOnly?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
   const img = useRef<HTMLImageElement>(null);
   const key = slug.replace(/^market:/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 64) || "provider";
-  const local = LOCAL_LOGOS[key];
+  const local = Object.hasOwn(localLogos, key) ? localLogos[key] : undefined;
   const url = local ? `/brand/providers/${local}` : localOnly ? null : `/api/logos/${key}${src ? `?src=${encodeURIComponent(src)}` : ""}`;
-  // A cached logo can finish while streamed HTML is still hydrating. Keep the
-  // first render deterministic, then attach image-load handlers after mounting.
-  useEffect(() => setReady(true), []);
   // An image that settled before hydration never fires onLoad/onError; check it once mounted.
   useEffect(() => {
     const el = img.current;
     if (el?.complete && el.naturalWidth < 2) setFailedUrl(url);
-  }, [ready, url]);
+  }, [url]);
   const box = { width: size, height: size };
-  if (!ready || !url || failedUrl === url) {
+  if (!url || failedUrl === url) {
     return (
       <span
         aria-hidden
