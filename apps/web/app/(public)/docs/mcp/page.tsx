@@ -7,6 +7,8 @@ export const metadata = { title: "MCP server" };
 export const dynamic = "force-dynamic";
 
 const TOOLS: Array<[string, string]> = [
+  ["compare_prices", "What arrives through each provider for an amount, with each number labelled and sourced."],
+  ["stablecoin_offramps", "USDT or USDC on a network to a bank: live Indian exchange prices after fees and TDS, plus other routes."],
   ["search_corridors", "Evaluate every mapped provider against a corridor."],
   ["check_eligibility", "Ask about one provider and get the reason, not just a verdict."],
   ["search_providers", "List providers filtered by product, asset or network."],
@@ -102,8 +104,9 @@ bearer_token_env_var = "RAILOR_KEY"`,
           </p>
         </Card>
         <p className="text-[13px] text-[var(--color-muted)]">
-          Tool calls require a key. <code>initialize</code> and <code>tools/list</code> are open so a
-          client can discover the server before authenticating.
+          Tool calls require a key. <code>initialize</code>, <code>ping</code> and <code>tools/list</code> are open so a
+          client can discover the server before authenticating. Each tool call counts toward the
+          workspace&apos;s monthly API allowance, and against its wallet once API calls are priced.
         </p>
       </section>
     </>
