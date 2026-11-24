@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, BellPlus, Bookmark, Trash2 } from "lucide-react";
+import { ArrowRight, BellRing, Bookmark, Trash2 } from "lucide-react";
 import { Flag, currencyFlagCode } from "@railor/ui";
 import { removePricePair } from "../../app/app/prices/actions";
 import type { SavedPair } from "../../lib/saved-pairs";
@@ -11,6 +11,8 @@ import { savedTransferHref } from "../../lib/saved-transfer";
 import { ProviderLogo } from "./provider-logo";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { toast } from "../toast";
+import { RateAlertButton } from "../price/rate-alert-button";
+import { formatMoney } from "../../lib/rate-alert-rules";
 import styles from "./saved.module.css";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
@@ -57,12 +59,13 @@ export function SavedPairsList({ initial, compact = false }: { initial: SavedPai
                 <span className={styles.text}>
                   <strong>{pair.provider ? `${pair.provider.name} · ` : ""}{pair.from} <span aria-hidden>→</span><span className="sr-only">to</span> {pair.to}</strong>
                   <small>{pair.amount.toLocaleString("en-US")} {pair.from}{compact ? "" : ` · ${ago(pair.createdAt)}`}</small>
+                  {compact && pair.alert ? <small className={styles.alertNote}><BellRing size={11} aria-hidden />Alert at {formatMoney(pair.alert.targetAmount, pair.alert.currency)}</small> : null}
                 </span>
                 <ArrowRight size={16} aria-hidden className={styles.go} />
               </Link>
               {compact ? null : (
                 <div className={styles.side}>
-                  <span className={styles.soon} title="Reminders are coming soon"><BellPlus size={14} aria-hidden />Reminder <em>Coming soon</em></span>
+                  <RateAlertButton pair={pair} compact onChange={(id, alert) => setPairs((current) => current.map((item) => item.id === id ? { ...item, alert } : item))} />
                   <button type="button" className={styles.remove} onClick={() => remove(pair)} aria-label={`Remove ${pair.from} to ${pair.to}${pair.provider ? ` with ${pair.provider.name}` : ""}`}><Trash2 size={15} /></button>
                 </div>
               )}

@@ -133,7 +133,7 @@ export default async function SettingsPage() {
             <Row label="Route changes" hint="Email when a provider or route you watch changes.">
               <Link href="/app/monitoring" className={styles.textLink}><BellRing size={13} aria-hidden />Choose what to watch</Link>
             </Row>
-            <Row label="Price reminders" hint="A reminder when a saved pair reaches your rate."><span className={styles.badge} data-tone="soon"><Clock size={13} aria-hidden />Coming soon</span></Row>
+            <Row label="Rate alerts" hint="Email when a saved pair gets better than the price you saw. Checked daily."><Link href="/app/saved" className={styles.textLink}><BellRing size={13} aria-hidden />Set on a saved pair</Link></Row>
           </section>
 
           <section id="connections" className={styles.section} aria-labelledby="connections-title">

@@ -3,17 +3,20 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { CustomerContext } from "@railor/core";
 import { getDb, organizations, savedSearches } from "@railor/database";
 import { savedProviderSlug, transferBookmarkKey, type TransferBookmark } from "./saved-transfer";
+import type { RateAlertSummary } from "./rate-alerts";
 
 /**
  * Currency pairs saved from the price calculator ("USD → INR, 1,000"). Stored
  * in saved_searches with kind "price_pair", so nothing else that reads saved
- * routes or monitors sees them. Reminders on a pair are coming later.
+ * routes or monitors sees them. Rate alerts hang off a saved pair (rate-alerts.ts).
  */
 export const SAVED_PAIR_LIMIT = 12;
 
 export interface SavedPair extends TransferBookmark {
   id: string;
   createdAt: string;
+  /** The signed-in person's active rate alert on this pair, when listed with alerts. */
+  alert?: RateAlertSummary;
 }
 
 const CODE = /^[A-Z]{3,5}$/;

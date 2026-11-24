@@ -7,7 +7,7 @@ import { apiKeys, getDb } from "@railor/database";
 import { ArrowRight, Bookmark, Bot, Check, ChevronRight, FileText, ListChecks, Radar, Route } from "lucide-react";
 import { getSession } from "../../lib/auth";
 import { getOrgAlerts } from "../../lib/org";
-import { listSavedPairs } from "../../lib/saved-pairs";
+import { listSavedPairsWithAlerts } from "../../lib/rate-alerts";
 import { SavedPairsList } from "../../components/app/saved-pairs-list";
 import { loadPricePage } from "../../lib/pricing";
 import { onboardingPriceProfile } from "../../lib/onboarding";
@@ -40,7 +40,7 @@ export default async function HomePage() {
   const org = session.organization;
   const db = await getDb();
   const [savedPairs, alerts, activePolicy, policies, usedKeys, anyKeys] = await Promise.all([
-    listSavedPairs(org.id).catch(() => []), getOrgAlerts(org.id, 3), getDefaultActivePolicy(org.id), listPolicies(org.id),
+    listSavedPairsWithAlerts(org.id, session.user.id).catch(() => []), getOrgAlerts(org.id, 3), getDefaultActivePolicy(org.id), listPolicies(org.id),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt), isNotNull(apiKeys.lastUsedAt))).limit(1),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt))).limit(1),
   ]);

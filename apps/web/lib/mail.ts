@@ -52,6 +52,8 @@ export interface MailMessage {
   subject: string;
   text: string;
   html?: string;
+  /** Extra headers, e.g. List-Unsubscribe for one-click unsubscribe. */
+  headers?: Record<string, string>;
   attachments?: Array<{
     filename: string;
     content: Buffer;

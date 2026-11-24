@@ -123,6 +123,25 @@ const STABLECOINS = new Set(["USDC", "USDT", "EURC", "PYUSD", "DAI", "USDP", "FD
  * server-side first quote so the card never opens empty.
  */
 export async function loadPricePage(params: Record<string, string | undefined>, organizationId: string | null, entityCountry?: string | null, profile: CustomerContext["profile"] = "business") {
+  const { currencies, from, to, amount, market, context, destinationCountry } = await resolvePriceInput(params, entityCountry, profile);
+  let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
+  let error: string | undefined;
+  if (from === to) error = "Pick two different currencies.";
+  else if (context.direction !== "receive" || context.paymentMethod !== "card") {
+    try {
+      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, destinationCountry, amount, includeMarket: market, context });
+    } catch (e) {
+      error = "Price comparison is temporarily unavailable. Please try again shortly.";
+    }
+  }
+  return { currencies, initial: { from, to, amount, market, context, destinationCountry }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
+}
+
+/**
+ * The pair, amount and customer context a price page would check for these
+ * query params and this workspace — the same defaults a saved pair opens with.
+ */
+export async function resolvePriceInput(params: Record<string, string | undefined>, entityCountry?: string | null, profile: CustomerContext["profile"] = "business") {
   const options = await getIntentOptions();
   const currencies = options.currencies.filter((c) => /^[A-Z]{3}$/.test(c.value) && !STABLECOINS.has(c.value));
   const known = new Set(currencies.map((c) => c.value));
@@ -142,17 +161,7 @@ export async function loadPricePage(params: Record<string, string | undefined>, 
   const context = readCustomerContext((key) => params[key], {
     profile, country: defaultPriceCountry(entity, from, directionForCountry), direction, purpose: profile === "personal" ? "personal" : "services",
   });
-  let result: Awaited<ReturnType<typeof runPriceCheck>> | null = null;
-  let error: string | undefined;
-  if (from === to) error = "Pick two different currencies.";
-  else if (context.direction !== "receive" || context.paymentMethod !== "card") {
-    try {
-      result = await runPriceCheck(organizationId, { sourceCurrency: from, destinationCurrency: to, destinationCountry, amount, includeMarket: market, context });
-    } catch (e) {
-      error = "Price comparison is temporarily unavailable. Please try again shortly.";
-    }
-  }
-  return { currencies, initial: { from, to, amount, market, context, destinationCountry }, result, error, executable: Object.keys(PAYOUT_ADAPTERS) };
+  return { currencies, from, to, amount, market, context, destinationCountry };
 }
 
 /** Query string → price-check input, clamped; null when unusable. */

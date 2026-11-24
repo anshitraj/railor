@@ -1129,6 +1129,37 @@ export const savedSearches = pgTable("saved_searches", {
   createdAt: now(),
 });
 
+/** Email when a saved pair's best complete price reaches the person's target. */
+export const rateAlerts = pgTable(
+  "rate_alerts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    savedSearchId: uuid("saved_search_id").notNull().references(() => savedSearches.id, { onDelete: "cascade" }),
+    /** The price-check input the alert repeats, resolved when it was set. */
+    input: jsonb("input").$type<Record<string, unknown>>().notNull(),
+    /** Destination-currency amount that should arrive. */
+    targetAmount: numeric("target_amount", { precision: 20, scale: 4, mode: "number" }).notNull(),
+    /** Best complete price when the alert was set. */
+    baselineAmount: numeric("baseline_amount", { precision: 20, scale: 4, mode: "number" }),
+    active: boolean("active").default(true).notNull(),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    lastBestAmount: numeric("last_best_amount", { precision: 20, scale: 4, mode: "number" }),
+    lastBestProvider: text("last_best_provider"),
+    lastMet: boolean("last_met").default(false).notNull(),
+    lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+    unsubscribeToken: text("unsubscribe_token").notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    pairUserIdx: uniqueIndex("rate_alerts_pair_user_idx").on(t.savedSearchId, t.userId),
+    unsubscribeIdx: uniqueIndex("rate_alerts_unsubscribe_idx").on(t.unsubscribeToken),
+    dueIdx: index("rate_alerts_due_idx").on(t.active, t.lastCheckedAt),
+  }),
+);
+
 export const savedCorridors = pgTable(
   "saved_corridors",
   {

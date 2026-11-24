@@ -44,7 +44,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.json({ error: "request_too_large" }, { status: 413 });
     }
     // /v1 uses bearer authentication exclusively. Cookie BFF routes require the canonical origin.
-    const serviceRoute = path.startsWith("/api/internal/") || path.startsWith("/api/webhooks/") || path === "/api/mcp" || path === "/api/connector/poll";
+    const serviceRoute = path.startsWith("/api/internal/") || path.startsWith("/api/webhooks/") || path === "/api/mcp" || path === "/api/connector/poll" || path === "/api/alerts/unsubscribe";
     if (path.startsWith("/api/") && !serviceRoute && !originAllowed(request)) {
       return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
     }

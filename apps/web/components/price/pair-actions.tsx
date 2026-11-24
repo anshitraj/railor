@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useTransition, type Dispatch, type SetStateAction } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BellPlus, Bookmark, BookmarkCheck, X } from "lucide-react";
+import { Bookmark, BookmarkCheck, X } from "lucide-react";
 import { removePricePair, savePricePair } from "../../app/app/prices/actions";
 import type { SavedPair } from "../../lib/saved-pairs";
 import { savedTransferHref, transferBookmarkKey, type TransferBookmark } from "../../lib/saved-transfer";
 import { toast } from "../toast";
+import { RateAlertButton } from "./rate-alert-button";
 import styles from "./pair-actions.module.css";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
@@ -38,13 +39,20 @@ export function TransferBookmarkButton({ transfer, saved, onSaved }: SavedContro
 }
 
 export function PairActions({ transfer, saved, onSaved }: SavedControls & { transfer: TransferBookmark }) {
+  const key = transferBookmarkKey(transfer);
+  const current = saved.find(pair => transferBookmarkKey(pair) === key) ?? null;
+  // An alert lives on a saved pair, so setting one saves the pair first.
+  const ensurePair = async () => {
+    const result = await savePricePair(transfer);
+    if (!result.ok) { toast.error("Couldn’t save it", result.error); return null; }
+    onSaved(previous => [result.pair, ...previous.filter(pair => transferBookmarkKey(pair) !== key)]);
+    return result.pair;
+  };
   return (
     <div className={styles.actions}>
       <TransferBookmarkButton transfer={transfer} saved={saved} onSaved={onSaved} />
-      <button type="button" className={styles.action} disabled title="Reminders are coming soon" aria-describedby="reminder-soon">
-        <BellPlus size={15} aria-hidden />Create reminder
-        <span id="reminder-soon" className={styles.soon}>Coming soon</span>
-      </button>
+      <RateAlertButton pair={current} ensurePair={ensurePair} disabled={transfer.from === transfer.to || transfer.amount < 1}
+        onChange={(id, alert) => onSaved(previous => previous.map(pair => pair.id === id ? { ...pair, alert } : pair))} />
     </div>
   );
 }

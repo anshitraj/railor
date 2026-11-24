@@ -1,0 +1,20 @@
+.root { position: relative; display: inline-flex; flex: 1 1 auto; }
+.trigger { display: inline-flex; width: 100%; min-height: 38px; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 13.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, color .15s ease; }
+.trigger:hover:not(:disabled) { border-color: var(--color-ink); }
+.trigger[data-on] { border-color: color-mix(in srgb, var(--color-orange) 40%, var(--color-line)); background: var(--color-lavender); color: var(--color-orange-deep); }
+.trigger[data-compact] { min-height: 34px; padding: 0 12px; font-size: 12.5px; }
+.trigger:disabled { cursor: progress; }
+
+.menu { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(300px, calc(100vw - 32px)); padding: 14px; border: 1px solid var(--color-line-strong); border-radius: 14px; background: var(--color-surface); box-shadow: 0 12px 32px -12px rgb(0 0 0 / .25); transform-origin: top right; }
+.title { margin: 0 0 4px; color: var(--color-ink); font-size: 14px; font-weight: 700; }
+.hint { margin: 0 0 12px; color: var(--color-muted); font-size: 12.5px; line-height: 1.45; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.step { min-height: 40px; border: 1px solid var(--color-line-strong); border-radius: 10px; background: var(--color-canvas); color: var(--color-ink); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.step:hover:not(:disabled) { border-color: var(--color-orange); background: var(--color-lavender); }
+.step:disabled { cursor: progress; opacity: .6; }
+.remove { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 4px 0; color: var(--color-muted); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.remove:hover:not(:disabled) { color: var(--color-bad); }
+.status { margin: 10px 0 0; color: var(--color-muted); font-size: 12.5px; }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
