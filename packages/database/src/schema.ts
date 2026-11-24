@@ -2340,6 +2340,45 @@ export const freelancerInvoices = pgTable("freelancer_invoices", {
   recentIdx: index("freelancer_invoices_recent_idx").on(t.organizationId, t.createdAt),
 }));
 
+/**
+ * The prices Railor showed for an invoice and which one the user picked: the
+ * quote a later bank credit is judged against. Never edited once saved except
+ * for the pick.
+ */
+export const freelancerRouteChecks = pgTable("freelancer_route_checks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  invoiceId: uuid("invoice_id").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  /** Invoice-currency amount the quote covers: what was outstanding at the time. */
+  amount: numeric("amount", { precision: 20, scale: 4 }).notNull(),
+  currency: text("currency").notNull(),
+  settlementCurrency: text("settlement_currency").notNull(),
+  referenceRate: numeric("reference_rate", { precision: 20, scale: 8 }),
+  referenceSource: text("reference_source"),
+  candidates: jsonb("candidates").$type<Array<Record<string, unknown>>>().notNull(),
+  chosenSlug: text("chosen_slug"),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: now(),
+  chosenAt: timestamp("chosen_at", { withTimezone: true }),
+}, (t) => ({
+  invoiceFk: foreignKey({ columns: [t.organizationId, t.invoiceId], foreignColumns: [freelancerInvoices.organizationId, freelancerInvoices.id] }).onDelete("cascade"),
+  invoiceIdx: index("freelancer_route_checks_invoice_idx").on(t.organizationId, t.invoiceId, t.createdAt),
+}));
+
+/** The last "where did the missing money go" investigation for an invoice, shown again without asking the model twice. */
+export const freelancerSettlementAnalyses = pgTable("freelancer_settlement_analyses", {
+  organizationId: uuid("organization_id").notNull(),
+  invoiceId: uuid("invoice_id").notNull(),
+  /** The credits it was run for; the report is stale once they change. */
+  receiptKey: text("receipt_key").notNull(),
+  report: jsonb("report").$type<Record<string, unknown>>().notNull(),
+  createdAt: now(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.organizationId, t.invoiceId] }),
+  invoiceFk: foreignKey({ columns: [t.organizationId, t.invoiceId], foreignColumns: [freelancerInvoices.organizationId, freelancerInvoices.id] }).onDelete("cascade"),
+}));
+
 /** User-confirmed allocations, distinct from provider-confirmed payment events. */
 export const freelancerReceipts = pgTable("freelancer_receipts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -2354,6 +2393,13 @@ export const freelancerReceipts = pgTable("freelancer_receipts", {
   settlementCurrency: text("settlement_currency").notNull(),
   receivedDate: text("received_date").notNull(),
   requestId: uuid("request_id").notNull(),
+  /** The quote this credit was expected under, and the provider it was matched to. */
+  routeCheckId: uuid("route_check_id").references(() => freelancerRouteChecks.id, { onDelete: "set null" }),
+  quoteSlug: text("quote_slug"),
+  /** Charges named on the credit advice or by the user, in the settlement currency. */
+  deductions: jsonb("deductions").$type<Array<{ label: string; amount: string }>>().default([]).notNull(),
+  /** Reference rates at the quote date and the credit date, from one source. */
+  fx: jsonb("fx").$type<Record<string, unknown> | null>(),
   createdAt: now(),
 }, (t) => ({
   invoiceFk: foreignKey({ columns: [t.organizationId, t.invoiceId], foreignColumns: [freelancerInvoices.organizationId, freelancerInvoices.id] }).onDelete("cascade"),

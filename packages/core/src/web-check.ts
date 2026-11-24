@@ -113,7 +113,7 @@ export function registrableDomain(urlOrHost: string): string {
   return host.startsWith("www.") ? host.slice(4) : host;
 }
 
-function sameSite(url: string, domain: string | null) {
+export function sameSite(url: string, domain: string | null) {
   if (!domain) return false;
   const host = registrableDomain(url);
   return host === domain || host.endsWith(`.${domain}`);

@@ -67,7 +67,7 @@ describe("workspace invoices and receipt allocation", () => {
     const invoice = await service.saveInvoice(orgA, user, { ...draft, invoiceNumber: "ROUTING", amount: "1000" });
     await service.recordInvoiceReceipt(orgA, user, invoice.id, receipt("ROUTE-PARTIAL", "250"));
     state.search.mockResolvedValue({ results: [] }); state.price.mockResolvedValue({ rows: [], reference: null, generatedAt: "2026-10-07", unavailable: [] });
-    const result = await service.routeInvoice(orgA, invoice.id);
+    const result = await service.routeInvoice(orgA, user, invoice.id);
     expect(state.search).toHaveBeenCalledWith(expect.objectContaining({ product: "collection", customerType: "business", sourceCountry: "US", amount: 750, amountCurrency: "USD" }), expect.objectContaining({ organizationId: orgA, includeDemoProviders: false, recordTelemetry: false }));
     expect(state.price).toHaveBeenCalledWith(orgA, expect.objectContaining({ amount: 750, context: { profile: "freelancer", country: "IN", direction: "receive", purpose: "services", paymentMethod: "local_bank" } }));
     expect(result.recommendedSlug).toBeNull();

@@ -46,19 +46,30 @@ export const InvoiceDraft = z.object({
   } catch (error) { ctx.addIssue({ code: "custom", path: ["amount"], message: (error as Error).message }); }
 });
 export type InvoiceDraft = z.infer<typeof InvoiceDraft>;
+/** A charge taken out of the credit, in the settlement currency. */
+export const ReceiptDeduction = z.object({ label: z.string().trim().min(1).max(60), amount });
+/**
+ * Only the bank credit and the date are required. Everything else defaults to
+ * the quoted route and the invoice: the provider is the one the user chose,
+ * the covered amount is what is still outstanding, and the reference is made
+ * from the invoice number.
+ */
 export const ReceiptDraft = z.object({
-  reference: z.string().trim().min(1).max(120),
-  providerName: z.string().trim().min(1).max(100),
-  sourceAmount: amount,
-  sourceCurrency: InvoiceCurrency,
+  reference: z.string().trim().min(1).max(120).optional(),
+  providerName: z.string().trim().min(1).max(100).optional(),
+  sourceAmount: amount.optional(),
+  sourceCurrency: InvoiceCurrency.optional(),
   settlementAmount: amount,
-  settlementCurrency: InvoiceCurrency,
+  settlementCurrency: InvoiceCurrency.optional(),
   receivedDate: day,
+  deductions: z.array(ReceiptDeduction).max(6).default([]),
   confirmed: z.literal(true),
   requestId: z.string().uuid(),
 }).superRefine((value, ctx) => {
   for (const [field, currency] of [["sourceAmount", value.sourceCurrency], ["settlementAmount", value.settlementCurrency]] as const) {
-    try { if (moneyUnits(value[field], currency) <= 0n) throw new Error("Receipt amounts must be above zero."); }
+    const given = value[field];
+    if (given === undefined || currency === undefined) continue;
+    try { if (moneyUnits(given, currency) <= 0n) throw new Error("Receipt amounts must be above zero."); }
     catch (error) { ctx.addIssue({ code: "custom", path: [field], message: (error as Error).message }); }
   }
 });
@@ -107,5 +118,8 @@ export const ExtractedReceipt = z.object({
   reference: z.string().max(120).nullable(), providerName: z.string().max(100).nullable(),
   sourceAmount: amount.nullable(), sourceCurrency: InvoiceCurrency.nullable(),
   settlementAmount: amount.nullable(), settlementCurrency: InvoiceCurrency.nullable(),
-  receivedDate: day.nullable(), warnings: z.array(z.string().max(200)).max(8),
+  receivedDate: day.nullable(),
+  /** Fees, charges and taxes the document itself says were taken out; never calculated. */
+  deductions: z.array(z.object({ label: z.string().max(60), amount })).max(6).default([]),
+  warnings: z.array(z.string().max(200)).max(8),
 });

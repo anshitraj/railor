@@ -2,16 +2,17 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight, Building2, Check, ChevronRight, Clock3, Copy, Download, FileText, Loader2, Plus, Sparkles, Users, X } from "lucide-react";
-import type { InvoiceDraft, ReceiptDraft } from "@railor/core";
-import type { FreelancerInvoice, InvoiceRouting } from "../../lib/freelancer";
+import type { InvoiceDraft } from "@railor/core";
+import type { FreelancerInvoice, InvoiceRouting, InvoiceSettlementView } from "../../lib/freelancer";
 import { DocumentUpload } from "./invoice-document-upload";
+import { InvoiceSettlement } from "./invoice-settlement";
+import { toast } from "../toast";
 import { PAY_METHODS, PayMethodSelect, type PayMethod } from "../price/pay-method-select";
 import { FreelancerReceivingRoutes } from "./freelancer-receiving-routes";
 import styles from "./freelancer-workspace.module.css";
 
 
 type Option = { value: string; label: string };
-type SavedReceipt = { id: string; reference: string; providerName: string; sourceAmount: string; sourceCurrency: string; settlementAmount: string; settlementCurrency: string; receivedDate: string };
 const inputClass = styles.input;
 const buttonClass = styles.primary;
 const secondaryClass = styles.secondary;
@@ -41,18 +42,15 @@ export function FreelancerWorkspace({ initialInvoices, countries, currencies, co
   const [payMethod, setPayMethod] = useState<PayMethod>(prefill?.paymentMethod ?? "local_bank");
   const [selected, setSelected] = useState<string | null>(null);
   const [routing, setRouting] = useState<InvoiceRouting | null>(null);
-  const [receipts, setReceipts] = useState<SavedReceipt[]>([]);
+  const [view, setView] = useState<InvoiceSettlementView | null>(null);
   const [busy, setBusy] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState("");
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [receipt, setReceipt] = useState<Partial<ReceiptDraft>>({});
   const [provider, setProvider] = useState("");
   const [copied, setCopied] = useState(false);
   const [uploadKey, setUploadKey] = useState(0);
   const form = useRef<HTMLFormElement>(null);
   const invoice = invoices.find((i) => i.id === selected) ?? null;
-  const retry = useRef<string | null>(null);
   const working = busy || extracting;
   const locked = working || !canWrite;
   useEffect(() => {
@@ -66,15 +64,31 @@ export function FreelancerWorkspace({ initialInvoices, countries, currencies, co
     const result = await response.json(); if (!response.ok) throw new Error(result.error);
     setInvoices(result.invoices);
   }
+  async function loadView(id: string) {
+    const response = await fetch(`/api/freelancer?id=${id}`);
+    const data = await response.json(); if (!response.ok) throw new Error(data.error);
+    setView(data);
+  }
   useEffect(() => {
     let current = true;
-    setReceipts([]); setReceipt({}); setShowReceipt(false); retry.current = null;
-    if (selected) fetch(`/api/freelancer?id=${selected}`).then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error); if (current) setReceipts(data.receipts); }).catch((e) => { if (current) setError(e.message); });
+    setView(null);
+    if (selected) fetch(`/api/freelancer?id=${selected}`).then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error); if (current) setView(data); }).catch((e) => { if (current) setError(e.message); });
     return () => { current = false; };
   }, [selected]);
   async function compare(id: string, method: PayMethod = payMethod) {
     const result = await api({ action: "route", id, paymentMethod: method }); setRouting(result.routing);
     setProvider(result.routing.candidates.find((r: { providerSlug: string }) => r.providerSlug === result.routing.recommendedSlug)?.providerName ?? "");
+    // The recommended price is now saved as this invoice's quote.
+    await loadView(id).catch(() => undefined);
+  }
+  /** Picking a route card also picks the quote the bank credit will be judged against. */
+  function selectRoute(name: string) {
+    setProvider(name);
+    const row = routing?.candidates.find((candidate) => candidate.providerName === name);
+    if (!invoice || !routing?.checkId || !row) return;
+    api({ action: "choose", id: invoice.id, checkId: routing.checkId, providerSlug: row.providerSlug })
+      .then((result) => setView((current) => current ? { ...current, quote: result.quote } : current))
+      .catch((e) => { if (row.recipientAmount !== null) toast.error("Couldn’t lock that quote", e instanceof Error ? e.message : undefined); });
   }
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -92,33 +106,18 @@ export function FreelancerWorkspace({ initialInvoices, countries, currencies, co
     if (!invoice) return; setBusy(true); setError(""); setRouting(null);
     try { await compare(invoice.id); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
-  function startReceipt() {
-    if (!invoice) return;
-    const today = new Date();
-    const receivedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    setReceipt({ reference: "", providerName: provider, sourceCurrency: invoice.currency, sourceAmount: invoice.outstanding, settlementCurrency: invoice.settlementCurrency, settlementAmount: "", receivedDate, confirmed: undefined }); retry.current = null; setShowReceipt(true);
-  }
-  function receiptField(key: keyof ReceiptDraft, value: string | boolean) { retry.current = null; setReceipt((r) => ({ ...r, [key]: value })); }
-  async function record(event: FormEvent) {
-    event.preventDefault(); if (!invoice) return;
-    const receivedDate = String(new FormData(event.currentTarget as HTMLFormElement).get("receivedDate") ?? "");
-    setBusy(true); setError("");
-    retry.current ??= crypto.randomUUID();
-    try {
-      await api({ action: "receipt", id: invoice.id, draft: { ...receipt, receivedDate, requestId: retry.current } });
-      await refresh();
-      const response = await fetch(`/api/freelancer?id=${invoice.id}`); const result = await response.json(); if (!response.ok) throw new Error(result.error); setReceipts(result.receipts);
-      setShowReceipt(false); retry.current = null; setRouting(null);
-    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  async function recorded(next: InvoiceSettlementView) {
+    setView(next); setRouting(null);
+    try { await refresh(); } catch (e) { setError((e as Error).message); }
   }
   const requestText = invoice ? `Hi ${invoice.clientName},\n\nPlease arrange payment for invoice ${invoice.invoiceNumber}: ${invoice.outstanding} ${invoice.currency}${invoice.dueDate ? `, due ${invoice.dueDate}` : ""}.\nPlease include ${invoice.invoiceNumber} as the payment reference.${provider ? `\nThe receiving provider I am considering is ${provider}; I will confirm onboarding and share its verified receiving instructions separately.` : "\nI will share verified receiving instructions separately."}\n\nThank you.` : "";
   async function copy() { try { await navigator.clipboard.writeText(requestText); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { setError("Copy is unavailable in this browser. Select and copy the request text below."); } }
   const clientCount = new Set(invoices.map((item) => item.clientName.trim().toLowerCase() + ":" + item.clientCountry)).size;
   const clientCountries = new Set(invoices.map((item) => item.clientCountry)).size;
-  const step = showReceipt || invoice?.status === "recorded_paid" ? 2 : invoice ? 1 : 0;
+  const step = invoice?.status === "recorded_paid" || view?.receipts.length ? 2 : invoice ? 1 : 0;
   const checkedAt = routing ? new Date(routing.generatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC" : null;
   const receivingCountry = countries.find((item) => item.value === draft.accountCountry)?.label ?? draft.accountCountry;
-  function newInvoice() { setSelected(null); setRouting(null); setProvider(""); setError(""); setDraft(fresh()); setShowReceipt(false); setUploadKey((value) => value + 1); requestAnimationFrame(() => form.current?.scrollIntoView({ block: "start" })); }
+  function newInvoice() { setSelected(null); setRouting(null); setProvider(""); setError(""); setDraft(fresh()); setView(null); setUploadKey((value) => value + 1); requestAnimationFrame(() => form.current?.scrollIntoView({ block: "start" })); }
   return <div className={styles.workspace}>
     <header className={styles.header}>
       <div className={styles.intro}><h1>Get paid</h1><p>Add an invoice, see the cheapest way to receive it, and track what reaches your bank.</p><button type="button" disabled={working || !canWrite} className={styles.newInvoice} onClick={newInvoice}><Plus size={15} />New invoice</button></div>
@@ -148,12 +147,9 @@ export function FreelancerWorkspace({ initialInvoices, countries, currencies, co
         </form>}
       </section>
       <div className="space-y-5">
-        <FreelancerReceivingRoutes routing={routing} invoice={invoice} draft={draft} busy={busy} locked={locked} provider={provider} onSelect={setProvider} />
+        {invoice?.status !== "recorded_paid" && <FreelancerReceivingRoutes routing={routing} invoice={invoice} draft={draft} busy={busy} locked={locked} provider={provider} onSelect={selectRoute} />}
         {invoice && invoice.status !== "recorded_paid" && <section className={panelClass}><div className="flex items-center justify-between gap-3"><h2 className="text-[17px] font-bold">Payment request</h2><button type="button" className={secondaryClass} onClick={copy}><Copy size={13} />{copied ? "Copied" : "Copy request"}</button></div><p className="my-3 text-[12px] text-[var(--color-muted)]">Confirm your provider account first, then share its verified receiving details with your client.</p><pre className="whitespace-pre-wrap rounded-xl bg-[var(--color-surface)] p-4 font-sans text-[12px] leading-relaxed">{requestText}</pre></section>}
-        {invoice && <section className={panelClass} aria-label="Reconciliation"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-[17px] font-bold">Receipts & reconciliation</h2>{invoice.status !== "recorded_paid" && !showReceipt && <button disabled={locked} type="button" className={secondaryClass} onClick={startReceipt}><Plus size={13} /> Record receipt</button>}</div><p className="mt-2 text-[12px] leading-relaxed text-[var(--color-muted)]">Match the amount covered in {invoice.currency} to this invoice. Record the net {invoice.settlementCurrency} bank credit separately, so conversion and fees do not create a false underpayment.</p>
-          {showReceipt && <form onSubmit={record} className="mt-5"><DocumentUpload kind="receipt" aiEnabled={aiEnabled} disabled={locked} sharedDemo={sharedDemo} onBusyChange={setExtracting} onProposal={(value) => { retry.current = null; setReceipt((r) => ({ ...r, ...Object.fromEntries(["reference", "providerName", "sourceAmount", "sourceCurrency", "settlementAmount", "settlementCurrency", "receivedDate"].map((key) => [key, typeof value[key] === "string" ? value[key] : ""])), confirmed: undefined })); }} /><fieldset disabled={locked} className="grid gap-3 sm:grid-cols-2">{[["reference", "Receipt / bank reference"], ["providerName", "Receiving provider"], ["sourceAmount", `Amount of invoice covered (${invoice.currency})`], ["settlementAmount", `Net bank credit (${invoice.settlementCurrency})`]] .map(([key, label]) => <Field key={key} label={label!}><input required maxLength={key === "reference" ? 120 : key === "providerName" ? 100 : 24} className={inputClass} inputMode={key!.includes("Amount") ? "decimal" : "text"} value={String(receipt[key as keyof ReceiptDraft] ?? "")} onChange={(e) => receiptField(key as keyof ReceiptDraft, e.target.value)} /></Field>)}<Select label="Allocation currency" options={currencies} value={receipt.sourceCurrency ?? ""} onChange={(v) => receiptField("sourceCurrency", v)} /><Select label="Bank credit currency" options={currencies} value={receipt.settlementCurrency ?? ""} onChange={(v) => receiptField("settlementCurrency", v)} /><Field label="Received date"><input name="receivedDate" required type="date" className={inputClass} value={receipt.receivedDate ?? ""} onInput={(e) => receiptField("receivedDate", e.currentTarget.value)} onChange={(e) => receiptField("receivedDate", e.target.value)} /></Field></fieldset><label className="my-4 flex items-start gap-2 text-[12px] leading-relaxed"><input required disabled={locked} type="checkbox" checked={receipt.confirmed === true} onChange={(e) => receiptField("confirmed", e.target.checked)} className="mt-1 accent-[var(--color-orange)]" /><span>I have checked my provider or bank statement and confirm this receipt belongs to this invoice. This is a manual record.</span></label><div className="flex gap-2"><button disabled={locked || !receipt.confirmed} className={buttonClass}>Save & reconcile</button><button disabled={working} className={secondaryClass} type="button" onClick={() => setShowReceipt(false)}>Cancel</button></div></form>}
-          <div className="mt-4 space-y-2">{receipts.map((r) => <div className="flex flex-wrap justify-between gap-2 rounded-xl bg-[var(--color-surface)] p-3 text-[12px]" key={r.id}><div><strong>{r.reference}</strong><p className="mt-1 text-[var(--color-muted)]">{r.providerName} · {r.receivedDate} · manual record</p></div><div className="text-right"><p>{displayMoney(r.sourceAmount, r.sourceCurrency)} allocated</p><p className="mt-1 text-[var(--color-muted)]">{displayMoney(r.settlementAmount, r.settlementCurrency)} bank credit</p></div></div>)}{!receipts.length && !showReceipt && <p className="py-3 text-[12px] text-[var(--color-muted)]">No receipts yet. When payment reaches your account, choose “Record receipt” and enter the amount from your statement.</p>}</div>
-        </section>}
+        {invoice && <InvoiceSettlement invoice={invoice} view={view} routing={routing} busy={busy} locked={locked} aiEnabled={aiEnabled} sharedDemo={sharedDemo} onFindQuote={reroute} onView={setView} onRecorded={recorded} />}
       </div>
     </div>
     <section className={panelClass} aria-label="Saved invoices"><div className="mb-4 flex items-center justify-between"><h2 className="text-[17px] font-bold">Your invoices</h2><span className="text-[12.5px] text-[var(--color-muted)]">Latest 100 · workspace private</span></div>{!invoices.length ? <p className="py-6 text-center text-[13px] text-[var(--color-muted)]">Your first invoice starts here. Add a file or enter the details above; saved invoices and their payment status will appear in this list.</p> : <div className="overflow-x-auto"><table className="w-full text-left text-[12px]"><thead className="border-b border-[var(--color-line)] text-[var(--color-muted)]"><tr>{["Invoice / client", "Total", "Outstanding", "Due", "Status", ""].map((title) => <th key={title} className="px-2 py-3 font-medium">{title}</th>)}</tr></thead><tbody>{invoices.map((row) => <tr key={row.id} className="border-b border-[var(--color-line)] last:border-0"><td className="px-2 py-4"><strong>{row.invoiceNumber}</strong><p className="mt-1 text-[var(--color-muted)]">{row.clientName}</p></td><td className="px-2 py-4 tabular-nums">{displayMoney(row.amount, row.currency)}</td><td className="px-2 py-4 tabular-nums">{displayMoney(row.outstanding, row.currency)}</td><td className="px-2 py-4">{row.dueDate ?? "—"}</td><td className="px-2 py-4">{statusLabel(row.status)}</td><td className="px-2 py-4"><button disabled={working} className={secondaryClass} onClick={() => { setSelected(row.id); setRouting(null); setProvider(""); setError(""); }}>Open <ArrowRight size={12} /></button></td></tr>)}</tbody></table></div>}</section>

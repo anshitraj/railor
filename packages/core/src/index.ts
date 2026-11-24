@@ -49,6 +49,9 @@ export * from "./customer-profiles.js";
 export * from "./web-check.js";
 export * from "./web-check-store.js";
 export * from "./freelancer.js";
+export * from "./settlement.js";
+export * from "./frontier-model.js";
+export * from "./shortfall.js";
 export * from "./invoice-extraction.js";
 export * from "./payslip-extraction.js";
 

@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ session: vi.fn(), save: vi.fn(), record: vi.fn
 vi.mock("server-only", () => ({}));
 vi.mock("../../../lib/auth", () => ({ getSession: mocks.session }));
 vi.mock("../../../lib/rate-limit", () => ({ consumeLimit: mocks.limit }));
-vi.mock("../../../lib/freelancer", () => ({ InvoiceError: class extends Error { constructor(message: string, public status = 400) { super(message); } }, saveInvoice: mocks.save, recordInvoiceReceipt: mocks.record, routeInvoice: mocks.route, listInvoices: mocks.list, findInvoice: vi.fn(), invoiceReceipts: vi.fn(), invoiceCsv: vi.fn() }));
+vi.mock("../../../lib/freelancer", () => ({ InvoiceError: class extends Error { constructor(message: string, public status = 400) { super(message); } }, saveInvoice: mocks.save, recordInvoiceReceipt: mocks.record, routeInvoice: mocks.route, listInvoices: mocks.list, findInvoice: vi.fn(), invoiceSettlement: vi.fn(async () => ({ receipts: [], quote: null, combined: null })), chooseQuote: vi.fn(), addReceiptDeduction: vi.fn(), invoiceCsv: vi.fn() }));
 const { POST, GET } = await import("./route");
 const draft = { invoiceNumber: "INV-001", clientName: "Synthetic", clientCountry: "US", accountCountry: "IN", currency: "USD", amount: "1000", settlementCurrency: "INR" };
 const request = (body: unknown, origin?: string) => new Request("http://localhost/api/freelancer", { method: "POST", headers: { "Content-Type": "application/json", ...(origin ? { origin } : {}) }, body: JSON.stringify(body) });
