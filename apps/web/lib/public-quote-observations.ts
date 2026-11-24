@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { getDb, providers, sourceDocuments, sourceSnapshots } from "@railor/database";
-import { remitlyBrowserQuoteRow, remitlyCalculatorUrl, usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, type PriceCheckInput, type PriceRow } from "@railor/core";
+import { calculatorProvider, calculatorSlugsFor, readCalculator, remitlyBrowserQuoteRow, remitlyCalculatorUrl, usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, type PriceCheckInput, type PriceRow } from "@railor/core";
 import { z } from "zod";
 import { consumeLimit } from "./rate-limit";
 
@@ -82,6 +82,50 @@ const browserResult = z.object({
     sourceUrl: z.url(),
   }),
 });
+
+export type CalculatorAttempt = { row: PriceRow; reason?: undefined } | { row: null; reason: string | null };
+
+/**
+ * Asks a provider's own calculator for this exact transfer, through a browser
+ * agent. A price comes back only if it passes every check (it adds up, it is
+ * for the amount asked, the rate is believable next to mid-market); otherwise
+ * the reason comes back so the person can be told why instead of seeing a
+ * blank.
+ */
+export async function attemptProviderCalculator(slug: string, input: PriceCheckInput, referenceRate: number | null = null, budgetMs = 50_000): Promise<CalculatorAttempt> {
+  if (slug === "xoom" || slug === "remitly") return { row: await readProviderCalculator(slug, input), reason: null } as CalculatorAttempt;
+  if (!calculatorProvider(slug)) return { row: null, reason: null };
+  const apiKey = process.env.TINYFISH_API_KEY?.trim();
+  if (!apiKey) return { row: null, reason: null };
+  if (!await consumeLimit("provider-quote-browser", slug, 24, 3_600_000)) return { row: null, reason: "This provider has been checked many times this hour. Try again shortly." };
+  const result = await readCalculator(slug, input, referenceRate, { apiKey, budgetMs });
+  return result.row ? { row: result.row } : { row: null, reason: result.reject };
+}
+
+/**
+ * Looks up, in the background, the providers that publish a calculator but no
+ * API, so the next refresh of a price check shows their real price instead of
+ * "quote required". Bounded three ways: a provider is tried once per transfer
+ * every 15 minutes, an hourly ceiling covers the whole app, and nothing runs
+ * without a browser-agent key.
+ */
+export async function warmProviderCalculators(input: PriceCheckInput, referenceRate: number | null, present: ReadonlySet<string>) {
+  if (!process.env.TINYFISH_API_KEY?.trim()) return;
+  const wanted = calculatorSlugsFor(input).filter((slug) => !present.has(slug));
+  const queue: string[] = [];
+  for (const slug of wanted) {
+    if (!await consumeLimit("calculator-warm", `${slug}:${requestKey(input)}`, 1, 15 * 60_000).catch(() => false)) continue;
+    if (!await consumeLimit("calculator-warm-hour", "all", Number(process.env.QUOTE_WARM_PER_HOUR) || 60, 3_600_000).catch(() => false)) break;
+    queue.push(slug);
+  }
+  const worker = async () => {
+    for (let slug = queue.shift(); slug; slug = queue.shift()) {
+      const attempt = await attemptProviderCalculator(slug, input, referenceRate, 90_000).catch(() => null);
+      if (attempt?.row) await savePublicQuoteObservation(input, attempt.row).catch(() => undefined);
+    }
+  };
+  await Promise.allSettled([worker(), worker(), worker()]);
+}
 
 export async function readProviderCalculator(slug: string, input: PriceCheckInput): Promise<PriceRow | null> {
   if (slug !== "xoom" && slug !== "remitly") return null;

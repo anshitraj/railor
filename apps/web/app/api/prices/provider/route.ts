@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { COUNTRY_TERMS, priceWebChecks, readWebChecks, registrableDomain, waitForWebChecks, type WebCheckClaim } from "@railor/core";
 import { getSession } from "../../../../lib/auth";
 import { parsePriceQuery, runPriceCheck } from "../../../../lib/pricing";
-import { readProviderCalculator, savePublicQuoteObservation } from "../../../../lib/public-quote-observations";
+import { attemptProviderCalculator, savePublicQuoteObservation } from "../../../../lib/public-quote-observations";
 import { consumeLimit } from "../../../../lib/rate-limit";
 import { providerIdentity } from "../../../../lib/price-display";
 import { priceView } from "../../../../lib/price-view";
@@ -34,10 +34,11 @@ export async function POST(request: Request) {
     const excludedProvider = excluded.find(item => providerIdentity(item.providerSlug) === slug);
     const available = quotes.filter(item => providerIdentity(item.providerSlug) === slug && item.recipientAmount !== null);
     const row = available.find(item => item.basis !== "market_estimate") ?? available[0];
-    const quote = row ?? (excludedProvider ? null : await readProviderCalculator(slug, result.input));
+    const attempt = row || excludedProvider ? null : await attemptProviderCalculator(slug, result.input, result.reference?.rate ?? null);
+    const quote = row ?? attempt?.row ?? null;
     if (!quote) {
       const restriction = excludedProvider?.profileAssessment?.reasons[0];
-      const message = restriction ?? provider?.pricingStatus?.reason ?? "The provider didn’t return a public total for this transfer. Check its calculator or your account.";
+      const message = restriction ?? attempt?.reason ?? provider?.pricingStatus?.reason ?? "The provider didn’t return a public total for this transfer. Check its calculator or your account.";
       if (!provider?.websiteUrl) return NextResponse.json({ message });
 
       const countryName = (code: string) => COUNTRY_TERMS.find(country => country.code === code)?.name ?? code;

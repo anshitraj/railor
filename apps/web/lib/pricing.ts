@@ -1,14 +1,14 @@
 import "server-only";
 import { after } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { PAYOUT_ADAPTERS, comparePrices, getAdapter, priceWebChecks, waitForWebChecks, CustomerContext, type PriceCheckInput } from "@railor/core";
+import { PAYOUT_ADAPTERS, calculatorSlugsFor, comparePrices, getAdapter, priceWebChecks, waitForWebChecks, CustomerContext, type PriceCheckInput } from "@railor/core";
 import { evidence, fees, getDb, providerConnections, providers } from "@railor/database";
 import { getConnectionCredentials } from "./connections";
 import { getIntentOptions } from "./reference";
 import { getPlatformQuoteChecks } from "./platform-pricing";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
-import { loadPublicQuoteObservations, savePublicQuoteObservation } from "./public-quote-observations";
+import { loadPublicQuoteObservations, savePublicQuoteObservation, warmProviderCalculators } from "./public-quote-observations";
 import { defaultPriceCountry, priceDestination } from "./price-destination";
 import { providerIdentity } from "./price-display";
 import { money2IndiaEvidence } from "./money2india-evidence";
@@ -91,6 +91,12 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   });
   const found = new Set(result.rows.filter(row => row.profileAssessment?.status === "not_supported" || (row.basis !== "market_estimate" && row.recipientAmount !== null)).map(row => providerIdentity(row.providerSlug)));
   result.rows.push(...cachedQuotes.filter(row => !found.has(providerIdentity(row.providerSlug))));
+  // Providers that show a price only in their own calculator are read in the background; the next refresh has them.
+  if (input.includeMarket && calculatorSlugsFor(result.input).some(slug => !found.has(slug) && !cachedQuotes.some(row => providerIdentity(row.providerSlug) === slug))) {
+    const present = new Set([...found, ...cachedQuotes.map(row => providerIdentity(row.providerSlug))]);
+    const referenceRate = result.reference?.rate ?? null;
+    try { after(() => warmProviderCalculators(result.input, referenceRate, present).catch(() => undefined)); } catch { /* outside a request: nothing to warm for */ }
+  }
   const coverage = providerMarketCoverage(input);
   const captured = coverage.providers.length ? await db.select({
     providerSlug: providers.slug, summary: fees.summary, product: fees.product,
