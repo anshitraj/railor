@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Check, Copy, Eye, EyeOff, KeyRound, Plus, RefreshCw, Terminal, Trash2, X } from "lucide-react";
-import { CodeSample, TechnologyLogo } from "@railor/ui";
+import { ArrowUpRight, Check, Copy, Eye, EyeOff, KeyRound, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { CodeSample } from "@railor/ui";
 import { createKey, regenerateKey, revokeKey } from "../../app/app/developers/actions";
-import { SETUP_CLIENTS, setupSnippet, type SetupClient } from "../../lib/developer-setup";
+import { AGENT_SETUP_PATH } from "../../lib/developer-setup";
 import { toast } from "../toast";
 import styles from "./developer-portal.module.css";
+import { McpClientGallery } from "./mcp-client-gallery";
 
 export interface KeyRow { id: string; label: string; mode: "test" | "live"; prefix: string; secret: string | null; lastUsedAt: string | null; createdAt: string; revoked: boolean; monthlyUsed: number | null; monthlyCap: number | null }
 export interface UsageRow { endpoint: string; count: number; errors: number; p95: number }
@@ -31,8 +32,6 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
   const primary = (fresh && !keys.find((key) => key.id === fresh.id)?.revoked ? fresh : null) ?? active.find((key) => key.mode === "live") ?? active[0];
   const secret = primary?.id === fresh?.id ? fresh?.secret ?? undefined : primary?.secret ?? undefined;
   const [revealed, setRevealed] = useState(false);
-  const [client, setClient] = useState<SetupClient>("Claude Code");
-  const [powershell, setPowershell] = useState(true);
   const [copied, setCopied] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -93,7 +92,6 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
     });
   }
 
-  const command = setupSnippet(client, baseUrl, secret ?? "YOUR_RAILOR_KEY", powershell);
   const usedPct = quota ? Math.min(100, (quota.used / Math.max(1, quota.cap)) * 100) : 0;
 
   return (
@@ -149,14 +147,14 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
         ) : (
           <div className={styles.emptyKey}>
             <p>No active key yet.</p>
-            {canManage ? <button type="button" className={`${styles.primary} press`} disabled={pending} onClick={() => { setMode("test"); create(); }}><Plus size={15} aria-hidden />{pending ? "Creating…" : "Create a test key"}</button> : <p className={styles.note}>Ask your workspace admin for access.</p>}
+            {canManage ? <Link href={AGENT_SETUP_PATH} className={`${styles.primary} press`}><Plus size={15} aria-hidden />Create a test key</Link> : <p className={styles.note}>Ask your workspace admin for access.</p>}
           </div>
         )}
 
         <div className={styles.firstRequest}>
           <h3>Your first request</h3>
-          <p>Copy and run it — it works as-is with your key.</p>
-          <CodeSample apiKey={secret} variants={[
+          <p>{revealed && secret ? "Copy and run this example with your key." : "Replace the placeholder with your API key, or reveal your key above to fill it in."}</p>
+          <CodeSample apiKey={revealed ? secret : undefined} variants={[
             { language: "curl", label: "cURL", code: `curl "${baseUrl}/v1/corridors/search" \\\n  -H "Authorization: Bearer RAILOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(exampleQuery)}'` },
             { language: "ts", label: "TypeScript", code: `const response = await fetch("${baseUrl}/v1/corridors/search", {\n  method: "POST",\n  headers: { Authorization: "Bearer RAILOR_API_KEY", "Content-Type": "application/json" },\n  body: JSON.stringify(${JSON.stringify(exampleQuery, null, 2)}),\n});\nconsole.log(await response.json());` },
             { language: "python", label: "Python", code: `import requests\n\nresponse = requests.post(\n    "${baseUrl}/v1/corridors/search",\n    headers={"Authorization": "Bearer RAILOR_API_KEY"},\n    json=${JSON.stringify(exampleQuery)},\n)\nprint(response.json())` },
@@ -164,40 +162,7 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
         </div>
       </section>
 
-      <section className={styles.card} aria-labelledby="setup-railor">
-        <div className={styles.cardHeading}>
-          <h2 id="setup-railor"><Terminal size={18} aria-hidden />Connect an AI tool</h2>
-        </div>
-        <p className={styles.note}>Pick your tool, copy the setup, then ask it to compare a payment route.</p>
-        <div className={styles.clients} role="group" aria-label="Choose an AI tool">
-          {SETUP_CLIENTS.map((name) => (
-            <button type="button" key={name} aria-pressed={client === name} className="press" onClick={() => setClient(name)}>
-              {name === "Any MCP client" ? <Terminal size={20} aria-hidden /> : <TechnologyLogo name={name} size={22} />}
-              {name}
-            </button>
-          ))}
-        </div>
-        <div className={styles.setup}>
-          <div className={styles.setupHead}>
-            <h3>{client} setup</h3>
-            {client === "Codex" ? (
-              <div className={styles.platform} role="group" aria-label="Terminal type">
-                <button type="button" aria-pressed={powershell} onClick={() => setPowershell(true)}>PowerShell</button>
-                <button type="button" aria-pressed={!powershell} onClick={() => setPowershell(false)}>macOS / Linux</button>
-              </div>
-            ) : null}
-          </div>
-          <p>{client === "Claude Code" || client === "Codex" ? "Run this in your terminal." : `Add this to ${client === "VS Code" ? ".vscode/mcp.json" : client === "Cursor" ? ".cursor/mcp.json" : "your client’s MCP settings"}.`}</p>
-          <div className={styles.snippet}>
-            <pre>{command.replaceAll(secret ?? "\0", "YOUR_RAILOR_KEY")}</pre>
-            <button type="button" className={`${styles.primary} press`} onClick={() => copy(command, "setup", secret ? "Setup copied with your key" : "Setup copied")}>
-              {copied === "setup" ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}{copied === "setup" ? "Copied" : "Copy setup"}
-            </button>
-          </div>
-          <p className={styles.note}>{secret ? "Your key is included when you copy." : "Replace YOUR_RAILOR_KEY with your saved key."} Then ask: “Compare providers for a payment from India to the UAE.”</p>
-          <Link href="/docs/mcp" className={styles.link}>Setup help and supported tools<ArrowUpRight size={13} aria-hidden /></Link>
-        </div>
-      </section>
+      <McpClientGallery baseUrl={baseUrl} />
 
       <section className={styles.card} aria-labelledby="usage-title">
         <div className={styles.cardHeading}>

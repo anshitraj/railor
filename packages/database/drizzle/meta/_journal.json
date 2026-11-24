@@ -211,6 +211,13 @@
       "when": 1795305600000,
       "tag": "0029_paid_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795478400000,
+      "tag": "0030_workspace_referral_source",
+      "breakpoints": true
     }
   ]
 }

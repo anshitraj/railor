@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import {
   alerts,
   apiKeys,
@@ -15,6 +15,7 @@ import {
   savedCorridors,
   users,
   watchlists,
+  type RailorDb,
 } from "@railor/database";
 import { corridorLabel } from "@railor/core";
 import { withOrgLock } from "./entitlements";
@@ -31,10 +32,7 @@ const slugify = (value: string) =>
     .replace(/^-|-$/g, "")
     .slice(0, 40) || "workspace";
 
-/**
- * Creates the organization *and* its starting test key. A developer never has
- * to go find a "create key" button before the docs work for them.
- */
+/** Creates a workspace and its owner. Developers provision a test key when they connect a client. */
 export async function createOrganizationForUser(
   userId: string,
   email: string,
@@ -61,7 +59,6 @@ export async function createOrganizationForUser(
     role: "owner",
   });
 
-  await createApiKey(org.id, userId, "Default test key", "test");
   return org;
 }
 
@@ -72,7 +69,10 @@ export async function createApiKey(
   label: string,
   mode: "test" | "live",
 ) {
-  const db = await getDb();
+  return withOrgLock(organizationId, (db) => insertApiKey(db, organizationId, userId, label, mode));
+}
+
+async function insertApiKey(db: RailorDb, organizationId: string, userId: string | null, label: string, mode: "test" | "live") {
   const secret = `rail_${mode}_${randomBytes(24).toString("base64url")}`;
   const [key] = await db
     .insert(apiKeys)
@@ -91,7 +91,22 @@ export async function createApiKey(
   return { key, secret };
 }
 
-export async function getOrgTestKey(organizationId: string) {
+/** Concurrent setup attempts share an existing active test credential. */
+export async function ensureAgentTestKey(organizationId: string, userId: string) {
+  return withOrgLock(organizationId, async (db) => {
+    const [existing] = await db.select({ secret: apiKeys.revealableSecret })
+      .from(apiKeys)
+      .where(and(eq(apiKeys.organizationId, organizationId), eq(apiKeys.mode, "test"), isNull(apiKeys.revokedAt), isNotNull(apiKeys.revealableSecret)))
+      .orderBy(desc(apiKeys.createdAt))
+      .limit(1);
+    if (existing?.secret) return { secret: existing.secret, created: false };
+    const { secret } = await insertApiKey(db, organizationId, userId, "Agent test key", "test");
+    return { secret, created: true };
+  });
+}
+
+export async function getOrgTestKey(organizationId: string, role: string | null | undefined) {
+  if (role !== "owner" && role !== "admin") return null;
   const db = await getDb();
   const [key] = await db
     .select()
@@ -117,6 +132,7 @@ export async function saveOnboarding(
       settlementCurrencies: answers.settlementCurrencies ?? undefined,
       interests: answers.interests ?? undefined,
       assumptions: answers.assumptions ?? undefined,
+      referralSource: answers.referralSource,
       onboardingStep: step,
       updatedAt: new Date(),
     })

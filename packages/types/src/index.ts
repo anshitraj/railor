@@ -648,6 +648,12 @@ export const InfrastructureInterest = z.enum([
 ]);
 export type InfrastructureInterest = z.infer<typeof InfrastructureInterest>;
 
+export const ReferralSource = z.enum([
+  "ai_assistant", "google_search", "x", "linkedin", "youtube", "podcast",
+  "coding_agent", "friend_or_colleague", "event", "other",
+]);
+export type ReferralSource = z.infer<typeof ReferralSource>;
+
 export const OnboardingAnswers = z.object({
   building: BuildingType.optional(),
   entityCountry: CountryCode.optional(),
@@ -656,6 +662,7 @@ export const OnboardingAnswers = z.object({
   interests: z.array(InfrastructureInterest).default([]),
   /** Steps the user skipped, recorded as explicit assumptions, never silent. */
   assumptions: z.array(z.string()).default([]),
+  referralSource: ReferralSource.nullish(),
 });
 export type OnboardingAnswers = z.infer<typeof OnboardingAnswers>;
 

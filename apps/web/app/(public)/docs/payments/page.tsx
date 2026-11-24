@@ -40,7 +40,7 @@ const SCENARIOS: Array<[string, string]> = [
 
 export default async function PaymentsDocs() {
   const session = await getSession();
-  const key = session?.organization ? await getOrgTestKey(session.organization.id) : null;
+  const key = session?.organization ? await getOrgTestKey(session.organization.id, session.role) : null;
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   return (
     <>

@@ -11,7 +11,7 @@ const ARTICLE_ID = "docs-article";
 
 export default async function DocsLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  const key = session?.organization ? await getOrgTestKey(session.organization.id) : null;
+  const key = session?.organization ? await getOrgTestKey(session.organization.id, session.role) : null;
 
   return (
     <div className="grid grid-cols-1 gap-x-10 gap-y-7 pb-20 lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:pb-0 xl:grid-cols-[15.5rem_minmax(0,1fr)_11.5rem]">

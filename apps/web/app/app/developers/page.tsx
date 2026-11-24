@@ -1,15 +1,14 @@
 import { redirect } from "next/navigation";
-import { and, desc, eq, isNull } from "drizzle-orm";
-import { apiKeys, getDb, rateLimitBuckets } from "@railor/database";
-import { getEntitlement } from "../../../lib/entitlements";
+import { desc, eq } from "drizzle-orm";
+import { apiKeys, getDb } from "@railor/database";
+import { getWorkspaceApiUsage } from "../../../lib/entitlements";
 import {
   getMonthlyUsageCount,
   getUsageByEndpoint,
   getUsageDailySeries,
-  monthStart,
 } from "@railor/core";
 import { getSession } from "../../../lib/auth";
-import { createApiKey, getSavedCorridors } from "../../../lib/org";
+import { getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
 import { WebhookEndpoints } from "../../../components/app/webhook-endpoints";
 import { listWebhookDeliveries, listWebhookEndpoints } from "@railor/core";
@@ -27,16 +26,7 @@ export default async function DevelopersPage() {
 
   const db = await getDb();
   const canManage = session.role === "owner" || session.role === "admin";
-  // Workspaces with no active key get one starter key; existing live-only setups stay intact.
-  const [anyTestKey] = await db
-    .select({ id: apiKeys.id })
-    .from(apiKeys)
-    .where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt)))
-    .limit(1);
-  if (!anyTestKey && canManage) await createApiKey(org.id, session.user.id, "Default test key", "test");
-
-  const entitlement = await getEntitlement(org.id);
-  const [workspaceUsage] = await db.select().from(rateLimitBuckets).where(and(eq(rateLimitBuckets.key, `api-month:${org.id}`), eq(rateLimitBuckets.windowStart, monthStart())));
+  const { entitlement, used, since } = await getWorkspaceApiUsage(org.id);
   const keyLimit = (key: { monthlyRequestCap: number | null }) => Math.min(key.monthlyRequestCap ?? entitlement.limits.apiRequests, entitlement.limits.apiRequests);
   const [keys, usage, dailySeries, corridors] = await Promise.all([
     db
@@ -52,7 +42,6 @@ export default async function DevelopersPage() {
   // Every active key gets its own usage count — a test-only org (the
   // free-tier default before a live key ever exists) still has real numbers
   // to show, not just an org that graduated to a live key.
-  const since = monthStart();
   const activeKeys = keys.filter((k) => !k.revokedAt);
   const usageByKey = new Map(
     await Promise.all(
@@ -65,7 +54,7 @@ export default async function DevelopersPage() {
   const primaryKey = liveKey ?? testKey;
   const quota = primaryKey
     ? {
-        used: workspaceUsage?.count ?? 0,
+        used,
         cap: entitlement.limits.apiRequests,
         mode: primaryKey.mode,
       }
