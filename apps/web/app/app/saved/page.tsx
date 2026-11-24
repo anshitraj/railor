@@ -8,7 +8,7 @@ import { SavedPairsList } from "../../../components/app/saved-pairs-list";
 import styles from "../../../components/app/saved.module.css";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Saved" };
+export const metadata = { title: "Saved routes" };
 
 /** Everything saved from Transfer, one tap from a fresh comparison. */
 export default async function SavedPage() {
@@ -23,7 +23,7 @@ export default async function SavedPage() {
   return (
     <div className={styles.page}>
       <header className={styles.head}>
-        <h1>Saved</h1>
+        <h1>Saved routes</h1>
         <p>Open a saved pair or provider corridor to check its current price, or set an alert to get an email when it gets better.</p>
         <p className={styles.usage}>
           {planName(entitlement.plan)} plan · {pairs.length} of {savedPairs} saved · {alerts} of {rateAlerts} {rateAlerts === 1 ? "alert" : "alerts"}

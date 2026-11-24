@@ -64,8 +64,8 @@ interface NavItem {
 export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items: NavItem[] }> = [
   { title: null, items: [
     { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
-    { href: "/app/saved", label: "Saved", icon: Bookmark },
-    { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
+    { href: "/app/saved", label: "Saved routes", icon: Bookmark },
+    { href: "/app/agent", label: "Use AI to find route", icon: Bot, stage: "beta" },
   ] },
   { title: "Transfer", icon: ArrowLeftRight, items: [
     { href: "/app/prices", label: "Compare & send", icon: ArrowLeftRight },
@@ -100,10 +100,10 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
 const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
   { title: "Dashboard", items: [
     { href: "/app", label: "Home", icon: LayoutDashboard },
-    { href: "/app/saved", label: "Saved", icon: Bookmark },
-    { href: "/app/prices", label: "Transfer", icon: ArrowLeftRight },
-    { href: "/app/search", label: "Routes", icon: Route },
-    { href: "/app/agent", label: "Agent", icon: Bot, stage: "beta" },
+    { href: "/app/prices", label: "Convert currencies", icon: ArrowLeftRight },
+    { href: "/app/search", label: "Find my route", icon: Route },
+    { href: "/app/saved", label: "Saved routes", icon: Bookmark },
+    { href: "/app/agent", label: "Use AI to find route", icon: Bot, stage: "beta" },
   ] },
   { title: "Operations", items: [
     { href: "/app/audit", label: "Company", icon: Building2 },
@@ -115,8 +115,8 @@ const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
 /** Phones get the four most-used places plus a way to everything else. */
 const MOBILE_NAV: NavItem[] = [
   { href: "/app", label: "Home", icon: LayoutDashboard, exact: true },
-  { href: "/app/prices", label: "Transfer", icon: ArrowLeftRight },
-  { href: "/app/search", label: "Routes", icon: Route },
+  { href: "/app/prices", label: "Convert", icon: ArrowLeftRight },
+  { href: "/app/search", label: "Find route", icon: Route },
   { href: "/app/payments", label: "Activity", icon: Activity },
 ];
 

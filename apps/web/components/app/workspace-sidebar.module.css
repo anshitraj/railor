@@ -54,7 +54,7 @@
 .link[aria-current="page"] .linkIcon { border-color: #ffbd9b25; background: #ffbd9b18; color: var(--nav-accent); }
 .activePlate { position: absolute; z-index: -1; inset: 0; border: 1px solid #ffba9828; border-radius: inherit; background: linear-gradient(100deg, #59392e, #372722); box-shadow: 0 5px 12px -9px #0009; }
 .activePlate::before { position: absolute; top: 10px; bottom: 10px; left: -1px; width: 2px; border-radius: 2px; background: var(--nav-accent); content: ""; }
-.linkLabel { flex: 1; }
+.linkLabel { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .currentArrow { color: var(--nav-accent); }
 .stageBadge > span { border-color: #ffb79038; background: #ffb79013; color: var(--nav-accent); }
 .footer { display: grid; gap: 4px; padding: 8px 2px 0; border-top: 1px solid var(--nav-border); }
@@ -69,7 +69,7 @@
 
 @media (hover: hover) and (pointer: fine) { .brand:hover .mark { transform: rotate(0); } }
 @media (min-width: 768px) {
-  .sidebar, .sidebar[data-open="true"] { position: sticky; inset: 0 auto auto 0; z-index: 0; width: 232px; align-self: start; visibility: visible; transform: none; }
+  .sidebar, .sidebar[data-open="true"] { position: sticky; inset: 0 auto auto 0; z-index: 0; width: 248px; align-self: start; visibility: visible; transform: none; }
   .sidebar[data-compact="true"] { width: 72px; padding-inline: 9px; }
   .sidebar[data-compact="true"] .brandRow { flex-direction: column; padding-inline: 0; }
   .sidebar[data-compact="true"] .link { justify-content: center; padding-inline: 0; }
