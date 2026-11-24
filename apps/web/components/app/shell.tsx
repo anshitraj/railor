@@ -102,6 +102,7 @@ const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
     { href: "/app", label: "Home", icon: LayoutDashboard },
     { href: "/app/prices", label: "Convert currencies", icon: ArrowLeftRight },
     { href: "/app/search", label: "Find my route", icon: Route },
+    { href: "/app/compare", label: "Compare providers", icon: GitCompare },
     { href: "/app/saved", label: "Saved routes", icon: Bookmark },
     { href: "/app/agent", label: "Use AI to find route", icon: Bot, stage: "beta" },
   ] },
