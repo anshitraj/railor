@@ -65,7 +65,7 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     if (parsed.data.channel_email && !(await getEntitlement(context.organizationId)).limits.emailAlerts) {
-      throw new ApiError(403, "founding_required", "Email alerts require active Founding access.");
+      throw new ApiError(403, "founding_required", "Email alerts need the Plus plan or above.");
     }
     const db = await getDb();
     const [updated] = await db

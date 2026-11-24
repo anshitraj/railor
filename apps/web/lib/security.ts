@@ -47,8 +47,20 @@ export function appOrigin(): string {
   return url.origin;
 }
 
-export function paymentLink(): string | null {
-  const raw = process.env.FOUNDING_PAYMENT_LINK?.trim();
+/** Where Enterprise "Contact us" goes; null when CONTACT_EMAIL is unset or malformed. */
+export function contactEmail(): string | null {
+  const value = process.env.CONTACT_EMAIL?.trim();
+  return value && /^[^\s@<>"]+@[^\s@<>"]+\.[a-z]{2,}$/i.test(value) ? value : null;
+}
+
+/**
+ * Checkout link for a plan: PLUS_PAYMENT_LINK, PRO_PAYMENT_LINK or
+ * BUSINESS_PAYMENT_LINK. Business falls back to the original
+ * FOUNDING_PAYMENT_LINK, which was the same $29 a month.
+ */
+export function paymentLink(plan: "plus" | "pro" | "business" = "business"): string | null {
+  const byPlan = { plus: process.env.PLUS_PAYMENT_LINK, pro: process.env.PRO_PAYMENT_LINK, business: process.env.BUSINESS_PAYMENT_LINK || process.env.FOUNDING_PAYMENT_LINK };
+  const raw = byPlan[plan]?.trim();
   if (!raw) return null;
   const url = new URL(raw);
   const allowed = (process.env.PAYMENT_LINK_ALLOWED_HOSTS ?? "buy.stripe.com,checkout.stripe.com").split(",").map((s) => s.trim().toLowerCase());

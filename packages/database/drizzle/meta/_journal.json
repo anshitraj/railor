@@ -204,6 +204,13 @@
       "when": 1795219200000,
       "tag": "0028_rate_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1795305600000,
+      "tag": "0029_paid_plans",
+      "breakpoints": true
     }
   ]
 }

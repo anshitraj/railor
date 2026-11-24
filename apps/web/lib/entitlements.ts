@@ -7,7 +7,7 @@ export async function getEntitlement(organizationId: string, db?: RailorDb) {
   const connection = db ?? await getDb();
   const [row] = await connection.select().from(organizationEntitlements).where(eq(organizationEntitlements.organizationId, organizationId)).limit(1);
   const plan = effectivePlan(row);
-  return { plan, limits: PLAN_LIMITS[plan], validUntil: row?.validUntil ?? null, status: row?.status === "revoked" ? "revoked" : row?.plan === "founding" && plan === "free" ? "expired" : "active" };
+  return { plan, limits: PLAN_LIMITS[plan], validUntil: row?.validUntil ?? null, status: row?.status === "revoked" ? "revoked" : row && row.plan !== "free" && plan === "free" ? "expired" : "active" };
 }
 
 /** Serializes quota checks and resource creation against the organization's stable row. */

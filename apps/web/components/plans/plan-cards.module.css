@@ -1,0 +1,37 @@
+.wrap { display: grid; gap: 18px; }
+.free { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--color-orange) 30%, var(--color-line)); border-radius: 14px; background: var(--color-lavender); color: var(--color-ink); font-size: 14px; line-height: 1.5; }
+.free svg { flex: none; margin-top: 3px; color: var(--color-orange-deep); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.card { display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); }
+.card[data-popular] { border-color: var(--color-ink); box-shadow: 0 14px 32px -24px rgb(21 19 16 / .55); }
+.card[data-current] { border-color: color-mix(in srgb, var(--color-orange) 55%, var(--color-line)); }
+.nameRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nameRow h2 { color: var(--color-ink); font-size: 16px; font-weight: 700; }
+.badge { padding: 2px 8px; border-radius: 999px; background: var(--color-canvas); color: var(--color-muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge[data-tone="accent"] { background: var(--color-ink); color: var(--color-surface); }
+.price { margin-top: 10px; color: var(--color-ink); font: 700 30px/1.1 var(--font-display, inherit); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.price small { margin-left: 4px; color: var(--color-muted); font-family: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.who { margin-top: 6px; color: var(--color-muted); font-size: 13px; line-height: 1.45; }
+.features { display: grid; flex: 1; align-content: start; gap: 8px; }
+.features li { display: flex; gap: 7px; color: var(--color-ink-soft, var(--color-ink)); font-size: 13.5px; line-height: 1.4; }
+.features svg { flex: none; margin-top: 2px; color: var(--color-orange-deep); }
+.action { display: grid; }
+.action :is(a, button) { display: inline-flex; min-height: 42px; width: 100%; align-items: center; justify-content: center; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 650; text-decoration: none; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.action :is(a, button):hover { border-color: var(--color-ink); }
+.card[data-popular] .action :is(a, button) { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-surface); }
+.action form { display: grid; }
+.action :global(.muted) { color: var(--color-muted); font-size: 12.5px; line-height: 1.45; text-align: center; }
+.currentNote { color: var(--color-orange-deep); font-size: 13px; font-weight: 650; text-align: center; }
+
+.usage { display: flex; gap: 12px; padding: 16px 18px; border: 1px dashed var(--color-line-strong); border-radius: 18px; }
+.usage > svg { flex: none; margin-top: 2px; color: var(--color-muted); }
+.usage h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--color-ink); font-size: 15px; font-weight: 700; }
+.usage p { margin-top: 4px; color: var(--color-muted); font-size: 13.5px; line-height: 1.55; }
+.soon { padding: 2px 8px; border-radius: 999px; background: var(--color-lavender); color: var(--color-orange-deep); font-size: 11px; font-weight: 700; }
+.fine { color: var(--color-muted); font-size: 12.5px; line-height: 1.5; }
+.fine a { color: inherit; text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}

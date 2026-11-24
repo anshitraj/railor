@@ -17,7 +17,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon; exact?: boolea
   { href: "/admin/research", label: "Country research", icon: Globe2 },
   { href: "/admin/usage", label: "Usage & demand", icon: Activity },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
-  { href: "/admin/access", label: "Founding access", icon: KeyRound },
+  { href: "/admin/access", label: "Plan access", icon: KeyRound },
 ];
 
 export function AdminShell({ email, alerts, children }: { email: string; alerts: { unknownPayments: number; pendingReview: number; paused: boolean }; children: React.ReactNode }) {

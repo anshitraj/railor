@@ -4,13 +4,17 @@ import { CustomerContext } from "@railor/core";
 import { getDb, organizations, savedSearches } from "@railor/database";
 import { savedProviderSlug, transferBookmarkKey, type TransferBookmark } from "./saved-transfer";
 import type { RateAlertSummary } from "./rate-alerts";
+import { getEntitlement } from "./entitlements";
+import { PLAN_LIMITS } from "./plans";
 
 /**
  * Currency pairs saved from the price calculator ("USD → INR, 1,000"). Stored
  * in saved_searches with kind "price_pair", so nothing else that reads saved
  * routes or monitors sees them. Rate alerts hang off a saved pair (rate-alerts.ts).
  */
-export const SAVED_PAIR_LIMIT = 12;
+/** The free plan's limit; paid plans raise it (plans.ts). Listing never shows more than the largest plan's. */
+export const SAVED_PAIR_LIMIT = PLAN_LIMITS.free.savedPairs;
+const LIST_LIMIT = Math.max(...Object.values(PLAN_LIMITS).map((limits) => limits.savedPairs));
 
 export interface SavedPair extends TransferBookmark {
   id: string;
@@ -54,7 +58,7 @@ export async function listSavedPairs(organizationId: string): Promise<SavedPair[
   const db = await getDb();
   const rows = await db.select().from(savedSearches)
     .where(and(eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK))
-    .orderBy(desc(savedSearches.createdAt)).limit(SAVED_PAIR_LIMIT);
+    .orderBy(desc(savedSearches.createdAt)).limit(LIST_LIMIT);
   return rows.map(savedPair).filter(pair => pair !== null);
 }
 
@@ -68,7 +72,8 @@ export async function savePair(organizationId: string, userId: string, input: Pa
     const rows = await tx.select().from(savedSearches).where(and(eq(savedSearches.organizationId, organizationId), PRICE_BOOKMARK));
     const key = transferBookmarkKey(pair);
     const existing = rows.map(savedPair).find(item => item && transferBookmarkKey(item) === key);
-    if (!existing && rows.length >= SAVED_PAIR_LIMIT) return { error: `You can save up to ${SAVED_PAIR_LIMIT} transfers. Remove one first.` };
+    const limit = (await getEntitlement(organizationId, tx)).limits.savedPairs;
+    if (!existing && rows.length >= limit) return { error: `Your plan saves up to ${limit} transfers. Remove one first, or upgrade for more.` };
     const title = pair.provider ? `${pairLabel(pair)} · ${pair.provider.name}` : pairLabel(pair);
     const data = { input: title, query: { kind: "price_pair", ...pair } };
     const [row] = existing

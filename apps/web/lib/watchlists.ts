@@ -176,8 +176,8 @@ export async function createWatchlist(
   if (existing) return { row: existing, created: false as const };
 
   const [usage] = await db.select({ count: sql<number>`count(*)::int` }).from(watchlists).where(eq(watchlists.organizationId, organizationId));
-  if ((usage?.count ?? 0) >= entitlement.limits.monitors) throw new ApiError(403, "monitor_limit", "Your plan's monitor limit has been reached. Upgrade to Founding for 25 monitors.");
-  if (input.channel_email && !entitlement.limits.emailAlerts) throw new ApiError(403, "founding_required", "Email alerts require Founding access.");
+  if ((usage?.count ?? 0) >= entitlement.limits.monitors) throw new ApiError(403, "monitor_limit", "Your plan's monitor limit has been reached. Upgrade your plan for more monitors.");
+  if (input.channel_email && !entitlement.limits.emailAlerts) throw new ApiError(403, "founding_required", "Email alerts need the Plus plan or above.");
 
   const [row] = await db
     .insert(watchlists)

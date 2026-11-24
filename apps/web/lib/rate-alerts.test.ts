@@ -141,3 +141,34 @@ describe("checking alerts", () => {
     expect((await alerts.listSavedPairsWithAlerts(workspace.organizationId, workspace.userId))[0]?.alert).toBeUndefined();
   });
 });
+
+describe("plan limits", () => {
+  async function secondPair(organizationId: string, userId: string, to: string) {
+    const [saved] = await state.db.insert(database.savedSearches).values({ organizationId, createdBy: userId, input: `USD → ${to}`, query: { kind: "price_pair", from: "USD", to, amount: 1000 } }).returning();
+    return saved.id as string;
+  }
+
+  it("gives a free workspace one alert, and lets it change that one", async () => {
+    const { workspace, savedId } = await savedPair();
+    state.rows = [row("infinity", 93_000)];
+    expect(await alerts.setRateAlert(workspace, savedId, 1)).toMatchObject({ ok: true });
+    expect(await alerts.setRateAlert(workspace, savedId, 2)).toMatchObject({ ok: true });
+    const other = await secondPair(workspace.organizationId, workspace.userId, "EUR");
+    const refused = await alerts.setRateAlert(workspace, other, 1);
+    expect(refused).toMatchObject({ ok: false, limit: true, error: expect.stringContaining("upgrade to Plus ($2.99 a month) for 10") });
+  });
+
+  it("gives Plus ten, and keeps only the oldest running after a downgrade", async () => {
+    const { workspace, savedId } = await savedPair();
+    const until = new Date(Date.now() + 86_400_000);
+    await state.db.insert(database.organizationEntitlements).values({ organizationId: workspace.organizationId, plan: "plus", validUntil: until });
+    state.rows = [row("infinity", 93_000)];
+    const ids = [savedId, ...await Promise.all(["EUR", "GBP", "AED"].map((to) => secondPair(workspace.organizationId, workspace.userId, to)))];
+    for (const id of ids) expect(await alerts.setRateAlert(workspace, id, 0.5)).toMatchObject({ ok: true });
+
+    await state.db.update(database.organizationEntitlements).set({ validUntil: new Date(Date.now() - 1000) });
+    state.rows = [row("infinity", 99_000)];
+    const run = await alerts.checkRateAlerts();
+    expect(run).toMatchObject({ alerts: 4, overLimit: 3, notified: 1 });
+  });
+});

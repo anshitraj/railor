@@ -9,6 +9,7 @@ import { ProfileNameForm, ProfilePhoto, SettingsNav } from "../../../components/
 import { ConnectionsGrid } from "../../../components/app/settings/connections-grid";
 import { inviteUrl, listPendingInvites, listUserWorkspaces } from "../../../lib/invites";
 import { getEntitlement } from "../../../lib/entitlements";
+import { planName } from "../../../lib/plans";
 import { isCompanyWorkspace } from "../../../lib/workspace-profile";
 import styles from "../../../components/app/settings/settings.module.css";
 
@@ -112,14 +113,15 @@ export default async function SettingsPage() {
             <h2 id="plan-title">Plan</h2>
             <div className={styles.plan}>
               <div>
-                <span className={styles.planName}><Sparkles size={15} aria-hidden />{entitlement.plan === "founding" ? "Founding" : "Free"}</span>
+                <span className={styles.planName}><Sparkles size={15} aria-hidden />{planName(entitlement.plan)}</span>
                 {entitlement.validUntil ? <small>{entitlement.status === "expired" ? "Expired" : "Valid until"} {entitlement.validUntil.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</small> : null}
               </div>
-              <Link href="/app/upgrade" className={styles.button}>See Founding access</Link>
+              <Link href="/app/upgrade" className={styles.button}>{entitlement.plan === "free" ? "See plans" : "Change plan"}</Link>
             </div>
             <ul className={styles.limits}>
               <li><strong>{entitlement.limits.savedCorridors}</strong><span>saved routes</span></li>
               <li><strong>{entitlement.limits.monitors}</strong><span>monitors</span></li>
+              <li><strong>{entitlement.limits.rateAlerts}</strong><span>rate alerts</span></li>
               <li><strong>{entitlement.limits.apiRequests.toLocaleString("en-US")}</strong><span>API requests a month</span></li>
             </ul>
             <div className={styles.links} style={{ marginTop: 12 }}>

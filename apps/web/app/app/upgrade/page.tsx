@@ -1,30 +1,32 @@
 import { redirect } from "next/navigation";
-import { Card } from "@railor/ui";
 import { getSession } from "../../../lib/auth";
 import { getEntitlement } from "../../../lib/entitlements";
-import { paymentLink } from "../../../lib/security";
+import { planName } from "../../../lib/plans";
+import { contactEmail, paymentLink } from "../../../lib/security";
 import { ProductHeader } from "../../../components/app/product-ui";
+import { PlanCards } from "../../../components/plans/plan-cards";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Upgrade" };
+export const metadata = { title: "Plans" };
+
 export default async function UpgradePage() {
   const session = await getSession();
   if (!session?.organization) redirect("/login");
   const entitlement = await getEntitlement(session.organization.id);
-  const configured = Boolean(paymentLink());
-  return <div className="max-w-[1100px] space-y-6">
-    <ProductHeader eyebrow="Founding access" title="Make your next move with evidence." description="Keep your shortlist, follow infrastructure changes, and bring your own provider accounts when you need a quote." />
-    <div className="grid gap-5 sm:grid-cols-2">
-      <Card className="space-y-4 p-6"><h2 className="text-xl font-semibold">Free</h2><p className="text-3xl">$0</p>
-        <ul className="space-y-2 text-sm"><li>Public catalog and corridor search</li><li>3 saved corridors</li><li>1 in-app monitor</li><li>500 API requests per month</li></ul>
-      </Card>
-      <Card className="space-y-4 border-[var(--color-ink)] p-6"><h2 className="text-xl font-semibold">Founding</h2><p className="text-3xl">$29<span className="text-sm text-[var(--color-muted)]"> / month</span></p>
-        <ul className="space-y-2 text-sm"><li>50 saved corridors and 25 monitors</li><li>Email change alerts</li><li>Comparison exports</li><li>Your provider connections and supported live quotes</li><li>10,000 API requests per month</li></ul>
-        {entitlement.plan === "founding" ? <p className="text-sm">Active until {entitlement.validUntil?.toLocaleDateString("en-GB")}</p> : configured ?
-          <form action="/api/billing/checkout" method="post"><button className="rounded-full bg-[var(--color-ink)] px-5 py-3 text-sm text-white">Continue to secure payment →</button></form> :
-          <p className="text-sm text-[var(--color-muted)]">Founding checkout is opening soon. Your free workspace is ready to use.</p>}
-      </Card>
-    </div>
-    <p className="text-sm text-[var(--color-muted)]">After payment, Railor verifies your payment reference and activates one month of access manually. Payment alone does not activate a plan. Use your account email and workspace reference <strong>{session.organization.slug}</strong>. Railor provides research and recommendations; funds remain with your selected provider.</p>
+  const canBuy = session.role === "owner" || session.role === "admin";
+  const contact = contactEmail();
+  const ready = (plan: "plus" | "pro" | "business") => { try { return Boolean(paymentLink(plan)); } catch { return false; } };
+  return <div className="max-w-[1200px] space-y-6">
+    <ProductHeader eyebrow={`${planName(entitlement.plan)} plan`} title="Pick what Railor watches for you." description="Comparing prices stays free. Plans add rate alerts, more saved transfers, route monitoring and API volume." />
+    <PlanCards current={entitlement.plan} action={(tier) => {
+      if (tier === "free") return <span className="muted">Always free</span>;
+      if (tier === "enterprise") return contact ? <a href={`mailto:${contact}?subject=${encodeURIComponent("Railor Enterprise")}`}>Contact us</a> : <span className="muted">Write to us from your account email; sales contact is opening soon.</span>;
+      if (tier === "founding") return null;
+      if (!canBuy) return <span className="muted">Ask a workspace owner or admin to upgrade.</span>;
+      return ready(tier)
+        ? <form action="/api/billing/checkout" method="post"><input type="hidden" name="plan" value={tier} /><button type="submit">Choose {planName(tier)}</button></form>
+        : <span className="muted">Checkout is opening soon.</span>;
+    }} />
+    <p className="text-sm text-[var(--color-muted)]">After payment, Railor checks your payment reference and turns your plan on for one month. Use your account email and workspace reference <strong>{session.organization.slug}</strong>.{entitlement.validUntil && entitlement.plan !== "free" ? <> Your {planName(entitlement.plan)} plan runs until {entitlement.validUntil.toLocaleDateString("en-GB")}.</> : null}</p>
   </div>;
 }

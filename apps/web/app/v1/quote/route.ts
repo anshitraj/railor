@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   let context: ApiContext | null = null;
   try {
     context = await authenticate(request);
-    if (!(await getEntitlement(context.organizationId)).limits.providerConnections) throw new ApiError(403, "founding_required", "Live quotes require active Founding access.");
+    if (!(await getEntitlement(context.organizationId)).limits.providerConnections) throw new ApiError(403, "founding_required", "Live quotes need the Pro plan or above.");
     if (!await consumeLimit("live-quotes", context.organizationId, 10, 60_000)) throw new ApiError(429, "rate_limited", "Please retry shortly.");
     const parsed = Body.safeParse(await request.json().catch(() => ({})));
     if (!parsed.success) {

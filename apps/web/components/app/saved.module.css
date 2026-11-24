@@ -28,6 +28,8 @@
 .page { display: grid; gap: 18px; max-width: 860px; }
 .head h1 { color: var(--color-ink); font: 650 30px/1.15 var(--font-display, inherit); letter-spacing: -.03em; }
 .head p { margin-top: 6px; color: var(--color-muted); font-size: 14px; }
+.head .usage { font-size: 13px; font-variant-numeric: tabular-nums; }
+.usage a { color: var(--color-orange-deep); font-weight: 650; }
 
 @media (max-width: 600px) {
   .item { flex-wrap: wrap; }

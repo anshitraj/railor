@@ -70,9 +70,9 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
 
       {!entitlement.limits.providerConnections ? (
         <div className="rounded-xl border border-[var(--color-warn)]/30 bg-[var(--color-warn-bg)] p-4 text-[13px]">
-          Provider connections are part of Founding access.{" "}
+          Provider connections come with the Pro plan and above.{" "}
           <Link href="/app/upgrade" className="font-semibold underline">
-            See Founding access →
+            See plans →
           </Link>{" "}
           Test-mode payments still work without one, simulated by Railor&apos;s sandbox rail.
         </div>

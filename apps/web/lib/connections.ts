@@ -63,7 +63,7 @@ export async function connectProvider(
   environment: ConnectionEnvironment = "sandbox",
 ): Promise<{ ok: boolean; detail: string }> {
   if (!(await getEntitlement(organizationId)).limits.providerConnections) {
-    return { ok: false, detail: "Provider connections require active Founding access." };
+    return { ok: false, detail: "Provider connections need the Pro plan or above." };
   }
   if (!credentialsConfigured()) {
     return { ok: false, detail: "Server is not configured for storing credentials (CREDENTIALS_ENCRYPTION_KEY unset)." };

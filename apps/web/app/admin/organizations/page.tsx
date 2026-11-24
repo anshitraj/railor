@@ -1,6 +1,6 @@
 import { desc, eq, sql } from "drizzle-orm";
 import { getDb, organizationEntitlements, organizationMembers, orgPaymentSettings, organizations, payments, providerConnections } from "@railor/database";
-import { effectivePlan } from "../../../lib/plans";
+import { effectivePlan, planName } from "../../../lib/plans";
 import { AdminHeader } from "../../../components/admin/admin-shell";
 import { OrgLiveEditor } from "../../../components/admin/payment-controls";
 
@@ -61,7 +61,7 @@ export default async function AdminOrganizationsPage({ searchParams }: { searchP
                 </span>
               </span>
               <Stat label="Members" value={memberMap.get(o.id)?.n ?? 0} />
-              <Stat label="Plan" value={plan === "founding" ? "Founding" : "Free"} />
+              <Stat label="Plan" value={planName(plan)} />
               <Stat label="Connections" value={`${cc?.production ?? 0} prod · ${cc?.sandbox ?? 0} sbx`} />
               <Stat label="Payments" value={`${pc?.live ?? 0} live · ${pc?.test ?? 0} test`} />
               <span className={`rounded-full px-2.5 py-1 text-[12.5px] font-bold uppercase ${s?.liveEnabled ? "bg-[var(--color-ok-bg)] text-[var(--color-ok)]" : "bg-[var(--color-canvas)] text-[var(--color-muted)]"}`}>

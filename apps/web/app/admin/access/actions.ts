@@ -8,7 +8,7 @@ import { requireSession } from "../../../lib/auth";
 import { consumeLimit } from "../../../lib/rate-limit";
 import { PLAN_LIMITS } from "../../../lib/plans";
 
-const Activation = z.object({ slug: z.string().trim().min(1).max(120), reference: z.string().trim().min(4).max(160), validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).transform((s) => new Date(`${s}:00Z`)).refine((d) => Number.isFinite(d.getTime())) });
+const Activation = z.object({ plan: z.enum(["plus", "pro", "business", "founding"]).default("business"), slug: z.string().trim().min(1).max(120), reference: z.string().trim().min(4).max(160), validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/).transform((s) => new Date(`${s}:00Z`)).refine((d) => Number.isFinite(d.getTime())) });
 export async function activateFounding(form: FormData) {
   const session = await requireSession();
   if (!session.user.isAdmin) throw new Error("Forbidden");
@@ -27,9 +27,9 @@ export async function activateFounding(form: FormData) {
       if (previous.organizationId !== org.id) throw new Error("Reference already belongs to another workspace");
       return; // Repeating an activation never extends the expiry.
     }
-    const values = { plan: "founding" as const, status: "active" as const, validFrom: now, validUntil: input.validUntil, activationReference: input.reference, limits: { ...PLAN_LIMITS.founding }, activatedBy: session.user.id, updatedAt: now };
+    const values = { plan: input.plan, status: "active" as const, validFrom: now, validUntil: input.validUntil, activationReference: input.reference, limits: { ...PLAN_LIMITS[input.plan] }, activatedBy: session.user.id, updatedAt: now };
     await tx.insert(organizationEntitlements).values({ organizationId: org.id, ...values }).onConflictDoUpdate({ target: organizationEntitlements.organizationId, set: values });
-    await tx.insert(auditLogs).values({ organizationId: org.id, actorId: session.user.id, action: "entitlement.activated", target: input.reference, metadata: { plan: "founding", validUntil: input.validUntil.toISOString() } });
+    await tx.insert(auditLogs).values({ organizationId: org.id, actorId: session.user.id, action: "entitlement.activated", target: input.reference, metadata: { plan: input.plan, validUntil: input.validUntil.toISOString() } });
   });
   revalidatePath("/app/settings");
   redirect("/admin/access?activated=1");

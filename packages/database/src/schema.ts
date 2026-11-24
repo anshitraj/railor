@@ -167,7 +167,7 @@ export const requirementKindEnum = pgEnum("requirement_kind", ["kyc", "kyb", "te
 
 export const apiKeyModeEnum = pgEnum("api_key_mode", ["test", "live"]);
 
-export const entitlementPlanEnum = pgEnum("entitlement_plan", ["free", "founding"]);
+export const entitlementPlanEnum = pgEnum("entitlement_plan", ["free", "founding", "plus", "pro", "business"]);
 export const entitlementStatusEnum = pgEnum("entitlement_status", ["active", "expired", "revoked"]);
 export const providerResearchStatusEnum = pgEnum("provider_research_status", [
   "pending",

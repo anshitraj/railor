@@ -13,12 +13,13 @@ export default async function AccessPage() {
   const db = await getDb();
   const rows = await db.select({ entitlement: organizationEntitlements, slug: organizations.slug }).from(organizationEntitlements).innerJoin(organizations, eq(organizations.id, organizationEntitlements.organizationId)).orderBy(desc(organizationEntitlements.updatedAt)).limit(50);
   return <div className="max-w-3xl space-y-6">
-    <AdminHeader title="Founding access" description="Verify the payment in the payment provider first. Activation is audited. Reusing a reference does not extend access." />
+    <AdminHeader title="Plan access" description="Verify the payment in the payment provider first. Activation is audited. Reusing a reference does not extend access." />
     <form action={activateFounding} className="grid gap-4 rounded-2xl border border-[var(--color-line)] p-5">
+      <label className="grid gap-1 text-sm">Plan<select name="plan" defaultValue="business" className="rounded border p-2"><option value="plus">Plus · $2.99</option><option value="pro">Pro · $9.99</option><option value="business">Business · $29</option><option value="founding">Founding (legacy)</option></select></label>
       <label className="grid gap-1 text-sm">Workspace slug<input required name="slug" maxLength={120} className="rounded border p-2" /></label>
       <label className="grid gap-1 text-sm">Verified payment reference<input required name="reference" minLength={4} maxLength={160} className="rounded border p-2" /></label>
       <label className="grid gap-1 text-sm">Access expires at (UTC)<input required type="datetime-local" name="validUntil" className="rounded border p-2" /></label>
-      <button className="rounded-full bg-[var(--color-ink)] p-3 text-white">Activate Founding</button>
+      <button className="rounded-full bg-[var(--color-ink)] p-3 text-white">Activate plan</button>
     </form>
     <ul className="divide-y divide-[var(--color-line)]">{rows.map(({ entitlement: e, slug }) => <li key={e.id} className="py-3 text-sm"><strong>{slug}</strong> · {e.plan} · {e.status} · expires {e.validUntil?.toISOString() ?? "—"}</li>)}</ul>
   </div>;

@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
 import type { PriceCheckInput, PriceRow } from "@railor/core";
 import { getDb, rateAlerts, savedSearches, users } from "@railor/database";
 import { onboardingPriceProfile } from "./onboarding";
@@ -11,6 +11,8 @@ import { appOrigin } from "./security";
 import { alertDecision, alertTarget, ALERT_STEPS, completePrices, type BestPrice } from "./rate-alert-rules";
 import { sendMail, smtpConfigured } from "./mail";
 import { createRateAlertEmail } from "./emails/rate-alert";
+import { getEntitlement, withOrgLock } from "./entitlements";
+import { nextPlanFor, PLAN_LIMITS, PLAN_PRICES, type Plan } from "./plans";
 
 /** What a saved pair shows about its alert. Only active alerts are listed. */
 export interface RateAlertSummary {
@@ -53,19 +55,40 @@ async function pairCheckInput(pair: TransferBookmark, entityCountry: string | nu
 }
 
 type Workspace = { organizationId: string; userId: string; entityCountry?: string | null; building?: string | null };
+type Reader = Pick<Awaited<ReturnType<typeof getDb>>, "select">;
+
+/** Active alerts in a workspace other than the one on this saved pair. */
+async function otherActiveAlerts(db: Reader, organizationId: string, savedSearchId: string) {
+  const [row] = await db.select({ n: count() }).from(rateAlerts)
+    .where(and(eq(rateAlerts.organizationId, organizationId), eq(rateAlerts.active, true), ne(rateAlerts.savedSearchId, savedSearchId)));
+  return Number(row?.n ?? 0);
+}
+
+export function alertLimitMessage(plan: Plan, limit: number) {
+  const next = nextPlanFor(plan, "rateAlerts");
+  const own = `Your plan includes ${limit} rate ${limit === 1 ? "alert" : "alerts"}.`;
+  return next
+    ? `${own} Remove one, or upgrade to ${PLAN_PRICES[next].name} ($${PLAN_PRICES[next].monthlyUsd} a month) for ${PLAN_LIMITS[next].rateAlerts}.`
+    : `${own} Remove one to add another, or contact us for more.`;
+}
 
 /**
  * Set (or reset) an alert on a saved pair: today's best complete price plus the
  * chosen step. Checking now gives the baseline, so the target is always a real
  * improvement on what the person just saw.
  */
-export async function setRateAlert(workspace: Workspace, savedSearchId: string, step: number): Promise<{ ok: true; alert: RateAlertSummary; best: BestPrice } | { ok: false; error: string }> {
+export async function setRateAlert(workspace: Workspace, savedSearchId: string, step: number): Promise<{ ok: true; alert: RateAlertSummary; best: BestPrice } | { ok: false; error: string; limit?: true }> {
   if (!ALERT_STEPS.includes(step as (typeof ALERT_STEPS)[number])) return { ok: false, error: "Choose one of the alert options." };
   const db = await getDb();
   const [saved] = await db.select().from(savedSearches)
     .where(and(eq(savedSearches.id, savedSearchId), eq(savedSearches.organizationId, workspace.organizationId), PRICE_PAIR)).limit(1);
   const pair = saved ? parsePairInput(saved.query) : null;
   if (!saved || !pair) return { ok: false, error: "Save this transfer first." };
+  // Fail fast before the price check; the insert re-checks under the workspace lock.
+  const entitlement = await getEntitlement(workspace.organizationId);
+  if (await otherActiveAlerts(db, workspace.organizationId, savedSearchId) >= entitlement.limits.rateAlerts) {
+    return { ok: false, error: alertLimitMessage(entitlement.plan, entitlement.limits.rateAlerts), limit: true };
+  }
   const input = await pairCheckInput(pair, workspace.entityCountry, workspace.building);
   let rows: PriceRow[];
   try { rows = (await runPriceCheck(workspace.organizationId, input)).rows; }
@@ -77,11 +100,16 @@ export async function setRateAlert(workspace: Workspace, savedSearchId: string, 
     input: input as unknown as Record<string, unknown>, targetAmount: alertTarget(best.amount, step), baselineAmount: best.amount, active: true,
     lastCheckedAt: now, lastBestAmount: best.amount, lastBestProvider: best.providerName, lastMet: false, updatedAt: now,
   };
-  const [row] = await db.insert(rateAlerts)
-    .values({ organizationId: workspace.organizationId, userId: workspace.userId, savedSearchId, unsubscribeToken: randomBytes(24).toString("base64url"), ...values })
-    .onConflictDoUpdate({ target: [rateAlerts.savedSearchId, rateAlerts.userId], set: values })
-    .returning();
-  return { ok: true, alert: summary(row!, input.destinationCurrency), best };
+  const row = await withOrgLock(workspace.organizationId, async (tx, locked) => {
+    if (await otherActiveAlerts(tx, workspace.organizationId, savedSearchId) >= locked.limits.rateAlerts) return null;
+    const [inserted] = await tx.insert(rateAlerts)
+      .values({ organizationId: workspace.organizationId, userId: workspace.userId, savedSearchId, unsubscribeToken: randomBytes(24).toString("base64url"), ...values })
+      .onConflictDoUpdate({ target: [rateAlerts.savedSearchId, rateAlerts.userId], set: values })
+      .returning();
+    return inserted ?? null;
+  });
+  if (!row) return { ok: false, error: alertLimitMessage(entitlement.plan, entitlement.limits.rateAlerts), limit: true };
+  return { ok: true, alert: summary(row, input.destinationCurrency), best };
 }
 
 export async function removeRateAlert(organizationId: string, userId: string, savedSearchId: string) {
@@ -99,7 +127,7 @@ export async function unsubscribeRateAlert(token: string): Promise<{ label: stri
   return { label: saved?.input ?? "this pair" };
 }
 
-export interface RateAlertRun { alerts: number; checks: number; notified: number; failedChecks: number; failedEmails: number; skipped: number }
+export interface RateAlertRun { alerts: number; checks: number; notified: number; failedChecks: number; failedEmails: number; skipped: number; overLimit: number }
 
 /**
  * Re-check the least recently checked alerts, one price check per distinct
@@ -117,13 +145,24 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
     .orderBy(sql`${rateAlerts.lastCheckedAt} asc nulls first`, asc(rateAlerts.createdAt))
     .limit(options.limit ?? 200);
 
+  // A workspace over its plan's limit (after a downgrade) keeps its oldest alerts running; the rest wait.
+  const allowed = new Set<string>();
+  for (const organizationId of new Set(due.map((row) => row.alert.organizationId))) {
+    const { limits } = await getEntitlement(organizationId);
+    const kept = await db.select({ id: rateAlerts.id }).from(rateAlerts)
+      .where(and(eq(rateAlerts.organizationId, organizationId), eq(rateAlerts.active, true)))
+      .orderBy(asc(rateAlerts.createdAt), asc(rateAlerts.id)).limit(limits.rateAlerts);
+    for (const { id } of kept) allowed.add(id);
+  }
+  const overLimit = due.filter((row) => !allowed.has(row.alert.id)).length;
+
   const groups = new Map<string, typeof due>();
-  for (const row of due) {
+  for (const row of due.filter((row) => allowed.has(row.alert.id))) {
     const key = `${row.alert.organizationId}|${JSON.stringify(row.alert.input)}`;
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
 
-  const run: RateAlertRun = { alerts: due.length, checks: 0, notified: 0, failedChecks: 0, failedEmails: 0, skipped: 0 };
+  const run: RateAlertRun = { alerts: due.length, checks: 0, notified: 0, failedChecks: 0, failedEmails: 0, skipped: 0, overLimit };
   const mail = smtpConfigured();
   const origin = appOrigin().replace(/\/$/, "");
   for (const members of groups.values()) {

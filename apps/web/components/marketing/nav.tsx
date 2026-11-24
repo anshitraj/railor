@@ -34,6 +34,7 @@ const LINKS: NavLink[] = [
   { label: "Compare prices", href: "/prices" },
   { label: "Providers", href: "/providers" },
   { label: "Coverage", href: "/coverage" },
+  { label: "Pricing", href: "/pricing" },
   {
     label: "Developers",
     menu: [

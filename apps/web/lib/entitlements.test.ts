@@ -45,7 +45,7 @@ describe("shared production limits", () => {
   it("applies manual activation and expiry immediately without deleting saved data", async () => {
     const db = await getDb();
     await db.insert(organizationEntitlements).values({ organizationId: org, plan: "founding", validUntil: new Date(Date.now() + 86_400_000) });
-    expect((await getEntitlement(org)).limits.apiRequests).toBe(10_000);
+    expect((await getEntitlement(org)).limits.apiRequests).toBe(100_000); // Founding keeps Business limits.
     expect(await consumeApiAllowance(org, "key-a", null)).toBe(true);
     const watch = await createWatchlist(org, null, { target_type: "country", target_id: "AE", channel_email: true });
     expect(watch.row.channelEmail).toBe(true);

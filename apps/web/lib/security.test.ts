@@ -37,6 +37,8 @@ describe("entitlement expiry", () => {
     expect(effectivePlan({ ...active, validUntil: null }, now)).toBe("free");
     expect(effectivePlan({ ...active, validFrom: new Date("2027-01-01") }, now)).toBe("free");
     expect(effectivePlan({ ...active, status: "revoked" }, now)).toBe("free");
-    expect(PLAN_LIMITS[effectivePlan(active, now)].apiRequests).toBe(10_000);
+    expect(PLAN_LIMITS[effectivePlan(active, now)].apiRequests).toBe(100_000);
+    expect(effectivePlan({ ...active, plan: "plus" }, now)).toBe("plus");
+    expect(effectivePlan({ ...active, plan: "nonsense" }, now)).toBe("free");
   });
 });
