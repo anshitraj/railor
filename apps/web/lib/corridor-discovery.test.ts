@@ -14,7 +14,9 @@ describe("directional community provider discovery", () => {
   });
   it("does not infer US payout support from Indian payout support", () => {
     const providers = matched(request("AED", "USD", "AE"));
-    expect(providers).toEqual(expect.arrayContaining(["careem-pay", "eand-money", "al-ansari-exchange", "wio"]));
+    expect(providers).toEqual(expect.arrayContaining(["eand-money", "al-ansari-exchange", "wio"]));
+    // Careem's FAQ lists the US, but its UAE-to-US product isn't confirmed, so it is not matched.
+    expect(providers).not.toContain("careem-pay");
     expect(providers).not.toContain("botim");
     expect(providers).not.toContain("aspora");
   });

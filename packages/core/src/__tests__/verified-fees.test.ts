@@ -100,8 +100,8 @@ describe("first-party fee schedules (checked 2026-11-18)", () => {
     expect(wise.notes.join(" ")).toContain("Swift or wire costs more");
     // Priced, so it is no longer listed as unavailable; the unpriced entry only covers what is not priced.
     expect(bank.unavailable.some((entry) => entry.providerSlug === "wise")).toBe(false);
-    // The public "Client sends with Wise" quote is a different product and stays out of the receiving-account price.
-    expect(bank.rows.some((row) => row.providerSlug === "wise" && row.product?.label === "Client sends with Wise")).toBe(false);
+    // A bank-funded "Client sends with Wise" quote may sit beside it, but stays a separate, payer-side product.
+    for (const row of bank.rows.filter((row) => row.providerSlug === "wise" && row !== wise)) expect(row).toMatchObject({ side: "payer", basis: "live_public" });
 
     const app = await comparePrices({ ...base, amount: 1700, context: { ...base.context!, paymentMethod: "transfer_service" } }, { fetcher, now });
     expect(app.unavailable.some((entry) => entry.product?.startsWith("Wise Business"))).toBe(false);

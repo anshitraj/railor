@@ -55,9 +55,10 @@ describe("an exchange card in the stablecoin page", () => {
 
   it("explains an exchange with no live price instead of leaving a gap, for visitors too", () => {
     for (const locked of [false, true]) {
-      const exchange = exchangeBySlug("suncrypto")!;
-      const shown = text(html({ slug: "suncrypto", name: "SunCrypto", support: depositSupport(exchange, "USDT", "tron"), status: "unavailable", checkedAt: "x", reason: "No live price." } as ExchangeQuote, locked));
-      expect(shown, `locked ${locked}`).toContain("No live price. SunCrypto’s public ticker lists a bid above its ask");
+      // SunCrypto now shows its latest trade; Mudrex is the exchange left with no usable public sell price.
+      const exchange = exchangeBySlug("mudrex")!;
+      const shown = text(html({ slug: "mudrex", name: "Mudrex", support: depositSupport(exchange, "USDT", "tron"), status: "unavailable", checkedAt: "x", reason: "No live price." } as ExchangeQuote, locked));
+      expect(shown, `locked ${locked}`).toContain("Mudrex’s public calculator reads a USDT buy rate");
       expect(shown).not.toContain("Sign in to see");
     }
   });
