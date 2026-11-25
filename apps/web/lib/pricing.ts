@@ -1,4 +1,5 @@
 import "server-only";
+import { promotionsFor, recordPriceCheck } from "./quote-history";
 import { after } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { PAYOUT_ADAPTERS, calculatorSlugsFor, comparePrices, getAdapter, priceWebChecks, waitForWebChecks, CustomerContext, type PriceCheckInput } from "@railor/core";
@@ -107,7 +108,12 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
     .where(and(eq(providers.isDemo, false), inArray(providers.slug, coverage.providers.map(provider => provider.providerSlug)))) : [];
   result.marketCoverage = attachMarketPricingEvidence(coverage, input.destinationCurrency, result.rows, result.unavailable,
     [...await bankEvidence, ...captured.map(fee => ({ ...fee, observedAt: fee.observedAt?.toISOString() ?? null }))]);
-  return result;
+  const promotions = await promotionsFor({ from: result.input.sourceCurrency, to: result.input.destinationCurrency, profile: input.context?.profile });
+  // Keep today's public quotes for the history chart, after the response is on its way.
+  const recordable = [...result.rows];
+  const recordInput = { ...result.input, profile: input.context?.profile ?? "personal" };
+  try { after(() => recordPriceCheck(recordInput, recordable, result.reference?.rate ?? null)); } catch { void recordPriceCheck(recordInput, recordable, result.reference?.rate ?? null); }
+  return Object.assign(result, { promotions });
 }
 
 /** Providers this workspace can send real money through right now (production connections). */

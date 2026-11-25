@@ -246,6 +246,13 @@
       "when": 1795824000000,
       "tag": "0034_provider_promotions",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795910400000,
+      "tag": "0035_promotions_and_quote_history",
+      "breakpoints": true
     }
   ]
 }

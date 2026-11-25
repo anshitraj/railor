@@ -10,6 +10,7 @@ import "server-only";
  */
 import {
   attachCheckoutSession,
+  checkDiscountCode,
   createBillingCheckout,
   currentBillingSubscription,
   findBillingSubscription,
@@ -17,6 +18,7 @@ import {
   getBillingCheckout,
   getDb,
   noteCheckoutChecked,
+  priceWithDiscount,
   settleBillingCheckout,
   syncBillingSubscription,
   type BillingCheckout,
@@ -57,7 +59,12 @@ export interface CheckoutRequest {
   plan?: string | null;
   amountCents?: number | null;
   method: PayMethod;
+  /** A Railor discount code the person entered, if any. */
+  discountCode?: string | null;
 }
+
+/** Smallest USDC charge ArcPay is asked to collect, in cents. */
+const MIN_USDC_CHARGE_CENTS = 100;
 
 /** Opens a checkout and returns where to send the person: the provider's page, or Railor's status page for USDC. */
 export async function startCheckout(session: SessionContext, request: CheckoutRequest): Promise<{ redirect: string }> {
@@ -74,6 +81,16 @@ export async function startCheckout(session: SessionContext, request: CheckoutRe
     amountCents = Number(request.amountCents);
     if (!(TOP_UP_AMOUNTS_CENTS as readonly number[]).includes(amountCents)) throw new BillingError("bad_amount", BILLING_ERROR_TEXT.bad_amount);
   }
+  let discount: { codeId: string; code: string; chargeCents: number; onDodo: boolean } | null = null;
+  if (request.discountCode?.trim()) {
+    const checked = await checkDiscountCode(db, { code: request.discountCode, organizationId: organization.id, purpose: request.purpose, plan });
+    if (!checked.ok) {
+      const misplaced = checked.reason === "wrong_purchase" || checked.reason === "wrong_plan";
+      throw new BillingError(misplaced ? "discount_not_here" : "discount_invalid", BILLING_ERROR_TEXT[misplaced ? "discount_not_here" : "discount_invalid"]);
+    }
+    const { chargeCents } = priceWithDiscount(checked.code, amountCents);
+    discount = { codeId: checked.code.id, code: checked.code.code, chargeCents, onDodo: Boolean(checked.code.dodoDiscountId) };
+  }
   const subscription = plan ? await currentBillingSubscription(db, organization.id) : null;
   const renewing = subscription?.status === "active" ? subscription : null;
   const origin = appOrigin();
@@ -83,8 +100,10 @@ export async function startCheckout(session: SessionContext, request: CheckoutRe
     const config = dodoConfig();
     const product = config ? (plan ? config.products[plan] : config.products.topUp) : null;
     if (!config || !product) throw new BillingError("method_unavailable", BILLING_ERROR_TEXT.method_unavailable);
+    if (discount && !discount.onDodo) throw new BillingError("discount_card_unavailable", BILLING_ERROR_TEXT.discount_card_unavailable);
     if (plan && renewing) {
       // One subscription per workspace: changing plan moves it rather than opening a second one.
+      if (discount) throw new BillingError("discount_not_here", BILLING_ERROR_TEXT.discount_not_here);
       if (renewing.plan === plan) throw new BillingError("already_on_plan", BILLING_ERROR_TEXT.already_on_plan);
       try {
         await changeDodoPlan(config, renewing.providerSubscriptionId, product);
@@ -92,7 +111,7 @@ export async function startCheckout(session: SessionContext, request: CheckoutRe
       } catch (error) { providerFailed(error); }
       return { redirect: "/app/upgrade?billing=changed" };
     }
-    const checkout = await createBillingCheckout(db, { organizationId: organization.id, userId: session.user.id, provider: "dodo", purpose: request.purpose, plan, amountCents, testMode: config.testMode });
+    const checkout = await createBillingCheckout(db, { organizationId: organization.id, userId: session.user.id, provider: "dodo", purpose: request.purpose, plan, amountCents, testMode: config.testMode, discount: discount ? { codeId: discount.codeId, chargeCents: discount.chargeCents } : null });
     try {
       const created = await createDodoCheckout(config, {
         productId: product,
@@ -101,6 +120,7 @@ export async function startCheckout(session: SessionContext, request: CheckoutRe
         returnUrl: `${origin}/app/billing/return?checkout=${checkout.id}`,
         cancelUrl: `${origin}${plan ? "/app/upgrade" : "/app/wallet"}`,
         metadata: metadata(checkout.id),
+        discountCode: discount?.code ?? null,
       });
       await attachCheckoutSession(db, checkout.id, { providerSessionId: created.sessionId, checkoutUrl: created.checkoutUrl });
       return { redirect: created.checkoutUrl };
@@ -110,10 +130,12 @@ export async function startCheckout(session: SessionContext, request: CheckoutRe
   const config = arcpayConfig();
   if (!config) throw new BillingError("method_unavailable", BILLING_ERROR_TEXT.method_unavailable);
   if (renewing) throw new BillingError("has_subscription", BILLING_ERROR_TEXT.has_subscription);
-  const checkout = await createBillingCheckout(db, { organizationId: organization.id, userId: session.user.id, provider: "arcpay", purpose: request.purpose, plan, amountCents, testMode: config.testMode });
+  if (discount && discount.chargeCents < MIN_USDC_CHARGE_CENTS) throw new BillingError("discount_too_large", BILLING_ERROR_TEXT.discount_too_large);
+  const checkout = await createBillingCheckout(db, { organizationId: organization.id, userId: session.user.id, provider: "arcpay", purpose: request.purpose, plan, amountCents, testMode: config.testMode, discount: discount ? { codeId: discount.codeId, chargeCents: discount.chargeCents } : null });
   try {
     const created = await createArcPayment(config, {
-      amountCents,
+      // What the person pays: the price, less any discount. The checkout still records the full value bought.
+      amountCents: discount?.chargeCents ?? amountCents,
       description: plan ? `Railor ${planName(plan)} plan, one month` : "Railor wallet top-up",
       customerEmail: session.user.email,
       metadata: metadata(checkout.id),
@@ -187,7 +209,7 @@ async function refreshArc(checkout: BillingCheckout, now: Date): Promise<void> {
   if (payment.status !== "confirmed") { await noteCheckoutChecked(db, checkout.id, { now }); return; }
   const cents = decimalToCents(payment.amount);
   const modeMatches = payment.isTest === undefined || payment.isTest === checkout.testMode;
-  if (cents !== checkout.amountCents || String(payment.currency).toUpperCase() !== "USDC" || !modeMatches) {
+  if (cents !== (checkout.chargeCents ?? checkout.amountCents) || String(payment.currency).toUpperCase() !== "USDC" || !modeMatches) {
     console.error("[billing] ArcPay payment differs from what Railor priced", { checkout: checkout.id, cents, currency: payment.currency });
     await noteCheckoutChecked(db, checkout.id, { failed: "The USDC payment didn’t match the amount due. Contact us and we’ll sort it out.", now });
     return;

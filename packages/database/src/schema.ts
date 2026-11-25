@@ -12,6 +12,7 @@ import {
   bigint,
   boolean,
   check,
+  date,
   foreignKey,
   index,
   integer,
@@ -2522,6 +2523,9 @@ export const billingCheckouts = pgTable(
     providerSessionId: text("provider_session_id"),
     providerPaymentId: text("provider_payment_id"),
     providerSubscriptionId: text("provider_subscription_id"),
+    /** The discount code applied, if any, and what the person is charged after it (null = the full amount). */
+    discountCodeId: uuid("discount_code_id"),
+    chargeCents: integer("charge_cents"),
     checkoutUrl: text("checkout_url"),
     failureReason: text("failure_reason"),
     paidAt: timestamp("paid_at", { withTimezone: true }),
@@ -2565,6 +2569,107 @@ export const billingSubscriptions = pgTable(
     planCheck: check("billing_subscriptions_plan_check", sql`plan in ('plus','pro','business')`),
   }),
 );
+
+/** One recorded quote per provider, corridor, amount and UTC day, as Railor priced it. */
+export const quoteSnapshots = pgTable(
+  "quote_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    observedOn: date("observed_on").notNull(),
+    sourceCurrency: text("source_currency").notNull(),
+    destinationCurrency: text("destination_currency").notNull(),
+    amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+    /** The customer profile the price was checked for: personal, freelancer or business. */
+    profile: text("profile").default("personal").notNull(),
+    providerSlug: text("provider_slug").notNull(),
+    providerName: text("provider_name").notNull(),
+    category: text("category"),
+    basis: text("basis").notNull(),
+    rate: numeric("rate", { precision: 24, scale: 10 }),
+    fee: numeric("fee", { precision: 18, scale: 2 }),
+    feeCurrency: text("fee_currency"),
+    recipientAmount: numeric("recipient_amount", { precision: 20, scale: 2 }).notNull(),
+    midMarketRate: numeric("mid_market_rate", { precision: 24, scale: 10 }),
+    sourceUrl: text("source_url"),
+    observedAt: timestamp("observed_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    dayIdx: uniqueIndex("quote_snapshots_day_idx").on(t.sourceCurrency, t.destinationCurrency, t.amount, t.profile, t.providerSlug, t.observedOn),
+    pairIdx: index("quote_snapshots_pair_idx").on(t.sourceCurrency, t.destinationCurrency, t.profile, t.observedOn),
+  }),
+);
+
+export type ProviderOfferKind = "fee_free" | "better_rate" | "bonus" | "other";
+/** An offer a provider publishes, entered by an operator with the provider's page as its source. */
+export const providerOffers = pgTable(
+  "provider_offers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    providerSlug: text("provider_slug").notNull(),
+    kind: text("kind").$type<ProviderOfferKind>().notNull(),
+    headline: text("headline").notNull(),
+    terms: text("terms").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    sourceCurrency: text("source_currency"),
+    destinationCurrency: text("destination_currency"),
+    profiles: text("profiles").array(),
+    newCustomersOnly: boolean("new_customers_only").default(true).notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    active: boolean("active").default(true).notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ providerIdx: index("provider_offers_provider_idx").on(t.providerSlug, t.active) }),
+);
+
+export type DiscountKind = "percent" | "amount";
+export type DiscountAppliesTo = "plan" | "top_up" | "any";
+/** A discount code for Railor's own plans and top-ups. */
+export const discountCodes = pgTable(
+  "discount_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull(),
+    description: text("description"),
+    kind: text("kind").$type<DiscountKind>().notNull(),
+    percentBps: integer("percent_bps"),
+    amountOffCents: integer("amount_off_cents"),
+    appliesTo: text("applies_to").$type<DiscountAppliesTo>().default("plan").notNull(),
+    plans: text("plans").array(),
+    cycles: integer("cycles").default(1).notNull(),
+    maxRedemptions: integer("max_redemptions"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    active: boolean("active").default(true).notNull(),
+    dodoDiscountId: text("dodo_discount_id"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({ codeIdx: uniqueIndex("discount_codes_code_idx").on(t.code) }),
+);
+
+export const discountRedemptions = pgTable(
+  "discount_redemptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    discountCodeId: uuid("discount_code_id").notNull().references(() => discountCodes.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    checkoutId: uuid("checkout_id").notNull().references(() => billingCheckouts.id, { onDelete: "cascade" }),
+    discountCents: integer("discount_cents").notNull(),
+    createdAt: now(),
+  },
+  (t) => ({
+    checkoutIdx: uniqueIndex("discount_redemptions_checkout_idx").on(t.checkoutId),
+    codeIdx: index("discount_redemptions_code_idx").on(t.discountCodeId, t.organizationId),
+  }),
+);
+
+export type QuoteSnapshot = typeof quoteSnapshots.$inferSelect;
+export type ProviderOffer = typeof providerOffers.$inferSelect;
+export type DiscountCode = typeof discountCodes.$inferSelect;
 
 export type BillingCheckout = typeof billingCheckouts.$inferSelect;
 export type BillingSubscription = typeof billingSubscriptions.$inferSelect;

@@ -22,7 +22,7 @@ const DONE: Record<string, string> = {
   resumed: "Renewal is back on.",
 };
 
-export default async function UpgradePage({ searchParams }: { searchParams: Promise<{ billing?: string; billing_error?: string }> }) {
+export default async function UpgradePage({ searchParams }: { searchParams: Promise<{ billing?: string; billing_error?: string; code?: string }> }) {
   const session = await getSession();
   if (!session?.organization) redirect("/login");
   const params = await searchParams;
@@ -33,6 +33,8 @@ export default async function UpgradePage({ searchParams }: { searchParams: Prom
   const contact = contactEmail();
   const error = billingErrorText(params.billing_error);
   const done = params.billing && Object.hasOwn(DONE, params.billing) ? DONE[params.billing] : null;
+  // A code that was refused comes back so it can be corrected rather than retyped.
+  const returnedCode = /^[A-Z0-9_-]{3,16}$/.test(params.code ?? "") ? params.code! : "";
 
   const payButtons = (tier: PaidPlan) => {
     const methods = availableMethods("plan", tier);
@@ -50,6 +52,10 @@ export default async function UpgradePage({ searchParams }: { searchParams: Prom
         {methods.card ? <button type="submit" name="method" value="card" aria-label={`Pay for ${planName(tier)} by card or UPI`}><CreditCard size={15} aria-hidden />Card or UPI{methods.cardTest ? <small className={styles.test}>Test</small> : null}</button> : null}
         {methods.usdc ? <button type="submit" name="method" value="usdc" data-quiet={methods.card || undefined} aria-label={`Pay $${PLAN_PRICES[tier].monthlyUsd} for ${planName(tier)} in USDC`}><CircleDollarSign size={15} aria-hidden />USDC{methods.usdcTest ? <small className={styles.test}>Test</small> : null}</button> : null}
         <span className="muted">{[methods.card ? "Card renews monthly" : null, methods.usdc ? "USDC pays one month" : null].filter(Boolean).join(" · ")}</span>
+        <details className={styles.codeField} open={Boolean(returnedCode) || undefined}>
+          <summary>Have a discount code?</summary>
+          <label><span className="sr-only">Discount code for {planName(tier)}</span><input name="code" defaultValue={returnedCode} placeholder="Code" maxLength={16} autoComplete="off" autoCapitalize="characters" spellCheck={false} /></label>
+        </details>
       </form>
     );
   };

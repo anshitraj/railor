@@ -4,6 +4,7 @@
     { "path": "/api/internal/source-monitor", "schedule": "0 4 * * *" },
     { "path": "/api/internal/coverage-gap-revalidation", "schedule": "0 5 * * *" },
     { "path": "/api/internal/conformance-check", "schedule": "0 6 * * *" },
-    { "path": "/api/internal/rate-alerts", "schedule": "30 2 * * *" }
+    { "path": "/api/internal/rate-alerts", "schedule": "30 2 * * *" },
+    { "path": "/api/internal/quote-snapshots", "schedule": "15 7 * * *" }
   ]
 }

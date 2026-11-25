@@ -123,8 +123,14 @@ export interface PriceUnavailable {
   sourceUrl?: string;
 }
 
+/** Operator-entered promotions shown beside prices; they never change an amount or the ranking. */
+export interface PricePromotions {
+  offers: Array<{ id: string; providerSlug: string; kind: "fee_free" | "better_rate" | "bonus" | "other"; headline: string; terms: string; sourceUrl: string; newCustomersOnly: boolean; endsAt: string | null }>;
+}
+
 export interface PriceCheckResult {
   input: PriceCheckInput;
+  promotions?: PricePromotions;
   reference: { rate: number; source: string; observedAt: string } | null;
   rows: PriceRow[];
   unavailable: PriceUnavailable[];

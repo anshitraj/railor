@@ -16,7 +16,7 @@ export class BillingProviderError extends Error {
 
 const TIMEOUT_MS = 12_000;
 
-async function call<T>(config: DodoConfig, method: "GET" | "POST" | "PATCH", path: string, body?: unknown, fetcher: typeof fetch = fetch): Promise<T> {
+async function call<T>(config: DodoConfig, method: "GET" | "POST" | "PATCH" | "DELETE", path: string, body?: unknown, fetcher: typeof fetch = fetch): Promise<T> {
   let response: Response;
   try {
     response = await fetcher(`${config.baseUrl}${path}`, {
@@ -45,6 +45,8 @@ export interface DodoCheckoutInput {
   returnUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
+  /** A Railor discount code that also exists at Dodo; Dodo charges the discounted price. */
+  discountCode?: string | null;
 }
 
 export async function createDodoCheckout(config: DodoConfig, input: DodoCheckoutInput, fetcher?: typeof fetch): Promise<{ sessionId: string; checkoutUrl: string }> {
@@ -54,6 +56,8 @@ export async function createDodoCheckout(config: DodoConfig, input: DodoCheckout
     return_url: input.returnUrl,
     cancel_url: input.cancelUrl,
     metadata: input.metadata,
+    // The code is applied by Railor and locked; customers can't type their own at Dodo.
+    ...(input.discountCode ? { discount_codes: [input.discountCode] } : {}),
     feature_flags: { allow_discount_code: false },
   }, fetcher);
   if (!response.session_id || !response.checkout_url || !/^https:\/\//.test(response.checkout_url)) throw new BillingProviderError("Dodo Payments returned no checkout page");
@@ -116,4 +120,44 @@ export function verifyDodoWebhook(rawBody: string, headers: { id: string | null;
     const given = Buffer.from(value, "base64");
     return given.length === expected.length && timingSafeEqual(given, expected);
   });
+}
+
+export interface DodoDiscountInput {
+  code: string;
+  name: string;
+  kind: "percent" | "amount";
+  percentBps?: number | null;
+  amountOffCents?: number | null;
+  /** Products the code may be used on; empty means any. */
+  productIds: string[];
+  /** Billing cycles a subscription keeps the discount for. */
+  cycles: number;
+  usageLimit?: number | null;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+}
+
+/** Creates the same code at Dodo so card checkouts charge the discounted price. */
+export async function createDodoDiscount(config: DodoConfig, input: DodoDiscountInput, fetcher?: typeof fetch): Promise<string> {
+  const flat = input.kind === "amount";
+  const response = await call<{ discount_id?: string }>(config, "POST", "/discounts", {
+    code: input.code,
+    name: input.name.slice(0, 80),
+    type: flat ? "flat" : "percentage",
+    amount: flat ? input.amountOffCents : input.percentBps,
+    ...(flat ? { currency_options: [{ currency: "USD", is_default: true, max_amount_possible: input.amountOffCents, minimum_subtotal: 0 }] } : {}),
+    ...(input.productIds.length ? { restricted_to: input.productIds } : {}),
+    subscription_cycles: input.cycles,
+    ...(input.usageLimit ? { usage_limit: input.usageLimit } : {}),
+    ...(input.startsAt ? { starts_at: input.startsAt.toISOString() } : {}),
+    ...(input.endsAt ? { expires_at: input.endsAt.toISOString() } : {}),
+    metadata: { railor: "discount_code" },
+  }, fetcher);
+  if (!response.discount_id) throw new BillingProviderError("Dodo Payments returned no discount id");
+  return response.discount_id;
+}
+
+/** Removes a code at Dodo, so it can't be used for card payments any more. */
+export async function deleteDodoDiscount(config: DodoConfig, discountId: string, fetcher?: typeof fetch): Promise<void> {
+  await call(config, "DELETE", `/discounts/${encodeURIComponent(discountId)}`, undefined, fetcher);
 }

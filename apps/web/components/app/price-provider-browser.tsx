@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, FileBadge, FileSearch, Info, Landmark, Layers3, LockKeyhole, Megaphone, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
-import type { MarketCoverageProvider, PriceRow } from "@railor/core";
+import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, FileBadge, FileSearch, Gift, Info, Landmark, Layers3, LockKeyhole, Megaphone, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
+import type { MarketCoverageProvider, PricePromotions, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
 import { PriceLoadingMark } from "../price/price-loading-mark";
@@ -37,12 +37,20 @@ type Props = {
   reference?: { rate: number; source: string; observedAt: string } | null;
   flashes: Record<string, "up" | "down">; market: ReactNode; history: ReactNode; coverage: ReactNode;
   webEvidence: ReactNode; connection: ReactNode; action: { label: string; href?: string; external?: boolean; disabled?: boolean };
+  /** Provider offers for this corridor: shown beside prices, never folded into them. */
+  promotions?: PricePromotions;
 };
+
+type Offer = PricePromotions["offers"][number];
+const offerEnds = (offer: Offer) => offer.endsAt ? `Ends ${new Date(offer.endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}` : null;
 
 /** Presentation only. Backend ordering, quote eligibility and the converter's selection stay authoritative. */
 export function PriceProviderBrowser(props: Props) {
   const reduce = useReducedMotion();
   const { rows, selected, best, from, to, amount, flashes, onSelect } = props;
+  const offers = props.promotions?.offers ?? [];
+  // Exact slug only: "wise-business" is a different product from "wise" and has its own offers.
+  const offerFor = (slug: string) => offers.find((offer) => offer.providerSlug === slug);
   const [tab, setTab] = useState("Providers");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recommended");
@@ -133,6 +141,7 @@ export function PriceProviderBrowser(props: Props) {
                     {quote?.product?.label && !method && <em className={styles.productLabel}>{quote.product.label}</em>}
                     <span className={styles.quoteRowBadges}>
                       {promoted && <span className={styles.promotedBadge} title="Paid placement"><Megaphone size={11} aria-hidden />Promoted</span>}
+                      {(() => { const offer = offerFor(providerSlug); return offer ? <span className={styles.offerChip} title={offer.terms}><Gift size={11} aria-hidden />{offer.headline}</span> : null; })()}
                       {quote && quote === best && <span className={styles.comparableBadge}>Best comparable</span>}
                     </span>
                   </span>
@@ -169,7 +178,7 @@ export function PriceProviderBrowser(props: Props) {
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>
       <motion.div id="price-panel-2" role="tabpanel" aria-labelledby="price-tab-2" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}>{tab === "Historical data" ? props.history : null}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected ? priceRowKey(selected) : "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected ? priceRowKey(selected) : "none"} offer={selected ? offerFor(selected.providerSlug) : undefined} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
   </>;
 }
 
@@ -269,7 +278,7 @@ function ProviderIdentity({ slug, name, logo, subtitle, status, basis, offer }: 
   );
 }
 
-function SelectedProvider({ row, best, reference, from, to, amount, checked, webEvidence, connection, action, bookmark }: { row: PriceRow | null; best: PriceRow | null; reference: { rate: number; source: string; observedAt: string } | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"]; bookmark?: ReactNode }) {
+function SelectedProvider({ row, offer, best, reference, from, to, amount, checked, webEvidence, connection, action, bookmark }: { row: PriceRow | null; offer?: Offer; best: PriceRow | null; reference: { rate: number; source: string; observedAt: string } | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"]; bookmark?: ReactNode }) {
   const [tab, setTab] = useState<DetailTab>("Overview");
   if (!row) return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider"><div className={styles.empty}><FileSearch size={24} /><strong>Select a provider to explore its price</strong><p>Fees, eligibility and source evidence will appear here.</p></div></aside>;
 
@@ -378,6 +387,12 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
                   <span aria-hidden><i style={{ width: `${Math.min(100, Math.abs(difference.bps) / 10)}%` }} /></span><strong>{percent}</strong>
                 </div>}
                 {cost.kind === "gap" && <p className={styles.gapNote}><Info size={14} aria-hidden />{cost.reason}</p>}
+                {offer ? <div className={styles.offerBox}>
+                  <span><Gift size={14} aria-hidden />Offer{offer.newCustomersOnly ? " · new customers" : ""}{offerEnds(offer) ? ` · ${offerEnds(offer)}` : ""}</span>
+                  <strong>{offer.headline}</strong>
+                  <p>{offer.terms} The price above doesn’t include it.</p>
+                  <a href={offer.sourceUrl} target="_blank" rel="noreferrer noopener">Offer terms on the provider’s site<ArrowUpRight size={12} aria-hidden /></a>
+                </div> : null}
               </section>
             </div>
             <div className={styles.overviewDisclosures}>

@@ -1,0 +1,84 @@
+.chart { --best: #2f6fd6; --bank: var(--color-orange); --mid: var(--color-ink); min-width: 0; color: var(--color-ink); }
+.header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.header h2 { color: var(--color-muted); font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.header p { margin-top: 4px; color: var(--color-muted); font-size: 12.5px; }
+.periods { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--color-canvas); }
+.periods button { display: grid; min-width: 38px; height: 32px; place-items: center; border-radius: 7px; color: var(--color-ink-soft); font-size: 12px; font-weight: 650; }
+.periods button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-surface); }
+.periods button:not([aria-pressed="true"]):hover { background: var(--color-surface); }
+
+/* The legend follows the cursor: date, then each line's value that day. */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin: 16px 0 10px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.legend > div { display: inline-flex; align-items: baseline; gap: 6px; }
+.legend dt { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); }
+.legend dd { color: var(--color-ink); font-weight: 650; }
+.legendDate dd { font-weight: 700; }
+.legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; }
+.legend [data-series="mid"] i { border-top: 2px dotted var(--mid); }
+.legend [data-series="best"] i { border-color: var(--best); }
+.legend [data-series="bank"] i { border-color: var(--bank); }
+.legend [data-series="gap"] i { height: 10px; border: 0; border-radius: 2px; background: color-mix(in srgb, var(--color-orange) 18%, transparent); }
+
+.frame { display: grid; grid-template-columns: max-content minmax(0, 1fr) minmax(86px, max-content); grid-template-rows: clamp(200px, 30vw, 300px) auto; gap: 0 8px; }
+.yAxis { position: relative; min-width: 48px; }
+.yAxis span { position: absolute; right: 0; color: var(--color-muted); font-size: 11px; transform: translateY(-50%); font-variant-numeric: tabular-nums; }
+.plot { position: relative; min-width: 0; border-bottom: 1px solid var(--color-line); cursor: crosshair; touch-action: pan-y; outline: none; }
+.plot:focus-visible { box-shadow: 0 0 0 2px var(--color-orange-deep); border-radius: 4px; }
+.graph { display: block; width: 100%; height: 100%; overflow: visible; }
+.grid { stroke: var(--color-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.best, .bank, .mid { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.best { stroke: var(--best); stroke-width: 2.2; }
+.bank { stroke: var(--bank); stroke-width: 2; }
+.mid { stroke: var(--mid); stroke-width: 1.4; stroke-dasharray: 3 4; opacity: .8; }
+.dot, .marker { position: absolute; z-index: 1; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.dot[data-series="best"], .marker[data-series="best"] { background: var(--best); }
+.dot[data-series="bank"], .marker[data-series="bank"] { background: var(--bank); }
+.marker[data-series="mid"] { background: var(--mid); }
+.marker { width: 10px; height: 10px; box-shadow: 0 0 0 2px var(--color-surface); }
+.cursor { position: absolute; inset-block: 0; width: 0; border-left: 1px solid var(--color-line-strong); pointer-events: none; }
+.endLabels { position: relative; }
+.endLabels li { position: absolute; left: 0; padding-left: 8px; border-left: 2px solid; font-size: 11.5px; font-weight: 650; line-height: 1.25; transform: translateY(-50%); white-space: nowrap; }
+.endLabels [data-series="best"] { border-color: var(--best); color: var(--best); }
+.endLabels [data-series="bank"] { border-color: var(--bank); color: var(--color-orange-deep); }
+.endLabels [data-series="mid"] { border-color: var(--mid); color: var(--color-ink-soft); }
+.xAxis { display: flex; grid-column: 2; justify-content: space-between; padding-top: 8px; color: var(--color-muted); font-size: 11px; }
+
+/* The selected day, provider by provider. */
+.table { margin-top: 18px; overflow-x: auto; border: 1px solid var(--color-line); border-radius: 14px; background: var(--color-surface); }
+.table table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.table th, .table td { padding: 11px 14px; border-bottom: 1px solid var(--color-line); text-align: right; white-space: nowrap; }
+.table thead th { color: var(--color-muted); font-size: 11.5px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+.table thead th:first-child, .table tbody th { text-align: left; }
+.table tbody th { display: flex; align-items: center; gap: 10px; color: var(--color-ink); font-weight: 650; }
+.table tbody tr:last-child > * { border-bottom: 0; }
+.table tr[data-row="mid"] { background: var(--color-canvas); }
+.table tr[data-best] { background: color-mix(in srgb, var(--color-ok) 8%, var(--color-surface)); }
+.table td strong { color: var(--color-ink); font-weight: 700; }
+.table td[data-sign="up"] { color: var(--color-ok); font-weight: 650; }
+.table td[data-sign="down"] { color: var(--color-muted); }
+.midIcon { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--color-line); border-radius: 8px; color: var(--color-muted); font-weight: 800; letter-spacing: 1px; }
+.cheapest, .estimate { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-style: normal; font-weight: 650; }
+.cheapest { background: var(--color-ok-bg); color: var(--color-ok); }
+.estimate { background: var(--color-canvas); color: var(--color-muted); }
+.empty { color: var(--color-muted); text-align: center !important; }
+.more { display: block; width: 100%; min-height: 44px; border-top: 1px solid var(--color-line); color: var(--color-orange-deep); font-size: 13px; font-weight: 650; }
+
+.note { margin-top: 12px; color: var(--color-muted); font-size: 11.5px; line-height: 1.6; }
+.note a { color: var(--color-orange-deep); font-weight: 600; }
+.state { display: flex; min-height: 240px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 18px; color: var(--color-muted); font-size: 13px; text-align: center; }
+.state strong { color: var(--color-ink); }
+.state p { max-width: 46ch; }
+.state button { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; color: var(--color-orange-deep); font-weight: 650; }
+
+@media (max-width: 640px) {
+  .frame { grid-template-columns: max-content minmax(0, 1fr); }
+  .endLabels { display: none; }
+  .legend { gap: 4px 12px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: no-preference) { .graph { animation: draw .4s var(--ease-out) both; } }
+@keyframes draw { from { opacity: .3; } }
+
+.tabsWrap { display: grid; gap: 16px; min-width: 0; }
+.tabs { display: inline-flex; width: fit-content; gap: 2px; padding: 3px; border-radius: 12px; background: var(--color-canvas); }
+.tabs button { min-height: 36px; padding: 0 14px; border-radius: 9px; color: var(--color-ink-soft); font-size: 13px; font-weight: 650; }
+.tabs button[aria-selected="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(21 19 16 / .12); }

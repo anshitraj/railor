@@ -13,7 +13,7 @@ import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderWordmark } from "./provider-wordmark";
 import { PlatformQuotePanel } from "./platform-quote-panel";
-import { RateHistoryChart } from "../price/rate-history-chart";
+import { PriceHistoryTabs } from "../price/price-history-tabs";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser, type ProviderQuoteAdvice } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
@@ -502,7 +502,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </ol>
             </details>
           ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
-        history={<RateHistoryChart mode="bank" from={from} to={to} amount={amount} />}
+        promotions={result?.promotions}
+        history={<PriceHistoryTabs from={from} to={to} amount={amount} profile={context.profile} />}
         coverage={null}
         webEvidence={selected?.webChecks?.length ? <div className="price-surface mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
       />

@@ -438,3 +438,10 @@
   .compactProviders .rowFee { grid-column: 1; grid-row: 2; padding-inline-start: 37px; }
   .compactProviders .rowFee > strong::before { content: "Fee "; font-weight: 500; }
 }
+/* Provider offers: a chip on the row, a fuller box in the selected panel. */
+.offerChip { display: inline-flex; width: fit-content; max-width: 100%; align-items: center; gap: 4px; margin-top: 3px; padding: 1px 7px; border-radius: 999px; background: #fff1d6; color: #7a4f0e; font-size: 11.5px; font-style: normal; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offerBox { display: grid; gap: 4px; margin-top: 12px; padding: 12px 14px; border: 1px solid #f0d39a; border-radius: 14px; background: #fff8ea; }
+.offerBox > span { display: inline-flex; align-items: center; gap: 6px; color: #7a4f0e; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.offerBox strong { color: var(--color-ink); font-size: 14.5px; }
+.offerBox p { color: var(--color-ink-soft); font-size: 13px; line-height: 1.5; }
+.offerBox a { display: inline-flex; width: fit-content; align-items: center; gap: 4px; color: var(--color-orange-deep); font-size: 12.5px; font-weight: 650; }

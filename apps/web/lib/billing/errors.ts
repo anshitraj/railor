@@ -1,4 +1,4 @@
-export type BillingErrorCode = "forbidden" | "unknown_plan" | "bad_amount" | "method_unavailable" | "provider_unavailable" | "founding" | "already_on_plan" | "has_subscription" | "no_subscription";
+export type BillingErrorCode = "forbidden" | "unknown_plan" | "bad_amount" | "method_unavailable" | "provider_unavailable" | "founding" | "already_on_plan" | "has_subscription" | "no_subscription" | "discount_invalid" | "discount_not_here" | "discount_card_unavailable" | "discount_too_large";
 
 export class BillingError extends Error {
   constructor(readonly code: BillingErrorCode, message: string) { super(message); }
@@ -15,6 +15,10 @@ export const BILLING_ERROR_TEXT: Record<BillingErrorCode, string> = {
   already_on_plan: "You’re already on this plan.",
   has_subscription: "Your plan renews by card. Switch plans with the card option, or cancel renewal first.",
   no_subscription: "There’s no card subscription to change.",
+  discount_invalid: "That discount code isn’t valid. Check the spelling, or pay without it.",
+  discount_not_here: "That discount code doesn’t apply to this purchase.",
+  discount_card_unavailable: "That discount code works with USDC only for now. Pay with USDC, or without the code.",
+  discount_too_large: "With that code there’s nothing left to pay in USDC. Use the card option instead.",
 };
 
 export function billingErrorText(code: string | null | undefined): string | null {

@@ -8,7 +8,7 @@ const directory = mkdtempSync(join(tmpdir(), "railor-billing-"));
 process.env.PGLITE_DATA_DIR = directory;
 process.env.DATABASE_URL = "";
 const database = await import("@railor/database");
-const { ensureMigrated, getDb, getDbHandle, organizations, users, organizationEntitlements, billingCheckouts, walletBalanceCents, walletHistory } = database;
+const { ensureMigrated, getDb, getDbHandle, organizations, users, organizationEntitlements, billingCheckouts, discountCodes, discountRedemptions, walletBalanceCents, walletHistory } = database;
 const { eq } = await import("drizzle-orm");
 const { verifyDodoWebhook } = await import("./dodo");
 const { centsToDecimal, decimalToCents, verifyArcWebhook } = await import("./arcpay");
@@ -316,5 +316,44 @@ describe("USDC through ArcPay", () => {
     const days = (row!.validUntil!.getTime() - before) / 86_400_000;
     expect(days).toBeGreaterThan(27);
     expect(days).toBeLessThan(32);
+  });
+});
+
+describe("discount codes at checkout", () => {
+  async function addCode(values: Partial<typeof discountCodes.$inferInsert> & { code: string }) {
+    const db = await getDb();
+    const [row] = await db.insert(discountCodes).values({ kind: "percent", percentBps: 5000, appliesTo: "any", ...values }).returning();
+    return row!;
+  }
+
+  it("charges the discounted price in USDC, credits the full plan and counts the redemption", async () => {
+    await addCode({ code: `HALF${sessionCount}` });
+    const { redirect } = await startCheckout(session(), { purpose: "plan", plan: "pro", method: "usdc", discountCode: `half${sessionCount}` });
+    const db = await getDb();
+    const [checkout] = await db.select().from(billingCheckouts).where(eq(billingCheckouts.id, checkoutIdFrom(redirect)));
+    expect(checkout).toMatchObject({ amountCents: 999, chargeCents: 499 });
+    expect(calls.find((call) => call.url.endsWith("/api/payments/create"))!.body).toMatchObject({ amount: "4.99" });
+    arcPayments[checkout!.providerSessionId!]!.status = "confirmed";
+    await refreshCheckout(checkout!, { force: true });
+    expect((await plan())!.plan).toBe("pro");
+    const used = await db.select().from(discountRedemptions).where(eq(discountRedemptions.checkoutId, checkout!.id));
+    expect(used).toHaveLength(1);
+    expect(used[0]!.discountCents).toBe(500);
+  });
+
+  it("passes the code to Dodo for card checkouts once it exists there, and refuses it before", async () => {
+    const synced = await addCode({ code: `CARD${sessionCount}`, dodoDiscountId: "dsc_123" });
+    await startCheckout(session(), { purpose: "plan", plan: "plus", method: "card", discountCode: synced.code });
+    expect(calls.find((call) => call.url.endsWith("/checkouts"))!.body).toMatchObject({ discount_codes: [synced.code], feature_flags: { allow_discount_code: false } });
+    const usdcOnly = await addCode({ code: `USDC${sessionCount}` });
+    await expect(startCheckout(session(), { purpose: "plan", plan: "plus", method: "card", discountCode: usdcOnly.code })).rejects.toMatchObject({ code: "discount_card_unavailable" });
+  });
+
+  it("refuses unknown codes, codes for another purchase, and a USDC charge with nothing left to pay", async () => {
+    await expect(startCheckout(session(), { purpose: "plan", plan: "pro", method: "usdc", discountCode: "NOSUCHCODE" })).rejects.toMatchObject({ code: "discount_invalid" });
+    const topUps = await addCode({ code: `TOPUP${sessionCount}`, appliesTo: "top_up" });
+    await expect(startCheckout(session(), { purpose: "plan", plan: "pro", method: "usdc", discountCode: topUps.code })).rejects.toMatchObject({ code: "discount_not_here" });
+    const free = await addCode({ code: `FREE${sessionCount}`, percentBps: 10_000 });
+    await expect(startCheckout(session(), { purpose: "plan", plan: "plus", method: "usdc", discountCode: free.code })).rejects.toMatchObject({ code: "discount_too_large" });
   });
 });

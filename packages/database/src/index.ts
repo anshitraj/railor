@@ -51,3 +51,18 @@ export {
   type WalletEntry,
   type WalletTotals,
 } from "./wallet.js";
+export {
+  activePromotions,
+  checkDiscountCode,
+  discountCodeUsage,
+  DISCOUNT_CODE_PATTERN,
+  normalizeDiscountCode,
+  priceWithDiscount,
+  recordQuoteSnapshots,
+  snapshotAmounts,
+  snapshotHistory,
+  type ActivePromotions,
+  type DiscountRefusal,
+  type QuoteSnapshotInput,
+  type SnapshotDay,
+} from "./promotions.js";

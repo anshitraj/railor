@@ -17,6 +17,7 @@ import type { RailorDb } from "./client.js";
 import {
   billingCheckouts,
   billingSubscriptions,
+  discountRedemptions,
   organizationEntitlements,
   organizations,
   type BillingCheckout,
@@ -60,6 +61,8 @@ export interface NewBillingCheckout {
   plan?: BillingPlan | null;
   amountCents: number;
   testMode: boolean;
+  /** A discount code applied at checkout, and what the person is charged after it. */
+  discount?: { codeId: string; chargeCents: number } | null;
 }
 
 export async function createBillingCheckout(db: RailorDb, input: NewBillingCheckout): Promise<BillingCheckout> {
@@ -73,6 +76,7 @@ export async function createBillingCheckout(db: RailorDb, input: NewBillingCheck
     plan: input.purpose === "plan" ? input.plan! : null,
     amountCents: input.amountCents,
     testMode: input.testMode,
+    ...(input.discount ? { discountCodeId: input.discount.codeId, chargeCents: input.discount.chargeCents } : {}),
   }).returning();
   return row!;
 }
@@ -287,6 +291,15 @@ export async function settleBillingCheckout(
     if (!checkout) {
       const [current] = await conn.select().from(billingCheckouts).where(eq(billingCheckouts.id, input.checkoutId)).limit(1);
       return { settled: false, checkout: current ?? null } as const;
+    }
+    if (checkout.discountCodeId && checkout.chargeCents !== null) {
+      // The paid checkout is the redemption; a retried settle can't count it twice.
+      await conn.insert(discountRedemptions).values({
+        discountCodeId: checkout.discountCodeId,
+        organizationId: checkout.organizationId,
+        checkoutId: checkout.id,
+        discountCents: checkout.amountCents - checkout.chargeCents,
+      }).onConflictDoNothing({ target: discountRedemptions.checkoutId });
     }
     let plan: PlanApplied | null = null;
     if (input.effect.kind === "top_up") {
