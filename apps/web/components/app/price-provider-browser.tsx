@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, ChevronDown, Clock3, FileBadge, FileSearch, Info, LockKeyhole, Search, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, FileBadge, FileSearch, Info, Layers3, LockKeyhole, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
 import type { MarketCoverageProvider, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
 import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
-import { priceRowKey, pricingSourceLabel } from "../../lib/price-display";
+import { RollingPrice } from "../price/animated-amount";
+import { priceRowKey, pricingSourceLabel, providerIdentity } from "../../lib/price-display";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
 function money(value: number | null) { return value === null || !Number.isFinite(value) ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-type DetailTab = "Details" | "Requirements" | "Source" | "Notes";
+const DETAIL_TABS = ["Overview", "Requirements", "Sources", "Notes"] as const;
+type DetailTab = (typeof DETAIL_TABS)[number];
 export type ProviderQuoteAdvice = { message: string; evidence?: Array<{ url: string; title: string; text: string }>; researchPending?: boolean };
 function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
   if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
@@ -39,13 +41,13 @@ type Props = {
 
 /** Presentation only. Backend ordering, quote eligibility and the converter's selection stay authoritative. */
 export function PriceProviderBrowser(props: Props) {
+  const reduce = useReducedMotion();
   const { rows, selected, best, from, to, amount, flashes, onSelect } = props;
   const [tab, setTab] = useState("Providers");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recommended");
   const [showResearch, setShowResearch] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
-  const reduce = useReducedMotion();
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to, showResearch]);
   const filtered = useMemo(() => {
     const priced = new Set(rows.map((row) => row.providerSlug));
@@ -80,8 +82,10 @@ export function PriceProviderBrowser(props: Props) {
           {filtered.map((entry) => <li key={entry.quote ? priceRowKey(entry.quote) : entry.providerSlug}>
             <button type="button" className={styles.providerRow} data-quoted-fee={entry.quote?.feeAmount != null} aria-pressed={entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug} aria-label={`Select ${entry.providerName}`} onClick={() => choose(entry.providerSlug, entry.quote ? priceRowKey(entry.quote) : undefined)}>
               {(entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug) && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
-              <span className={styles.providerName}><ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} /><span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.quote && entry.quote === best ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
-              <span className={styles.rowAmount}><motion.strong key={`${entry.providerSlug}:${entry.quote?.recipientAmount}`} initial={reduce ? false : { opacity: .5, y: 2 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0 : .2 }} data-move={entry.quote ? flashes[priceRowKey(entry.quote)] : undefined}>{entry.quote?.recipientAmount != null ? money(entry.quote.recipientAmount) : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</motion.strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
+              <span className={styles.providerName}>
+                <ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} />
+                <span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.quote && entry.quote === best ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
+              <span className={styles.rowAmount}><strong data-move={entry.quote ? flashes[priceRowKey(entry.quote)] : undefined}>{entry.quote?.recipientAmount != null ? <RollingPrice key={to} value={entry.quote.recipientAmount} /> : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
               <span className={styles.rowFee}><strong title={entry.candidate?.feeHighlight}>{entry.quote?.feeAmount == null ? entry.candidate?.feeHighlight ?? (entry.quote?.feeBreakdown || entry.candidate?.feeEvidence?.length ? "Fee details available" : "Research details") : `${money(entry.quote.feeAmount)} ${entry.quote.feeCurrency ?? ""}`}</strong>{entry.quote ? (() => {
                 const cost = benchmarkCost(entry.quote, amount, props.reference?.rate, to);
                 const difference = benchmarkPayoutDifference(entry.quote.recipientAmount, amount, props.reference?.rate, to);
@@ -134,7 +138,9 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
   const fees = provider.feeEvidence?.slice(0, 3) ?? [];
   const sources = provider.discoverySources?.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
-    <div className={styles.selectedHeader}><ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={39} /><div><h2>{provider.providerName}</h2><p>{provider.category}</p></div></div>
+    <div className={styles.quoteHero}>
+      <ProviderIdentity slug={provider.providerSlug} name={provider.providerName} subtitle={provider.category} status="Quote unavailable" />
+    </div>
     {bookmark && <div className={styles.researchBookmark}>{bookmark}</div>}
     <div className={styles.pricingResearch}>
       <span>No payout quote for this setup</span>
@@ -167,11 +173,33 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
 
 const METHOD_NAME: Record<string, string> = { local_bank: "Local bank transfer", wire: "International wire", card: "Card", transfer_service: "Transfer app" };
 
+function QuoteFacts({ items }: { items: Array<[string, ReactNode]> }) {
+  return <dl className={styles.factList}>{items.map(([label, value]) => (
+    <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+  ))}</dl>;
+}
+
+function ProviderIdentity({ slug, name, logo, subtitle, status, basis, offer }: {
+  slug: string; name: string; logo?: string; subtitle: ReactNode; status: string; basis?: PriceRow["basis"]; offer?: boolean;
+}) {
+  return (
+    <header className={styles.selectedIdentity} data-provider={providerIdentity(slug)}>
+      <ProviderLogo slug={slug} name={name} src={logo} size={42} loading="eager" />
+      <div>
+        <h2>{name}</h2>
+        <p>{subtitle}</p>
+      </div>
+      <span className={styles.quoteStatus} data-basis={basis} data-offer={offer || undefined}>
+        <Layers3 size={13} aria-hidden />{status}
+      </span>
+    </header>
+  );
+}
+
 function SelectedProvider({ row, best, reference, from, to, amount, checked, webEvidence, connection, action, bookmark }: { row: PriceRow | null; best: PriceRow | null; reference: { rate: number; source: string; observedAt: string } | null; from: string; to: string; amount: number; checked: string; webEvidence: ReactNode; connection: ReactNode; action: Props["action"]; bookmark?: ReactNode }) {
-  // The provider's tab and bookmark stay focused while their quote refreshes.
-  const [tab, setTab] = useState<DetailTab>("Details");
-  const reduce = useReducedMotion();
+  const [tab, setTab] = useState<DetailTab>("Overview");
   if (!row) return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider"><div className={styles.empty}><FileSearch size={24} /><strong>Select a provider to explore its price</strong><p>Fees, eligibility and source evidence will appear here.</p></div></aside>;
+
   const assessment = row.profileAssessment;
   const payment = assessment?.payment;
   const feeTax = payment?.feeTax?.detail ?? row.taxNote ?? (row.taxIncluded === true
@@ -181,33 +209,149 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
       : row.taxIncluded === null ? "Not stated in the sources checked." : "No verified tax treatment for this payment method.");
   const receipt = payment?.receipt?.detail ?? row.receipt;
   const delivery = row.basis === "exact" && row.delivery !== payment?.delivery?.label ? row.delivery : payment?.delivery?.detail ?? row.delivery;
+  const deliveryLabel = row.delivery ?? payment?.delivery?.label;
   const cost = benchmarkCost(row, amount, reference?.rate, to);
   const difference = benchmarkPayoutDifference(row.recipientAmount, amount, reference?.rate, to);
-  const isBest = best === row;
-  const benchmark = reference ? `${reference.source}, 1 ${from} = ${reference.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}, observed ${new Date(reference.observedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC. A mid-market rate, not a consumer offer.` : "No benchmark rate available.";
-  return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
-    <div className={styles.selectedIdentity}><ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} loading="eager" size={42} /><div><h2>{row.providerName}</h2><p>{row.product?.label ?? <>{from} <ArrowRight size={10} /> {to}</>}</p></div><span className={styles.basisBadge} data-basis={row.basis}>{pricingSourceLabel(row)}</span></div>
-    <div className={styles.selectedMetrics}><div><span>{row.partial ? "Reference amount" : "Recipient gets (est.)"}</span><motion.strong key={`${row.providerSlug}:${row.recipientAmount}`} initial={reduce ? false : { opacity: .6 }} animate={{ opacity: 1 }} transition={{ duration: .2 }}>{money(row.recipientAmount)} <small>{to}</small></motion.strong></div><div><span>{cost.kind === "cost" ? "Cost vs mid-market" : "Payout vs mid-market"}</span><strong>{cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : difference.kind === "cost" ? formatPayoutDifference(difference) : "No benchmark"}</strong></div></div>
-    {isBest ? <p className={styles.rankNote}>{row.basis === "exact" ? `Best account quote among comparable options${row.expiresAt ? `, valid until ${new Date(row.expiresAt).toLocaleTimeString("en-GB", { timeStyle: "short" })}` : ""}.` : `Highest estimated ${to} among comparable options.`}</p> : null}
-    {cost.kind === "gap" ? <p className={styles.gapNote}><Info size={14} />{cost.reason}</p> : null}
-    <div className={styles.selectedMeta}><span><Clock3 size={14} aria-hidden />{row.delivery ?? "Ask provider about delivery"}</span>{payment?.receipt && <span className={styles.receiptChip}><FileBadge size={14} aria-hidden />{payment.receipt.label}</span>}<span><ShieldCheck size={14} aria-hidden />{assessment?.status === "documented" ? "Documented profile" : "Confirm eligibility"}</span></div>
-    {row.partial && <p className={styles.warning}><Info size={14} />{row.publicOffer ? `First-transfer offer for ${row.publicOffer.fundingMethod} → ${row.publicOffer.payoutMethod}. Subject to provider eligibility. Collected ${priceSourceTime(row.observedAt, row.basis).replace(/^Collected /, "")}; not a locked quote.` : row.costComplete && !row.missing?.length ? row.profileAssessment?.reasons[0] ?? "Confirm account eligibility and the final price with the provider." : "Some costs or account requirements are unconfirmed. This is not a complete executable quote."}</p>}
-    {row.publicComparison && <p className={styles.detailIntro}>Public price observed for {row.publicComparison.sourceCountry ?? "an unspecified sender country"} → {row.publicComparison.destinationCountry ?? to}. Funding method and first-transfer offers may change your price. This reference is excluded from the complete-quote winner.</p>}
-    <div className={styles.selectedActions}>
-      {action.href && !action.disabled ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</Link> : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />{action.label}</button>}
-      {bookmark}
+  const percent = difference.kind === "cost" ? `${(Math.abs(difference.bps) / 100).toFixed(2)}%` : null;
+  const receiveLabel = row.partial || row.basis === "market_estimate" ? "Reference amount" : row.basis === "exact" ? "Recipient gets" : "Estimated payout";
+  const sourceLabel = pricingSourceLabel(row);
+  const sourceTime = priceSourceTime(row.observedAt, row.basis);
+  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} />;
+  const sourceDetails = (
+    <div className={styles.quoteSources}>
+      <QuoteFacts items={[
+        ["Data status", sourceLabel],
+        ["Source time", sourceTime],
+        ["Panel checked", checked],
+        ...(row.expiresAt ? [["Quote valid until", row.expiresAt] satisfies [string, string]] : []),
+        ["Mid-market source", reference ? <>{reference.source} · {priceSourceTime(reference.observedAt, "reference")}</> : "No benchmark rate available"],
+      ]} />
+      {row.source.url ? <a className={styles.sourceLink} href={row.source.url} target="_blank" rel="noreferrer noopener">{row.source.label}<ArrowUpRight size={12} aria-hidden /></a> : <p className={styles.detailIntro}>{row.source.label}</p>}
+      {row.rateSource && <a className={styles.sourceLink} href={row.rateSource.url} target="_blank" rel="noreferrer noopener">{row.rateSource.label} · {priceSourceTime(row.rateSource.observedAt, "reference")}<ArrowUpRight size={12} aria-hidden /></a>}
+      {payment && ([
+        ["Delivery timing", payment.delivery], ["Remittance proof", payment.receipt],
+        ["Tax on provider fees", payment.feeTax], ["Export GST and LUT", payment.exportTax],
+      ] as const).map(([label, fact]) => fact && <a className={styles.sourceLink} key={label} href={fact.url} target="_blank" rel="noreferrer noopener">{label}<ArrowUpRight size={12} aria-hidden /></a>)}
+      {webEvidence}
     </div>
-    {connection}
-    <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>{(["Details", "Requirements", "Source", "Notes"] as const).map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}</div>
-    {/* No exit animation: an outgoing panel must never show the previous provider's figures. */}
-    <div key={tab} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${tab}`} className={tab === "Requirements" ? styles.detailContent : `${styles.detailContent} railor-step-in`}>
-      {tab === "Details" && <><dl className={styles.factList}>{[
-        ["Product", row.product?.label ?? row.providerName], ["Client pays by", row.paymentMethods?.length ? row.paymentMethods.map((method) => METHOD_NAME[method] ?? method).join(", ") : "Unknown"],
-        ["Send amount", `${money(amount)} ${from}`], [row.partial ? "Reference receive amount" : "Receive amount (est.)", `${money(row.recipientAmount)} ${to}`], ["Known provider fee", row.feeAmount === null ? (row.feeBreakdown ? "See fee breakdown" : "Confirm at checkout") : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`], ...(row.feeBreakdown ? [["Fee breakdown", row.feeBreakdown]] : []), ["Who pays the fee", row.side === "payer" ? "Your client (sender)" : row.side === "recipient" ? "You (deducted before payout)" : "Unknown"], ["Tax on provider fees", feeTax], ...(payment?.exportTax ? [["Export GST and income tax", payment.exportTax.detail]] : []), ["Remittance proof", receipt ?? (row.receipt === null ? "Not stated in the sources checked." : "No verified document for this payment method.")], ["Cost vs mid-market", cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : cost.reason], ["Exchange rate", row.rate === null ? "Not supplied" : `1 ${from} ≈ ${row.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}`], ["Delivery estimate", delivery ?? "Ask the provider for timing on this route."], ...(row.shortfall ? [["Compared with lowest documented", `${money(Math.abs(row.shortfall))} ${to} ${row.shortfall > 0 ? "less" : "more"}`]] : []), ["Data status", pricingSourceLabel(row)], ["Source time", priceSourceTime(row.observedAt, row.basis)], ["Benchmark", benchmark], ...(row.missing?.length ? [["Missing", row.missing.join(" ")]] : []), ...(row.expiresAt ? [["Quote valid until", row.expiresAt]] : []), ["Panel checked", checked],
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>{cost.kind === "cost" && <p className={styles.detailNote}>Shown as <strong>{cost.bps} basis points (bps)</strong>. One basis point is 0.01 percentage points. Railor compares the quoted payout with the amount at the mid-market exchange rate.</p>}</>}
-      {tab === "Requirements" && <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} />}
-      {tab === "Source" && <><span className={styles.basisBadge} data-basis={row.basis}>{pricingSourceLabel(row)}</span><p className={styles.detailIntro}>{priceSourceTime(row.observedAt, row.basis)}</p>{row.source.url ? <a className={styles.sourceLink} href={row.source.url} target="_blank" rel="noreferrer noopener">{row.source.label}<ArrowUpRight size={12} /></a> : <p>{row.source.label}</p>}{row.rateSource && <><p className={styles.detailIntro}>Provider FX observed {new Date(row.rateSource.observedAt).toLocaleString("en-GB", { timeZone: "UTC" })} UTC</p><a className={styles.sourceLink} href={row.rateSource.url} target="_blank" rel="noreferrer noopener">{row.rateSource.label}<ArrowUpRight size={12} /></a></>}{payment && ([["Delivery timing", payment.delivery], ["Remittance proof", payment.receipt], ["Tax on provider fees", payment.feeTax], ["Export GST and LUT", payment.exportTax]] as const).map(([label, fact]) => fact && <a className={styles.sourceLink} key={label} href={fact.url} target="_blank" rel="noreferrer noopener">{label}<ArrowUpRight size={12} aria-hidden /></a>)}{webEvidence}</>}
-      {tab === "Notes" && <>{row.side === "payer" && <p className={styles.detailIntro}>This is a service your sender pays. You only need your bank account; you do not sign up for their sending service.</p>}{row.notes.length ? row.notes.map((note, index) => <p className={styles.detailIntro} key={index}>{note}</p>) : <p className={styles.detailIntro}>No additional provider notes were supplied.</p>}</>}
-    </div>
-  </aside>;
+  );
+
+  return (
+    <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
+      <div className={styles.quoteHero}>
+        <ProviderIdentity slug={row.providerSlug} name={row.providerName} logo={row.logoUrl}
+          subtitle={row.product?.label ?? <>{from} <ArrowRight size={10} aria-hidden /> {to}</>}
+          status={sourceLabel} basis={row.basis} offer={Boolean(row.publicOffer)} />
+        <dl className={styles.selectedMetrics}>
+          <div>
+            <dt>{receiveLabel}</dt>
+            <dd>{row.recipientAmount !== null ? <RollingPrice key={to} value={row.recipientAmount} /> : "—"} <small>{to}</small></dd>
+          </div>
+          <div>
+            <dt>{cost.kind === "cost" ? "Total cost" : "Payout vs mid-market"} <Info size={12} aria-hidden /></dt>
+            <dd>{cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : difference.kind === "cost" ? formatPayoutDifference(difference) : "Unavailable"}</dd>
+          </div>
+          <div>
+            <dt>Delivery time</dt>
+            <dd><span className={styles.deliverySticker} data-known={Boolean(deliveryLabel) || undefined}>
+              {deliveryLabel ? <Zap size={14} aria-hidden /> : <Clock3 size={14} aria-hidden />}
+              {deliveryLabel ?? "Ask provider"}
+            </span></dd>
+          </div>
+        </dl>
+        <div className={styles.selectedActions}>
+          {action.href && !action.disabled
+            ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={15} aria-hidden /> : <ArrowRight size={15} aria-hidden />}</Link>
+            : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} aria-hidden />{action.label}</button>}
+          {bookmark}
+        </div>
+      </div>
+      <div className={styles.selectedMeta}>
+        {best === row && <span data-tone="accent">{row.basis === "exact" ? "Best account quote" : "Highest comparable payout"}</span>}
+        {payment?.receipt && <span data-tone="green"><FileBadge size={14} aria-hidden />{payment.receipt.label}</span>}
+        <span><ShieldCheck size={14} aria-hidden />{assessment?.status === "documented" ? "Documented profile" : "Confirm eligibility"}</span>
+      </div>
+      {row.partial && <p className={styles.warning}><Info size={14} aria-hidden />{
+        row.publicOffer ? `First-transfer offer for ${row.publicOffer.fundingMethod} → ${row.publicOffer.payoutMethod}. Subject to provider eligibility. ${sourceTime}.`
+          : row.costComplete && !row.missing?.length ? assessment?.reasons[0] ?? "Confirm account eligibility and the final price with the provider."
+            : "Some costs or account requirements are unconfirmed."
+      }</p>}
+      {row.publicComparison && <p className={styles.detailIntro}>Public price observed for {row.publicComparison.sourceCountry ?? "an unspecified sender country"} → {row.publicComparison.destinationCountry ?? to}. Funding method and first-transfer offers may change your price.</p>}
+      {connection}
+      <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>
+        {DETAIL_TABS.map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}
+      </div>
+      <div key={tab} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${tab}`} className={styles.detailContent}>
+        {tab === "Overview" && (
+          <>
+            <div className={styles.overviewGrid}>
+              <section>
+                <h3><span data-tone="accent"><Wallet size={16} aria-hidden /></span>Fee calculation</h3>
+                <QuoteFacts items={[
+                  ["You send", `${money(amount)} ${from}`],
+                  ["Known provider fee", row.feeAmount === null ? (row.feeBreakdown ? "See Notes" : "Confirm at checkout") : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`],
+                  ["Exchange rate used", row.rate === null ? "Not supplied" : `1 ${from} = ${row.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}`],
+                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : `${money(row.recipientAmount)} ${to}`],
+                ]} />
+              </section>
+              <section>
+                <h3><span><Banknote size={16} aria-hidden /></span>Benchmark vs. mid-market</h3>
+                <QuoteFacts items={[
+                  ["Mid-market amount", difference.kind === "cost" ? `${money(difference.baselineMinor / 100)} ${to}` : "Unavailable"],
+                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : `${money(row.recipientAmount)} ${to}`],
+                  [difference.kind === "cost" && difference.costMinor < 0 ? "Above mid-market" : "Difference", difference.kind === "cost" ? `${money(Math.abs(difference.costMinor) / 100)} ${to} (${Math.abs(difference.bps)} bps)` : "Unavailable"],
+                ]} />
+                {difference.kind === "cost" && <div className={styles.benchmarkScale} data-better={difference.costMinor < 0 || undefined} title="Bar shows the size of the difference on a 0% to 10% scale">
+                  <span aria-hidden><i style={{ width: `${Math.min(100, Math.abs(difference.bps) / 10)}%` }} /></span><strong>{percent}</strong>
+                </div>}
+                {cost.kind === "gap" && <p className={styles.gapNote}><Info size={14} aria-hidden />{cost.reason}</p>}
+              </section>
+            </div>
+            <div className={styles.overviewDisclosures}>
+              <div className={styles.overviewDisclosure}>
+                <details>
+                  <summary>
+                    <span className={styles.disclosureIcon}><Layers3 size={17} aria-hidden /></span>
+                    <strong>Pricing methodology &amp; source<small>{sourceTime}</small></strong>
+                    <ChevronDown size={16} aria-hidden />
+                  </summary>
+                  <div className={styles.overviewBody}>
+                    {sourceDetails}
+                    <p className={styles.detailIntro}>Railor compares the quoted payout with the amount at the mid-market rate. One basis point (bps) equals 0.01 percentage points.</p>
+                  </div>
+                </details>
+                {row.source.url && <a className={styles.overviewSource} href={row.source.url} target="_blank" rel="noreferrer noopener">View source <ArrowUpRight size={13} aria-hidden /></a>}
+              </div>
+              <div className={styles.overviewDisclosure}>
+                <details>
+                  <summary>
+                    <span className={styles.disclosureIcon}><ShieldCheck size={17} aria-hidden /></span>
+                    <strong>Transfer requirements</strong>
+                    <ChevronDown size={16} aria-hidden />
+                  </summary>
+                  <div className={styles.overviewBody}>
+                    <QuoteFacts items={[
+                      ["Payment method", row.paymentMethods?.length ? row.paymentMethods.map((method) => METHOD_NAME[method] ?? method).join(", ") : "Confirm with provider"],
+                      ["Who pays the fee", row.side === "payer" ? "Sender" : row.side === "recipient" ? "Deducted before payout" : "Confirm with provider"],
+                    ]} />
+                    {requirements}
+                  </div>
+                </details>
+              </div>
+            </div>
+          </>
+        )}
+        {tab === "Requirements" && requirements}
+        {tab === "Sources" && sourceDetails}
+        {tab === "Notes" && <>
+          {row.side === "payer" && <p className={styles.detailIntro}>The sender pays through this service. The recipient only needs a bank account.</p>}
+          {row.feeBreakdown && <QuoteFacts items={[["Fee breakdown", row.feeBreakdown]]} />}
+          {row.missing?.length ? <ul className={styles.quoteNotes}>{row.missing.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}
+          {row.shortfall ? <p className={styles.detailIntro}>{money(Math.abs(row.shortfall))} {to} {row.shortfall > 0 ? "less" : "more"} than the best documented payout.</p> : null}
+          {row.notes.map((note, index) => <p className={styles.detailIntro} key={index}>{note}</p>)}
+          {!row.notes.length && !row.feeBreakdown && !row.missing?.length && !row.shortfall && row.side !== "payer" && <p className={styles.detailIntro}>No additional provider notes were supplied.</p>}
+        </>}
+      </div>
+    </aside>
+  );
 }

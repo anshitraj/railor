@@ -43,7 +43,6 @@ export interface QuickQuoteProps {
   initial: { from: string; to: string; amount: number; context: CustomerContext };
   initialResult: PriceCheckResult | null;
   initialError?: string;
-  guest?: boolean;
   /** Where "compare all" goes: the public page or the workspace page. */
   compareBase: string;
   /** The workspace's own country, when known; otherwise India-receiving rules apply as on the price page. */
@@ -85,7 +84,7 @@ function ago(ms: number) {
   return s < 3 ? "just now" : s < 60 ? `${s}s ago` : `${Math.round(s / 60)} min ago`;
 }
 
-export function QuickQuote({ variant, currencies, initial, initialResult, initialError, compareBase, entityCountry, guest = false }: QuickQuoteProps) {
+export function QuickQuote({ variant, currencies, initial, initialResult, initialError, compareBase, entityCountry }: QuickQuoteProps) {
   const reduce = useReducedMotion();
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -120,9 +119,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const midRate = result?.reference?.rate ?? null;
   const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...contextParams(context) }).toString();
   const compareHref = `${compareBase}?${query}`;
-  // Optional: read the invoice instead of typing. Guests go through the free sign-up first.
-  const invoiceTarget = `/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`;
-  const invoiceHref = guest ? `/login?intent=start&next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
+  const invoiceHref = `/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`;
 
   const load = useCallback(async () => {
     if (!valid || cardComingSoon) return;
@@ -213,22 +210,18 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </span>}
         </div>
 
-        {context.direction === "receive" && (variant !== "hero" || activeProfile !== "personal") ? (
+        {variant === "app" && context.direction === "receive" ? (
           <div className={styles.methodRow}>
-            {/* The landing hero keeps to amount and currencies: the payment-method choice lives in the app. The method still defaults in `context`, so the prices are unchanged. */}
-            {variant === "hero" ? null : (
               <PayMethodSelect
                 cardComingSoon
                 value={context.paymentMethod ?? (activeProfile === "personal" ? "transfer_service" : "local_bank")}
                 onChange={(paymentMethod) => setContext((previous) => ({ ...previous, paymentMethod }))}
                 label={activeProfile === "personal" ? "Sender pays by" : "Client pays by"}
               />
-            )}
             {activeProfile !== "personal" && !cardComingSoon ? (
               <Link href={invoiceHref} prefetch={false} className={`${styles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
                 <FileUp size={14} aria-hidden />
                 Upload invoice
-                {guest ? <span className={styles.invoiceTag}>Free account</span> : null}
               </Link>
             ) : null}
           </div>

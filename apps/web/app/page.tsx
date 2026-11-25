@@ -27,15 +27,11 @@ const PROFILES = new Set(["personal", "freelancer", "business"]);
 /** The calculator streams in on its own, so the page never waits on a provider's quote. */
 async function HeroQuote({ params }: { params: Record<string, string | undefined> }) {
   const profile = PROFILES.has(params.profile ?? "") ? (params.profile as "personal" | "freelancer" | "business") : "personal";
-  const [page, session] = await Promise.all([
-    loadPricePage({ from: params.from, to: params.to, amount: params.amount ?? "1000" }, null, null, profile),
-    getSession(),
-  ]);
+  const page = await loadPricePage({ from: params.from, to: params.to, amount: params.amount ?? "1000" }, null, null, profile);
   return (
     <QuickQuote
       variant="hero"
       compareBase="/prices"
-      guest={!session}
       currencies={page.currencies}
       initial={{ from: page.initial.from, to: page.initial.to, amount: page.initial.amount, context: page.initial.context }}
       initialResult={page.result}

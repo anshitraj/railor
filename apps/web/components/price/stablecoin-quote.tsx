@@ -7,11 +7,13 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Check, Copy, Info, ShieldCheck, Tr
 import type { SettleInrReference } from "@railor/core";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { ProviderLogo } from "../app/provider-logo";
+import { ProviderWordmark } from "../app/provider-wordmark";
 import { toast } from "../toast";
 import { NETWORKS, SETTLE_MODELED_FEE, STABLECOIN_CHECKED, TOKENS, isCashOutCurrency, isCashPickupCurrency, notIssuedReason, stablecoinRoutes, swapOption, type CashOutCurrency, type Destination, type Network, type RouteCard, type Stablecoin } from "../../lib/stablecoin-routes";
 import { ExchangeCard, NetworkSupportTable, TaxTools, inr, useCashOutQuote, useExchangeQuotes, type LockedExchange } from "./stablecoin-inr";
 import { depositSupport, exchangeBySlug, exchangesFor, isBankPayoutEstimate, type ExchangeQuote } from "../../lib/india-exchanges";
 import { CASH_OUT_RAILS, KRAKEN_CANADA, KRAKEN_EEA, KRAKEN_FEES, KRAKEN_NETWORKS, KRAKEN_TAKER_RATE, KRAKEN_WITHDRAWALS, cashOutRestriction, fiat, type CashOutQuote } from "../../lib/stablecoin-cash-out";
+import { QuoteAmount } from "./animated-amount";
 import { StablecoinPicker } from "./stablecoin-picker";
 import { RateHistoryChart } from "./rate-history-chart";
 import comparisonStyles from "../app/price-check.module.css";
@@ -119,7 +121,10 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
             <span className={priceStyles.fieldLabel}>{receiveLabel}</span>
             <div className={priceStyles.fieldRow}>
               <output className={`${priceStyles.amount} ${styles.receiveAmount}`} data-status={(!cashOutLabel && receiveAmount === undefined) || undefined} aria-live="polite" aria-busy={pending}>
-                {pending ? "Refreshing…" : showLocked ? "Sign in to see" : cashOutLabel ?? (receiveAmount?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "Quote unavailable")}
+                {showLocked ? "Sign in to see" : cashOutLabel && !pending ? cashOutLabel : (
+                  <QuoteAmount key={context} value={pending ? null : receiveAmount ?? null} identity={selected?.id}
+                    locale="en-IN" placeholder={pending ? "Refreshing…" : "Quote unavailable"} />
+                )}
               </output>
               <StablecoinPicker side="to" value={destination} network={network} onChange={setDestination} />
             </div>
@@ -188,7 +193,7 @@ export function StablecoinQuote({ initial, locked = false }: { initial: { asset:
                 value = "Live rate on DEX";
               }
               return <li key={entry.id}><button type="button" className={`${comparisonStyles.providerRow} ${styles.quoteRow}`} aria-pressed={entry.id === selected?.id} aria-label={`Select ${entry.name}`} onClick={() => choose(entry.id)}>
-                <span className={comparisonStyles.providerName}><ProviderLogo slug={entry.slug} name={entry.name} size={29} /><span><strong>{entry.name}</strong>{entry.id === recommended?.slug ? <small>Most in your bank</small> : null}</span></span>
+                <span className={comparisonStyles.providerName}><span><strong><ProviderWordmark slug={entry.slug} name={entry.name} /></strong>{entry.id === recommended?.slug ? <small>Most in your bank</small> : null}</span></span>
                 <span className={comparisonStyles.rowAmount}><strong>{value}</strong>{basis ? <small>{basis}</small> : null}</span>
                 <span className={styles.rowDescription}>{entry.hint}{entry.quote ? ` · ${entry.quote.support.status === "yes" ? "Network supported" : entry.quote.support.status === "no" ? "Network not supported" : "Check network support"}` : ""}</span>
               </button></li>;

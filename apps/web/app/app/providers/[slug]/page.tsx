@@ -14,7 +14,7 @@ import {
 import { MonitorProviderButton } from "../../../../components/app/monitor-button";
 import { CurrencyLogo } from "../../../../components/marketing/currency-logo";
 import { NetworkLogo } from "../../../../components/marketing/network-logo";
-import { ProviderLogo } from "../../../../components/app/provider-logo";
+import { ProviderWordmark } from "../../../../components/app/provider-wordmark";
 
 import { hideDemoProvider } from "../../../../lib/demo-providers";
 
@@ -105,10 +105,9 @@ export default async function ProviderProfile({
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <ProviderLogo slug={provider.slug} name={provider.name} size={56} />
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-[24px] font-semibold tracking-tight">{provider.name}</h1>
+              <h1 className="text-[24px] font-semibold tracking-tight"><ProviderWordmark slug={provider.slug} name={provider.name} size="large" /></h1>
               {provider.isDemo ? <StageBadge stage="beta" /> : null}
             </div>
             <p className="max-w-2xl text-[14px] leading-relaxed text-[var(--color-muted)]">

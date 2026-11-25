@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ProviderLogo } from "../../app/provider-logo";
+import { ProviderWordmark } from "../../app/provider-wordmark";
 import styles from "./home.module.css";
 
 export { FEATURED_PROVIDERS } from "../../../lib/featured-providers";
@@ -21,9 +21,8 @@ export function ProvidersSection({ trackedCount }: { trackedCount: number }) {
         <ul className={styles.providerGrid} data-pin-track>
           {FEATURED_PROVIDERS.map((provider) => (
             <li key={provider.slug} className={styles.provider}>
-              <ProviderLogo slug={provider.slug} name={provider.name} size={44} />
               <div>
-                <h3>{provider.name}</h3>
+                <h3><ProviderWordmark slug={provider.slug} name={provider.name} size="large" /></h3>
                 <p>{provider.summary}</p>
                 <div className={styles.tags} aria-label={`${provider.name} is for`}>
                   {provider.for.map((audience) => <span key={audience} className={styles.tag} data-kind={audience}>{audience}</span>)}

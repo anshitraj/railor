@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, CircleHelp, Clock3, ShieldCheck } from "lucide-react";
 import type { SearchPreviewCandidate, SearchPreviewResult } from "@railor/core";
 import { RANKING_PRESET_LABEL } from "@railor/types";
-import { ProviderLogo } from "./provider-logo";
+import { ProviderWordmark } from "./provider-wordmark";
 import { AccessRequestButton } from "./access-request";
 
 export const QUOTE_LABELS = {
@@ -54,7 +54,7 @@ function CandidateCard({ candidate: c, preview, index, best, canDecide, busy, de
   const tone = c.policyPreview === "pass" ? "good" : c.policyPreview === "fail" ? "bad" : "warn";
   const policyLabel = c.policyPreview === "pass" ? "Allowed by policy" : c.policyPreview === "fail" ? "Blocked by policy" : "Policy needs evidence";
   return <article className="comparison-card" data-best={best || undefined} aria-label={`${c.provider} comparison`}>
-    <div className="comparison-card-top"><div className="comparison-provider"><span className="comparison-index">{String(index + 1).padStart(2, "0")}</span><ProviderLogo slug={c.providerSlug} name={c.provider} size={36} /><div><h3>{c.provider}</h3><p>{QUOTE_LABELS[c.quoteState]}</p></div></div>
+    <div className="comparison-card-top"><div className="comparison-provider"><span className="comparison-index">{String(index + 1).padStart(2, "0")}</span><div><h3><ProviderWordmark slug={c.providerSlug} name={c.provider} /></h3><p>{QUOTE_LABELS[c.quoteState]}</p></div></div>
       <span className="comparison-policy" data-tone={tone}>{c.policyPreview === "pass" ? <Check size={13} /> : <ShieldCheck size={13} />}{policyLabel}</span></div>
     <div className="comparison-route-facts"><span>Route <strong>{readable(c.routeConfirmation)}</strong></span><span>Entity <strong>{readable(c.entityEligibility)}</strong></span><span>Account <strong>{c.connectionState === "connected" ? "Connected" : "Not connected"}</strong></span>{c.activeIncident ? <span className="text-[var(--color-bad)]">Active incident</span> : null}</div>
     <dl className="comparison-metrics"><Metric label={c.quoteAccountContext === "railor_network" ? "Reference conversion" : "Recipient receives"} value={c.recipientAmount === null ? "Awaiting quote" : `${number(c.recipientAmount)} ${unit}`} note={c.quoteAccountContext === "railor_network" ? "Railor account · payout fee excluded" : c.quoteState === "INDICATIVE" ? "Reference price · not guaranteed" : c.quoteState === "LIVE_CONNECTED" ? "From your connected account" : "Connect for account pricing"} />

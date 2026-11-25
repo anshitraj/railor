@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight, Clock3, Plug, Search } from "lucide-react";
-import { ProviderLogo } from "./provider-logo";
+import { ProviderWordmark } from "./provider-wordmark";
 import styles from "./connector-catalog.module.css";
 
 type Provider = { slug: string; name: string; category: string; description: string };
@@ -37,8 +37,7 @@ export function ConnectorCatalog({ providers }: { providers: Provider[] }) {
           <ul role="list" className={styles.rows}>
             {results.slice(0, visible).map((provider) => (
               <li key={provider.slug}>
-                <ProviderLogo slug={provider.slug} name={provider.name} size={42} />
-                <div className={styles.provider}><strong>{provider.name}</strong><p>{provider.description || provider.category}</p></div>
+                <div className={styles.provider}><strong><ProviderWordmark slug={provider.slug} name={provider.name} /></strong><p>{provider.description || provider.category}</p></div>
                 <button type="button" disabled className={styles.soon} aria-label={`${provider.name} · Coming soon`}><Clock3 size={14} aria-hidden /> Coming soon</button>
               </li>
             ))}

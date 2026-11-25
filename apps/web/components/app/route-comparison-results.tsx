@@ -6,7 +6,7 @@ import { ArrowRight, ArrowUpRight, Check, ChevronDown, CircleHelp, ClipboardCopy
 import { Flag } from "@railor/ui";
 import { refreshRouteComparison, shareRouteComparison } from "../../app/app/compare/actions";
 import { NEEDS_CONFIRMATION, type ComparisonCandidate, type RouteComparison } from "../../lib/route-comparison-model";
-import { ProviderLogo } from "./provider-logo";
+import { ProviderWordmark } from "./provider-wordmark";
 import styles from "./route-comparison.module.css";
 
 const VERDICT: Record<ComparisonCandidate["verdict"], string> = {
@@ -27,8 +27,7 @@ function CandidateCard({ candidate, index }: { candidate: ComparisonCandidate; i
       transition={{ duration: .3, delay: reduced ? 0 : index * .08, ease: [.2, .8, .25, 1] }}
     >
       <div className={styles.candidateHeader}>
-        <ProviderLogo slug={candidate.slug} name={candidate.name} loading="eager" size={43} />
-        <div><h3>{candidate.name}</h3><span>{candidate.category}</span></div>
+        <div><h3><ProviderWordmark slug={candidate.slug} name={candidate.name} size="large" /></h3><span>{candidate.category}</span></div>
       </div>
       <div className={styles.verdict} data-verdict={candidate.verdict}>
         {candidate.verdict === "supported" ? <FileCheck2 size={14} /> : <CircleHelp size={14} />}

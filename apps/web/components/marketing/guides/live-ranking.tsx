@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { loadPricePage } from "../../../lib/pricing";
 import { convertHref } from "../../../lib/guides/destinations";
 import { rankProviders } from "../../../lib/guides/ranking";
-import { ProviderLogo } from "../../app/provider-logo";
+import { ProviderWordmark } from "../../app/provider-wordmark";
 import styles from "./guides.module.css";
 
 export const RANK_AMOUNTS = [100, 500, 1_000, 5_000, 10_000] as const;
@@ -62,9 +62,8 @@ export async function LiveRanking({ amount, signedIn }: { amount: number; signed
           {ranked.map((provider, index) => (
             <li key={provider.slug} className={styles.rankRow} data-first={index === 0 ? "" : undefined}>
               <span className={styles.rankNum}>{index + 1}</span>
-              <ProviderLogo slug={provider.slug} name={provider.name} src={provider.logoUrl} size={34} />
               <span className={styles.rankName}>
-                <strong>{provider.name}</strong>
+                <strong><ProviderWordmark slug={provider.slug} name={provider.name} src={provider.logoUrl} /></strong>
                 <small>
                   <span className={styles.tag} data-kind={provider.offer ? "offer" : undefined}>{provider.label}</span>
                   {provider.delivery ? <span>{provider.delivery}</span> : null}

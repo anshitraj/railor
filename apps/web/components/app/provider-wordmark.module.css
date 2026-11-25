@@ -1,0 +1,24 @@
+.brand {
+  --wordmark-height: 20px;
+  --wordmark-width: 112px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 6px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+.brand[data-size="compact"] { --wordmark-height: 17px; --wordmark-width: 86px; }
+.brand[data-size="large"] { --wordmark-height: 26px; --wordmark-width: 154px; }
+.brand[data-size="strip"] { --wordmark-height: clamp(24px, 3vw, 30px); --wordmark-width: clamp(138px, 17vw, 172px); }
+.brand > img {
+  display: block;
+  width: auto;
+  height: var(--wordmark-height);
+  max-width: min(100%, var(--wordmark-width));
+  object-fit: contain;
+  object-position: left center;
+}
+.qualifier { font-size: .82em; }

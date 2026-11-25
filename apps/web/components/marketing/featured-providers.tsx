@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { ProviderLogo } from "../app/provider-logo";
+import { ProviderWordmark } from "../app/provider-wordmark";
 import { FEATURED_PROVIDERS, type Audience } from "../../lib/featured-providers";
 import { providerSite } from "../../lib/provider-sites";
 import styles from "./featured-providers.module.css";
@@ -36,9 +36,8 @@ export function FeaturedProviders() {
           return (
             <li key={provider.slug} className={styles.card}>
               <div className={styles.top}>
-                <ProviderLogo slug={provider.slug} name={provider.name} size={44} />
                 <div>
-                  <h3>{provider.name}</h3>
+                  <h3><ProviderWordmark slug={provider.slug} name={provider.name} size="large" /></h3>
                   <div className={styles.tags}>{provider.for.map((item) => <span key={item} data-kind={item}>{item}</span>)}</div>
                 </div>
               </div>

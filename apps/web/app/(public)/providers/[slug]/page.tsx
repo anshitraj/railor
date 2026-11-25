@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { loadProviderBySlug } from "@railor/core";
 import { CHANGE_KIND_LABEL } from "@railor/types";
 import { Card, EvidencePopover, Freshness, SectionLabel, VerdictPill } from "@railor/ui";
-import { ProviderLogo } from "../../../../components/app/provider-logo";
+import { ProviderWordmark } from "../../../../components/app/provider-wordmark";
 
 import { hideDemoProvider } from "../../../../lib/demo-providers";
 
@@ -50,8 +50,7 @@ export default async function PublicProviderProfile({
             ← All providers
           </Link>
           <h1 className="flex items-center gap-3 text-[30px] font-semibold tracking-tight">
-            <ProviderLogo slug={provider.slug} name={provider.name} size={44} />
-            {provider.name}
+            <ProviderWordmark slug={provider.slug} name={provider.name} size="large" />
           </h1>
           <p className="max-w-2xl text-[15px] leading-relaxed text-[var(--color-muted)]">
             {provider.description}

@@ -11,12 +11,14 @@ import type { CustomerContext, PriceBasis, PriceCheckResult, PriceRow, RowWebChe
 import { Flag, cn, type PickerOption } from "@railor/ui";
 import { fallbackFill } from "../marketing/logo-fallback";
 import { ProviderLogo } from "./provider-logo";
+import { ProviderWordmark } from "./provider-wordmark";
 import { PlatformQuotePanel } from "./platform-quote-panel";
 import { RateHistoryChart } from "../price/rate-history-chart";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser, type ProviderQuoteAdvice } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { providerSite } from "../../lib/provider-sites";
+import { AmountInput, QuoteAmount } from "../price/animated-amount";
 import { CurrencyPicker } from "../price/currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "../price/pay-method-select";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
@@ -57,35 +59,6 @@ function money(n: number | null | undefined) {
 
 function rateText(n: number) {
   return n.toLocaleString("en-US", { maximumSignificantDigits: 6 });
-}
-
-/** Eases a displayed number toward its new value. A different `identity` (another provider) jumps instead, so a figure never shows a blend of two providers. */
-function useTween(target: number | null, ms = 450, identity?: string | null) {
-  const [value, setValue] = useState(target);
-  const current = useRef(target);
-  const lastIdentity = useRef(identity);
-  useEffect(() => {
-    const start = current.current;
-    const switched = lastIdentity.current !== identity;
-    lastIdentity.current = identity;
-    if (switched || target === null || start === null || start === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      current.current = target;
-      setValue(target);
-      return;
-    }
-    let raf = 0;
-    const t0 = performance.now();
-    const step = (t: number) => {
-      const k = Math.min(1, (t - t0) / ms);
-      const v = start + (target - start) * (1 - (1 - k) ** 3);
-      current.current = v;
-      setValue(v);
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, ms, identity]);
-  return value;
 }
 
 function CurrencyBadge({ code, symbol, flag, size = 26 }: { code: string; symbol?: string; flag?: string; size?: number }) {
@@ -294,7 +267,6 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     ?? visibleRows.find(row => providerIdentity(row.providerSlug) === providerIdentity(picked)) : null;
   const selectedCandidate = picked && !pickedPrice ? candidates.find(candidate => candidate.providerSlug === providerIdentity(picked)) ?? null : null;
   const selected = picked ? pickedPrice ?? null : best ?? quotes[0] ?? estimates[0] ?? null;
-  const receive = useTween(selected?.recipientAmount ?? null, 450, selected ? priceRowKey(selected) : null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
   const selectedCost = selected ? benchmarkCost(selected, amount, result?.reference?.rate, to) : null;
@@ -403,14 +375,11 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-3">
-                <input
+                <AmountInput
                   id="swap-amount"
-                  inputMode="decimal"
-                  autoComplete="off"
                   value={amountText}
                   onChange={(e) => setAmountText(e.target.value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 12))}
                   className="min-w-0 flex-1 bg-transparent font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
-                  placeholder="0"
                 />
                 <QuickPicks options={currencies} exclude={[from, to]} onPick={setFrom} />
                 <CurrencyPicker label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setFrom(c))} />
@@ -432,7 +401,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <span className="text-[12.5px] font-medium text-[var(--color-muted)]">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
                 {selected || selectedCandidate ? (
                   <span className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
-                    {selected?.side === "payer" ? "sent with" : "via"} <ProviderLogo slug={selected?.providerSlug ?? selectedCandidate!.providerSlug} name={selected?.providerName ?? selectedCandidate!.providerName} src={selected?.logoUrl} size={16} /> <span className="font-semibold text-[var(--color-ink-soft)]">{selected?.providerName ?? selectedCandidate?.providerName}</span>
+                    {selected?.side === "payer" ? "sent with" : "via"} <ProviderWordmark slug={selected?.providerSlug ?? selectedCandidate!.providerSlug} name={selected?.providerName ?? selectedCandidate!.providerName} src={selected?.logoUrl} size="compact" />
                   </span>
                 ) : null}
               </div>
@@ -446,7 +415,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                     loading && !result && "animate-pulse text-[var(--color-faint)]",
                   )}
                 >
-                  {receive === null ? (loading ? "…" : "—") : money(receive)}
+                  <QuoteAmount key={`${from}-${to}`} value={selected?.recipientAmount ?? null} identity={selected ? priceRowKey(selected) : undefined} placeholder={loading ? "…" : "—"} />
                 </output>
                 <QuickPicks options={currencies} exclude={[from, to]} onPick={setTo} />
                 <CurrencyPicker label="Receive currency" value={to} options={currencies} onChange={(c) => (c === from ? swap() : setTo(c))} />
@@ -633,10 +602,9 @@ function QuoteRow({ row, best, selected, flash, onPick, mode, connected }: { row
         aria-pressed={selected}
         className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2.5 text-left"
       >
-        <ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} size={28} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[13.5px] font-semibold text-[var(--color-ink)]">{row.providerName}</span>
+            <span className="text-[13.5px] font-semibold text-[var(--color-ink)]"><ProviderWordmark slug={row.providerSlug} name={row.providerName} src={row.logoUrl} size="compact" /></span>
             {best ? <span className="rounded-md bg-[var(--color-orange)] px-1.5 py-px text-[12.5px] font-bold text-[#fff]">{row.profileAssessment ? "Lowest documented estimate" : "Best price"}</span> : null}
             <span title={tag.hint} className={cn("rounded-md px-1.5 py-px text-[12px] font-bold", tag.cls)}>
               {tag.label}

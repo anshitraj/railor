@@ -1,6 +1,6 @@
 import { Check, LoaderCircle } from "lucide-react";
 import { Flag } from "@railor/ui";
-import { ProviderLogo } from "../../app/provider-logo";
+import { ProviderWordmark } from "../../app/provider-wordmark";
 import { LoopOnView } from "./loop-on-view";
 import { MobileCardSlider } from "./mobile-card-slider";
 import styles from "./home.module.css";
@@ -30,7 +30,7 @@ export function HowItWorks() {
 
         <MobileCardSlider mode="steps" label="How Railor works" labels={["Choose an amount", "Compare providers", "Check the details"]}>
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
               <div className={styles.mini} aria-hidden>
                 <p className={styles.miniLabel}>Sending</p>
                 <div className={styles.miniField}>
@@ -52,13 +52,12 @@ export function HowItWorks() {
           </li>
 
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
               <div className={`${styles.mini} ${styles.miniRows}`} aria-hidden>
                 <p className={styles.miniLabel}>Example payouts</p>
                 {CHECKING.map((row, index) => (
                   <div key={row.slug} className={styles.miniRow}>
-                    <ProviderLogo slug={row.slug} name={row.name} size={26} />
-                    <strong>{row.name}</strong>
+                    <ProviderWordmark slug={row.slug} name={row.name} size="compact" />
                     <span className={styles.miniStatus}>
                       <span className={styles.miniChecking} data-anim style={{ animationDelay: `${index * 0.28}s` }}><LoaderCircle size={14} aria-hidden style={{ display: "inline", verticalAlign: "-2px" }} /> Checking</span>
                       <span className={styles.miniDone} data-anim style={{ animationDelay: `${index * 0.28}s`, color: row.amount === "Hidden" ? "var(--color-muted)" : undefined }}>
@@ -77,11 +76,11 @@ export function HowItWorks() {
           </li>
 
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
               <div className={styles.mini} aria-hidden>
                 <div className={styles.receiptHead}>
-                  <ProviderLogo slug="wise" name="Wise" size={32} />
-                  <div><strong>Wise</strong><small>Public quote · example</small></div>
+                  <ProviderWordmark slug="wise" name="Wise" />
+                  <small>Public quote · example</small>
                 </div>
                 <dl className={styles.receipt}>
                   {[["Arrives", "₹92,369.57"], ["Fee", "$11.26"], ["Rate", "1 USD = 93.42 INR"], ["Source", "wise.com"]].map(([label, value], index) => (

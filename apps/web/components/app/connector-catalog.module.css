@@ -20,6 +20,6 @@
 @media (max-width: 560px) {
   .header a { margin-inline-start: 0; }
   .rows li, .toolbar { gap: 10px; padding-inline: 12px; }
-  .rows li { display: grid; grid-template-columns: auto minmax(0, 1fr); }
-  .soon { grid-column: 2; justify-self: start; }
+  .rows li { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .soon { justify-self: start; }
 }

@@ -1,7 +1,7 @@
 /* Guide cards: each carries a small picture of the route it is about, like the audience cards on the home page. */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-line); border-radius: 24px; background: var(--color-surface); color: inherit; transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out); }
-@media (hover: hover) and (pointer: fine) { .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-panel); } }
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-panel); }
 .card:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 3px; }
 .art { position: relative; height: 150px; overflow: hidden; background: linear-gradient(180deg, #fbefd9, #f6e3c3); }
 .art[data-topic="ways"] { background: linear-gradient(180deg, #f6e6dc, #efd3c1); }
@@ -15,7 +15,7 @@
 .cardSummary { color: var(--color-muted); font-size: 15px; line-height: 1.55; }
 .cardMeta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; color: var(--color-muted); font-size: 13.5px; }
 .cardMeta svg { color: var(--color-ink); transition: transform .2s var(--ease-out); }
-@media (hover: hover) and (pointer: fine) { .card:hover .cardMeta svg { transform: translateX(3px); } }
+.card:hover .cardMeta svg { transform: translateX(3px); }
 
 /* "Send money to …": every row is a link into Convert currencies with the country already chosen. */
 .countries { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 2px 20px; }
@@ -24,7 +24,7 @@
 .country:focus-visible { outline: 2px solid var(--color-orange); outline-offset: -2px; }
 .moreLink { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--color-ink); font-size: 15px; font-weight: 650; }
 .moreLink svg { transition: transform .2s var(--ease-out); }
-@media (hover: hover) and (pointer: fine) { .moreLink:hover svg { transform: translateX(3px); } }
+.moreLink:hover svg { transform: translateX(3px); }
 
 /* Home page strip */
 .homeFoot { display: grid; gap: 28px; margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--color-line); }
@@ -108,7 +108,7 @@
 .amounts a:hover { border-color: var(--color-ink); color: var(--color-ink); }
 .amounts a[aria-current="true"] { border-color: var(--color-ink); background: var(--color-ink); color: #fff; }
 .rank { overflow: hidden; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); }
-.rankRow { display: grid; grid-template-columns: 24px 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--color-line); }
+.rankRow { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--color-line); }
 .rankRow:first-child { border-top: 0; }
 .rankRow[data-first] { background: #fff8ec; }
 .rankNum { color: var(--color-muted); font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -137,16 +137,4 @@
 @media (prefers-reduced-motion: reduce) {
   .card, .cardMeta svg, .moreLink svg, .faq summary svg { transition: none; }
   .skeleton { animation: none; }
-}
-
-/* Home page on phones: guides become a swipeable rail and the country list a compact two-column grid. */
-@media (max-width: 639px) {
-  .homeGrid { display: flex; gap: 12px; margin-inline: -16px; padding: 2px 16px 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-inline: contain; }
-  .homeGrid::-webkit-scrollbar { display: none; }
-  .homeGrid > * { flex: 0 0 min(80vw, 320px); scroll-snap-align: start; }
-  .homeGrid .art { height: 112px; }
-  .homeFoot { margin-top: 28px; padding-top: 26px; }
-  .homeFoot .countries { grid-template-columns: 1fr 1fr; gap: 2px 8px; }
-  .homeFoot .countries > :nth-child(n+9) { display: none; }
-  .homeFoot .country { min-height: 44px; gap: 8px; padding: 6px 4px; font-size: 14px; }
 }
