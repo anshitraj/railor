@@ -11,6 +11,7 @@ import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { priceView } from "../../lib/price-view";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import { priceRowKey, pricingSourceLabel } from "../../lib/price-display";
+import { AmountInput, QuoteAmount, RollingPrice } from "./animated-amount";
 import { defaultPriceCountry } from "../../lib/price-destination";
 import { CurrencyPicker } from "./currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "./pay-method-select";
@@ -52,30 +53,6 @@ export interface QuickQuoteProps {
 const money = (n: number | null | undefined, digits = 2) =>
   n === null || n === undefined || !Number.isFinite(n) ? "—" : n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
-function useTween(target: number | null, ms = 420) {
-  const [value, setValue] = useState(target);
-  const current = useRef(target);
-  useEffect(() => {
-    const start = current.current;
-    if (target === null || start === null || start === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      current.current = target;
-      setValue(target);
-      return;
-    }
-    let raf = 0;
-    const t0 = performance.now();
-    const step = (t: number) => {
-      const k = Math.min(1, (t - t0) / ms);
-      const v = start + (target - start) * (1 - (1 - k) ** 3);
-      current.current = v;
-      setValue(v);
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
-  return value;
-}
 
 /** Same derivation as the full price page, so both screens price the same situation. */
 function contextFor(from: string, to: string, profile: Profile, entityCountry: string | null | undefined, previous: CustomerContext): CustomerContext {
@@ -113,7 +90,6 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
   const [amountText, setAmountText] = useState(String(initial.amount));
-  const [focused, setFocused] = useState(false);
   const [context, setContext] = useState<CustomerContext>(initial.context);
   const [response, setResponse] = useState(initialResult);
   const [error, setError] = useState(initialError ?? "");
@@ -141,7 +117,6 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const shownQuotes = ranked.slice(0, 3);
   const shownEstimates = dated.slice(0, Math.max(0, 3 - shownQuotes.length));
   const estimateBeatsBest = Boolean(best?.recipientAmount != null && shownEstimates.some((row) => row.recipientAmount! > best.recipientAmount!));
-  const receive = useTween(top?.recipientAmount ?? null);
   const midRate = result?.reference?.rate ?? null;
   const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...contextParams(context) }).toString();
   const compareHref = `${compareBase}?${query}`;
@@ -215,7 +190,6 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   }
 
   const activeProfile: Profile = context.profile === "sole_proprietor" ? "freelancer" : (context.profile as Profile);
-  const amountDisplay = focused ? amountText : amount > 0 ? amount.toLocaleString("en-US", { maximumFractionDigits: 2 }) : amountText;
   const pending = loading || (valid && !result && !error);
   const hero = variant === "hero";
   const topCost = top ? benchmarkCost(top, amount, midRate, to) : null;
@@ -265,16 +239,12 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           <div className={styles.field}>
             <label htmlFor={`${variant}-amount`} className={styles.fieldLabel}>{hero ? "You send" : "Sending"}</label>
             <div className={styles.fieldRow}>
-              <input
+              {/* Digits roll to each new amount; while typing, the plain input takes over. */}
+              <AmountInput
                 id={`${variant}-amount`}
-                inputMode="decimal"
-                autoComplete="off"
-                value={amountDisplay}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
+                value={amountText}
                 onChange={(event) => setAmountText(event.target.value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 11))}
                 className={styles.amount}
-                placeholder="0"
                 aria-describedby={`${variant}-presets`}
               />
               <CurrencyPicker label="Sending currency" value={from} options={currencies} onChange={pickFrom} />
@@ -298,7 +268,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
             <span className={styles.fieldLabel}>{hero ? (topIsEstimate ? "Recipient gets (estimate)" : "Recipient gets") : topIsEstimate ? "Arrives (estimate)" : "Arrives"}</span>
             <div className={styles.fieldRow}>
               <output aria-live="polite" className={styles.amount} data-pending={pending || undefined}>
-                {receive === null ? (pending ? "…" : "—") : money(receive)}
+                <QuoteAmount key={`${from}-${to}`} value={top?.recipientAmount ?? null} identity={top ? priceRowKey(top) : undefined} placeholder={pending ? "…" : "—"} />
               </output>
               <CurrencyPicker label="Arriving currency" value={to} options={currencies} onChange={pickTo} />
             </div>
@@ -337,7 +307,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                   </span>
                   <small>{[top.basis === "market_estimate" ? collected(top.observedAt, now) : top.delivery ? `Arrives ${top.delivery}` : pricingSourceLabel(top), top.feeAmount != null && top.feeCurrency ? `Fee ${money(top.feeAmount)} ${top.feeCurrency}` : null].filter(Boolean).join(" · ")}</small>
                 </span>
-                <span className={styles.heroBestAmount}><strong>{money(top.recipientAmount)}</strong><small>{to}</small></span>
+                <span className={styles.heroBestAmount}><strong>{top.recipientAmount !== null ? <RollingPrice value={top.recipientAmount} /> : "—"}</strong><small>{to}</small></span>
                 <ChevronRight size={18} aria-hidden className={styles.heroBestChevron} />
               </Link>
             ) : pending ? (
@@ -390,7 +360,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                           {row.feeAmount != null && row.feeCurrency ? <small>Quoted fee {money(row.feeAmount)} {row.feeCurrency}</small> : null}
                         </span>
                         <span className={styles.rowAmount}>
-                          <strong>{money(row.recipientAmount)}</strong>
+                          <strong>{row.recipientAmount !== null ? <RollingPrice value={row.recipientAmount} /> : "—"}</strong>
                           <small>{isBest
                             ? <span className={styles.bestTag} title={`Highest estimated ${to} among comparable options`}>{estimateBeatsBest ? "Best live price" : `Highest ${to}`}</span>
                             : cost.kind === "cost" && row.basis !== "market_estimate"

@@ -1,0 +1,6 @@
+.field { position: relative; display: grid; align-items: center; }
+.field input { grid-area: 1 / 1; width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; }
+.field input::placeholder { color: var(--color-faint); }
+.field[data-roll]:not(:focus-within) input { color: transparent; }
+.digits { position: absolute; inset-inline: 0; top: 50%; translate: 0 -50%; pointer-events: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field:focus-within .digits, .pendingDigits { position: absolute; visibility: hidden; pointer-events: none; }

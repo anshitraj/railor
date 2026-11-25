@@ -23,21 +23,34 @@
 @media (min-width: 720px) { .columns { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 1040px) { .top { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 64px; padding-top: 88px; } }
 
-/* The sign-off scene: the image rises out of the footer's dark, and the name sits over it, cropped by the page edge. */
+/* The sign-off scene: the dotted Earth rises out of the footer's dark, routes light up over it, and the name sits on top, cropped by the page edge. */
 .footer { overflow: clip; }
-.scene { position: relative; height: clamp(210px, 36vw, 560px); margin-top: -8px; isolation: isolate; }
-.sceneImage { z-index: -1; object-fit: cover; object-position: 50% 62%; }
-.scene::before { position: absolute; z-index: 0; inset: 0; content: ""; background: linear-gradient(180deg, var(--color-ink) 0%, rgb(21 19 16 / .55) 30%, rgb(21 19 16 / .05) 62%, rgb(21 19 16 / .35) 100%); pointer-events: none; }
+.scene { position: relative; height: clamp(230px, 38vw, 600px); margin-top: -12px; isolation: isolate; }
+.planet { position: absolute; inset: 0; z-index: 0; }
+.planetDots, .planetRoutes { position: absolute; inset: 0; width: 100%; height: 100%; }
+.planetDots { object-fit: cover; object-position: 50% 100%; }
+.planetRoutes { overflow: visible; }
+.route { fill: none; stroke: #ff8a4c; stroke-linecap: round; stroke-width: 2.2; opacity: .75; }
+.comet { fill: none; stroke: #ffe2c6; stroke-linecap: round; stroke-width: 3.2; stroke-dasharray: .07 1; stroke-dashoffset: .07; opacity: 0; filter: drop-shadow(0 0 6px #ff8a4c); }
+.city { fill: #ffd9bd; }
+.cityHalo { fill: #ff8a4c; opacity: .22; transform-box: fill-box; transform-origin: center; }
 .wordmark { position: absolute; z-index: 1; left: 50%; bottom: 0; display: flex; color: transparent; font-size: clamp(104px, 29vw, 470px); font-weight: 750; letter-spacing: -.065em; line-height: .78; white-space: nowrap; transform: translate(-50%, 9%); pointer-events: none; user-select: none; }
-.wordmark span { display: inline-block; background: linear-gradient(180deg, #fbf3e6 0%, #f6dcc4 55%, rgb(246 220 196 / .55) 100%); background-clip: text; -webkit-background-clip: text; text-shadow: 0 18px 60px rgb(0 0 0 / .18); }
+.wordmark span { display: inline-block; background: linear-gradient(180deg, #fbf3e6 0%, #f6dcc4 55%, rgb(246 220 196 / .5) 100%); background-clip: text; -webkit-background-clip: text; }
 
-/* Scroll in and the letters rise one after another while the picture settles; where scroll-linked animation isn't supported, it's simply still. */
 @media (prefers-reduced-motion: no-preference) {
+  /* Routes draw on, then a light keeps travelling each one, staggered so something is always moving. */
+  .comet { animation: cometRun 3.4s cubic-bezier(.45, 0, .55, 1) calc(1.6s + var(--route) * .55s) infinite; }
+  .cityHalo { animation: cityPulse 2.8s ease-out calc(var(--node) * .35s) infinite; }
   @supports (animation-timeline: view()) {
+    /* Scroll in and the planet rises while the letters climb one after another. */
     .scene { view-timeline: --footer-scene block; }
-    .sceneImage { animation: sceneSettle linear both; animation-timeline: --footer-scene; animation-range: entry 0% entry 100%; }
+    .route { stroke-dasharray: 1; animation: routeDraw linear both; animation-timeline: --footer-scene; animation-range: entry calc(25% + var(--route) * 6%) entry calc(70% + var(--route) * 4%); }
+    .planet { animation: planetRise linear both; animation-timeline: --footer-scene; animation-range: entry 0% entry 100%; }
     .wordmark span { animation: letterRise linear both; animation-timeline: --footer-scene; animation-range: entry calc(15% + var(--l) * 7%) entry calc(62% + var(--l) * 6%); }
   }
 }
-@keyframes sceneSettle { from { transform: scale(1.18) translateY(-6%); filter: saturate(.6) brightness(.7); } to { transform: none; filter: none; } }
+@keyframes routeDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes cometRun { 0% { opacity: 0; stroke-dashoffset: .07; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; stroke-dashoffset: -1; } }
+@keyframes cityPulse { 0% { opacity: .45; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
+@keyframes planetRise { from { transform: translateY(16%) scale(1.06); opacity: .4; } to { transform: none; opacity: 1; } }
 @keyframes letterRise { from { opacity: 0; transform: translateY(55%) rotate(6deg); } to { opacity: 1; transform: none; } }

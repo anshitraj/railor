@@ -15,6 +15,7 @@
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/manrope": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
+    "@number-flow/react": "^0.6.2",
     "@railor/core": "workspace:^",
     "@railor/database": "workspace:*",
     "@railor/types": "workspace:*",

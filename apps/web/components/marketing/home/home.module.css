@@ -45,7 +45,10 @@
 .heroExtras { grid-area: extras; max-width: 620px; }
 .heroExtras .heroActions { margin-top: 0; }
 .heroBadge { display: inline-flex; height: 32px; align-items: center; gap: 7px; padding: 0 13px 0 11px; border: 1px solid var(--color-lavender-deep); border-radius: 999px; background: color-mix(in srgb, var(--color-lavender) 82%, var(--color-surface)); color: var(--color-ink-soft); font-size: 13px; font-weight: 600; animation: rise .45s var(--ease-out) both; }
-.heroBadge svg { color: var(--color-orange); fill: currentColor; }
+.heroBadge { height: 36px; gap: 8px; padding: 0 12px 0 5px; text-decoration: none; transition: border-color .15s ease, background-color .15s ease; }
+.heroBadge strong { color: var(--color-ink); font-weight: 700; }
+.heroBadge > svg { color: var(--color-orange-deep); transition: transform .2s var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .heroBadge:hover { border-color: var(--color-orange); } .heroBadge:hover > svg { transform: translateX(2px); } }
 .heroTitle { margin-top: 20px; color: var(--color-ink); font-size: clamp(40px, 5.7vw, 74px); font-weight: 750; letter-spacing: -.045em; line-height: 1.02; text-wrap: balance; }
 .heroTitle > span { display: block; animation: rise .6s var(--ease-out) both; }
 .heroTitle > span:nth-child(2) { animation-delay: .06s; }
@@ -311,7 +314,7 @@
   .heroInner { gap: 22px; }
   .heroTitle { font-size: clamp(36px, 10.2vw, 57px); }
   .heroLead { margin-top: 16px; font-size: 15.5px; line-height: 1.5; }
-  .heroBadge { height: 30px; font-size: 12.5px; }
+  .heroBadge { height: 34px; font-size: 12.5px; }
   .heroTitle { margin-top: 16px; }
   .heroActions .heroCta, .heroActions .heroGhost { flex: 1; height: 48px; padding-inline: 12px; font-size: 14px; }
   .heroFeatures { display: grid; gap: 10px; margin-top: 18px; font-size: 13.5px; }
@@ -453,8 +456,8 @@
   .heroCalc { position: relative; }
   .phoneStickers { position: absolute; z-index: 8; inset: 0; display: block; pointer-events: none; }
   .phoneStickers > * { position: absolute; }
-  .phoneStickers > :nth-child(1) { top: -14px; left: 2px; }
-  .phoneStickers > :nth-child(2) { top: -12px; right: 4px; }
+  .phoneStickers > :nth-child(1) { top: -30px; left: -12px; }
+  .phoneStickers > :nth-child(2) { top: -28px; right: 2px; }
   .phoneStickers > :nth-child(3) { right: 8px; bottom: -18px; }
-  .finalStickers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 8px; margin-bottom: 6px; }
+  .finalStickers { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-bottom: 10px; }
 }

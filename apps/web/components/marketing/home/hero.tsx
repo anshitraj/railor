@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Play, RefreshCw, ShieldCheck, Waypoints, Zap } from "lucide-react";
+import { ArrowRight, Play, RefreshCw, ShieldCheck, Waypoints } from "lucide-react";
 import { ProviderLogo } from "../../app/provider-logo";
+import { SealSticker, StampSticker } from "../die-cut-stickers";
+
+const BADGE_LOGOS = [["wise", "Wise"], ["remitly", "Remitly"], ["revolut", "Revolut"], ["western-union", "Western Union"]] as const;
 import { HeroGlobe } from "./hero-globe";
 import { ProviderMarquee } from "./provider-marquee";
 import styles from "./home.module.css";
@@ -14,7 +17,14 @@ export function HomeHero({ calculator, providerCount }: { calculator: React.Reac
         <div className={styles.heroInner}>
           <HeroGlobe />
           <div className={styles.heroIntro}>
-            <p className={styles.heroBadge}><Zap size={14} aria-hidden />Free transfer comparison</p>
+            {/* Proof, not a slogan: the real providers it compares, and how many. */}
+            <Link href="/providers" className={`${styles.heroBadge} press`}>
+              <span className={styles.logoStack} aria-hidden="true">
+                {BADGE_LOGOS.map(([slug, name]) => <ProviderLogo key={slug} slug={slug} name={name} size={20} loading="eager" />)}
+              </span>
+              <span><strong>{providerCount > 0 ? `${providerCount.toLocaleString("en-US")}+ providers` : "Every provider"}</strong> · free to compare</span>
+              <ArrowRight size={13} aria-hidden />
+            </Link>
             <h1 id="home-title" className={styles.heroTitle}>
               <span>Move money abroad.</span>
               <span>Keep <span className={styles.heroAccent}>more of it.</span></span>
@@ -41,11 +51,11 @@ export function HomeHero({ calculator, providerCount }: { calculator: React.Reac
               {calculator}
             </div>
             <div className={styles.phoneStickers} aria-hidden="true">
-              <span className="sticker" data-tone="green" style={{ "--tilt": "-8deg", "--delay": "1.05s" } as React.CSSProperties}>Free to compare</span>
-              <span className="sticker" data-tone="orange" style={{ "--tilt": "7deg", "--delay": "1.2s" } as React.CSSProperties}>No sign-up</span>
+              <SealSticker word="FREE" line="to compare" size={78} tilt={-12} delay={1.05} />
+              <StampSticker text="No sign-up" size={76} tilt={10} delay={1.2} />
               <span className={`sticker ${styles.logoSticker}`} style={{ "--tilt": "-4deg", "--delay": "1.35s" } as React.CSSProperties}>
                 <span className={styles.logoStack}>
-                  {[["wise", "Wise"], ["remitly", "Remitly"], ["revolut", "Revolut"], ["western-union", "Western Union"]].map(([slug, name]) => <ProviderLogo key={slug} slug={slug!} name={name!} size={22} />)}
+                  {BADGE_LOGOS.map(([slug, name]) => <ProviderLogo key={slug} slug={slug} name={name} size={22} />)}
                 </span>
                 {providerCount > 0 ? `${providerCount.toLocaleString("en-US")}+ providers` : "Every provider"}
               </span>

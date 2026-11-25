@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RouteSticker, SealSticker, TicketSticker } from "../die-cut-stickers";
 import { ArrowRight, Bot, Check, Code2, Package } from "lucide-react";
 import { DeveloperDemo } from "./developer-demo";
 import { LoopOnView } from "./loop-on-view";
@@ -180,9 +181,9 @@ export function FinalCta() {
             <span className="coin" data-metal="gold">£</span>
           </div>
           <div className={styles.finalStickers} aria-hidden="true">
-            <span className="sticker" data-tone="gold" style={{ "--tilt": "-9deg" } as React.CSSProperties}>Free</span>
-            <span className="sticker" style={{ "--tilt": "7deg" } as React.CSSProperties}>No account needed</span>
-            <span className="sticker" data-tone="ink" style={{ "--tilt": "-4deg" } as React.CSSProperties}>Source on every price</span>
+            <SealSticker word="FREE" line="always" size={70} tilt={-10} />
+            <RouteSticker from="US" to="IN" tilt={6} delay={0.12} />
+            <TicketSticker label="Every price" text="Source shown" tilt={-4} delay={0.24} />
           </div>
           <h2 id="final-title">Check before you send.</h2>
           <p>Enter two currencies and an amount to compare public prices.</p>

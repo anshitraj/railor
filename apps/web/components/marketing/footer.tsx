@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { RailorMark } from "../brand";
+import { HORIZON_ARCS, HORIZON_NODES, HORIZON_SIZE } from "./footer-horizon-data";
 import styles from "./footer.module.css";
 
 const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
@@ -46,9 +46,26 @@ export function MarketingFooter(_props: { counts?: unknown } = {}) {
           <Link href="/status" className={styles.status}><span aria-hidden />Service status<ArrowUpRight size={13} aria-hidden /></Link>
         </div>
       </div>
-      {/* The sign-off: Railor's rail running across the map, with the name set large over it. Decorative only. */}
+      {/* The sign-off: the dotted Earth rising under the page, money moving along Railor's busiest corridors, and the name set large over it. Decorative only. */}
       <div className={styles.scene} aria-hidden="true">
-        <Image className={styles.sceneImage} src="/images/railor-hero-route.png" alt="" fill sizes="100vw" quality={70} />
+        <div className={styles.planet}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a static decorative SVG; nothing to optimise */}
+          <img className={styles.planetDots} src="/images/footer-horizon.svg" alt="" width={HORIZON_SIZE.width} height={HORIZON_SIZE.height} loading="lazy" decoding="async" />
+          <svg className={styles.planetRoutes} viewBox={`0 0 ${HORIZON_SIZE.width} ${HORIZON_SIZE.height}`} preserveAspectRatio="xMidYMax slice" focusable="false">
+            {HORIZON_ARCS.map((arc, index) => (
+              <g key={`${arc.from}-${arc.to}`} style={{ "--route": index } as React.CSSProperties}>
+                <path className={styles.route} d={arc.d} pathLength={1} />
+                <path className={styles.comet} d={arc.d} pathLength={1} />
+              </g>
+            ))}
+            {HORIZON_NODES.map((node, index) => (
+              <g key={node.code} transform={`translate(${node.x} ${node.y})`} style={{ "--node": index } as React.CSSProperties}>
+                <circle className={styles.cityHalo} r="12" />
+                <circle className={styles.city} r="4.5" />
+              </g>
+            ))}
+          </svg>
+        </div>
         <p className={styles.wordmark}>
           {"Railor".split("").map((letter, index) => (
             <span key={index} style={{ "--l": index } as React.CSSProperties}>{letter}</span>
