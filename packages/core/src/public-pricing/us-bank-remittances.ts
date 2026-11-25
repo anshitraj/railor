@@ -311,11 +311,108 @@ async function xoomBankQuote(currency: Corridor, amount: number, fetcher: typeof
   }, now);
 }
 
+async function ofxIndiaPublicCalculator(amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  if (amount < 150) return null;
+  const source = "https://www.ofx.com/en-us/send-money/india/";
+  const endpoint = `https://api.ofx.com/PublicSite.ApiService/OFX/spotrate/Individual/USD/INR/${amount}`;
+  const response = await fetcher(endpoint, { signal: AbortSignal.timeout(6000), redirect: "error", headers: { Accept: "application/json" } });
+  if (!response.ok) return null;
+  const quote = z.object({
+    CustomerRate: z.number().finite().positive(),
+    CustomerAmount: z.number().finite().positive(),
+    Fee: z.number().finite().nonnegative(),
+    DeliveryCountry: z.literal("India"),
+  }).safeParse(await response.json());
+  if (!quote.success) return null;
+  const { CustomerRate: rate, CustomerAmount: received, Fee: fee } = quote.data;
+  // The API does not echo the send amount. Independently check the payout
+  // against the requested principal and the displayed four-decimal rate.
+  if (Math.abs(received - rate * amount) > 0.02 + amount * 0.00005) return null;
+  return {
+    ...baseRow(), providerSlug: "ofx", providerName: "OFX",
+    product: { id: "ofx:us-india-individual", label: "OFX · US personal transfer to India" },
+    rate, recipientAmount: received, feeAmount: fee, costComplete: false,
+    feeBreakdown: "OFX fee added to the transfer principal",
+    observedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 5 * 60_000).toISOString(),
+    missing: ["Rate and charges for your chosen funding method and account."],
+    notes: ["OFX’s US-to-India calculator returns an amount-specific customer rate and provider fee. Custom account rates and any third-party bank deductions are confirmed separately."],
+    source: { label: "OFX US-to-India public calculator", url: source },
+  };
+}
+
+const worldRemitCalculation = z.object({
+  data: z.object({ createCalculation: z.object({
+    errors: z.tuple([]),
+    calculation: z.object({
+      id: z.null(),
+      send: z.object({ currency: z.literal("USD"), amount: z.number().finite().positive() }),
+      receive: z.object({ currency: z.literal("INR"), amount: z.number().finite().positive() }),
+      rounding: z.object({ receiveRoundingSeed: z.number().finite().positive().max(1) }),
+      exchangeRate: z.object({ value: z.number().finite().positive(), crossedOutValue: z.null() }),
+      informativeSummary: z.object({
+        fee: z.object({ value: z.object({ amount: z.number().finite().nonnegative(), currency: z.literal("USD") }) }),
+        discount: z.null(),
+        appliedPromotions: z.union([z.null(), z.tuple([])]),
+        totalToPay: z.object({ amount: z.number().finite().positive() }),
+      }),
+    }),
+  }) }),
+});
+
+async function worldRemitIndiaPublicCalculator(amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  const source = "https://www.worldremit.com/en-us/india";
+  // This is the preview calculation used by the public country page.
+  // No recipient, customer or payment details are sent.
+  const query = `mutation createCalculation($amount: BigDecimal!, $sendCountry: CountryCode!, $sendCurrency: CurrencyCode!, $receiveCountry: CountryCode!, $receiveCurrency: CurrencyCode!) {
+    createCalculation(calculationInput: {
+      amount: $amount, type: SEND, send: { country: $sendCountry, currency: $sendCurrency },
+      receive: { country: $receiveCountry, currency: $receiveCurrency }, payOutMethodCode: "BNK", correspondentId: ""
+    }) {
+      calculation {
+        id send { currency amount } receive { currency amount } rounding { receiveRoundingSeed }
+        exchangeRate { value crossedOutValue }
+        informativeSummary {
+          fee { value { currency amount } } discount { value { currency amount } }
+          appliedPromotions totalToPay { amount }
+        }
+      }
+      errors { __typename }
+    }
+  }`;
+  const response = await fetcher("https://api.worldremit.com/graphql", {
+    method: "POST", signal: AbortSignal.timeout(6000), redirect: "error",
+    headers: { "Content-Type": "application/json", "x-wr-platform": "Web", "x-wr-requestid": crypto.randomUUID() },
+    body: JSON.stringify({ operationName: "createCalculation", query, variables: {
+      amount, sendCountry: "US", sendCurrency: "USD", receiveCountry: "IN", receiveCurrency: "INR",
+    } }),
+  });
+  if (!response.ok) return null;
+  const parsed = worldRemitCalculation.safeParse(await response.json());
+  if (!parsed.success) return null;
+  const quote = parsed.data.data.createCalculation.calculation;
+  const { receive, send, informativeSummary, exchangeRate, rounding } = quote;
+  const { fee, totalToPay } = informativeSummary;
+  if (send.amount !== amount || Math.abs(totalToPay.amount - amount - fee.value.amount) > 0.011
+    || Math.abs(receive.amount - amount * exchangeRate.value) > rounding.receiveRoundingSeed / 2 + 0.01) return null;
+  return {
+    ...baseRow(), providerSlug: "world-remit", providerName: "WorldRemit",
+    product: { id: "world-remit:us-india-deposit", label: "WorldRemit · deposit to an Indian bank" },
+    rate: exchangeRate.value, recipientAmount: receive.amount, feeAmount: fee.value.amount,
+    feeBreakdown: "Published preview fee added to the transfer principal",
+    costComplete: false, observedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 5 * 60_000).toISOString(),
+    missing: ["Final price for the payer’s funding method."],
+    notes: ["The calculator prices bank deposit to India before the payer chooses how to fund the transfer. Indian bank accounts must be personal accounts. https://www.worldremit.com/en-us/india/banks"],
+    source: { label: "WorldRemit US-to-India calculator", url: source },
+  };
+}
+
 export async function usBankRemittanceRows(currency: Corridor, amount: number, fetcher: typeof fetch, now: Date): Promise<PriceRow[]> {
   const rows = await Promise.allSettled([
     currency === "INR" ? asporaBankQuote("USD", amount, fetcher, now) : Promise.resolve(null),
     Object.hasOwn(remitlyCorridors, currency) ? remitlyBankQuote(currency as keyof typeof remitlyCorridors, amount, fetcher, now) : Promise.resolve(null),
     xoomBankQuote(currency, amount, fetcher, now),
+    currency === "INR" ? ofxIndiaPublicCalculator(amount, fetcher, now) : Promise.resolve(null),
+    currency === "INR" ? worldRemitIndiaPublicCalculator(amount, fetcher, now) : Promise.resolve(null),
   ]);
   return rows.flatMap(result => result.status === "fulfilled" && result.value ? [result.value] : []);
 }

@@ -91,7 +91,7 @@ describe("profile-aware price comparisons", () => {
     expect(connectedQuotes).toHaveBeenCalledOnce();
     expect(result.rows.find((r) => r.providerSlug === "wise" && r.basis === "live_public")).toMatchObject({ partial: true, totalCostPct: null, shortfall: null, profileAssessment: { status: "documented", priceApplicable: false } });
     expect(result.rows.find((r) => r.providerSlug === "market:remitly")).toMatchObject({ partial: true, shortfall: null, profileAssessment: { status: "unconfirmed" } });
-    expect(result.rows.find((r) => r.shortfall === 0)?.providerSlug).toBe("infinity");
+    expect(result.rows.find((r) => r.shortfall === 0)?.providerSlug).toBe("dashx");
   });
   it("does not give market estimates a best-price baseline when public sources fail", async () => {
     const onlyMarket: typeof fetch = async (url) => String(url).includes("/v4/comparisons") ? Response.json({ providers: [{ alias: "bank", name: "Bank", quotes: [{ receivedAmount: 100, fee: 0 }] }] }) : new Response("{}", { status: 503 });

@@ -176,7 +176,7 @@ export function FinalCta() {
             <span className="coin" data-metal="gold">£</span>
           </div>
           <h2 id="final-title">Check before you send.</h2>
-          <p>Two currencies and an amount is all it takes. Sign in free and every price is yours.</p>
+          <p>Enter two currencies and an amount to compare public prices.</p>
           <div className={styles.heroActions} style={{ marginTop: 6, justifyContent: "center", animation: "none" }}>
             <Link href="/#calculator" className={`${styles.btn} ${styles.btnPrimary} press`}>Compare prices now<ArrowRight size={17} aria-hidden /></Link>
             <Link href="/login?intent=start" className={`${styles.btn} ${styles.btnSecondary} press`}>Create a free account</Link>

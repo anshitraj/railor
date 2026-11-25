@@ -91,8 +91,9 @@ const evidence: Record<string, ProductEvidence | undefined> = {
     feeTax: { detail: "Salt advertises a 1.75% fee including GST. Confirm the active offer before relying on it.", url: salt },
   },
   dashx: {
-    receipt: { label: "FIRA advertised", detail: "DashX describes automatic FIRA documentation in its company profile. Ask DashX which receipts qualify and when the document becomes available.", url: "https://www.linkedin.com/company/dashxpayments" },
-    feeTax: { detail: "DashX publishes a 0.30% fee. Its calculator does not say whether GST is included.", url: "https://dashx.xyz/tools/currency-converter" },
+    delivery: { label: "Within 24h after partner-bank receipt", detail: "DashX advertises settlement within 24 hours on business days, starting when its partner bank receives the payment.", url: "https://dashx.xyz/pricing" },
+    receipt: { label: "Free eFIRA for fiat receipts", detail: "DashX says it provides a free eFIRA on each fiat collection.", url: "https://dashx.xyz/compare/dashx-vs-infinity" },
+    feeTax: { detail: "DashX states that it adds no GST to its published 0.35% platform fee.", url: "https://dashx.xyz/compare/dashx-vs-infinity" },
   },
   payzoll: {
     receipt: { label: "FIRA/FIRC available", detail: "PayZoll advertises FIRA/FIRC for eligible international receipts. Check the document issued for this payment.", url: payzoll },

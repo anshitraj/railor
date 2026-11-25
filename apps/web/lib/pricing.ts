@@ -20,7 +20,7 @@ const ACCOUNT_PRICED = [
   { slug: "xflow", name: "Xflow" },
   { slug: "dlocal", name: "dLocal" },
 ];
-const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora", "sendwave", "lemfi", "careem-pay"]);
+const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora", "ofx", "world-remit", "sendwave", "lemfi", "careem-pay"]);
 
 /**
  * Price check for a workspace: its own connected accounts first (production
@@ -55,7 +55,7 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
       if (checks.pending.size) after(() => waitForWebChecks());
       return checks;
     },
-    platformQuotes: async (req) => getPlatformQuoteChecks({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount }),
+    platformQuotes: organizationId ? async (req) => getPlatformQuoteChecks({ sourceAsset: req.sourceCurrency, destinationCurrency: req.destinationCurrency, destinationCountry: req.destinationCountry, amount: req.amount }) : undefined,
     connectable: ACCOUNT_PRICED.filter((p) => input.context?.direction !== "receive" || p.slug === "xflow")
       .map((p) => ({ slug: p.slug, name: nameOf(p.slug), connected: connected.has(p.slug) })),
     connectedQuotes: async (req) =>

@@ -50,11 +50,11 @@ describe("published comparison integrity", () => {
   });
   it("ranks a cheaper verified standard model instead of pinning Skydo as the winner", async () => {
     const result = await comparePrices(input, { fetcher, now });
-    expect(result.rows.find((row) => row.shortfall === 0)?.providerSlug).toBe("infinity");
+    expect(result.rows.find((row) => row.shortfall === 0)?.providerSlug).toBe("dashx");
     expect(result.rows.find((row) => row.providerSlug === "infinity")).toMatchObject({ feeAmount: 5, recipientAmount: 89550, partial: false });
     expect(result.rows.find((row) => row.providerSlug === "payzoll")).toMatchObject({ feeAmount: 10, partial: true, shortfall: null });
     expect(result.rows.find((row) => row.providerSlug === "xflow")?.profileAssessment?.status).toBe("documented");
-    expect(result.rows.find((row) => row.providerSlug === "dashx")).toMatchObject({ feeAmount: 3, partial: true, shortfall: null });
+    expect(result.rows.find((row) => row.providerSlug === "dashx")).toMatchObject({ feeAmount: 3.5, recipientAmount: 89685, partial: false, shortfall: 0, taxIncluded: true });
   });
   it("attaches scoped Infinity delivery, KYC, fee tax and remittance proof", async () => {
     const business = { ...input.context!, profile: "business" as const, paymentMethod: "local_bank" as const };

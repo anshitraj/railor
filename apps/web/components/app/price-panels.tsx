@@ -17,8 +17,14 @@ const TOOLS = {
   ],
 };
 
-export function PriceCheckHeader({ mode }: { mode: "app" | "public" }) {
-  return <header className={styles.pageHeader}><div><h1>Compare prices</h1><p>See what arrives, what it costs and where every price comes from.</p></div><nav aria-label="Price tools">{TOOLS[mode].slice(1).map((tool) => <Link key={tool.href} href={tool.href}><tool.icon size={13} />{tool.label}</Link>)}</nav></header>;
+export function PriceCheckHeader({ mode, guest = false }: { mode: "app" | "public"; guest?: boolean }) {
+  return <header className={styles.pageHeader}>
+    <div><h1>{guest ? "Convert currencies" : "Compare prices"}</h1><p>See what arrives, what it costs and where every price comes from.</p></div>
+    <nav aria-label="Price tools">
+      {TOOLS[mode].slice(1).map(tool => <Link key={tool.href} href={tool.href}><tool.icon size={13} aria-hidden />{tool.label}</Link>)}
+      {guest ? <Link href="/login">Sign in to workspace <ArrowRight size={13} aria-hidden /></Link> : null}
+    </nav>
+  </header>;
 }
 
 /** Bank money and stablecoins are compared differently, so each has its own view. */

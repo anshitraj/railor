@@ -15,7 +15,7 @@ export interface DirectoryProvider {
   countryCount: number; currencyCount: number; customerTypes: string[];
   hasApi: boolean; hasSandbox: boolean; hasWebhooks: boolean;
   headquartersCountry: string | null; lastVerifiedAt: string | null;
-  profileAvailable?: boolean; sourceUrl?: string; pricingSummary?: string;
+  profileAvailable?: boolean; sourceUrl?: string; sourceLabel?: string; pricingSummary?: string;
 }
 
 const PRODUCTS: Record<string, string> = {
@@ -110,7 +110,7 @@ export function ProviderDirectory({ providers, basePath = "/app/providers" }: { 
 
     {filtered.length ? <div className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
       <div aria-hidden className="hidden grid-cols-[minmax(0,1fr)_150px_130px_115px] gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-5 py-3 text-[12px] font-medium text-[var(--color-faint)] lg:grid"><span>Provider</span><span>Mapped coverage</span><span>Developers</span><span className="text-right">Explore</span></div>
-      <ul aria-label="Provider directory" className="divide-y divide-[var(--color-line)]">{shown.map(provider => <ProviderRow key={provider.slug} provider={provider} href={provider.profileAvailable === false ? `/docs/pricing#provider-${provider.slug}` : `${basePath}/${provider.slug}`} open={expanded === provider.slug} onToggle={() => setExpanded(value => value === provider.slug ? null : provider.slug)} />)}</ul>
+      <ul aria-label="Provider directory" className="divide-y divide-[var(--color-line)]">{shown.map(provider => <ProviderRow key={provider.slug} provider={provider} href={provider.profileAvailable === false ? provider.sourceLabel && provider.sourceUrl ? provider.sourceUrl : `/docs/pricing#provider-${provider.slug}` : `${basePath}/${provider.slug}`} open={expanded === provider.slug} onToggle={() => setExpanded(value => value === provider.slug ? null : provider.slug)} />)}</ul>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-line)] px-4 py-2 text-xs text-[var(--color-muted)]"><span>Showing {shown.length} of {filtered.length}</span>{shown.length < filtered.length && <button type="button" onClick={() => setLimit(value => value + 24)} className="flex min-h-11 items-center gap-2 font-semibold text-[var(--color-ink)]">Show more providers<ChevronDown size={14} /></button>}{limit > 12 && <button type="button" onClick={() => setLimit(12)} className="min-h-11">Show fewer</button>}</div>
     </div> : <EmptyState what="No matching providers" why="Try another name or remove a filter." actionLabel="Clear filters" onAction={clearAll} />}
   </div>;
@@ -139,7 +139,7 @@ function ProviderRow({ provider: p, href, open, onToggle }: { provider: Director
         {p.countryCount > 0 && <span>{p.countryCount} mapped countries · {p.currencyCount} currencies</span>}
         {p.hasApi && <span className="inline-flex items-center gap-1.5"><Code2 size={13} />API</span>}{p.hasSandbox && <span className="inline-flex items-center gap-1.5"><FlaskConical size={13} />Sandbox</span>}{p.hasWebhooks && <span className="inline-flex items-center gap-1.5"><Webhook size={13} />Webhooks</span>}
         {p.profileAvailable === false ? <span>Source research · route support needs confirmation</span> : <Freshness date={p.lastVerifiedAt} />}
-        {p.sourceUrl && <a href={p.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-8 items-center gap-1 text-[var(--color-orange-deep)]">Official pricing source<ArrowUpRight size={11} /></a>}
+        {p.sourceUrl && <a href={p.sourceUrl} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-8 items-center gap-1 text-[var(--color-orange-deep)]">{p.sourceLabel ?? "Official pricing source"}<ArrowUpRight size={11} /></a>}
       </div>
     </motion.div>}</AnimatePresence>
   </li>;

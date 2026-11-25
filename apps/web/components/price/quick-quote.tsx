@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowDownUp, ArrowRight, CircleAlert, FileUp, LockKeyhole, RefreshCw } from "lucide-react";
+import { ArrowDownUp, ArrowRight, CircleAlert, FileUp, RefreshCw } from "lucide-react";
 import type { CustomerContext, PriceCheckResult, PriceRow } from "@railor/core";
 import { Flag, type PickerOption } from "@railor/ui";
 import { ProviderLogo } from "../app/provider-logo";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
-import { BASIS_LABEL, priceView } from "../../lib/price-view";
-import { isLockedPriceCheck, type LockedPriceCheck } from "../../lib/price-lock";
+import { priceView } from "../../lib/price-view";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import { pricingSourceLabel } from "../../lib/price-display";
 import { defaultPriceCountry } from "../../lib/price-destination";
@@ -38,10 +37,9 @@ export interface QuickQuoteProps {
   variant: "hero" | "app";
   currencies: PickerOption[];
   initial: { from: string; to: string; amount: number; context: CustomerContext };
-  initialResult: PriceCheckResult | LockedPriceCheck | null;
+  initialResult: PriceCheckResult | null;
   initialError?: string;
-  /** Signed out: the calculator works, but prices stay hidden (and are never sent) until sign-in. */
-  locked?: boolean;
+  guest?: boolean;
   /** Where "compare all" goes: the public page or the workspace page. */
   compareBase: string;
   /** The workspace's own country, when known; otherwise India-receiving rules apply as on the price page. */
@@ -107,7 +105,7 @@ function ago(ms: number) {
   return s < 3 ? "just now" : s < 60 ? `${s}s ago` : `${Math.round(s / 60)} min ago`;
 }
 
-export function QuickQuote({ variant, currencies, initial, initialResult, initialError, compareBase, entityCountry, locked = false }: QuickQuoteProps) {
+export function QuickQuote({ variant, currencies, initial, initialResult, initialError, compareBase, entityCountry, guest = false }: QuickQuoteProps) {
   const reduce = useReducedMotion();
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -128,9 +126,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const valid = Boolean(from && to && from !== to && amount > 0);
   const cardComingSoon = context.direction === "receive" && context.paymentMethod === "card";
   const request = useMemo(() => ({ from, to, amount, market: true, context }), [from, to, amount, context]);
-  const matching = priceResponseMatches(response, request) ? response : null;
-  const result = matching && !isLockedPriceCheck(matching) ? matching : null;
-  const preview = matching && isLockedPriceCheck(matching) ? matching : null;
+  const result = priceResponseMatches(response, request) ? response : null;
   const { quotes, estimates, excluded, best } = priceView(result, now);
   // Live and published prices rank first; consumer estimates are listed after them and never called "best".
   const priced = [...quotes, ...estimates].filter((row) => row.recipientAmount !== null);
@@ -152,7 +148,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const compareHref = `${compareBase}?${query}`;
   // Optional: read the invoice instead of typing. Guests go through the free sign-up first.
   const invoiceTarget = `/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`;
-  const invoiceHref = locked ? `/login?intent=start&next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
+  const invoiceHref = guest ? `/login?intent=start&next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
 
   const load = useCallback(async () => {
     if (!valid || cardComingSoon) return;
@@ -163,7 +159,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
     const q = new URLSearchParams({ from, to, amount: String(amount), market: "1", ...contextParams(context) });
     try {
       const res = await fetch(`/api/prices?${q}`, { signal: ctl.signal, cache: "no-store" });
-      const body = (await res.json().catch(() => ({}))) as (PriceCheckResult | LockedPriceCheck) & { error?: string };
+      const body = (await res.json().catch(() => ({}))) as (PriceCheckResult) & { error?: string };
       if (controller.current !== ctl || ctl.signal.aborted) return;
       if (!res.ok) throw new Error(body.error ?? "Prices couldn’t load right now.");
       setResponse(body);
@@ -221,8 +217,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
 
   const activeProfile: Profile = context.profile === "sole_proprietor" ? "freelancer" : (context.profile as Profile);
   const amountDisplay = focused ? amountText : amount > 0 ? amount.toLocaleString("en-US", { maximumFractionDigits: 2 }) : amountText;
-  const pending = loading || (valid && !result && !preview && !error);
-  const signInHref = `/login?intent=start&next=${encodeURIComponent(compareHref)}`;
+  const pending = loading || (valid && !result && !error);
 
   return (
     <div className={styles.quote} data-variant={variant}>
@@ -230,7 +225,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
         <div className={styles.stickers} aria-hidden>
           {toOption?.flag ? <span className="sticker-flag" style={{ "--tilt": "9deg", "--delay": ".55s", top: -18, right: 26 } as React.CSSProperties}><Flag code={toOption.flag} size={44} round /></span> : null}
           {fromOption?.flag ? <span className="sticker-flag" style={{ "--tilt": "-10deg", "--delay": ".45s", top: 92, left: -20 } as React.CSSProperties}><Flag code={fromOption.flag} size={36} round /></span> : null}
-          {!locked && spread >= 1 ? (
+          {spread >= 1 ? (
             <span className="sticker" data-tone="gold" style={{ "--tilt": "-4deg", "--delay": ".8s", bottom: -14, left: 34 } as React.CSSProperties}>
               Prices differ by up to {money(spread, 0)} {to}
             </span>
@@ -270,7 +265,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
               <Link href={invoiceHref} prefetch={false} className={`${styles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
                 <FileUp size={14} aria-hidden />
                 Upload invoice
-                {locked ? <span className={styles.invoiceTag}>Free account</span> : null}
+                {guest ? <span className={styles.invoiceTag}>Free account</span> : null}
               </Link>
             ) : null}
           </div>
@@ -313,20 +308,13 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           <div className={styles.field} data-output>
             <span className={styles.fieldLabel}>{topIsEstimate ? "Arrives (estimate)" : "Arrives"}</span>
             <div className={styles.fieldRow}>
-              {locked ? (
-                <Link href={signInHref} className={styles.lockedAmount} aria-label="Sign in to see how much arrives">
-                  <span aria-hidden className={styles.blurred}>00,000.00</span>
-                  <span className={styles.lockedBadge}><LockKeyhole size={13} aria-hidden />Sign in to see</span>
-                </Link>
-              ) : (
-                <output aria-live="polite" className={styles.amount} data-pending={pending || undefined}>
-                  {receive === null ? (pending ? "…" : "—") : money(receive)}
-                </output>
-              )}
+              <output aria-live="polite" className={styles.amount} data-pending={pending || undefined}>
+                {receive === null ? (pending ? "…" : "—") : money(receive)}
+              </output>
               <CurrencyPicker label="Arriving currency" value={to} options={currencies} onChange={pickTo} />
             </div>
             <p className={styles.via}>
-              {locked ? <>Free account · see who’s cheapest, the fees and when it arrives</> : top ? (
+              {top ? (
                 <>
                   via <strong>{top.providerName.split(" · ")[0]}</strong>
                   {top.feeAmount !== null ? <> · fee {money(top.feeAmount)} {top.feeCurrency ?? ""}</> : null}
@@ -346,27 +334,6 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </div>
         ) : !valid ? (
           <p className={styles.hint}>{from === to ? "Pick two different currencies." : "Enter an amount above zero."}</p>
-        ) : locked ? (
-          <div className={styles.ranking}>
-            <p className={styles.rankingTitle}>{preview ? `${preview.providerCount} ${preview.providerCount === 1 ? "price" : "prices"} found for ${activeProfile === "personal" ? "personal transfers" : activeProfile === "freelancer" ? "freelancers" : "businesses"}` : "Checking providers…"}</p>
-            <div className={styles.lockedList}>
-              <ol className={styles.rows} aria-hidden>
-                {(preview?.providers.length ? preview.providers.slice(0, 3) : [null, null, null]).map((provider, index) => (
-                  <li key={provider?.providerSlug ?? index} className={styles.row}>
-                    {provider ? <ProviderLogo slug={provider.providerSlug} name={provider.providerName} src={provider.logoUrl} size={30} /> : <span className={styles.logoGhost} />}
-                    <span className={styles.rowName}><strong>{provider?.providerName ?? "Provider"}</strong><small className={styles.blurred}>{provider ? BASIS_LABEL[provider.basis] : "Public quote"}</small></span>
-                    <span className={styles.rowAmount}><strong className={styles.blurred}>00,000.00</strong><small className={styles.blurred}>fee 00.00</small></span>
-                  </li>
-                ))}
-              </ol>
-              <div className={styles.lockOverlay}>
-                <span className={styles.lockIcon}><LockKeyhole size={18} aria-hidden /></span>
-                <strong>Sign in to see live prices</strong>
-                <span>Free account · no card needed · takes 30 seconds</span>
-              </div>
-            </div>
-            {preview?.hiddenCount ? <p className={styles.hidden}>{preview.hiddenCount} more {preview.hiddenCount === 1 ? "option doesn’t" : "options don’t"} serve this profile.</p> : null}
-          </div>
         ) : (
           <div className={styles.ranking}>
             <p className={styles.rankingTitle}>
@@ -424,22 +391,13 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </div>
         )}
 
-        {locked ? (
-          <Link href={signInHref} className={`${styles.compare} press`}>
-            <LockKeyhole size={16} aria-hidden />
-            {preview?.providerCount ? `Sign in to see all ${preview.providerCount} prices` : "Sign in to see prices"}
-          </Link>
-        ) : (
-          <Link href={compareHref} className={`${styles.compare} press`} aria-disabled={!valid || undefined} onClick={(event) => { if (!valid) event.preventDefault(); }}>
-            {options.length > 3 ? `Compare all ${options.length} options` : "See the full comparison"}
-            <ArrowRight size={17} aria-hidden />
-          </Link>
-        )}
+        <Link href={compareHref} className={`${styles.compare} press`} aria-disabled={!valid || undefined} onClick={(event) => { if (!valid) event.preventDefault(); }}>
+          {options.length > 3 ? `Compare all ${options.length} options` : "See the full comparison"}
+          <ArrowRight size={17} aria-hidden />
+        </Link>
         <p className={styles.footnote}>
-          {locked ? <>Already have an account? <Link href={`/login?next=${encodeURIComponent(compareHref)}`} className={styles.footLink}>Sign in</Link>. Every price shows its source.</> : <>
-            {midRate ? <>Mid-market: 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}. </> : null}
-            Every price shows its source. Confirm the final amount with the provider.
-          </>}
+          {midRate ? <>Mid-market: 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}. </> : null}
+          Every price shows its source. Confirm the final amount with the provider.
         </p>
         </>}
       </div>

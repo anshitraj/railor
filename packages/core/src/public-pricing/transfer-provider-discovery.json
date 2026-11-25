@@ -1,0 +1,306 @@
+{
+  "reviewedAt": "2026-11-24",
+  "sourceUrl": "https://moneytransfers.com/companies/",
+  "providers": [
+    {
+      "slug": "a-place-in-the-sun-currency",
+      "name": "A Place in the Sun Currency",
+      "website": "https://aplaceinthesuncurrency.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "atlantic-money",
+      "name": "Atlantic Money",
+      "website": "https://atlantic.money",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "aussie-forex",
+      "name": "Aussie Forex & Finance",
+      "website": "https://aussieforex.com.au/",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "b-sharpe",
+      "name": "b-sharpe",
+      "website": "https://www.b-sharpe.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "bancoli",
+      "name": "Bancoli",
+      "website": "https://bancoli.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "bcremit",
+      "name": "BCRemit",
+      "website": "https://beta.bcremit.ph/faqs",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "bookmyforex",
+      "name": "BookMyForex",
+      "website": "https://www.bookmyforex.com/money-transfer/",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "boss-money",
+      "name": "BOSS Money",
+      "website": "https://www.bossrevolution.com/en-us/services/money-transfer",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "cambridge-currencies",
+      "name": "Cambridge Currencies",
+      "website": "https://www.cambridgecurrencies.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "caribe-express",
+      "name": "Caribe Express",
+      "website": "https://www.caribeexpress.com.do",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "caxton",
+      "name": "Caxton",
+      "website": "https://www.caxton.io",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currencies-direct",
+      "name": "Currencies Direct",
+      "website": "https://www.currenciesdirect.com/en-gb",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currency-solutions",
+      "name": "Currency Solutions",
+      "website": "https://www.currencysolutions.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currency-transfer",
+      "name": "CurrencyTransfer",
+      "website": "https://www.currencytransfer.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currencyfair",
+      "name": "CurrencyFair",
+      "website": "https://www.currencyfair.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currencyflow",
+      "name": "Currencyflow",
+      "website": "https://currencyflow.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "currenxie",
+      "name": "Currenxie",
+      "website": "https://www.currenxie.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "dahabshiil",
+      "name": "Dahabshiil",
+      "website": "https://www.dahabshiil.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "equals-money",
+      "name": "Equals Money",
+      "website": "https://equalsmoney.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "fairfx",
+      "name": "FairFX",
+      "website": "https://www.fairfx.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "felix-pago",
+      "name": "Félix Pago",
+      "website": "https://www.felixpago.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "fiberpay",
+      "name": "Fiberpay",
+      "website": "https://fiberpay.com/",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "ifx-payments",
+      "name": "IFX Payments",
+      "website": "https://www.ifxpayments.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "kabayan-remit",
+      "name": "Kabayan Remit",
+      "website": "https://www.kabayanremit.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "key-currency",
+      "name": "Key Currency",
+      "website": "https://www.keycurrency.co.uk",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "lumon",
+      "name": "Lumon",
+      "website": "https://www.lumonpay.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "moneycorp",
+      "name": "Moneycorp",
+      "website": "https://www.moneycorp.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "multipass",
+      "name": "MultiPass",
+      "website": "https://multipass.co",
+      "category": "Business payments"
+    },
+    {
+      "slug": "opal-transfer",
+      "name": "Opal Transfer",
+      "website": "https://www.opaltransfer.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "orbitremit",
+      "name": "OrbitRemit",
+      "website": "https://www.orbitremit.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "paga",
+      "name": "Paga",
+      "website": "https://www.mypaga.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "pangea",
+      "name": "Pangea Money Transfer",
+      "website": "https://pangeamoneytransfer.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "passto",
+      "name": "PassTo",
+      "website": "https://www.passto.co.uk",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "paysend",
+      "name": "Paysend",
+      "website": "https://paysend.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "profee",
+      "name": "Profee",
+      "website": "https://www.profee.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "regency-fx",
+      "name": "Regency FX",
+      "website": "https://www.regencyfx.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "ria",
+      "name": "Ria Money Transfer",
+      "website": "https://www.riamoneytransfer.com/en-in/",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "sling-money",
+      "name": "Morse (formerly Sling Money)",
+      "website": "https://morsemoney.com/",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "smart-currency-exchange",
+      "name": "Smart Currency Exchange",
+      "website": "https://www.smartcurrencyexchange.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "sokin",
+      "name": "Sokin",
+      "website": "https://sokin.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "statrys",
+      "name": "Statrys",
+      "website": "https://statrys.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "sterling-fx",
+      "name": "Sterling FX",
+      "website": "https://www.sterlingfx.co.uk",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "talkremit",
+      "name": "TalkRemit",
+      "website": "https://www.talkremit.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "torfx",
+      "name": "TorFX",
+      "website": "https://www.torfx.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "transfergo",
+      "name": "TransferGo",
+      "website": "https://www.transfergo.com",
+      "category": "Money transfer"
+    },
+    {
+      "slug": "transfermate",
+      "name": "TransferMate",
+      "website": "https://www.transfermate.com",
+      "category": "Business payments"
+    },
+    {
+      "slug": "verto",
+      "name": "Verto",
+      "website": "https://verto.co/",
+      "category": "Business payments"
+    },
+    {
+      "slug": "vfx-financial",
+      "name": "VFX Financial",
+      "website": "https://vfxfinancial.com/regulatory-information/uk",
+      "category": "Business payments"
+    },
+    {
+      "slug": "worldfirst",
+      "name": "WorldFirst",
+      "website": "https://www.worldfirst.com/global/product/pay/",
+      "category": "Business payments"
+    },
+    {
+      "slug": "xe",
+      "name": "Xe",
+      "website": "https://www.xe.com/send-money/",
+      "category": "Money transfer"
+    }
+  ]
+}

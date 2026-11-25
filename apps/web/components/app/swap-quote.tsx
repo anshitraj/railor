@@ -146,6 +146,7 @@ function ago(ms: number) {
 
 export interface SwapQuoteProps {
   mode: "app" | "public";
+  guest?: boolean;
   basePath: string;
   currencies: PickerOption[];
   initial: { from: string; to: string; amount: number; market: boolean; context: CustomerContext; destinationCountry?: string };
@@ -160,7 +161,7 @@ export interface SwapQuoteProps {
   initialProvider?: string;
 }
 
-export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider }: SwapQuoteProps) {
+export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider, guest = false }: SwapQuoteProps) {
   const [saved, setSaved] = useState<SavedPair[]>(savedPairs ?? []);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -186,6 +187,10 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const firstRun = useRef(true);
 
   const amount = Number(amountText);
+  const invoiceTarget = `/app/freelancer?${new URLSearchParams({
+    from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank",
+  })}#invoice`;
+  const invoiceHref = guest ? `/login?next=${encodeURIComponent(invoiceTarget)}` : invoiceTarget;
   const valid = Boolean(from && to && from !== to && amount > 0);
   const cardComingSoon = context.direction === "receive" && context.paymentMethod === "card";
   const result = priceResponseMatches(response, { from, to, amount, market, context, destinationCountry }) ? response : null;
@@ -366,7 +371,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   label={context.profile === "personal" ? "Sender pays by" : "Client pays by"}
                 />
                 {context.profile !== "personal" && !cardComingSoon ? (
-                  <Link prefetch={false} href={`/app/freelancer?${new URLSearchParams({ from: "prices", amount: amount > 0 ? String(amount) : "", currency: from, method: context.paymentMethod ?? "local_bank" })}#invoice`} className={`${priceStyles.invoiceLink} press`} title="Optional. Railor reads the amount, currency and client from your invoice; you review it before anything is saved.">
+                  <Link prefetch={false} href={invoiceHref} className={`${priceStyles.invoiceLink} press`} title={guest ? "Sign in to upload an invoice" : "Railor reads the amount, currency and client from your invoice. You review it before anything is saved."}>
                     <FileUp size={14} aria-hidden />Upload invoice
                   </Link>
                 ) : null}

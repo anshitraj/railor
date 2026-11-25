@@ -18,7 +18,6 @@ import { loadGuideDestinations } from "../lib/guides/load";
 import { QuickQuote, QuickQuoteSkeleton } from "../components/price/quick-quote";
 import { loadPricePage } from "../lib/pricing";
 import { getSession } from "../lib/auth";
-import { lockPriceCheck } from "../lib/price-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -31,16 +30,14 @@ async function HeroQuote({ params }: { params: Record<string, string | undefined
     loadPricePage({ from: params.from, to: params.to, amount: params.amount ?? "1000" }, null, null, profile),
     getSession(),
   ]);
-  // Prices are for signed-in accounts: a visitor sees who was checked, never the numbers.
-  const locked = !session;
   return (
     <QuickQuote
       variant="hero"
       compareBase="/prices"
-      locked={locked}
+      guest={!session}
       currencies={page.currencies}
       initial={{ from: page.initial.from, to: page.initial.to, amount: page.initial.amount, context: page.initial.context }}
-      initialResult={page.result && locked ? lockPriceCheck(page.result) : page.result}
+      initialResult={page.result}
       initialError={page.error}
     />
   );

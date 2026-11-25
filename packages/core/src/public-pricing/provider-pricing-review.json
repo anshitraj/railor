@@ -3,6 +3,62 @@
   "method": "The initial audit used Parallel.ai (max_age_seconds=86400, stale-cache fallback disabled), with independent official web-reader and calculator checks. Later reviews use official pricing pages and product documentation. Each record identifies its retrieval method and date. Summaries describe published components and limitations. The November 19 review records source-backed findings for every directory entry and labels figures by product. A fee, minimum or announced promotion is not a payout price.",
   "providers": [
     {
+      "slug": "xe",
+      "name": "Xe",
+      "sourceUrl": "https://www.xe.com/en-us/send-money/send-money-to-india/",
+      "checkedAt": "2026-11-25",
+      "status": "readable",
+      "method": "official_pricing_review",
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-25",
+        "label": "Published transfer fees",
+        "reason": "Xe advertises a USD 1 fee below USD 1,000 and zero above USD 1,000 for US-to-India transfers, with charges dependent on the funding method. The page does not resolve the exact threshold or supply an amount-specific bank-funded quote.",
+        "url": "https://www.xe.com/en-us/send-money/send-money-to-india/"
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "origin": "US",
+          "to": "INR",
+          "label": "Published fee tiers",
+          "reason": "Xe publishes US-to-India fee tiers. Confirm the transfer rate, funding method and exact fee at checkout.",
+          "feeHighlight": "USD 1 below USD 1,000; USD 0 above, subject to funding method",
+          "sources": [
+            { "label": "Xe US-to-India fees and delivery", "url": "https://www.xe.com/en-us/send-money/send-money-to-india/" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "ria",
+      "name": "Ria Money Transfer",
+      "sourceUrl": "https://www.riamoneytransfer.com/en-us/send-money-to-india/",
+      "checkedAt": "2026-11-25",
+      "status": "readable",
+      "method": "official_pricing_review",
+      "summary": null,
+      "pricingReview": {
+        "reviewedOn": "2026-11-25",
+        "label": "Published transfer conditions",
+        "reason": "Ria’s send-to-India calculator varies the price by funding method, payout method and first-transfer eligibility.",
+        "url": "https://www.riamoneytransfer.com/en-us/send-money-to-india/"
+      },
+      "routeNotes": [
+        {
+          "from": "USD",
+          "origin": "US",
+          "to": "INR",
+          "label": "First-transfer terms published",
+          "reason": "The HELLORIA offer applies to eligible US customers’ first transfers of USD 50 or more. The published offer expires December 31, 2026. Repeat-transfer pricing depends on the selected amount and methods.",
+          "sources": [
+            { "label": "Ria first-transfer terms", "url": "https://app3.riamoneytransfer.com/en-us/promo/" },
+            { "label": "Ria US-to-India calculator", "url": "https://www.riamoneytransfer.com/en-us/send-money-to-india/" }
+          ]
+        }
+      ]
+    },
+    {
       "slug": "1money",
       "name": "1Money",
       "sourceUrl": "https://www.1money.com/pricing",
@@ -727,17 +783,17 @@
     {
       "slug": "dashx",
       "name": "DashX",
-      "sourceUrl": "https://dashx.xyz/tools/currency-converter",
-      "checkedAt": "2026-11-19",
+      "sourceUrl": "https://dashx.xyz/pricing",
+      "checkedAt": "2026-11-25",
       "status": "readable",
       "method": "official_pricing_review",
-      "summary": "The calculator advertises a flat 0.30% platform fee with no FX markup. The public figure does not specify GST treatment.",
+      "summary": "DashX lists a 0.35% flat fiat collection fee. Its November 23 comparison says no GST is added to that fee and lists a free eFIRA for fiat receipts.",
       "pricingReview": {
-        "reviewedOn": "2026-11-19",
+        "reviewedOn": "2026-11-25",
         "label": "India collection fee published",
-        "reason": "DashX advertises its flat fee on the converter. GST inclusion and the executable account rate require confirmation.",
-        "url": "https://dashx.xyz/tools/currency-converter",
-        "feeHighlight": "0.30% advertised collection fee"
+        "reason": "The current pricing page and dated November 23 comparison agree on 0.35%. A lower rate still appears on the provider’s older currency converter.",
+        "url": "https://dashx.xyz/compare/dashx-vs-infinity",
+        "feeHighlight": "0.35% fiat fee, no added GST"
       }
     },
     {

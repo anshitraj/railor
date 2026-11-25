@@ -3,16 +3,19 @@ import { loadProviderSummaries, remittanceProviderDirectory, remittanceSurvey } 
 import { ProviderDirectory } from "../../../components/app/provider-directory";
 import { SurveyProviderDirectory } from "../../../components/app/survey-provider-directory";
 import { FeaturedProviders } from "../../../components/marketing/featured-providers";
+import { discoveredTransferDirectory } from "../../../lib/transfer-provider-discovery";
 
 export const metadata = { title: "Providers" };
 export const dynamic = "force-dynamic";
 
 export default async function PublicProvidersPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const infrastructure = (await searchParams).view === "infrastructure";
+  const { view } = await searchParams;
+  const infrastructure = view === "infrastructure";
+  const discovery = view === "directory";
   // Different sources: a dated consumer fee survey and Railor's verified
   // infrastructure graph. A survey entry does not imply route support.
   const providers = infrastructure ? (await loadProviderSummaries()).filter((p) => !p.isDemo) : [];
-  const survey = infrastructure ? null : remittanceSurvey({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 });
+  const survey = infrastructure || discovery ? null : remittanceSurvey({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 });
 
   return (
     <div className="space-y-10">
@@ -22,12 +25,14 @@ export default async function PublicProvidersPage({ searchParams }: { searchPara
           <p className="mt-3 text-[16px] leading-relaxed text-[var(--color-muted)]">
             {infrastructure
               ? "The payment infrastructure Railor maps for businesses: what each provider offers, where, and for whom — with sources."
+              : discovery ? "Browse money transfer and business payment providers found in public research."
               : "Who each provider is for and what it charges. Start with the popular ones, or search every service in the global fee survey."}
           </p>
         </div>
-        <nav aria-label="Provider catalogs" className="flex gap-1 rounded-full bg-[var(--color-surface)] p-1 shadow-[inset_0_0_0_1px_var(--color-line)]">
-          <Link href="/providers" aria-current={!infrastructure ? "page" : undefined} className={`inline-flex h-10 items-center rounded-full px-4 text-[14px] font-semibold ${!infrastructure ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"}`}>Money transfer</Link>
+        <nav aria-label="Provider catalogs" className="flex flex-wrap gap-1 rounded-2xl bg-[var(--color-surface)] p-1 shadow-[inset_0_0_0_1px_var(--color-line)]">
+          <Link href="/providers" aria-current={survey ? "page" : undefined} className={`inline-flex h-10 items-center rounded-full px-4 text-[14px] font-semibold ${survey ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"}`}>Money transfer</Link>
           <Link href="/providers?view=infrastructure" aria-current={infrastructure ? "page" : undefined} className={`inline-flex h-10 items-center rounded-full px-4 text-[14px] font-semibold ${infrastructure ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"}`}>Business infrastructure</Link>
+          <Link href="/providers?view=directory" aria-current={discovery ? "page" : undefined} className={`inline-flex h-10 items-center rounded-full px-4 text-[14px] font-semibold ${discovery ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"}`}>Provider discovery</Link>
         </nav>
       </header>
 
@@ -49,7 +54,7 @@ export default async function PublicProvidersPage({ searchParams }: { searchPara
             <SurveyProviderDirectory providers={remittanceProviderDirectory()} />
           </section>
         </>
-      ) : (
+      ) : discovery ? <ProviderDirectory basePath="/providers" providers={discoveredTransferDirectory()} /> : (
         <ProviderDirectory
           basePath="/providers"
           providers={providers.map((p) => ({

@@ -4,6 +4,7 @@ import pricingReview from "../../../packages/core/src/public-pricing/provider-pr
 import type { MarketCoverage, PriceCheckInput } from "@railor/core";
 import { assessCustomerProfile, INDIA_RECEIVING_PRODUCTS } from "@railor/core";
 import { discoveredCoverage, DISCOVERED_PROVIDERS } from "./corridor-discovery";
+import { transferProviderDiscovery } from "./transfer-provider-discovery";
 
 interface UniverseProvider {
   slug: string;
@@ -96,11 +97,21 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
   const discovered = discoveredCoverage(input);
   const known = discovered.filter(provider => provider.routeMatch);
   const bySlug = new Map([...matched, ...discovered].map((provider) => [provider.providerSlug, provider]));
-  const allProviders = [...catalog.values()].map((provider) => bySlug.get(provider.slug) ?? {
+  const allProviders: MarketCoverage["providers"] = [...catalog.values()].map((provider) => bySlug.get(provider.slug) ?? {
     providerSlug: provider.slug, providerName: provider.name, websiteUrl: provider.website,
     category: primaryCategory(provider.categories), currencyMatch: "unverified" as const, lastVerified: provider.lastVerified,
     pricingStatus: { label: "Route unconfirmed", reason: "A complete price and eligibility for this route have not been verified. Currency support in a catalog is not a transfer quote." },
-  }).sort((a, b) => Number("routeMatch" in b && b.routeMatch) - Number("routeMatch" in a && a.routeMatch) || Number(a.currencyMatch === "unverified") - Number(b.currencyMatch === "unverified") || a.providerName.localeCompare(b.providerName));
+  });
+  for (const provider of transferProviderDiscovery.providers) {
+    if (catalog.has(provider.slug)) continue;
+    allProviders.push({
+      providerSlug: provider.slug, providerName: provider.name, websiteUrl: provider.website, category: provider.category,
+      currencyMatch: "unverified", lastVerified: null, routeMatch: false,
+      pricingStatus: { label: "Route unconfirmed", reason: "Check the provider for current eligibility, fees and rates." },
+      discoverySources: [{ label: "Provider website", url: provider.website }, { label: "MoneyTransfers.com provider directory", url: transferProviderDiscovery.sourceUrl }],
+    });
+  }
+  allProviders.sort((a, b) => Number(Boolean(b.routeMatch)) - Number(Boolean(a.routeMatch)) || Number(a.currencyMatch === "unverified") - Number(b.currencyMatch === "unverified") || a.providerName.localeCompare(b.providerName));
   const destinationProviders = [...matched.filter(provider => !discovered.some(item => item.providerSlug === provider.providerSlug)), ...known];
   const reviewed = (candidate: MarketCoverage["providers"][number]) => {
     const profile = input.context && candidate.currencyMatch !== "unverified" && destination === "INR"
@@ -128,5 +139,5 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
       discoverySources: [...sources].map(([url, label]) => ({ url, label })),
     };
   };
-  return { totalTracked: catalog.size, matched: destinationProviders.length, providers: destinationProviders.map(reviewed), allProviders: allProviders.map(reviewed) };
+  return { totalTracked: allProviders.length, matched: destinationProviders.length, providers: destinationProviders.map(reviewed), allProviders: allProviders.map(reviewed) };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { providerMarketCoverage } from "./provider-market";
 import { attachMarketPricingEvidence } from "./market-pricing-evidence";
+import { transferProviderDiscovery } from "./transfer-provider-discovery";
 
 describe("providerMarketCoverage", () => {
   it("surfaces the wider USD to INR market without presenting it as quotes", () => {
@@ -23,11 +24,33 @@ describe("providerMarketCoverage", () => {
     expect(coverage.totalTracked).toBeGreaterThanOrEqual(100);
     for (const providerSlug of ["pingpong", "karbon", "refrens", "salt"]) expect(coverage.allProviders).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug })]));
     expect(coverage.allProviders).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug: "razorpay" }), expect.objectContaining({ providerSlug: "dashx" }), expect.objectContaining({ providerSlug: "briskpe", currencyMatch: "unverified" })]));
-    for (const provider of coverage.allProviders ?? []) {
-      expect(provider.pricingReviewedAt).toBe("2026-11-19");
+    const discovered = new Set(transferProviderDiscovery.providers.map(provider => provider.slug));
+    for (const provider of (coverage.allProviders ?? []).filter(provider => !discovered.has(provider.providerSlug))) {
+      expect(provider.pricingReviewedAt).toMatch(/^2026-11-(?:19|25)$/);
       expect(provider.pricingStatus?.reason).toBeTruthy();
       expect(provider.discoverySources?.length).toBeGreaterThan(0);
       expect(provider).not.toHaveProperty("recipientAmount");
+    }
+  });
+
+  it("lists newly discovered transfer providers without treating directory presence as route evidence", () => {
+    const coverage = providerMarketCoverage({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 });
+    expect(new Set(coverage.allProviders?.map(provider => provider.providerSlug)).size).toBe(coverage.totalTracked);
+    expect(coverage.allProviders).toContainEqual(expect.objectContaining({
+      providerSlug: "currencies-direct",
+      currencyMatch: "unverified",
+      routeMatch: false,
+      pricingStatus: expect.objectContaining({ label: "Route unconfirmed" }),
+    }));
+    expect(coverage.providers.some(provider => provider.providerSlug === "currencies-direct")).toBe(false);
+    const personal = providerMarketCoverage({
+      sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000,
+      context: { direction: "send", country: "US", profile: "personal", purpose: "personal" },
+    });
+    for (const [providerSlug, label] of [["xe", "Published fee tiers"], ["ria", "First-transfer terms published"]]) {
+      expect(personal.providers).toContainEqual(expect.objectContaining({
+        providerSlug, routeMatch: true, pricingStatus: expect.objectContaining({ label }),
+      }));
     }
   });
 

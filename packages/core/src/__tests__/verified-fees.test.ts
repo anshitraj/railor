@@ -42,6 +42,16 @@ describe("first-party fee schedules (checked 2026-11-18)", () => {
     expect(schedule("xflow").fee({ ...base, amount: 6000 }, 6000)).toMatchObject({ amount: 24, plan: { id: "xflow:growth" } });
   });
 
+  it("calculates BRISKPE's standard USD export fee while preserving the GST gap", async () => {
+    for (const [amount, expected] of [[2000, 16], [2001, 25], [10000, 25], [12000, 30]] as const) {
+      expect(schedule("briskpe").fee({ ...base, amount }, amount)?.amount).toBe(expected);
+    }
+    const result = await comparePrices(base, { fetcher, now });
+    expect(result.rows.find(row => row.providerSlug === "briskpe")).toMatchObject({
+      feeAmount: 16, partial: true, costComplete: false, taxIncluded: null, shortfall: null,
+    });
+  });
+
   it("names the exact missing input on every partial published schedule", () => {
     for (const item of PUBLISHED_PRICING.filter((entry) => entry.partial)) expect(item.missing?.length, item.slug).toBeGreaterThan(0);
   });

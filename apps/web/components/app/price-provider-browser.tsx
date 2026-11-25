@@ -42,19 +42,22 @@ export function PriceProviderBrowser(props: Props) {
   const [tab, setTab] = useState("Providers");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recommended");
+  const [showResearch, setShowResearch] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
   const reduce = useReducedMotion();
-  useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to]);
+  useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to, showResearch]);
   const filtered = useMemo(() => {
     const priced = new Set(rows.map((row) => row.providerSlug));
     const ordered = sort === "recommended" ? recommendedPriceRows(rows, best) : rows;
     const entries = [...ordered.map((quote) => ({ providerSlug: quote.providerSlug, providerName: quote.providerName, quote, candidate: undefined as MarketCoverageProvider | undefined })), ...(props.candidates ?? []).filter((candidate) => !priced.has(candidate.providerSlug)).map((candidate) => ({ providerSlug: candidate.providerSlug, providerName: candidate.providerName, quote: undefined as PriceRow | undefined, candidate }))];
-    const list = entries.filter((entry) => `${entry.providerName} ${entry.providerSlug}`.toLowerCase().includes(query.trim().toLowerCase()));
+    const term = query.trim().toLowerCase();
+    const list = entries.filter(entry => (term || showResearch || entry.quote?.recipientAmount != null)
+      && `${entry.providerName} ${entry.providerSlug}`.toLowerCase().includes(term));
     if (sort === "receive") list.sort((a, b) => (b.quote?.recipientAmount ?? -Infinity) - (a.quote?.recipientAmount ?? -Infinity));
     if (sort === "cost") list.sort((a, b) => (a.quote?.totalCostPct ?? Infinity) - (b.quote?.totalCostPct ?? Infinity));
     if (sort === "name") list.sort((a, b) => a.providerName.localeCompare(b.providerName));
     return list;
-  }, [rows, best, props.candidates, query, sort]);
+  }, [rows, best, props.candidates, query, sort, showResearch]);
   const priceCount = filtered.filter(({ quote }) => quote?.recipientAmount != null).length;
   function choose(slug: string) {
     onSelect(slug);
@@ -88,7 +91,14 @@ export function PriceProviderBrowser(props: Props) {
           </li>)}
         </ol>
         {!filtered.length && <div className={styles.empty}><FileSearch size={22} /><strong>{query ? "No providers match your search" : props.loading ? "Checking provider prices…" : "No provider price for this setup yet"}</strong><p>{query ? "Try another name or clear your search." : "Try another currency pair, or review broader coverage in Market view."}</p>{query && <button type="button" onClick={() => setQuery("")}>Clear search</button>}</div>}
-        <div className={styles.tableFooter}><span>{priceCount} {priceCount === 1 ? "price" : "prices"} · {filtered.length - priceCount} without a payout quote</span>{filtered.length > 5 && <span className={styles.scrollHint}>Scroll for more <ChevronDown size={14} aria-hidden /></span>}</div>
+        <div className={styles.tableFooter}>
+          <span>{priceCount} {priceCount === 1 ? "price" : "prices"}</span>
+          {!query.trim() && Boolean(props.candidates?.length || rows.some(row => row.recipientAmount === null)) && (
+            <button type="button" className={styles.scrollHint} aria-expanded={showResearch} aria-controls="price-provider-list" onClick={() => setShowResearch(value => !value)}>
+              {showResearch ? "Show prices only" : "Browse more providers"} <ChevronDown size={14} aria-hidden />
+            </button>
+          )}
+        </div>
         <p className={styles.tableNote}>Complete estimates first; public comparisons keep their collection time and conditions. <Link href="/docs/pricing">How comparison works <ArrowUpRight size={10} /></Link></p>
       </div>
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>

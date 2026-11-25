@@ -30,6 +30,32 @@ function providerFetch(destinationCountry = "SG", method = "ACH") {
 }
 
 describe("US bank-funded remittances", () => {
+  it("reads the OFX US calculator for the requested INR amount and preserves unknown funding charges", async () => {
+    const fetcher: typeof fetch = async url => String(url) === "https://api.ofx.com/PublicSite.ApiService/OFX/spotrate/Individual/USD/INR/1000"
+      ? Response.json({ CustomerRate: 88.9741, CustomerAmount: 88_974.10, Fee: 5, DeliveryCountry: "India" })
+      : new Response(null, { status: 404 });
+    expect(await usBankRemittanceRows("INR", 1000, fetcher, now)).toEqual([expect.objectContaining({
+      providerSlug: "ofx", rate: 88.9741, recipientAmount: 88_974.1, feeAmount: 5, partial: true, costComplete: false,
+    })]);
+  });
+
+  it("reads WorldRemit's calculator for a bank deposit before funding is selected", async () => {
+    const fetcher: typeof fetch = async (url, options) => {
+      if (String(url) !== "https://api.worldremit.com/graphql") return new Response(null, { status: 404 });
+      expect(JSON.parse(String(options?.body)).variables).toEqual({
+        amount: 1000, sendCountry: "US", sendCurrency: "USD", receiveCountry: "IN", receiveCurrency: "INR",
+      });
+      return Response.json({ data: { createCalculation: { errors: [], calculation: {
+        id: null, send: { currency: "USD", amount: 1000 }, receive: { currency: "INR", amount: 92_156 },
+        rounding: { receiveRoundingSeed: 1 }, exchangeRate: { value: 92.1557, crossedOutValue: null },
+        informativeSummary: { fee: { value: { amount: 0.99, currency: "USD" } }, discount: null, appliedPromotions: null, totalToPay: { amount: 1000.99 } },
+      } } } });
+    };
+    expect(await usBankRemittanceRows("INR", 1000, fetcher, now)).toEqual([expect.objectContaining({
+      providerSlug: "world-remit", recipientAmount: 92156, feeAmount: 0.99, partial: true, costComplete: false,
+    })]);
+  });
+
   it("keeps the Cameroon USD to XAF total past the promotion cap with an unspecified delivery method", async () => {
     const fetcher: typeof fetch = async url => String(url).includes("remitly.com") ? Response.json({ estimate: {
       conduit: { source_country: "USA", target_country: "CMR", source_currency: { alpha3: "USD" }, target_currency: { alpha3: "XAF" } },

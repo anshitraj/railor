@@ -1,6 +1,36 @@
 {
-  "scope": "Community discovery checked against official product sources. Directional coverage is not a quote, account approval or a best-price ranking.",
+  "scope": "Provider discoveries checked against official product sources. Directional coverage is not a quote, account approval or a best-price ranking.",
   "providers": [
+    {
+      "slug": "xe",
+      "name": "Xe",
+      "website": "https://www.xe.com/en-us/send-money/send-money-to-india/",
+      "reviewedAt": "2026-11-24",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Xe documents transfers from the United States to Indian bank accounts and cash pickup where available. The fee, rate and delivery time depend on the amount and funding method. Use Xe’s transfer quote for the selected setup.",
+      "sources": [
+        "https://www.xe.com/en-us/send-money/send-money-to-india/",
+        "https://help.xe.com/hc/en-gb/articles/360019654398-Sending-money-to-India"
+      ],
+      "discovery": ["https://moneytransfers.com/companies/"]
+    },
+    {
+      "slug": "ria",
+      "name": "Ria Money Transfer",
+      "website": "https://www.riamoneytransfer.com/en-in/",
+      "reviewedAt": "2026-11-24",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Ria documents personal money transfers from the United States to India. Check the provider’s calculator for the fee, exchange rate and available receiving methods for the selected transfer.",
+      "sources": [
+        "https://www3.riamoneytransfer.com/en-us/send-money-to-india/",
+        "https://www.riamoneytransfer.com/en-in/"
+      ],
+      "discovery": ["https://moneytransfers.com/companies/"]
+    },
     {
       "slug": "lemfi",
       "name": "LemFi",

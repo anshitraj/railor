@@ -4,7 +4,7 @@ import { COUNTRY_TERMS, priceWebChecks, readWebChecks, registrableDomain, waitFo
 import { getSession } from "../../../../lib/auth";
 import { parsePriceQuery, runPriceCheck } from "../../../../lib/pricing";
 import { attemptProviderCalculator, savePublicQuoteObservation } from "../../../../lib/public-quote-observations";
-import { consumeLimit } from "../../../../lib/rate-limit";
+import { consumeLimit, requestIdentity } from "../../../../lib/rate-limit";
 import { providerIdentity } from "../../../../lib/price-display";
 import { priceView } from "../../../../lib/price-view";
 
@@ -15,7 +15,6 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Sign in to get a provider quote." }, { status: 401 });
 
   const params = new URL(request.url).searchParams;
   const input = parsePriceQuery(params);
@@ -23,12 +22,13 @@ export async function POST(request: Request) {
   if (!input?.context || input.context.paymentMethod === "card" || !slug || !/^[a-z0-9-]{1,80}$/.test(slug)) {
     return NextResponse.json({ error: "Choose a provider, route and amount." }, { status: 400 });
   }
-  if (!await consumeLimit("provider-quote", session.user.id, 6, 60_000)) {
+  const identity = session?.user.id ?? `guest:${requestIdentity(request)}`;
+  if (!await consumeLimit("provider-quote", identity, session ? 6 : 3, 60_000)) {
     return NextResponse.json({ error: "Too many quote requests. Try again in a minute." }, { status: 429 });
   }
 
   try {
-    const result = await runPriceCheck(session.organization?.id ?? null, input);
+    const result = await runPriceCheck(session?.organization?.id ?? null, input);
     const provider = (result.marketCoverage?.allProviders ?? result.marketCoverage?.providers)?.find(row => row.providerSlug === slug);
     const { quotes, excluded } = priceView(result, Date.now());
     const excludedProvider = excluded.find(item => providerIdentity(item.providerSlug) === slug);
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (!quote) {
       const restriction = excludedProvider?.profileAssessment?.reasons[0];
       const message = restriction ?? attempt?.reason ?? provider?.pricingStatus?.reason ?? "The provider didn’t return a public total for this transfer. Check its calculator or your account.";
-      if (!provider?.websiteUrl) return NextResponse.json({ message });
+      if (!session || !provider?.websiteUrl) return NextResponse.json({ message });
 
       const countryName = (code: string) => COUNTRY_TERMS.find(country => country.code === code)?.name ?? code;
       const { context, sourceCurrency, destinationCurrency, destinationCountry } = result.input;

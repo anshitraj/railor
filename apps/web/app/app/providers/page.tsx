@@ -4,6 +4,7 @@ import audit from "../../../../../packages/core/src/public-pricing/provider-sour
 import discovery from "../../../../../packages/core/src/public-pricing/corridor-discovery.json";
 import pricingReview from "../../../../../packages/core/src/public-pricing/provider-pricing-review.json";
 import { ProviderDirectory, type DirectoryProvider } from "../../../components/app/provider-directory";
+import { discoveredTransferDirectory } from "../../../lib/transfer-provider-discovery";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Providers" };
@@ -18,6 +19,7 @@ export default async function ProvidersPage() {
     pricingSummary: pricingReview.providers.find(entry => entry.slug === p.slug)?.summary ?? INDIA_RECEIVING_PRODUCTS.find(product => product.slug === p.slug)?.fee,
   }));
   // Public-source discoveries are searchable too, without inventing graph facts or dead profile links.
+  const newListings = new Map(discoveredTransferDirectory().map(provider => [provider.slug, provider]));
   const discoveries = new Map(discovery.providers.map(provider => [provider.slug, provider]));
   const research = new Map([...audit.providers, ...discovery.providers].map(provider => [provider.slug, provider]));
   for (const provider of research.values()) if (!directory.some(entry => entry.slug === provider.slug)) {
@@ -27,9 +29,13 @@ export default async function ProvidersPage() {
       products: [], assets: [], networks: [], countryCount: 0, currencyCount: 0, customerTypes: [],
       hasApi: false, hasSandbox: false, hasWebhooks: false, headquartersCountry: null, lastVerifiedAt: null,
       profileAvailable: false, sourceUrl: pricingReview.providers.find(entry => entry.slug === provider.slug)?.sourceUrl ?? evidence?.sources[0] ?? provider.website ?? undefined,
+      sourceLabel: newListings.has(provider.slug) ? "Provider source" : undefined,
       pricingSummary: pricingReview.providers.find(entry => entry.slug === provider.slug)?.summary ?? evidence?.pricingNote,
     });
   }
+
+  const existingSlugs = new Set(directory.map(provider => provider.slug));
+  directory.push(...[...newListings.values()].filter(provider => !existingSlugs.has(provider.slug)));
 
   return (
     <div className="space-y-5">

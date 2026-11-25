@@ -5,6 +5,7 @@ import { getDb, providers, sourceDocuments, sourceSnapshots } from "@railor/data
 import { calculatorProvider, calculatorSlugsFor, readCalculator, remitlyBrowserQuoteRow, remitlyCalculatorUrl, usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, type PriceCheckInput, type PriceRow } from "@railor/core";
 import { z } from "zod";
 import { consumeLimit } from "./rate-limit";
+import { readRiaCalculator } from "./ria-public-quote";
 
 const PARSER = "public_calculator_quote";
 const VALID_FOR = 15 * 60_000;
@@ -128,6 +129,7 @@ export async function warmProviderCalculators(input: PriceCheckInput, referenceR
 }
 
 export async function readProviderCalculator(slug: string, input: PriceCheckInput): Promise<PriceRow | null> {
+  if (slug === "ria") return readRiaCalculator(input);
   if (slug !== "xoom" && slug !== "remitly") return null;
   const currency = usBankRemittanceCorridor(input);
   const apiKey = process.env.TINYFISH_API_KEY?.trim();
