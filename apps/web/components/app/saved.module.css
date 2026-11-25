@@ -22,7 +22,7 @@
 .text small { overflow: hidden; color: var(--color-muted); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .text small.alertNote { display: inline-flex; align-items: center; gap: 4px; color: var(--color-orange-deep); font-weight: 600; }
 .go { flex: none; color: var(--color-muted); transition: transform .2s var(--ease-out), color .15s ease; }
-.main:hover .go { color: var(--color-ink); transform: translateX(2px); }
+@media (hover: hover) and (pointer: fine) { .main:hover .go { color: var(--color-ink); transform: translateX(2px); } }
 .side { display: flex; flex: none; align-items: center; gap: 4px; }
 .remove { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--color-muted); transition: background-color .15s ease, color .15s ease; }
 .remove:hover { background: var(--color-bad-bg); color: var(--color-bad); }

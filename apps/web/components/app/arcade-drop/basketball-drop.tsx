@@ -128,7 +128,7 @@ export function BasketballDrop({ title, subtitle, dropText, dropHint, accept, in
 
       <input ref={input} className="sr-only" type="file" accept={accept} aria-label={inputLabel} disabled={locked} tabIndex={-1}
         onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) shoot(file); }} />
-      <button ref={stage} type="button" className={styles.stage} disabled={locked} data-dragging={dragging || undefined} aria-busy={busy || undefined}
+      <button ref={stage} type="button" className={styles.stage} data-press="off" disabled={locked} data-dragging={dragging || undefined} aria-busy={busy || undefined}
         aria-label={`${dropText}${dropHint ? `. ${dropHint}` : ""}`}
         onClick={() => input.current?.click()} onDragEnter={onDragOver} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
         <span className={styles.copy}>

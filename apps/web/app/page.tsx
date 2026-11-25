@@ -54,7 +54,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <HomeScrollMotion />
         <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <HowItWorks />
-        <WhyRailor />
+        <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
         <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />

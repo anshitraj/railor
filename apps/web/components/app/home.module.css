@@ -31,7 +31,7 @@
 .shortcut small { display: block; margin-top: 1px; overflow: hidden; color: var(--color-muted); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
 .shortcutIcon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; background: var(--color-canvas); color: var(--color-orange-deep); }
 .shortcutArrow { color: var(--color-faint); transition: transform .2s var(--ease-out); }
-.shortcut:hover .shortcutArrow { transform: translateX(2px); }
+@media (hover: hover) and (pointer: fine) { .shortcut:hover .shortcutArrow { transform: translateX(2px); } }
 
 /* Lists */
 .lists { display: grid; gap: 18px; }

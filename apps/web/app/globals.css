@@ -695,6 +695,16 @@
 .press:active { transform: scale(.97); }
 @media (prefers-reduced-motion: reduce) { .press:active { transform: none; } }
 
+/* Every enabled button, and every link dressed as one, gives a little under the finger. It uses the `scale`
+   property, not `transform`, so it composes with any transform the control already has; controls that
+   already carry .press, and big drop targets (data-press="off"), keep their own feedback. A control that sets
+   its own `transition` snaps instead of easing, which is still instant feedback. */
+:where(button, a[class*="primary"], a[class*="secondary"], a[class*="cta"], a[class*="button"], a[class*="Button"]) { transition: scale .16s var(--ease-out); }
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled, .press, [data-press="off"], [aria-disabled="true"]):active,
+  a:is([class*="primary"], [class*="secondary"], [class*="cta"], [class*="button"], [class*="Button"]):not(.press, [data-press="off"], [aria-disabled="true"]):active { scale: .97; }
+}
+
 /* ── Stickers: die-cut labels that pin facts onto product visuals. ────────
    A white outer ring + layered shadow reads as a real sticker; they land once
    with a short slap (rare, first-visit motion) and never loop. */

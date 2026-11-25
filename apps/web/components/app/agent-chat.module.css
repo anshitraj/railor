@@ -20,7 +20,7 @@
 .suggestionLabel { justify-self: start; margin-top: 6px; color: var(--color-ink-soft); font: 600 14px/1.4 var(--font-sans); }
 .starters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; text-align: left; }
 .starter { min-width: 0; overflow: hidden; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); color: var(--color-ink); text-align: left; cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s; }
-.starter:hover { transform: translateY(-3px); border-color: var(--color-orange); box-shadow: var(--shadow-soft); }
+@media (hover: hover) and (pointer: fine) { .starter:hover { transform: translateY(-3px); border-color: var(--color-orange); box-shadow: var(--shadow-soft); } }
 .starterArt { position: relative; overflow: hidden; width: 100%; aspect-ratio: 240 / 104; background: var(--color-paper); color: var(--color-orange-deep); }
 .starter[data-tone="brand"] .starterArt { background: var(--color-brand); color: var(--color-accent-light); }
 .starter[data-tone="warm"] .starterArt { background: var(--color-lavender); }

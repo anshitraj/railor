@@ -14,7 +14,7 @@
 .btnSecondary:hover { border-color: var(--color-ink); }
 .textLink { display: inline-flex; align-items: center; gap: 6px; color: var(--color-ink); font-size: 15px; font-weight: 650; }
 .textLink svg { transition: transform .2s var(--ease-out); }
-.textLink:hover svg { transform: translateX(3px); }
+@media (hover: hover) and (pointer: fine) { .textLink:hover svg { transform: translateX(3px); } }
 
 @keyframes homeReveal {
   from { opacity: .84; translate: 0 24px; }
@@ -258,7 +258,7 @@
   .faq { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 64px; }
 }
 @media (hover: hover) and (pointer: fine) {
-  .provider:hover { border-color: var(--color-line-strong); box-shadow: var(--shadow-soft); transform: translateY(-2px); }
+  @media (hover: hover) and (pointer: fine) { .provider:hover { border-color: var(--color-line-strong); box-shadow: var(--shadow-soft); transform: translateY(-2px); } }
 }
 @media (max-width: 719px) {
   .section, .mapSection { padding: 51px 0; }

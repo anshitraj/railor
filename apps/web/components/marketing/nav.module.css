@@ -23,7 +23,7 @@
 /* The wide Developers menu hangs from the right edge of its button: with Guides added it sits further right, and from the left it ran past a 1160px window. */
 .menu[data-wide] { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 8px; width: 560px; left: auto; right: -8px; transform-origin: top right; }
 .feature { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: linear-gradient(160deg, var(--color-ink), #2c2620); color: #fff; transition: transform .2s var(--ease-out); }
-.feature:hover { transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) { .feature:hover { transform: translateY(-1px); } }
 .featureIcon { display: inline-grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; background: rgb(255 255 255 / .1); color: var(--color-accent-light, #ffb08a); }
 .feature strong { margin-top: 4px; font-size: 15px; font-weight: 650; }
 .feature small { color: rgb(255 255 255 / .68); font-size: 12.5px; line-height: 1.45; }
