@@ -36,9 +36,6 @@
   }
 }
 
-.hideSmall { display: inline; }
-@media (max-width: 479px) { .hideSmall { display: none; } }
-
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .hero { position: relative; overflow: hidden; padding: 28px 0 56px; }
 .heroGlow { position: absolute; z-index: -1; top: -120px; right: -10%; width: 70%; height: 760px; background: radial-gradient(closest-side, rgb(255 214 190 / .55), transparent 70%); pointer-events: none; }
@@ -46,31 +43,46 @@
 .heroIntro { grid-area: intro; max-width: 620px; }
 .heroExtras { grid-area: extras; max-width: 620px; }
 .heroExtras .heroActions { margin-top: 0; }
-.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface); color: var(--color-ink-soft); font-size: 13.5px; font-weight: 550; animation: rise .5s var(--ease-out) both; }
-.pillIcon { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: #e3f6e9; color: #1d6f3b; }
-.heroTitle { margin-top: 18px; color: var(--color-ink); font-size: clamp(42px, 6vw, 76px); font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+.heroLabel { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-soft); font-size: 13px; font-weight: 650; animation: rise .45s var(--ease-out) both; }
+.heroLabel svg { color: var(--color-orange-deep); }
+.heroTitle { margin-top: 14px; color: var(--color-ink); font-size: clamp(40px, 6vw, 76px); font-weight: 700; letter-spacing: -.048em; line-height: 1; }
 .heroTitle > span { display: block; animation: rise .6s var(--ease-out) both; }
 .heroTitle > span:nth-child(2) { animation-delay: .06s; }
 .underline { position: relative; display: inline-block; white-space: nowrap; }
-.underline svg { position: absolute; left: -2%; bottom: -.16em; width: 104%; height: .32em; overflow: visible; color: var(--color-orange); }
-.underline path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .7s var(--ease-in-out) .55s forwards; }
+.underline::after { position: absolute; inset: auto 0 -.09em; height: 3px; border-radius: 2px; background: var(--color-orange); transform-origin: left; animation: draw .55s var(--ease-out) .34s both; content: ""; }
 .heroLead { max-width: 52ch; margin-top: 22px; color: var(--color-muted); font-size: clamp(17px, 1.5vw, 19px); line-height: 1.6; animation: rise .6s var(--ease-out) .12s both; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; animation: rise .6s var(--ease-out) .18s both; }
 .heroProof { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 30px; color: var(--color-ink-soft); font-size: 14px; font-weight: 550; animation: rise .6s var(--ease-out) .24s both; }
 .heroProof li { display: inline-flex; align-items: center; gap: 7px; }
 .heroProof svg { color: var(--color-ok); }
 .heroCalc { grid-area: calc; position: relative; display: grid; justify-items: center; animation: calcIn .7s var(--ease-out) .1s both; }
+.heroRoute { display: none; }
 .logos { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--color-line); }
-.logos > p { color: var(--color-muted); font-size: 13.5px; font-weight: 550; text-align: center; }
-.logoRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 30px; margin-top: 18px; }
-.logoRow li { display: inline-flex; align-items: center; gap: 9px; color: var(--color-ink-soft); font-size: 15px; font-weight: 650; letter-spacing: -.01em; opacity: .82; transition: opacity .15s ease; }
-.logoRow li:hover { opacity: 1; }
+.logosIntro { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; }
+.logosIntro p { grid-column: 2; color: var(--color-muted); font-size: 13.5px; font-weight: 550; text-align: center; }
+.logoControl { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 9px; color: var(--color-muted); }
+.logoControl:hover { background: var(--color-surface); color: var(--color-ink); }
+.logoControl:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: -2px; }
+.logoViewport { margin-top: 9px; }
+.logoRow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px 30px; padding-block: 6px; }
+.logoRow li { display: inline-flex; flex: none; align-items: center; gap: 9px; color: var(--color-ink-soft); font-size: 15px; font-weight: 650; letter-spacing: -.01em; white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .logoViewport { --logo-gap: clamp(25px, 4vw, 48px); overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); }
+  .logoTrack { display: flex; width: max-content; min-width: 200%; animation: logoMarquee 46s linear infinite; }
+  .logoTrack[data-paused] { animation-play-state: paused; }
+  .logoRow { flex: 1 0 auto; flex-wrap: nowrap; justify-content: space-around; gap: var(--logo-gap); padding-inline: calc(var(--logo-gap) / 2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logoControl, .logoRow[aria-hidden] { display: none; }
+}
+@keyframes logoMarquee { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
 @keyframes calcIn { from { opacity: 0; transform: translateY(18px) scale(.98); } }
-@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes draw { from { scale: 0 1; } }
 
 /* ── How it works ─────────────────────────────────────────────────── */
 .steps { display: grid; gap: 16px; }
+.stepControls { display: none; }
 .step { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-line); border-radius: 28px; background: var(--color-canvas); }
 .stepStage { position: relative; display: grid; height: 248px; place-items: center; padding: 22px; background: var(--color-sand); }
 .step:nth-child(2) .stepStage { background: #f3e2d6; }
@@ -102,24 +114,19 @@
 .receiptHead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .receiptHead strong { color: var(--color-ink); font-size: 15px; font-weight: 650; }
 .receiptHead small { display: block; color: var(--color-muted); font-size: 12px; }
-.stageSticker { position: absolute; }
-
-.typed[data-anim] { animation: typeIn 4.2s steps(5, end) infinite both; }
-.caret[data-anim] { animation: blink 4.2s linear infinite both; }
-.miniChecking[data-anim] { animation: hideAt 4.2s var(--ease-out) infinite both; }
-.miniDone[data-anim] { animation: showAt 4.2s var(--ease-out) infinite both; }
-.receipt > div[data-anim] { animation: lineIn 4.2s var(--ease-out) infinite both; }
-.stageSticker[data-anim] { animation: popLoop 4.2s var(--ease-out) infinite both; }
-/* Loops run only while their card is on screen (data-playing), and never with reduced motion.
-   Declared after the animations so the shorthand above doesn't reset the play state. */
-.loop [data-anim] { animation-play-state: paused; }
-.loop[data-playing] [data-anim] { animation-play-state: running; }
-@keyframes typeIn { 0%, 6% { clip-path: inset(0 100% 0 0); } 34%, 88% { clip-path: inset(0 0 0 0); } 96%, 100% { clip-path: inset(0 100% 0 0); } }
-@keyframes blink { 0%, 49%, 100% { opacity: 1; } 50%, 99% { opacity: 0; } }
-@keyframes hideAt { 0%, 22% { opacity: 1; } 27%, 92% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes showAt { 0%, 22% { opacity: 0; transform: translateY(4px); } 29%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-@keyframes lineIn { 0%, 6% { opacity: 0; transform: translateY(4px); } 16%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-@keyframes popLoop { 0%, 62% { opacity: 0; transform: rotate(var(--tilt)) scale(.7); } 70% { opacity: 1; transform: rotate(calc(var(--tilt) + 3deg)) scale(1.05); } 76%, 92% { opacity: 1; transform: rotate(var(--tilt)) scale(1); } 100% { opacity: 0; transform: rotate(var(--tilt)) scale(.9); } }
+.miniChecking, .caret { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .loop[data-playing] .typed { animation: typeIn .55s steps(5, end) both; }
+  .loop[data-playing] .caret { animation: blink .68s steps(2, jump-none) 2; }
+  .loop[data-playing] .miniChecking { animation: hideAt .52s var(--ease-out) both; }
+  .loop[data-playing] .miniDone { animation: showAt .52s var(--ease-out) both; }
+  .loop[data-playing] .receipt > div { animation: lineIn .42s var(--ease-out) both; }
+}
+@keyframes typeIn { from { clip-path: inset(0 100% 0 0); } }
+@keyframes blink { 50% { opacity: 1; } }
+@keyframes hideAt { 0%, 62% { opacity: 1; } }
+@keyframes showAt { 0%, 60% { opacity: 0; transform: translateY(4px); } }
+@keyframes lineIn { from { opacity: .25; transform: translateY(6px); } }
 
 /* ── Providers ────────────────────────────────────────────────────── */
 .providerGrid { display: grid; gap: 12px; }
@@ -142,6 +149,7 @@
 .mapViewport { overflow: hidden; margin-inline: -16px; padding-inline: 16px; }
 .mapFrame { position: relative; width: 100%; aspect-ratio: 2 / 1; margin-top: 8px; }
 .mapFrame > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mapArc { transition: stroke-dashoffset 1.2s cubic-bezier(.77, 0, .175, 1) var(--route-delay); }
 .mapDots { color: rgb(250 246 239 / .2); }
 .routeChips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
 .routeChip { display: inline-flex; height: 40px; align-items: center; gap: 8px; padding: 0 14px 0 6px; border: 1px solid rgb(255 255 255 / .14); border-radius: 999px; color: #fff; font-size: 14px; font-weight: 600; transition: border-color .15s ease, background-color .15s ease; }
@@ -153,11 +161,23 @@
 
 /* ── Audiences ────────────────────────────────────────────────────── */
 .audiences { display: grid; gap: 16px; }
+.profileControls { display: none; }
 .audience { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-line); border-radius: 28px; background: var(--color-surface); }
 .audienceArt { position: relative; overflow: hidden; height: 210px; background: linear-gradient(180deg, #fbefd9, #f6e3c3); }
 .audience:nth-child(2) .audienceArt { background: linear-gradient(180deg, #f6e6dc, #efd3c1); }
 .audience:nth-child(3) .audienceArt { background: linear-gradient(180deg, #e9ebe3, #d9ded0); }
-.audienceArt :global(.coin) { position: absolute; }
+.audienceCoins { position: absolute; inset: 0; }
+.audienceCoins :global(.coin) { position: absolute; }
+@media (prefers-reduced-motion: no-preference) {
+  .audienceArt[data-playing] .audienceCoins :global(.coin) { animation: coinSettle .64s var(--ease-out) both; }
+  .audienceArt[data-playing] .audienceCoins :global(.coin):nth-child(2) { animation-delay: .11s; }
+  .audienceArt[data-playing] .audienceCoins :global(.coin):nth-child(3) { animation-delay: .2s; }
+}
+@keyframes coinSettle {
+  0% { opacity: .2; transform: translateY(34px) scale(.72) rotate(-16deg); }
+  72% { opacity: 1; transform: translateY(-3px) scale(1.025) rotate(2deg); }
+  100% { transform: none; }
+}
 .audienceBody { display: flex; flex: 1; flex-direction: column; padding: 24px; }
 .audienceBody h3 { color: var(--color-ink); font-size: 23px; font-weight: 650; letter-spacing: -.02em; }
 .audienceBody > p { margin-top: 6px; color: var(--color-muted); font-size: 15px; }
@@ -241,20 +261,54 @@
   .provider:hover { border-color: var(--color-line-strong); box-shadow: var(--shadow-soft); transform: translateY(-2px); }
 }
 @media (max-width: 719px) {
-  .section, .mapSection { padding: 64px 0; }
-  .head { margin-bottom: 28px; }
-  .hero { isolation: isolate; }
+  .section, .mapSection { padding: 51px 0; }
+  .head { margin-bottom: 22px; }
+  .hero { isolation: isolate; padding: 22px 0 38px; }
   .heroGlow { top: -80px; right: -46%; width: 136%; background: radial-gradient(closest-side, #fbd6c1b3, transparent 80%); }
-  .heroActions .btn { flex: 1; }
+  .heroInner { gap: 22px; }
+  .heroTitle { font-size: clamp(36px, 10.2vw, 57px); }
+  .heroLead { margin-top: 16px; font-size: 15.5px; line-height: 1.5; }
+  .heroActions .btn { flex: 1; height: 46px; padding-inline: 12px; font-size: 14px; }
+  .heroProof { gap: 6px 14px; margin-top: 14px; font-size: 12px; }
   .heroCalc { scroll-margin-top: 92px; }
-  .stepStage { height: auto; min-height: 220px; padding: 18px; }
-  .stepStage:has(.demoLock) { padding-bottom: 54px; }
-  .stepBody { padding: 18px 20px 22px; }
+  .heroRoute { position: relative; isolation: isolate; display: grid; width: min(222px, 84%); height: 43px; grid-template-columns: 1fr 1fr 1fr; align-items: center; justify-items: center; margin-bottom: 8px; }
+  .routeSignal { position: absolute; z-index: -1; inset: 50% 28px auto; height: 1px; background: var(--color-line-strong); }
+  .routeSignal::after { position: absolute; inset: 0; background: var(--color-orange-deep); content: ""; }
+  .routeDeparture, .routeArrival, .routeJunction { position: relative; display: grid; width: 39px; height: 34px; place-items: center; border: 1px solid var(--color-line); border-radius: 10px; background: var(--color-surface); box-shadow: 0 5px 12px -7px #432a2050; }
+  .routeDeparture { color: var(--color-orange-deep); }
+  .routeArrival { color: var(--color-ok); }
+  .routeJunction { width: 44px; height: 41px; }
+  .routeDeparture svg:last-child, .routeArrival svg:last-child { position: absolute; right: -3px; bottom: -2px; box-sizing: content-box; padding: 2px; border: 1px solid var(--color-line); border-radius: 50%; background: var(--color-surface); }
+  .steps, .audiences { position: relative; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; overscroll-behavior-inline: contain; }
+  .step, .audience { min-width: 0; flex: 0 0 100%; scroll-snap-align: start; }
+  .profileControls { display: grid; grid-template-columns: .92fr 1.15fr 1.08fr; gap: 3px; padding: 3px; margin-bottom: 12px; border: 1px solid var(--color-line); border-radius: 14px; background: var(--color-canvas); }
+  .profileControls button { min-height: 44px; padding-inline: 5px; border-radius: 10px; color: var(--color-muted); font-size: clamp(11px, 3.35vw, 14px); font-weight: 650; transition: background-color .2s ease, color .2s ease; }
+  .profileControls button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-surface); }
+  .profileControls button:focus-visible, .routeChips:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
+  .audience { border-radius: 22px; }
+  .audienceArt { height: 132px; }
+  .audienceCoins :global(.coin) { scale: .79; }
+  .audienceBody { padding: 17px 16px 14px; }
+  .audienceBody .textLink { min-height: 44px; }
+  .stepControls { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .stepControls button { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 11px; color: var(--color-ink); }
+  .stepControls > button { border: 1px solid var(--color-line); background: var(--color-canvas); }
+  .stepControls > button:disabled { opacity: .38; }
+  .stepControls button:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
+  .stepDots { display: flex; }
+  .stepDots button span { width: 7px; height: 7px; border-radius: 99px; background: var(--color-line-strong); transition: width .24s var(--ease-out), background-color .24s ease; }
+  .stepDots button[aria-current] span { width: 21px; background: var(--color-orange-deep); }
+  .stepStage { height: auto; min-height: 220px; padding: 14px; }
+  .stepStage .mini { padding: 11px; }
+  .stepStage .miniRow { padding-block: 5px; }
+  .stepStage .receipt > div { padding-block: 7px; }
+  .stepBody { padding: 14px 16px 20px; }
   .stepBody h3 { margin-top: 10px; }
   .mapFrame { width: 145%; margin-left: -27%; }
+  .routeChips { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: max-content; margin-top: 18px; margin-inline: -4px; padding: 4px 4px 8px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; scroll-padding-inline: 4px; scrollbar-width: thin; }
+  .routeChips li { scroll-snap-align: start; }
+  .routeChip { min-height: 44px; }
   .logos { margin-top: 44px; }
-  .logoRow { justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; mask-image: linear-gradient(90deg, black 85%, transparent); }
-  .logoRow li { flex: none; }
   .dev { gap: 24px; padding: 28px 14px 14px; }
   .dev > :first-child { padding-inline: 6px; }
   .final { padding: 88px 20px 52px; border-radius: 28px; }
@@ -266,36 +320,23 @@
 @media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
   .motionPage:global([data-mobile-motion]) .heroCalc { animation: none; }
   .motionPage :global([data-scroll-scene]):focus-within { transform: none !important; opacity: 1 !important; }
+  .motionPage:global([data-mobile-motion]) .routeSignal::after { display: none; }
+  .motionPage:global([data-mobile-motion]) .routeSignal { background: var(--color-orange-deep); transform-origin: left; }
+  @supports (animation-timeline: view()) {
+    .mapViewport { view-timeline-name: --popular-routes; }
+    .mapArc { transition: none; animation: traceRoutes linear both; animation-timeline: --popular-routes; animation-range: entry var(--route-start) cover 56%; }
+  }
 }
+@keyframes traceRoutes { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
 @media (max-width: 360px) { .dev { padding-inline: 10px; } }
 
-@media (max-width: 719px) and (min-height: 540px) and (prefers-reduced-motion: no-preference) {
-  .motionPage:global([data-mobile-motion]) .steps { display: flex; flex-direction: column; gap: 30px; }
-  .motionPage:global([data-mobile-motion]) .step {
-    position: sticky;
-    top: 84px;
-    scroll-margin-top: 104px;
-    box-shadow: 0 10px 30px -18px #2f1e1660;
-  }
-  .motionPage:global([data-mobile-motion]) .step:nth-child(2) { top: 96px; }
-  .motionPage:global([data-mobile-motion]) .step:nth-child(3) { top: 108px; }
-  .motionPage:global([data-mobile-motion]) .steps:has(:focus-visible) .step { position: relative; top: auto; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .pill, .heroTitle > span, .heroLead, .heroActions, .heroProof, .heroCalc { animation: none; }
-  .underline path { animation: none; stroke-dashoffset: 0; }
-  .loop [data-anim] { animation: none !important; }
-  .typed { clip-path: none; }
-  .miniChecking { opacity: 0; }
+  .heroLabel, .heroTitle > span, .heroLead, .heroActions, .heroProof, .heroCalc, .underline::after { animation: none; }
+  .stepDots button span, .profileControls button { transition: none; }
+  .mapArc { stroke-dashoffset: 0; transition: none; }
   .faqItem[open] .faqAnswer { animation: none; }
 }
-
-/* Example prices on the landing blur for visitors, like every price on Railor. */
-.demoBlur { filter: blur(6px); user-select: none; }
-.demoLock { position: absolute; bottom: 14px; left: 50%; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; background: var(--color-surface); box-shadow: 0 6px 18px -8px rgb(21 19 16 / .35); color: var(--color-ink); font-size: 12.5px; font-weight: 650; white-space: nowrap; transform: translateX(-50%); transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out); }
-.demoLock:hover { box-shadow: 0 10px 22px -10px rgb(21 19 16 / .45); transform: translate(-50%, -1px); }
-.demoLock:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 2px; }
 
 /* Hero calculator: bank transfer or stablecoins. */
 .calcSwitch { display: grid; width: 100%; max-width: 500px; gap: 10px; }

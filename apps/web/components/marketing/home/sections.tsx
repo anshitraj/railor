@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Bot, Check, Code2, Package } from "lucide-react";
 import { DeveloperDemo } from "./developer-demo";
+import { LoopOnView } from "./loop-on-view";
+import { MobileCardSlider } from "./mobile-card-slider";
 import styles from "./home.module.css";
 
 const AUDIENCES = [
@@ -39,16 +41,18 @@ export function AudiencesSection() {
             <p className={styles.eyebrow}>Made for you</p>
             <h2 id="audience-title" className={styles.title}>One app. Three ways to use it.</h2>
           </div>
-          <p className={styles.lead}>Railor only shows prices you can actually use — so a family transfer, a client payment and a supplier payout each get the right answer.</p>
+          <p className={styles.lead}>Compare providers for a family transfer, a client payment, or a supplier payout.</p>
         </div>
-        <ul className={styles.audiences}>
+        <MobileCardSlider mode="profiles" label="Transfer profiles" labels={AUDIENCES.map(audience => audience.title)}>
           {AUDIENCES.map((audience) => (
             <li key={audience.title} className={styles.audience}>
-              <div className={styles.audienceArt} aria-hidden>
-                {audience.coins.map((coin, index) => (
-                  <span key={index} className="coin" data-metal={coin.metal} style={{ "--size": `${coin.size}px`, left: coin.left, top: coin.top, rotate: `${coin.tilt}deg` } as React.CSSProperties}>{coin.symbol}</span>
-                ))}
-              </div>
+              <LoopOnView className={styles.audienceArt}>
+                <div className={styles.audienceCoins} aria-hidden="true">
+                  {audience.coins.map((coin) => (
+                    <span key={coin.symbol} className="coin" data-metal={coin.metal} style={{ "--size": `${coin.size}px`, left: coin.left, top: coin.top, rotate: `${coin.tilt}deg` } as React.CSSProperties}>{coin.symbol}</span>
+                  ))}
+                </div>
+              </LoopOnView>
               <div className={styles.audienceBody}>
                 <h3>{audience.title}</h3>
                 <p>{audience.line}</p>
@@ -59,7 +63,7 @@ export function AudiencesSection() {
               </div>
             </li>
           ))}
-        </ul>
+        </MobileCardSlider>
       </div>
     </section>
   );

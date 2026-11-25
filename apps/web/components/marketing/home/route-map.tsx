@@ -39,7 +39,7 @@ export function RouteMapSection() {
           <RouteArcs routes={ROUTES.map(({ from, to }) => ({ from, to }))} />
         </div>
         </div>
-        <ul className={styles.routeChips} aria-label="Price a popular route">
+        <ul className={styles.routeChips} tabIndex={0} aria-label="Price a popular route">
           {ROUTES.map((route) => (
             <li key={`${route.from}-${route.to}`}>
               <Link href={`/prices?from=${route.pair[0]}&to=${route.pair[1]}&amount=1000&market=1`} className={`${styles.routeChip} press`}>

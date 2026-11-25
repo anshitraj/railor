@@ -57,6 +57,7 @@ export default async function HomePage() {
     { done: usedKeys.length > 0, title: anyKeys.length ? "Make your first API request" : "Get your API key", href: "/app/developers", action: anyKeys.length ? "Try the API" : "Get a key" },
   ];
   const doneCount = steps.filter((step) => step.done).length;
+  const completion = Math.round((doneCount / steps.length) * 100);
   const next = steps.find((step) => !step.done);
 
   return (
@@ -82,7 +83,13 @@ export default async function HomePage() {
               <h2>{doneCount === steps.length ? "You’re all set" : "Get set up"}</h2>
               <p>{doneCount} of {steps.length} done</p>
             </div>
-            <span className={styles.ring} style={{ "--progress": `${(doneCount / steps.length) * 100}%` } as React.CSSProperties} aria-hidden><span>{Math.round((doneCount / steps.length) * 100)}%</span></span>
+            <span className={styles.ring} aria-hidden>
+              <svg viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" />
+                <circle className={styles.ringValue} cx="24" cy="24" r="20" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - completion} />
+              </svg>
+              <span>{completion}%</span>
+            </span>
           </div>
           <ol className={styles.steps}>
             {steps.map((step) => (

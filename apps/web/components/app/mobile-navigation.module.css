@@ -13,3 +13,18 @@
   .item:active .icon{background:var(--color-canvas)}
 }
 @media(prefers-reduced-motion:reduce){.icon{transition:none}}
+
+/* Section headings settle before their controls reach the reading area. */
+@keyframes sectionHeadingEntry {
+  from { translate: 0 9px; }
+  to { translate: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .main :where(section, aside) h2:not(:focus-within, dialog h2, [role="dialog"] h2) {
+      animation: sectionHeadingEntry var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 16%;
+    }
+  }
+}

@@ -32,7 +32,7 @@ export function TestimonialsSection({ items = TESTIMONIALS }: { items?: Testimon
         </div>
         <ul className={styles.grid}>
           {visible.map((item, index) => (
-            <li key={item.name + index} className={styles.card} style={{ "--i": index } as React.CSSProperties}>
+            <li key={item.name + index} className={styles.card} data-home-reveal>
               {item.sample ? <span className={styles.sample} title="Replace with a real customer quote before launch">Sample · dev only</span> : null}
               <Quote size={26} aria-hidden className={styles.mark} />
               <blockquote className={styles.quote}>{item.quote}</blockquote>

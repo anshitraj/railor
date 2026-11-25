@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PriceRow } from "@railor/core";
+import { priceRowKey } from "./price-display";
 import { recommendedPriceRows } from "./price-recommendations";
 const row = (providerSlug: string, amount: number, extra: Partial<PriceRow> = {}) => ({ providerSlug, recipientAmount: amount, basis: "published", partial: false, costComplete: true, feeAmount: 10, profileAssessment: { status: "documented", priceApplicable: true }, ...extra }) as PriceRow;
 describe("provider comparison recommendations", () => {
@@ -23,5 +24,12 @@ describe("provider comparison recommendations", () => {
     const result = recommendedPriceRows(rows, winner);
     expect(result.map((value) => value.providerSlug)).toEqual(["complete", "partial-999", "partial-997", "partial-995"]);
     expect(new Set(result.map((value) => value.providerSlug)).size).toBe(rows.length);
+  });
+
+  it("keeps independently selectable products from the same provider", () => {
+    const account = row("wise", 990, { product: { id: "wise:receive", label: "Wise receiving account" } });
+    const remittance = row("wise", 982, { product: { id: "wise:send", label: "Client sends with Wise" } });
+    expect(priceRowKey(account)).not.toBe(priceRowKey(remittance));
+    expect(recommendedPriceRows([remittance, account], account)).toEqual([account, remittance]);
   });
 });

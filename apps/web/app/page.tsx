@@ -53,8 +53,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <main id="main" className={homeStyles.motionPage}>
         <HomeScrollMotion />
         <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
-        <HowItWorks signedIn={Boolean(session)} />
-        <WhyRailor signedIn={Boolean(session)} />
+        <HowItWorks />
+        <WhyRailor />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
         <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />

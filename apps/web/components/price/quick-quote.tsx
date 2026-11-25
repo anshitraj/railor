@@ -5,15 +5,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowDownUp, ArrowRight, CircleAlert, FileUp, RefreshCw } from "lucide-react";
 import type { CustomerContext, PriceCheckResult, PriceRow } from "@railor/core";
-import { Flag, type PickerOption } from "@railor/ui";
+import { type PickerOption } from "@railor/ui";
 import { ProviderLogo } from "../app/provider-logo";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
 import { priceView } from "../../lib/price-view";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
-import { pricingSourceLabel } from "../../lib/price-display";
+import { priceRowKey, pricingSourceLabel } from "../../lib/price-display";
 import { defaultPriceCountry } from "../../lib/price-destination";
 import { CurrencyPicker } from "./currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "./pay-method-select";
+import { PriceLoadingMark } from "./price-loading-mark";
 import styles from "./price.module.css";
 
 /**
@@ -138,12 +139,8 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const shownQuotes = ranked.slice(0, 3);
   const shownEstimates = dated.slice(0, Math.max(0, 3 - shownQuotes.length));
   const estimateBeatsBest = Boolean(best?.recipientAmount != null && shownEstimates.some((row) => row.recipientAmount! > best.recipientAmount!));
-  const amounts = options.map((row) => row.recipientAmount!);
-  const spread = amounts.length > 1 ? Math.max(...amounts) - Math.min(...amounts) : 0;
   const receive = useTween(top?.recipientAmount ?? null);
   const midRate = result?.reference?.rate ?? null;
-  const fromOption = currencies.find((option) => option.value === from);
-  const toOption = currencies.find((option) => option.value === to);
   const query = new URLSearchParams({ from, to, amount: String(amount || ""), market: "1", ...contextParams(context) }).toString();
   const compareHref = `${compareBase}?${query}`;
   // Optional: read the invoice instead of typing. Guests go through the free sign-up first.
@@ -221,18 +218,6 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
 
   return (
     <div className={styles.quote} data-variant={variant}>
-      {variant === "hero" ? (
-        <div className={styles.stickers} aria-hidden>
-          {toOption?.flag ? <span className="sticker-flag" style={{ "--tilt": "9deg", "--delay": ".55s", top: -18, right: 26 } as React.CSSProperties}><Flag code={toOption.flag} size={44} round /></span> : null}
-          {fromOption?.flag ? <span className="sticker-flag" style={{ "--tilt": "-10deg", "--delay": ".45s", top: 92, left: -20 } as React.CSSProperties}><Flag code={fromOption.flag} size={36} round /></span> : null}
-          {spread >= 1 ? (
-            <span className="sticker" data-tone="gold" style={{ "--tilt": "-4deg", "--delay": ".8s", bottom: -14, left: 34 } as React.CSSProperties}>
-              Prices differ by up to {money(spread, 0)} {to}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className={styles.card}>
         <div className={styles.progress} data-active={pending || undefined} aria-hidden />
         <div className={styles.cardHead}>
@@ -245,8 +230,8 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
             ))}
           </div>
           {!cardComingSoon && <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
-            <span aria-hidden className={styles.liveDot} data-loading={loading || undefined} />
-            {fetchedAt ? `Updated ${ago(now - fetchedAt)}` : "Live prices"}
+            {pending ? <PriceLoadingMark size={14} /> : fetchedAt ? <span aria-hidden className={styles.liveDot} /> : null}
+            {pending ? "Checking prices" : fetchedAt ? `Checked ${ago(now - fetchedAt)}` : "Ready to compare"}
           </span>}
         </div>
 
@@ -348,7 +333,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                   const difference = benchmarkPayoutDifference(row.recipientAmount, amount, midRate, to);
                   return (
                     <motion.li
-                      key={row.providerSlug}
+                      key={priceRowKey(row)}
                       layout={!reduce}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -420,7 +405,7 @@ export function QuickQuoteSkeleton({ variant = "hero" }: { variant?: "hero" | "a
               </button>
             ))}
           </div>
-          <span className={styles.live}><span aria-hidden className={styles.liveDot} data-loading />Checking prices</span>
+          <span className={styles.live} role="status"><PriceLoadingMark size={14} />Checking prices</span>
         </div>
         <div className={styles.fields}>
           <div className={styles.field}><span className={styles.fieldLabel}>Sending</span><div className={styles.fieldRow}><span className={styles.amount} data-pending>1,000</span></div><div className={styles.presets} style={{ height: 28 }} /></div>

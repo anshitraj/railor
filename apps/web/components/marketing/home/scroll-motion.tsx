@@ -15,13 +15,15 @@ type Scene = {
   anchor?: string;
   frames: { transform: string[]; opacity?: number[] };
   offset: ScrollOffsets;
+  times?: number[];
 };
 
+const networkAnchor = "[data-home-reveal]:has([data-home-provider-motion])";
 const mobileScenes: Scene[] = [
   {
     select: `.${styles.heroIntro}`,
     anchor: `.${styles.hero}`,
-    frames: { transform: ["translateY(0)", "translateY(-46px)"], opacity: [1, .82] },
+    frames: { transform: ["translateY(0)", "translateY(-62px)"], opacity: [1, .9] },
     offset: ["start start", "start -.46"],
   },
   {
@@ -31,19 +33,64 @@ const mobileScenes: Scene[] = [
     offset: ["start start", "end .28"],
   },
   {
+    select: `.${styles.routeDeparture}`,
+    anchor: `.${styles.heroCalc}`,
+    frames: { transform: ["translate(-55px, -16px) rotate(-17deg) scale(.83)", "translate(6px, 3px) rotate(3deg) scale(1.04)", "translate(0) rotate(0) scale(1)"] },
+    offset: ["start .37", "start .15"],
+    times: [0, .83, 1],
+  },
+  {
+    select: `.${styles.routeJunction}`,
+    anchor: `.${styles.heroCalc}`,
+    frames: { transform: ["translateY(19px) rotate(-6deg) scale(.78)", "translateY(-3px) rotate(1deg) scale(1.06)", "translateY(0) rotate(0) scale(1)"] },
+    offset: ["start .34", "start .12"],
+    times: [0, .82, 1],
+  },
+  {
+    select: `.${styles.routeArrival}`,
+    anchor: `.${styles.heroCalc}`,
+    frames: { transform: ["translate(58px, -23px) rotate(17deg) scale(.86)", "translate(-5px, 3px) rotate(-3deg) scale(1.04)", "translate(0) rotate(0) scale(1)"] },
+    offset: ["start .36", "start .1"],
+    times: [0, .86, 1],
+  },
+  {
+    select: `.${styles.routeSignal}`,
+    anchor: `.${styles.heroCalc}`,
+    frames: { transform: ["scaleX(0)", "scaleX(1)"], opacity: [.15, 1] },
+    offset: ["start .38", "start .13"],
+  },
+  {
     select: `.${styles.head} > :first-child, .${styles.dev} > :first-child, .${styles.trust} > :first-child, .${styles.faq} > :first-child`,
     frames: { transform: ["translateY(44px)", "translateY(0)"], opacity: [.72, 1] },
     offset: ["start .98", "start .39"],
   },
   {
-    select: `.${styles.head} > .${styles.lead}, .${styles.heroExtras}, .${styles.logos}, .${styles.routeChips}, .${styles.faqList}`,
+    select: `.${styles.head} > .${styles.lead}, .${styles.heroExtras}, .${styles.logos}, .${styles.routeChips}, .${styles.faqList}, .${styles.stepControls}, .${styles.profileControls}`,
     frames: { transform: ["translateY(32px)", "translateY(0)"], opacity: [.8, 1] },
     offset: ["start .92", "start .36"],
   },
   {
-    select: `.${styles.heroCalc}, .${styles.provider}, .${styles.audience}, .${styles.devCode}, .${styles.basis}, .${styles.final}, [data-home-reveal]`,
-    frames: { transform: ["translateY(58px) scale(.94)", "translateY(0) scale(1)"], opacity: [.68, 1] },
-    offset: ["start 1", "start .37"],
+    select: `.${styles.heroCalc}, .${styles.steps}, .${styles.provider}, .${styles.audiences}, .${styles.devCode}, .${styles.basis}, .${styles.final}, [data-home-reveal]`,
+    frames: { transform: ["translateY(38px) scale(.97)", "translateY(0) scale(1)"] },
+    offset: ["start 1", "start .52"],
+  },
+  {
+    select: "[data-home-provider-motion]:nth-child(odd)",
+    anchor: networkAnchor,
+    frames: { transform: ["translate(-34px, 23px) rotate(-8deg) scale(.88)", "translate(0) rotate(0) scale(1)"], opacity: [.48, 1] },
+    offset: ["start .93", "start .52"],
+  },
+  {
+    select: "[data-home-provider-motion]:nth-child(even)",
+    anchor: networkAnchor,
+    frames: { transform: ["translate(36px, 36px) rotate(8deg) scale(.88)", "translate(0) rotate(0) scale(1)"], opacity: [.48, 1] },
+    offset: ["start .87", "start .47"],
+  },
+  {
+    select: "[data-home-result-motion]",
+    anchor: networkAnchor,
+    frames: { transform: ["translateY(30px) scale(.92)", "translateY(0) scale(1)"], opacity: [.36, 1] },
+    offset: ["start .75", "start .32"],
   },
   {
     select: `.${styles.mapFrame}`,
@@ -52,10 +99,16 @@ const mobileScenes: Scene[] = [
     offset: ["start 1", "start .29"],
   },
   {
-    select: `.${styles.finalCoins}`,
+    select: `.${styles.finalCoins} > :first-child`,
     anchor: `.${styles.final}`,
-    frames: { transform: ["translateY(44px) scale(.78)", "translateY(0) scale(1)"] },
+    frames: { transform: ["translate(46px, 14px) rotate(28deg) scale(.76)", "translate(0) rotate(0) scale(1)"] },
     offset: ["start .93", "start .39"],
+  },
+  {
+    select: `.${styles.finalCoins} > :nth-child(3)`,
+    anchor: `.${styles.final}`,
+    frames: { transform: ["translate(-38px, 20px) rotate(-30deg) scale(.82)", "translate(0) rotate(0) scale(1)"] },
+    offset: ["start .86", "start .34"],
   },
 ];
 
@@ -70,7 +123,7 @@ function attachMobileScenes(home: HTMLElement) {
       } else if (!section.stop) {
         const stops = section.tracks.map(({ element, scene }) => {
           const anchor = scene.anchor ? element.closest<HTMLElement>(scene.anchor) ?? element : element;
-          const animation = animate(element, scene.frames, { autoplay: false, ease: "linear" });
+          const animation = animate(element, scene.frames, { autoplay: false, ease: "linear", times: scene.times });
           const detach = scroll(animation, { target: anchor, offset: scene.offset });
           return () => {
             detach();

@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { MAP_HEIGHT, MAP_WIDTH, arcPath, projectCountry } from "@railor/core/geo";
 import { Flag } from "@railor/ui";
+import styles from "./home.module.css";
 
 export interface MapRoute { from: string; to: string }
 
 /**
- * The live layer over the dot map: each corridor draws itself once when the
- * map scrolls into view, then a single dot travels along it to show which way
+ * The live layer over the dot map: corridors draw as the map enters view,
+ * then a dot travels along each one to show which way
  * the money moves. Countries are labelled with their flags so nothing on the
  * map needs a legend.
  */
@@ -80,8 +81,9 @@ export function RouteArcs({ routes }: { routes: MapRoute[] }) {
         </defs>
         {arcs.map((arc) => (
           <g key={arc.id}>
-            <path id={`arc-${arc.id}`} d={arc.d} pathLength={1} fill="none" stroke="url(#route-stroke)" strokeWidth={1.6} strokeLinecap="round"
-              style={{ strokeDasharray: 1, strokeDashoffset: inView || reduced ? 0 : 1, transition: reduced ? "none" : `stroke-dashoffset 1.2s cubic-bezier(0.77, 0, 0.175, 1) ${arc.index * 0.12}s` }} />
+            <path id={`arc-${arc.id}`} className={styles.mapArc} d={arc.d} pathLength={1} fill="none" stroke="url(#route-stroke)" strokeWidth={1.6} strokeLinecap="round"
+              strokeDasharray={1} strokeDashoffset={inView || reduced ? 0 : 1}
+              style={{ "--route-delay": `${arc.index * 0.12}s`, "--route-start": `${8 + (arc.index % 5) * 9}%` } as React.CSSProperties} />
             {pulsing ? (
               <circle r={3.2} fill="#fff" opacity={0}>
                 <animateMotion dur={`${3.2 + (arc.index % 3) * 0.6}s`} begin="indefinite" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">

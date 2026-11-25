@@ -1,18 +1,23 @@
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.action { display: inline-flex; min-height: 38px; flex: 1 1 auto; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, color .15s ease; }
+.action { display: inline-flex; min-height: 44px; flex: 1 1 auto; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--color-line); border-radius: 10px; background: var(--color-surface); color: var(--color-ink); font-size: 13px; font-weight: 650; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, color .15s ease; }
+.corridorAction { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
 .action:hover:not(:disabled) { border-color: var(--color-ink); }
-.action[data-on] { border-color: color-mix(in srgb, var(--color-orange) 40%, var(--color-line)); background: var(--color-lavender); color: var(--color-orange-deep); }
+.action[data-on] { border-color: color-mix(in srgb, var(--color-ok) 28%, var(--color-line)); background: var(--color-ok-bg); color: var(--color-ok); }
 .action:disabled { cursor: not-allowed; }
 .action:disabled:not([data-on]) { color: var(--color-muted); }
 
-.strip { display: flex; min-width: 0; align-items: center; gap: 8px; }
-.stripLabel { display: inline-flex; flex: none; align-items: center; gap: 5px; color: var(--color-muted); font-size: 12.5px; font-weight: 600; }
-.strip ul { display: flex; min-width: 0; gap: 6px; overflow-x: auto; padding: 2px; scrollbar-width: none; }
-.strip ul::-webkit-scrollbar { display: none; }
-.strip li { flex: none; }
-.chip { display: inline-flex; height: 32px; align-items: center; overflow: hidden; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); }
-.chip[data-active] { border-color: var(--color-ink); }
-.chip > a { display: inline-flex; height: 100%; align-items: center; gap: 6px; padding: 0 4px 0 12px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
-.chip small { color: var(--color-muted); font-size: 11.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.remove { display: grid; width: 26px; height: 100%; place-items: center; color: var(--color-muted); }
-.remove:hover { color: var(--color-bad); }
+.strip { display: grid; min-width: 0; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--color-line); }
+.stripLabel { display: inline-flex; align-items: center; gap: 6px; color: var(--color-ink-soft); font-size: 12px; font-weight: 650; }
+.strip ul { display: flex; min-width: 0; gap: 8px; overflow-x: auto; padding: 3px; scroll-padding: 3px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.strip li { display: flex; flex: none; max-width: 100%; scroll-snap-align: start; }
+.chip { display: inline-flex; align-items: stretch; min-width: 0; min-height: 48px; border: 1px solid var(--color-line); border-radius: 10px; background: var(--color-canvas); }
+.chip[data-active] { border-color: color-mix(in srgb, var(--color-orange-deep) 48%, var(--color-line)); background: var(--color-lavender); }
+.chip > a { display: inline-flex; min-width: 0; align-items: center; gap: 8px; padding: 5px 2px 5px 7px; border-radius: 9px; color: var(--color-ink); }
+.chipIcon { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border: 1px solid var(--color-line); border-radius: 8px; background: var(--color-surface); color: var(--color-orange-deep); }
+.chip strong { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.chip small { display: block; overflow: hidden; color: var(--color-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.remove { display: grid; width: 36px; flex: none; place-items: center; border-radius: 9px; color: var(--color-muted); }
+.remove:hover:not(:disabled) { color: var(--color-bad); }
+.strip :is(a, button, ul):focus-visible, .action:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: -2px; }
+@media (pointer: coarse) { .remove { width: 44px; } }
+@media (prefers-reduced-motion: reduce) { .action { transition: none; } }

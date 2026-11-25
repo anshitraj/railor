@@ -19,6 +19,11 @@ export function freshComparison(row: PriceRow, input: PriceCheckInput, now: numb
 }
 
 export function providerIdentity(slug: string): string { return slug.replace(/^market:/, "").toLowerCase(); }
+
+/** One provider can return different checkout and receiving-account products. */
+export function priceRowKey(row: PriceRow): string {
+  return [row.providerSlug, row.product?.id ?? row.side ?? "", row.basis].join("/");
+}
 /**
  * Data status in plain words: an account quote (from the customer's own
  * connected account), a published estimate (the provider's published fees,

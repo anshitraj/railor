@@ -2,16 +2,13 @@ import { ArrowDownRight, Bell, Check, ChevronRight, Link2, MessageSquareText, Re
 import { ProviderLogo } from "../../app/provider-logo";
 import { RailorMark } from "../../brand";
 import { LoopOnView } from "./loop-on-view";
-import { DemoLock } from "./demo-lock";
 import home from "./home.module.css";
 import styles from "./why.module.css";
 
 /**
  * Each scene demonstrates one product behavior and settles into a readable still.
  */
-export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
-  // Signed out, example amounts blur like every price on Railor.
-  const blur = signedIn ? "" : ` ${home.demoBlur}`;
+export function WhyRailor() {
   return (
     <section className={home.section} aria-labelledby="why-title">
       <div className={home.container}>
@@ -30,14 +27,14 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
                 <div className={styles.networkInputs}>
                   <div className={styles.converge}>
                     {([["wise", "Wise"], ["remitly", "Remitly"], ["xoom", "Xoom"], ["revolut", "Revolut"], ["skydo", "Skydo"], ["payzoll", "PayZoll"]] as const).map(([slug, name], index) => (
-                      <span key={slug} className={styles.chip} style={{ "--beat": `${index * 65}ms` } as React.CSSProperties}>
+                      <span key={slug} className={styles.chip} data-home-provider-motion style={{ "--beat": `${index * 65}ms` } as React.CSSProperties}>
                         <ProviderLogo slug={slug} name={name} size={24} loading="eager" />{name}
                       </span>
                     ))}
                   </div>
                 </div>
                 <div className={styles.connector}><i /><ChevronRight size={16} /><ArrowDownRight size={16} /></div>
-                <div className={styles.networkResult}>
+                <div className={styles.networkResult} data-home-result-motion>
                   <span className={styles.networkMark}><RailorMark size={29} /></span>
                   <span><strong>One comparison</strong><small>Price · speed · eligibility</small></span>
                   <Check size={17} className={styles.networkCheck} />
@@ -70,25 +67,23 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
               <div className={styles.live} aria-hidden>
                 <span className={styles.ring}><RefreshCw size={16} /></span>
                 <div>
-                  <span className={styles.liveLabel}>Arrives</span>
-                  <strong className={`${styles.liveAmount}${blur}`}><span className={styles.liveOld}>₹92,341.20</span><span className={styles.liveNew}>₹92,369.57</span></strong>
+                  <span className={styles.liveLabel}>Example payout</span>
+                  <strong className={styles.liveAmount}><span className={styles.liveOld}>₹92,341.20</span><span className={styles.liveNew}>₹92,369.57</span></strong>
                 </div>
               </div>
-              {signedIn ? null : <DemoLock />}
             </LoopOnView>
             <div className={styles.copy}>
-              <h3>Live, not last week</h3>
-              <p>Prices refresh every 30 seconds while you look, with the time of each check.</p>
+              <h3>See when prices update</h3>
+              <p>Watch prices refresh and see when Railor last checked.</p>
             </div>
           </li>
 
           <li className={styles.tile} data-home-reveal>
             <LoopOnView className={styles.stage} once>
               <div className={styles.source} aria-hidden>
-                <span className={styles.sourcePrice}>Fee <span className={blur.trim() || undefined}>$11.26</span></span>
-                <span className={styles.sourceTip}><Link2 size={13} />wise.com · checked 4s ago</span>
+                <span className={styles.sourcePrice}>Example fee $11.26</span>
+                <span className={styles.sourceTip}><Link2 size={13} />wise.com</span>
               </div>
-              {signedIn ? null : <DemoLock />}
             </LoopOnView>
             <div className={styles.copy}>
               <h3>A source on every number</h3>

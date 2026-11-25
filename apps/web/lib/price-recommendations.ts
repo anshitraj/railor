@@ -8,6 +8,6 @@ export function recommendedPriceRows(rows: PriceRow[], best: PriceRow | null): P
     && row.recipientAmount !== null && row.recipientAmount > best.recipientAmount!
     && row.feeAmount !== null && !row.webChecks?.some((check) => check.state === "contradicted"))
     .sort((a, b) => b.recipientAmount! - a.recipientAmount!).slice(0, 2);
-  const pinned = new Set([best.providerSlug, ...promising.map((row) => row.providerSlug)]);
-  return [best, ...promising, ...rows.filter((row) => !pinned.has(row.providerSlug))];
+  const pinned = new Set([best, ...promising]);
+  return [best, ...promising, ...rows.filter((row) => !pinned.has(row))];
 }

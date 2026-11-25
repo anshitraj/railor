@@ -1,4 +1,6 @@
-export type HistoryRequest = { mode: "bank" | "stablecoin"; from: string; to: string; provider?: string; network?: string };
+export const HISTORY_RANGES = { bank: [7, 30, 90, 365], stablecoin: [7, 30, 90] } as const;
+export type HistoryDays = (typeof HISTORY_RANGES.bank)[number];
+export type HistoryRequest = { mode: "bank" | "stablecoin"; from: string; to: string; provider?: string; network?: string; days?: HistoryDays };
 export type HistoryPoint = { date: string; rate: number | null };
 export type RateHistory = { from: string; to: string; start: string; end: string; source: string; sourceUrl: string; note: string; points: HistoryPoint[] };
 
@@ -7,12 +9,14 @@ const COINS: Record<string, string> = { USDT: "tether", USDC: "usd-coin", EURC: 
 const positive = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
 const dateOf = (time: number) => new Date(time).toISOString().slice(0, 10);
 
-/** Seven calendar dates, with gaps preserved. These are market observations, never executable quotes. */
+/** Daily market observations on the requested UTC dates, with gaps preserved. */
 export async function loadRateHistory(request: HistoryRequest, fetcher: typeof fetch = fetch, now = new Date()): Promise<RateHistory> {
+  const days = request.days ?? 7;
   const end = dateOf(now.getTime());
-  const startMs = Date.parse(end) - 6 * DAY;
+  const startMs = Date.parse(end) - (days - 1) * DAY;
   const start = dateOf(startMs);
-  const slots = Array.from({ length: 7 }, (_, index) => dateOf(startMs + index * DAY));
+  const slots = Array.from({ length: days }, (_, index) => dateOf(startMs + index * DAY));
+  const dates = new Set(slots);
   const finish = (rates: Map<string, number>, source: string, sourceUrl: string, note: string): RateHistory => ({
     from: request.from, to: request.to, start, end, source, sourceUrl, note,
     points: slots.map((date) => ({ date, rate: rates.get(date) ?? null })),
@@ -36,7 +40,7 @@ export async function loadRateHistory(request: HistoryRequest, fetcher: typeof f
     const rows = await json(`https://api.frankfurter.dev/v2/rates?${params}`);
     const values = new Map<string, number>();
     if (Array.isArray(rows)) for (const row of rows) {
-      if (row && slots.includes(row.date) && row.base === request.from && row.quote === request.to && positive(row.rate)) values.set(row.date, row.rate);
+      if (row && dates.has(row.date) && row.base === request.from && row.quote === request.to && positive(row.rate)) values.set(row.date, row.rate);
     }
     return finish(values, "Frankfurter daily reference rates", "https://frankfurter.dev/", "Reference rates, excluding provider fees. Dates without a published observation remain empty.");
   }
@@ -46,8 +50,8 @@ export async function loadRateHistory(request: HistoryRequest, fetcher: typeof f
     const coindcx = request.provider === "coindcx";
     try {
       const url = coindcx
-        ? `https://api.coindcx.com/market_data/candles?${new URLSearchParams({ pair: `I-${request.from}_INR`, interval: "1d", limit: "7", startTime: String(startMs), endTime: String(now.getTime()) })}`
-        : `https://api.wazirx.com/sapi/v1/klines?${new URLSearchParams({ symbol: `${request.from.toLowerCase()}inr`, interval: "1d", limit: "7", startTime: String(startMs / 1000), endTime: String(Math.floor(now.getTime() / 1000)) })}`;
+        ? `https://api.coindcx.com/market_data/candles?${new URLSearchParams({ pair: `I-${request.from}_INR`, interval: "1d", limit: String(days), startTime: String(startMs), endTime: String(now.getTime()) })}`
+        : `https://api.wazirx.com/sapi/v1/klines?${new URLSearchParams({ symbol: `${request.from.toLowerCase()}inr`, interval: "1d", limit: String(days), startTime: String(startMs / 1000), endTime: String(Math.floor(now.getTime() / 1000)) })}`;
       const rows = await json(url);
       const prices: Array<[number, number]> = Array.isArray(rows) ? rows.flatMap((row) => {
         const time = coindcx ? row?.time : Array.isArray(row) ? row[0] * 1000 : NaN;
@@ -62,7 +66,7 @@ export async function loadRateHistory(request: HistoryRequest, fetcher: typeof f
 
   if (!COINS[request.from] || (request.to !== "INR" && request.to !== "EURC")) throw new Error("Historical rates are not available for this pair.");
   const market = async (coin: string, currency: string) => {
-    const body = await json(`https://api.coingecko.com/api/v3/coins/${COINS[coin]}/market_chart?${new URLSearchParams({ vs_currency: currency, days: "7" })}`);
+    const body = await json(`https://api.coingecko.com/api/v3/coins/${COINS[coin]}/market_chart?${new URLSearchParams({ vs_currency: currency, days: String(days) })}`);
     const rows = body && typeof body === "object" && "prices" in body ? body.prices : [];
     return Array.isArray(rows) ? rows.filter((row): row is [number, number] => Array.isArray(row) && typeof row[0] === "number" && positive(row[1])) : [];
   };

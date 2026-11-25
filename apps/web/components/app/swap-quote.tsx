@@ -20,7 +20,7 @@ import { providerSite } from "../../lib/provider-sites";
 import { CurrencyPicker } from "../price/currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "../price/pay-method-select";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
-import { providerIdentity } from "../../lib/price-display";
+import { priceRowKey, providerIdentity } from "../../lib/price-display";
 import { priceView } from "../../lib/price-view";
 import { benchmarkCost, formatBenchmarkCost } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
@@ -177,7 +177,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const [now, setNow] = useState(serverTime);
   const destinationCountry = to === initial.to ? initial.destinationCountry : undefined;
   const scope = JSON.stringify([from, to, context, destinationCountry]);
-  const [selection, setSelection] = useState(() => ({ scope, slug: initialProvider ?? null }));
+  const [selection, setSelection] = useState<{ scope: string; slug: string | null; rowKey?: string }>(() => ({ scope, slug: initialProvider ?? null }));
   const selectionRef = useRef(selection);
   const picked = selection.scope === scope ? selection.slug : null;
   const [inverted, setInverted] = useState(false);
@@ -196,8 +196,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const result = priceResponseMatches(response, { from, to, amount, market, context, destinationCountry }) ? response : null;
   const contextCurrent = Boolean(result);
 
-  function setPicked(slug: string) {
-    const next = { scope, slug };
+  function setPicked(slug: string, rowKey?: string) {
+    const next = { scope, slug, rowKey };
     selectionRef.current = next;
     setSelection(next);
   }
@@ -218,10 +218,11 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       // Flash rows whose price moved since the last poll of the same request.
       const moves: Record<string, "up" | "down"> = {};
       for (const row of body.rows) {
-        const before = previous.current[row.providerSlug];
-        if (before !== undefined && row.recipientAmount !== null && row.recipientAmount !== before) moves[row.providerSlug] = row.recipientAmount > before ? "up" : "down";
+        const key = priceRowKey(row);
+        const before = previous.current[key];
+        if (before !== undefined && row.recipientAmount !== null && row.recipientAmount !== before) moves[key] = row.recipientAmount > before ? "up" : "down";
       }
-      previous.current = Object.fromEntries(body.rows.flatMap((r) => (r.recipientAmount === null ? [] : [[r.providerSlug, r.recipientAmount]])));
+      previous.current = Object.fromEntries(body.rows.flatMap((r) => (r.recipientAmount === null ? [] : [[priceRowKey(r), r.recipientAmount]])));
       setFlashes(moves);
       setResult(body);
       setError("");
@@ -245,7 +246,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   useEffect(() => {
     if (firstRun.current) {
       firstRun.current = false;
-      previous.current = Object.fromEntries((initialResult?.rows ?? []).flatMap((r) => (r.recipientAmount === null ? [] : [[r.providerSlug, r.recipientAmount]])));
+      previous.current = Object.fromEntries((initialResult?.rows ?? []).flatMap((r) => (r.recipientAmount === null ? [] : [[priceRowKey(r), r.recipientAmount]])));
       return;
     }
     previous.current = {};
@@ -287,11 +288,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const { quotes, estimates, excluded, best } = priceView(result, now);
   const unavailable = result?.unavailable.filter(u => !result.platformQuotes?.some(check => check.providerSlug === u.providerSlug && check.status === "quoted")) ?? [];
   const candidates = (result?.marketCoverage?.allProviders ?? result?.marketCoverage?.providers ?? []).filter((candidate) => !excluded.some((row) => providerIdentity(row.providerSlug) === candidate.providerSlug) && !quotes.some(row => providerIdentity(row.providerSlug) === candidate.providerSlug));
-  const pickedPrice = picked ? [...quotes, ...estimates].find(row => row.providerSlug === picked)
-    ?? [...quotes, ...estimates].find(row => providerIdentity(row.providerSlug) === providerIdentity(picked)) : null;
+  const visibleRows = [...quotes, ...estimates];
+  const pickedPrice = picked ? visibleRows.find(row => priceRowKey(row) === selection.rowKey)
+    ?? visibleRows.find(row => row.providerSlug === picked)
+    ?? visibleRows.find(row => providerIdentity(row.providerSlug) === providerIdentity(picked)) : null;
   const selectedCandidate = picked && !pickedPrice ? candidates.find(candidate => candidate.providerSlug === providerIdentity(picked)) ?? null : null;
   const selected = picked ? pickedPrice ?? null : best ?? quotes[0] ?? estimates[0] ?? null;
-  const receive = useTween(selected?.recipientAmount ?? null, 450, selected?.providerSlug ?? null);
+  const receive = useTween(selected?.recipientAmount ?? null, 450, selected ? priceRowKey(selected) : null);
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
   const selectedCost = selected ? benchmarkCost(selected, amount, result?.reference?.rate, to) : null;
@@ -438,8 +441,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   aria-live="polite"
                   className={cn(
                     "min-w-0 flex-1 truncate font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight tabular text-[var(--color-ink)]",
-                    selected && flashes[selected.providerSlug] === "up" && "railor-flash-up",
-                    selected && flashes[selected.providerSlug] === "down" && "railor-flash-down",
+                    selected && flashes[priceRowKey(selected)] === "up" && "railor-flash-up",
+                    selected && flashes[priceRowKey(selected)] === "down" && "railor-flash-down",
                     loading && !result && "animate-pulse text-[var(--color-faint)]",
                   )}
                 >
@@ -525,7 +528,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               </summary>
               <ol className="flex flex-col gap-1 pb-1">
                 {estimates.map((row) => (
-                  <QuoteRow key={row.providerSlug} row={row} best={false} selected={row === selected} flash={flashes[row.providerSlug]} onPick={() => setPicked(row.providerSlug)} mode={mode} connected={connected.includes(connectionProviderSlug(row.providerSlug))} />
+                  <QuoteRow key={priceRowKey(row)} row={row} best={false} selected={row === selected} flash={flashes[priceRowKey(row)]} onPick={() => setPicked(row.providerSlug, priceRowKey(row))} mode={mode} connected={connected.includes(connectionProviderSlug(row.providerSlug))} />
                 ))}
               </ol>
             </details>

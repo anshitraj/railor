@@ -4,7 +4,7 @@ import { loadRateHistory } from "./rate-history";
 const now = new Date("2026-11-18T12:00:00Z");
 const reply = (data: unknown) => new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 
-describe("seven-day rate history", () => {
+describe("daily rate history", () => {
   it("keeps exactly seven UTC dates and leaves missing fiat observations empty", async () => {
     const fetcher = vi.fn(async (_url: string | URL | Request) => reply([
       { date: "2026-11-11", base: "USD", quote: "INR", rate: 80 },
@@ -28,6 +28,19 @@ describe("seven-day rate history", () => {
     expect(result.points[6]?.rate).toBe(103.15);
     expect(result.source).toBe("CoinDCX daily candles");
     expect(String(fetcher.mock.calls[0]?.[0])).toContain("pair=I-USDT_INR");
+  });
+
+  it("requests a longer time series and preserves its missing days", async () => {
+    const fetcher = vi.fn(async (_url: string | URL | Request) => reply([
+      { date: "2026-10-20", base: "USD", quote: "INR", rate: 91.5 },
+      { date: "2026-11-18", base: "USD", quote: "INR", rate: 94.1 },
+    ]));
+    const result = await loadRateHistory({ mode: "bank", from: "USD", to: "INR", days: 30 }, fetcher, now);
+    expect(result).toMatchObject({ start: "2026-10-20", end: "2026-11-18" });
+    expect(result.points).toHaveLength(30);
+    expect(result.points[0]).toEqual({ date: "2026-10-20", rate: 91.5 });
+    expect(result.points[1]).toEqual({ date: "2026-10-21", rate: null });
+    expect(String(fetcher.mock.calls[0]?.[0])).toContain("from=2026-10-20");
   });
 
   it("reads WazirX's second-based timestamps and switches the requested token", async () => {

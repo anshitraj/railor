@@ -9,8 +9,9 @@
 .setupHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--color-line); }
 .setupHead h2 { color: var(--color-ink); font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
 .setupHead p { margin-top: 2px; color: var(--color-muted); font-size: 13px; }
-.ring { --progress: 0%; position: relative; display: grid; width: 48px; height: 48px; flex: none; place-items: center; border-radius: 50%; background: conic-gradient(var(--color-orange) var(--progress), var(--color-sand) 0); }
-.ring::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--color-surface); }
+.ring { position: relative; display: grid; width: 48px; height: 48px; flex: none; place-items: center; }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; stroke: var(--color-sand); stroke-width: 4; }
+.ringValue { stroke: var(--color-orange); stroke-linecap: round; }
 .ring span { position: relative; color: var(--color-ink); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .steps { display: grid; gap: 4px; margin-top: 10px; }
 .steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 48px; padding: 6px 8px; border-radius: 14px; }
@@ -71,3 +72,25 @@
 .savedPanel header a { display: inline-flex; align-items: center; gap: 2px; color: var(--color-muted); font-size: 13px; font-weight: 600; text-decoration: none; }
 .savedPanel header a:hover { color: var(--color-ink); }
 @media (min-width: 0px) { .listsSingle { grid-template-columns: minmax(0, 1fr) !important; } }
+
+@keyframes fillRing { from { stroke-dashoffset: 100; } }
+@keyframes settleMark { from { scale: .78; } to { scale: 1; } }
+@keyframes placeShortcut { from { translate: 0 10px; rotate: -6deg; } to { translate: none; rotate: none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .setup { view-timeline-name: --setup; }
+    .ringValue { animation: fillRing linear both; animation-timeline: --setup; animation-range: entry 0% entry 75%; }
+    .stepMark {
+      animation: settleMark var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 18%;
+    }
+    .shortcut { view-timeline-name: --shortcut; }
+    .shortcutIcon {
+      animation: placeShortcut var(--ease-out) both;
+      animation-timeline: --shortcut;
+      animation-range: entry 0% cover 18%;
+    }
+  }
+}

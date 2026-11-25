@@ -7,9 +7,10 @@ import { ArrowRight, ArrowUpRight, ChevronDown, Clock3, FileBadge, FileSearch, I
 import type { MarketCoverageProvider, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
+import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
-import { pricingSourceLabel } from "../../lib/price-display";
+import { priceRowKey, pricingSourceLabel } from "../../lib/price-display";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
@@ -25,7 +26,7 @@ function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
   event.preventDefault(); tabs[next]?.focus(); tabs[next]?.click();
 }
 type Props = {
-  rows: PriceRow[]; selected: PriceRow | null; best: PriceRow | null; onSelect: (slug: string) => void;
+  rows: PriceRow[]; selected: PriceRow | null; best: PriceRow | null; onSelect: (slug: string, rowKey?: string) => void;
   candidates?: MarketCoverageProvider[]; selectedCandidate?: MarketCoverageProvider | null;
   bookmark?: ReactNode;
   onGetQuote?: (slug: string, signal: AbortSignal) => Promise<ProviderQuoteAdvice | null>;
@@ -59,8 +60,8 @@ export function PriceProviderBrowser(props: Props) {
     return list;
   }, [rows, best, props.candidates, query, sort, showResearch]);
   const priceCount = filtered.filter(({ quote }) => quote?.recipientAmount != null).length;
-  function choose(slug: string) {
-    onSelect(slug);
+  function choose(slug: string, rowKey?: string) {
+    onSelect(slug, rowKey);
     requestAnimationFrame(() => {
       const panel = document.getElementById("price-selected-provider");
       if (panel && getComputedStyle(panel).position === "static") {
@@ -76,11 +77,11 @@ export function PriceProviderBrowser(props: Props) {
         <div className={styles.tableTools}><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search providers" placeholder="Search providers" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => setQuery("")}><X size={13} /></button>}</label><label className={styles.sort}>Sort by<select aria-label="Sort providers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">Recommended</option><option value="receive">Highest recipient amount</option><option value="cost">Lowest total cost</option><option value="name">Provider name</option></select></label></div>
         <div className={styles.tableHeader} aria-hidden><span>Provider</span><span>Recipient gets</span><span>Fee · cost vs mid-market</span><span>Data status</span></div>
         <ol id="price-provider-list" ref={listRef} className={styles.providerRows} tabIndex={filtered.length > 5 ? 0 : undefined} aria-label="Provider prices" aria-busy={props.loading}>
-          {filtered.map((entry) => <li key={entry.providerSlug}>
-            <button type="button" className={styles.providerRow} data-quoted-fee={entry.quote?.feeAmount != null} aria-pressed={entry.providerSlug === (props.selectedCandidate?.providerSlug ?? selected?.providerSlug)} aria-label={`Select ${entry.providerName}`} onClick={() => choose(entry.providerSlug)}>
-              {entry.providerSlug === (props.selectedCandidate?.providerSlug ?? selected?.providerSlug) && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
-              <span className={styles.providerName}><ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} /><span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.providerSlug === best?.providerSlug ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
-              <span className={styles.rowAmount}><motion.strong key={`${entry.providerSlug}:${entry.quote?.recipientAmount}`} initial={reduce ? false : { opacity: .5, y: 2 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0 : .2 }} data-move={flashes[entry.providerSlug]}>{entry.quote?.recipientAmount != null ? money(entry.quote.recipientAmount) : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</motion.strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
+          {filtered.map((entry) => <li key={entry.quote ? priceRowKey(entry.quote) : entry.providerSlug}>
+            <button type="button" className={styles.providerRow} data-quoted-fee={entry.quote?.feeAmount != null} aria-pressed={entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug} aria-label={`Select ${entry.providerName}`} onClick={() => choose(entry.providerSlug, entry.quote ? priceRowKey(entry.quote) : undefined)}>
+              {(entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug) && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
+              <span className={styles.providerName}><ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} /><span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.quote && entry.quote === best ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
+              <span className={styles.rowAmount}><motion.strong key={`${entry.providerSlug}:${entry.quote?.recipientAmount}`} initial={reduce ? false : { opacity: .5, y: 2 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0 : .2 }} data-move={entry.quote ? flashes[priceRowKey(entry.quote)] : undefined}>{entry.quote?.recipientAmount != null ? money(entry.quote.recipientAmount) : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</motion.strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
               <span className={styles.rowFee}><strong title={entry.candidate?.feeHighlight}>{entry.quote?.feeAmount == null ? entry.candidate?.feeHighlight ?? (entry.quote?.feeBreakdown || entry.candidate?.feeEvidence?.length ? "Fee details available" : "Research details") : `${money(entry.quote.feeAmount)} ${entry.quote.feeCurrency ?? ""}`}</strong>{entry.quote ? (() => {
                 const cost = benchmarkCost(entry.quote, amount, props.reference?.rate, to);
                 const difference = benchmarkPayoutDifference(entry.quote.recipientAmount, amount, props.reference?.rate, to);
@@ -90,7 +91,7 @@ export function PriceProviderBrowser(props: Props) {
             </button>
           </li>)}
         </ol>
-        {!filtered.length && <div className={styles.empty}><FileSearch size={22} /><strong>{query ? "No providers match your search" : props.loading ? "Checking provider prices…" : "No provider price for this setup yet"}</strong><p>{query ? "Try another name or clear your search." : "Try another currency pair, or review broader coverage in Market view."}</p>{query && <button type="button" onClick={() => setQuery("")}>Clear search</button>}</div>}
+        {!filtered.length && <div className={styles.empty}>{props.loading && !query ? <><PriceLoadingMark /><strong role="status">Checking provider prices…</strong></> : <><FileSearch size={22} /><strong>{query ? "No providers match your search" : "No provider price for this setup yet"}</strong><p>{query ? "Try another name or clear your search." : "Try another currency pair, or review broader coverage in Market view."}</p>{query && <button type="button" onClick={() => setQuery("")}>Clear search</button>}</>}</div>}
         <div className={styles.tableFooter}>
           <span>{priceCount} {priceCount === 1 ? "price" : "prices"}</span>
           {!query.trim() && Boolean(props.candidates?.length || rows.some(row => row.recipientAmount === null)) && (
@@ -104,7 +105,7 @@ export function PriceProviderBrowser(props: Props) {
       <motion.div id="price-panel-1" role="tabpanel" aria-labelledby="price-tab-1" hidden={tab !== "Market view"} initial={false} animate={{ opacity: tab === "Market view" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}><h2>More context for this market</h2><p>Consumer estimates and currency coverage are separate from your current provider prices. They do not confirm your route or account eligibility.</p>{props.market}{props.coverage}</motion.div>
       <motion.div id="price-panel-2" role="tabpanel" aria-labelledby="price-tab-2" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}>{tab === "Historical data" ? props.history : null}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected?.providerSlug ?? "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected ? priceRowKey(selected) : "none"} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
   </>;
 }
 
@@ -134,7 +135,7 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
   const sources = provider.discoverySources?.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
     <div className={styles.selectedHeader}><ProviderLogo slug={provider.providerSlug} name={provider.providerName} size={39} /><div><h2>{provider.providerName}</h2><p>{provider.category}</p></div></div>
-    {bookmark}
+    {bookmark && <div className={styles.researchBookmark}>{bookmark}</div>}
     <div className={styles.pricingResearch}>
       <span>No payout quote for this setup</span>
       <h3>{provider.pricingStatus?.label ?? "Provider pricing"}</h3>
@@ -182,7 +183,7 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
   const delivery = row.basis === "exact" && row.delivery !== payment?.delivery?.label ? row.delivery : payment?.delivery?.detail ?? row.delivery;
   const cost = benchmarkCost(row, amount, reference?.rate, to);
   const difference = benchmarkPayoutDifference(row.recipientAmount, amount, reference?.rate, to);
-  const isBest = best?.providerSlug === row.providerSlug;
+  const isBest = best === row;
   const benchmark = reference ? `${reference.source}, 1 ${from} = ${reference.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}, observed ${new Date(reference.observedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC. A mid-market rate, not a consumer offer.` : "No benchmark rate available.";
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
     <div className={styles.selectedIdentity}><ProviderLogo slug={row.providerSlug} name={row.providerName} src={row.logoUrl} loading="eager" size={42} /><div><h2>{row.providerName}</h2><p>{row.product?.label ?? <>{from} <ArrowRight size={10} /> {to}</>}</p></div><span className={styles.basisBadge} data-basis={row.basis}>{pricingSourceLabel(row)}</span></div>
@@ -192,8 +193,10 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
     <div className={styles.selectedMeta}><span><Clock3 size={14} aria-hidden />{row.delivery ?? "Ask provider about delivery"}</span>{payment?.receipt && <span className={styles.receiptChip}><FileBadge size={14} aria-hidden />{payment.receipt.label}</span>}<span><ShieldCheck size={14} aria-hidden />{assessment?.status === "documented" ? "Documented profile" : "Confirm eligibility"}</span></div>
     {row.partial && <p className={styles.warning}><Info size={14} />{row.publicOffer ? `First-transfer offer for ${row.publicOffer.fundingMethod} → ${row.publicOffer.payoutMethod}. Subject to provider eligibility. Collected ${priceSourceTime(row.observedAt, row.basis).replace(/^Collected /, "")}; not a locked quote.` : row.costComplete && !row.missing?.length ? row.profileAssessment?.reasons[0] ?? "Confirm account eligibility and the final price with the provider." : "Some costs or account requirements are unconfirmed. This is not a complete executable quote."}</p>}
     {row.publicComparison && <p className={styles.detailIntro}>Public price observed for {row.publicComparison.sourceCountry ?? "an unspecified sender country"} → {row.publicComparison.destinationCountry ?? to}. Funding method and first-transfer offers may change your price. This reference is excluded from the complete-quote winner.</p>}
-    {action.href && !action.disabled ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</Link> : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />{action.label}</button>}
-    {bookmark}
+    <div className={styles.selectedActions}>
+      {action.href && !action.disabled ? <Link prefetch={false} href={action.href} target={action.external ? "_blank" : undefined} rel={action.external ? "noreferrer noopener" : undefined} className={styles.providerAction}>{action.label}{action.external ? <ArrowUpRight size={14} /> : <ArrowRight size={14} />}</Link> : <button type="button" disabled className={styles.providerAction}><LockKeyhole size={14} />{action.label}</button>}
+      {bookmark}
+    </div>
     {connection}
     <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>{(["Details", "Requirements", "Source", "Notes"] as const).map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}</div>
     {/* No exit animation: an outgoing panel must never show the previous provider's figures. */}

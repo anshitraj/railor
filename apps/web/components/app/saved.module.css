@@ -3,7 +3,19 @@
 .item:hover { border-color: var(--color-line-strong); box-shadow: 0 10px 24px -20px rgb(21 19 16 / .5); }
 .main { display: flex; min-width: 0; flex: 1; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 12px; color: var(--color-ink); text-decoration: none; }
 .marks { display: inline-flex; flex: none; }
-.marks > :last-child { margin-left: -8px; box-shadow: 0 0 0 2px var(--color-surface); border-radius: 50%; }
+.marks > :nth-child(2) { margin-left: -8px; box-shadow: 0 0 0 2px var(--color-surface); border-radius: 50%; }
+
+@keyframes alignCurrency { from { translate: 6px 0; } to { translate: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .item { view-timeline-name: --saved-route; }
+    .marks > :nth-child(2) {
+      animation: alignCurrency var(--ease-out) both;
+      animation-timeline: --saved-route;
+      animation-range: entry 0% cover 18%;
+    }
+  }
+}
 .text { display: grid; min-width: 0; flex: 1; gap: 1px; }
 .text strong { font-size: 15px; font-weight: 650; }
 .text strong span { color: var(--color-orange-deep); }

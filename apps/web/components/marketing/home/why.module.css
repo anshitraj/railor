@@ -89,6 +89,9 @@
     .stage::before { animation: drift linear both; animation-timeline: --feature-scene; animation-range: cover; }
   }
 }
+@media (max-width: 719px) {
+  .stage[data-scene-ready] :is(.chip, .networkResult):global([data-scroll-scene]) { animation: none; }
+}
 @keyframes gather { from { opacity: .2; transform: translateX(-22px) translateY(9px) scale(.94); } }
 @keyframes send { 0% { opacity: 0; transform: translateX(0); } 28%, 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(51px); } }
 @keyframes settle { 0% { opacity: .46; transform: translateY(9px) scale(.94); } 65% { opacity: 1; transform: translateY(0) scale(1.025); } }
