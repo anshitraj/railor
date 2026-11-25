@@ -6,7 +6,7 @@ import styles from "./footer.module.css";
 const GROUPS: Array<{ title: string; links: Array<[string, string]> }> = [
   { title: "Product", links: [["Compare prices", "/prices"], ["Providers", "/providers"], ["Market coverage", "/coverage"], ["Guides", "/guides"], ["Change feed", "/changes"], ["Pricing", "/pricing"]] },
   { title: "Developers", links: [["Documentation", "/docs"], ["API reference", "/docs/api"], ["SDKs", "/docs/sdks"], ["MCP for AI tools", "/docs/mcp"], ["Changelog", "/docs/changelog"]] },
-  { title: "Company", links: [["About", "/company"], ["Trust", "/company/trust"], ["Roadmap", "/company/roadmap"], ["Status", "/status"]] },
+  { title: "Company", links: [["About", "/company"], ["Trust", "/company/trust"], ["Help centre", "/help"], ["Roadmap", "/company/roadmap"], ["Status", "/status"]] },
   { title: "Legal", links: [["Terms", "/legal/terms"], ["Privacy", "/legal/privacy"]] },
 ];
 

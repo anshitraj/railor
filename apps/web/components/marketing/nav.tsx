@@ -12,6 +12,7 @@ import {
   Code2,
   History,
   Info,
+  LifeBuoy,
   KeyRound,
   LayoutDashboard,
   Map as MapIcon,
@@ -53,6 +54,7 @@ const LINKS: NavLink[] = [
     menu: [
       { label: "About", href: "/company", hint: "Why Railor exists", icon: Info },
       { label: "Trust", href: "/company/trust", hint: "Where every price comes from", icon: ShieldCheck },
+      { label: "Help centre", href: "/help", hint: "Answers and how to reach us", icon: LifeBuoy },
       { label: "Roadmap", href: "/company/roadmap", hint: "What we are building next", icon: MapIcon },
       { label: "Status", href: "/status", hint: "Live service status", icon: Activity },
     ],

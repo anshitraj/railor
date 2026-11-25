@@ -33,6 +33,7 @@ import {
   ScanSearch,
   Scale,
   Settings,
+  LifeBuoy,
   Shuffle,
   Users,
   Wallet,
@@ -218,7 +219,7 @@ export function AppShell({
     href: item.href,
   }));
   const navItems = NAV_GROUPS.flatMap((group) => group.items);
-  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }, { id: "page:/app/wallet", label: "Wallet & billing", group: "Go to", href: "/app/wallet", keywords: "credit balance top up add money promo code billing history auto reload" }].map((p) => {
+  const items: CommandItem[] = [...pageItems, ...palette, { id: "page:/app/settings", label: "Settings", group: "Go to", href: "/app/settings" }, { id: "page:/help", label: "Help centre", group: "Go to", href: "/help", keywords: "support contact faq articles question" }, { id: "page:/app/wallet", label: "Wallet & billing", group: "Go to", href: "/app/wallet", keywords: "credit balance top up add money promo code billing history auto reload" }].map((p) => {
     const Icon = p.id === "page:/app/wallet" ? Wallet : p.id === "action:invite" ? Users : navItems.find((item) => item.href === p.href || (!item.exact && p.href.startsWith(`${item.href}/`)))?.icon;
     return {
       id: p.id,
@@ -352,6 +353,16 @@ export function AppShell({
           >
             <span className={sidebarStyles.linkIcon}><Settings size={17} strokeWidth={1.8} aria-hidden /></span>
             {!compact && <span className={sidebarStyles.linkLabel}>Settings</span>}
+          </Link>
+          <Link
+            href="/help"
+            title={compact ? "Help centre" : undefined}
+            aria-label={compact ? "Help centre" : undefined}
+            className={cn(sidebarStyles.link, sidebarStyles.settings)}
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className={sidebarStyles.linkIcon}><LifeBuoy size={17} strokeWidth={1.8} aria-hidden /></span>
+            {!compact && <span className={sidebarStyles.linkLabel}>Help centre</span>}
           </Link>
           {walletBalanceCents !== null ? (
             <Link
