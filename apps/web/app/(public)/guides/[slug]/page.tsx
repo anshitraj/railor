@@ -58,6 +58,12 @@ export default async function GuidePage({ params, searchParams }: Props) {
           <span>Facts checked {updated}</span>
         </p>
       </header>
+      {guide.banner ? (
+        <figure className={styles.articleBanner} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a static vector illustration drawn for this guide */}
+          <img src={guide.banner} alt="" width={1200} height={440} decoding="async" fetchPriority="high" />
+        </figure>
+      ) : null}
 
       <div className={styles.layout}>
         <div>

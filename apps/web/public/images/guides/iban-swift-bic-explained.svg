@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="1200" height="440">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef0e8"/><stop offset="1" stop-color="#d6dcc9"/></linearGradient>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#151310" opacity=".07"/></pattern>
+<filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#3a2410" flood-opacity=".16"/><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#3a2410" flood-opacity=".08"/></filter>
+<filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#3a2410" flood-opacity=".14"/></filter>
+<radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".55" stop-color="#f2c14e"/><stop offset="1" stop-color="#c8901c"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d9dee6"/><stop offset="1" stop-color="#a7b0bd"/></linearGradient>
+<linearGradient id="orangeFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset="1" stop-color="#c2410c"/></linearGradient>
+</defs>
+<rect width="1200" height="440" fill="url(#bg)"/>
+<rect width="1200" height="440" fill="url(#dots)"/>
+<ellipse cx="600" cy="230" rx="520" ry="200" fill="url(#glow)" opacity=".55"/>
+<g filter="url(#lift)"><rect x="150" y="54" width="560" height="332" rx="22" fill="#ffffff"/></g>
+<text x="184" y="100" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="800" fill="#151310" text-anchor="start" letter-spacing="0">Recipient’s bank details</text>
+<rect x="180" y="122" width="500" height="40" rx="10" fill="#fff1e7"/>
+<text x="196" y="148" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#c2410c" text-anchor="start" letter-spacing="0">IBAN</text>
+<text x="664" y="148" font-family="'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace" font-size="15" font-weight="700" fill="#151310" text-anchor="end" letter-spacing="0">DE89 3704 0044 0532 0130 00</text>
+<rect x="180" y="172" width="500" height="40" rx="10" fill="#f5f3ee"/>
+<text x="196" y="198" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#8a8178" text-anchor="start" letter-spacing="0">SWIFT / BIC</text>
+<text x="664" y="198" font-family="'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace" font-size="15" font-weight="700" fill="#151310" text-anchor="end" letter-spacing="0">COBADEFFXXX</text>
+<rect x="180" y="222" width="500" height="40" rx="10" fill="#f5f3ee"/>
+<text x="196" y="248" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#8a8178" text-anchor="start" letter-spacing="0">Sort code</text>
+<text x="664" y="248" font-family="'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace" font-size="15" font-weight="700" fill="#151310" text-anchor="end" letter-spacing="0">20-00-00</text>
+<rect x="180" y="272" width="500" height="40" rx="10" fill="#f5f3ee"/>
+<text x="196" y="298" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#8a8178" text-anchor="start" letter-spacing="0">IFSC</text>
+<text x="664" y="298" font-family="'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace" font-size="15" font-weight="700" fill="#151310" text-anchor="end" letter-spacing="0">SBIN0001234</text>
+<rect x="180" y="322" width="500" height="40" rx="10" fill="#f5f3ee"/>
+<text x="196" y="348" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#8a8178" text-anchor="start" letter-spacing="0">Routing number</text>
+<text x="664" y="348" font-family="'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace" font-size="15" font-weight="700" fill="#151310" text-anchor="end" letter-spacing="0">021000021</text>
+<!-- checked stamp -->
+<g transform="rotate(-10 880 210)" filter="url(#soft)"><circle cx="880" cy="210" r="96" fill="#fff"/><circle cx="880" cy="210" r="84" fill="none" stroke="#1f8a4c" stroke-width="5"/><circle cx="880" cy="210" r="70" fill="none" stroke="#1f8a4c" stroke-width="2" stroke-dasharray="4 6"/><path d="M846 212 L870 236 L916 186" fill="none" stroke="#1f8a4c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="880" y="342" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#3d3832" text-anchor="middle" letter-spacing="0">Right details, first time</text>
+<g filter="url(#soft)"><circle cx="1070" cy="96" r="39" fill="#fff"/></g><clipPath id="clip-DE-1070-96"><circle cx="1070" cy="96" r="34"/></clipPath><g clip-path="url(#clip-DE-1070-96)"><rect x="1036" y="62" width="68" height="22.666666666666668" fill="#000"/><rect x="1036" y="84.66666666666667" width="68" height="22.666666666666668" fill="#dd0000"/><rect x="1036" y="107.33333333333333" width="68" height="22.666666666666668" fill="#ffce00"/></g><g filter="url(#soft)"><circle cx="1100" cy="318" r="39" fill="#fff"/></g><clipPath id="clip-GB-1100-318"><circle cx="1100" cy="318" r="34"/></clipPath><g clip-path="url(#clip-GB-1100-318)"><rect x="1066" y="284" width="68" height="68" fill="#012169"/><path d="M1066 284L1134 352M1134 284L1066 352" stroke="#fff" stroke-width="12.24"/><path d="M1066 284L1134 352M1134 284L1066 352" stroke="#c8102e" stroke-width="4.08"/><path d="M1100 284V352M1066 318H1134" stroke="#fff" stroke-width="17"/><path d="M1100 284V352M1066 318H1134" stroke="#c8102e" stroke-width="10.2"/></g><g filter="url(#soft)"><circle cx="1030" cy="210" r="35" fill="#fff"/></g><clipPath id="clip-IN-1030-210"><circle cx="1030" cy="210" r="30"/></clipPath><g clip-path="url(#clip-IN-1030-210)"><rect x="1000" y="180" width="60" height="20" fill="#ff9933"/><rect x="1000" y="200" width="60" height="20" fill="#fff"/><rect x="1000" y="220" width="60" height="20" fill="#138808"/><circle cx="1030" cy="210" r="6.6" fill="none" stroke="#000080" stroke-width="1.5"/></g>
+</svg>

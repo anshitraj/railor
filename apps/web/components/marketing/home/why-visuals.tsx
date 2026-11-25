@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Bell, Check, FileText, Mail, X } from "lucide-react";
+import { Bell, Check, FileText, Landmark, Mail, X } from "lucide-react";
 import { ProviderLogo } from "../../app/provider-logo";
 import { RailorMark } from "../../brand";
 import styles from "./why-rows.module.css";
@@ -169,10 +169,11 @@ export function CostVisual() {
 /** 3. Only the prices you can use. */
 export function EligibilityVisual() {
   const rows = [
-    { name: "Transfer app", ok: true, note: "Can serve you" },
-    { name: "Money app", ok: true, note: "Can serve you" },
-    { name: "Export platform", ok: false, note: "Business accounts only" },
-    { name: "Your bank", ok: true, note: "Can serve you" },
+    // Real services, with what is true for a personal sender: Skydo serves businesses and exporters only.
+    { slug: "wise", name: "Wise", ok: true, note: "Can serve you" },
+    { slug: "remitly", name: "Remitly", ok: true, note: "Can serve you" },
+    { slug: "skydo", name: "Skydo", ok: false, note: "Business accounts only" },
+    { slug: null, name: "Your bank", ok: true, note: "Can serve you" },
   ];
   return (
     <Scene tint="linear-gradient(160deg, #e9ebe3, #d3dac8)" label="Example figures">
@@ -183,7 +184,9 @@ export function EligibilityVisual() {
         <ul className={styles.list}>
           {rows.map((row, index) => (
             <li key={row.name} className={`${styles.row} ${styles.item}`} style={at(index + 1)} data-out={!row.ok || undefined}>
-              <span className={styles.avatar} data-tone={index}>{row.name.slice(0, 1)}</span>
+              {row.slug
+                ? <span className={styles.logo}><ProviderLogo slug={row.slug} name={row.name} size={34} loading="eager" /></span>
+                : <span className={styles.avatar} data-tone={index}><Landmark size={17} aria-hidden /></span>}
               <span className={styles.rowText}>
                 <strong>{row.name}</strong>
                 <small>{row.note}</small>

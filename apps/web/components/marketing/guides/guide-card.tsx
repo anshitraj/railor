@@ -4,8 +4,16 @@ import { Flag } from "@railor/ui";
 import { GUIDE_TOPICS, guideHref, type GuideMeta } from "../../../lib/guides/catalog";
 import styles from "./guides.module.css";
 
-/** The little picture on a guide's card: coins for the currencies, flags for the countries. */
+/** The picture on a guide's card: its drawn banner, or coins and flags for a guide that has none yet. */
 export function GuideArt({ guide }: { guide: GuideMeta }) {
+  if (guide.banner) {
+    return (
+      <div className={`${styles.art} ${styles.artBanner}`} data-topic={guide.topic} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a small static vector illustration */}
+        <img src={guide.banner} alt="" width={1200} height={440} loading="lazy" decoding="async" />
+      </div>
+    );
+  }
   const [first, second] = guide.art.symbols;
   const [from, to] = guide.art.flags;
   return (

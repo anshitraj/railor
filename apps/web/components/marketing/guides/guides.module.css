@@ -141,3 +141,12 @@
 
 /* Ways to send, under the article: the corridor's providers by how the money moves. */
 .ways { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--color-line); scroll-margin-top: 88px; }
+
+/* Drawn banners: fill the card's picture area and sit under an article's title. */
+.artBanner { background: none; }
+.artBanner img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .5s var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .card:hover .artBanner img { transform: scale(1.035); } }
+.articleBanner { overflow: hidden; margin: 8px 0 32px; border-radius: 28px; box-shadow: 0 24px 50px -36px rgb(21 19 16 / .45); }
+.articleBanner img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 440; }
+@media (max-width: 639px) { .articleBanner { border-radius: 20px; } .articleBanner img { aspect-ratio: 16 / 9; object-fit: cover; } }
+@media (prefers-reduced-motion: reduce) { .artBanner img { transition: none; } }

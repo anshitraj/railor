@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="1200" height="440">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbf1df"/><stop offset="1" stop-color="#f4dcb5"/></linearGradient>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#151310" opacity=".07"/></pattern>
+<filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#3a2410" flood-opacity=".16"/><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#3a2410" flood-opacity=".08"/></filter>
+<filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#3a2410" flood-opacity=".14"/></filter>
+<radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".55" stop-color="#f2c14e"/><stop offset="1" stop-color="#c8901c"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d9dee6"/><stop offset="1" stop-color="#a7b0bd"/></linearGradient>
+<linearGradient id="orangeFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset="1" stop-color="#c2410c"/></linearGradient>
+</defs>
+<rect width="1200" height="440" fill="url(#bg)"/>
+<rect width="1200" height="440" fill="url(#dots)"/>
+<ellipse cx="600" cy="230" rx="520" ry="200" fill="url(#glow)" opacity=".55"/>
+<!-- phone -->
+<g filter="url(#lift)"><rect x="150" y="52" width="196" height="352" rx="34" fill="#151310"/></g>
+<rect x="162" y="64" width="172" height="328" rx="25" fill="#fffaf2"/>
+<rect x="215" y="74" width="66" height="14" rx="7" fill="#151310"/>
+<text x="180" y="124" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="#8a8178" text-anchor="start" letter-spacing="0">You send</text>
+<rect x="178" y="134" width="140" height="48" rx="12" fill="#f3ebe0"/>
+<text x="192" y="166" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="800" fill="#151310" text-anchor="start" letter-spacing="0">1,000</text><text x="304" y="165" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="#3d3832" text-anchor="end" letter-spacing="0">USD</text>
+<text x="180" y="210" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="#8a8178" text-anchor="start" letter-spacing="0">They receive</text>
+<rect x="178" y="220" width="140" height="48" rx="12" fill="#f3ebe0"/>
+<text x="192" y="252" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="800" fill="#151310" text-anchor="start" letter-spacing="0">92,369</text><text x="304" y="251" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" fill="#3d3832" text-anchor="end" letter-spacing="0">INR</text>
+<rect x="178" y="296" width="140" height="44" rx="22" fill="#e95a2c"/><text x="248" y="324" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0">Compare</text>
+<!-- route -->
+<path d="M360 230 C 480 80, 700 80, 820 210" fill="none" stroke="#e95a2c" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
+<path d="M0 -9 L16 0 L0 9 Z" fill="#e95a2c" transform="translate(822 214) rotate(52)"/>
+<g filter="url(#soft)"><circle cx="430" cy="156" r="24" fill="#fff"/></g><circle cx="430" cy="156" r="18" fill="#151310"/><text x="430" y="162" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="0">1</text><text x="430" y="206" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="700" fill="#3d3832" text-anchor="middle" letter-spacing="0">Compare</text><g filter="url(#soft)"><circle cx="590" cy="104" r="24" fill="#fff"/></g><circle cx="590" cy="104" r="18" fill="#151310"/><text x="590" y="110" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="0">2</text><text x="590" y="154" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="700" fill="#3d3832" text-anchor="middle" letter-spacing="0">Pay</text><g filter="url(#soft)"><circle cx="742" cy="150" r="24" fill="#fff"/></g><circle cx="742" cy="150" r="18" fill="#151310"/><text x="742" y="156" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="0">3</text><text x="742" y="200" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="700" fill="#3d3832" text-anchor="middle" letter-spacing="0">Track</text>
+<!-- bank -->
+<g filter="url(#lift)"><rect x="800" y="220" width="250" height="168" rx="22" fill="#ffffff"/></g>
+<path d="M870 262 L925 236 L980 262 Z" fill="#151310"/><rect x="866" y="262" width="118" height="9" fill="#151310"/>
+<rect x="880" y="276" width="12" height="44" rx="2" fill="#3d3832"/><rect x="906" y="276" width="12" height="44" rx="2" fill="#3d3832"/><rect x="932" y="276" width="12" height="44" rx="2" fill="#3d3832"/><rect x="958" y="276" width="12" height="44" rx="2" fill="#3d3832"/>
+<rect x="862" y="322" width="126" height="10" rx="2" fill="#151310"/>
+<rect x="860" y="346" width="79" height="28" rx="14" fill="#dcf3e4"/><text x="899.5" y="363" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#1f8a4c" text-anchor="middle" letter-spacing="0">Arrived</text>
+<g transform="rotate(-10 1090 120)" filter="url(#soft)">
+<circle cx="1090" cy="124.6" r="46" fill="#c8901c"/>
+<circle cx="1090" cy="120" r="46" fill="url(#gold)"/>
+<circle cx="1090" cy="120" r="36.800000000000004" fill="none" stroke="#b7801a" stroke-width="2.3000000000000003" opacity=".55"/>
+<text x="1090" y="135.64" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="43.699999999999996" font-weight="800" fill="#8a5a06" text-anchor="middle" letter-spacing="0">$</text>
+</g><g transform="rotate(8 1020 74)" filter="url(#soft)">
+<circle cx="1020" cy="77" r="30" fill="#8d96a3"/>
+<circle cx="1020" cy="74" r="30" fill="url(#silver)"/>
+<circle cx="1020" cy="74" r="24" fill="none" stroke="#9aa3af" stroke-width="1.5" opacity=".55"/>
+<text x="1020" y="84.2" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="28.5" font-weight="800" fill="#5b6472" text-anchor="middle" letter-spacing="0">₹</text>
+</g>
+</svg>

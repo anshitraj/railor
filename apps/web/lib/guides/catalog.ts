@@ -30,6 +30,8 @@ export interface GuideMeta {
   updated: string;
   /** Currency symbols and country flags drawn on the guide's card. */
   art: { symbols: readonly [string, string?]; flags: readonly [string, string?] };
+  /** An illustrated banner for the card and the article, drawn for this guide. Falls back to the coin art. */
+  banner?: string;
   /** The route the guide's "Compare this route" button opens in Convert currencies. */
   route: { from: string; to: string; country: string; label: string };
   /** A guide that shows today's ranking from Railor's own price check. */
@@ -45,6 +47,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 7,
     updated: "2026-11-25",
     art: { symbols: ["$", "€"], flags: ["US", "DE"] },
+    banner: "/images/guides/how-to-send-money-abroad.svg",
     route: { from: "USD", to: "EUR", country: "DE", label: "USD to EUR" },
   },
   {
@@ -55,6 +58,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 6,
     updated: "2026-11-25",
     art: { symbols: ["%", "$"], flags: ["US", "GB"] },
+    banner: "/images/guides/real-cost-of-sending-money.svg",
     route: { from: "USD", to: "GBP", country: "GB", label: "USD to GBP" },
   },
   {
@@ -65,6 +69,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 7,
     updated: "2026-11-25",
     art: { symbols: ["$", "₹"], flags: ["US", "IN"] },
+    banner: "/images/guides/send-money-to-india.svg",
     route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
   },
   {
@@ -75,6 +80,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 6,
     updated: "2026-11-25",
     art: { symbols: ["$", "£"], flags: ["US", "GB"] },
+    banner: "/images/guides/debit-card-vs-bank-transfer.svg",
     route: { from: "USD", to: "GBP", country: "GB", label: "USD to GBP" },
   },
   {
@@ -85,6 +91,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 6,
     updated: "2026-11-25",
     art: { symbols: ["€", "£"], flags: ["DE", "GB"] },
+    banner: "/images/guides/iban-swift-bic-explained.svg",
     route: { from: "USD", to: "EUR", country: "DE", label: "USD to EUR" },
   },
   {
@@ -95,6 +102,7 @@ export const GUIDES: readonly GuideMeta[] = [
     minutes: 5,
     updated: "2026-11-25",
     art: { symbols: ["$", "₹"], flags: ["US", "IN"] },
+    banner: "/images/guides/usd-to-inr.svg",
     route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
     live: true,
   },

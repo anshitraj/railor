@@ -27,17 +27,17 @@ import {
 import { RailorMark } from "../brand";
 import type { Destination } from "../../lib/guides/destinations";
 import { GuidesMenu, GuidesMobileGroups } from "./guides/guides-menu";
+import { BusinessMenu, CompaniesMenu, ProvidersMobileGroups } from "./providers-menu";
 import styles from "./nav.module.css";
 export { RailorMark } from "../brand";
 
 interface MenuLink { label: string; href: string; hint: string; icon: LucideIcon }
-type NavLink = { label: string; href: string } | { label: string; menu: MenuLink[] } | { label: string; guides: true };
+type NavLink = { label: string; href: string } | { label: string; menu: MenuLink[] } | { label: string; guides: true } | { label: string; mega: "companies" | "business" };
 
 const LINKS: NavLink[] = [
-  { label: "Compare prices", href: "/prices" },
-  { label: "Providers", href: "/providers" },
-  { label: "Coverage", href: "/coverage" },
   { label: "Guides", guides: true },
+  { label: "Companies", mega: "companies" },
+  { label: "For business", mega: "business" },
   { label: "Pricing", href: "/pricing" },
   {
     label: "Developers",
@@ -140,7 +140,7 @@ export function MarketingNav({ signedIn = false, guideCountries = [] }: { signed
                 <span className={styles.linkText}>{link.label}</span>
               </Link>
             </li>
-          ) : "guides" in link ? (
+          ) : "guides" in link || "mega" in link ? (
             <li key={link.label} className={styles.megaItem} onMouseEnter={() => { setHover(link.label); openMenu(link.label); }} onMouseLeave={closeSoon}>
               <button
                 type="button"
@@ -153,7 +153,9 @@ export function MarketingNav({ signedIn = false, guideCountries = [] }: { signed
                 <ChevronDown size={14} aria-hidden className={styles.chevron} data-open={open === link.label || undefined} />
               </button>
               <div className={styles.mega} data-open={open === link.label || undefined} inert={open !== link.label}>
-                <GuidesMenu countries={guideCountries} signedIn={signedIn} onPick={() => setOpen(null)} />
+                {"mega" in link
+                  ? link.mega === "companies" ? <CompaniesMenu onPick={() => setOpen(null)} /> : <BusinessMenu onPick={() => setOpen(null)} />
+                  : <GuidesMenu countries={guideCountries} signedIn={signedIn} onPick={() => setOpen(null)} />}
               </div>
             </li>
           ) : (
@@ -224,6 +226,7 @@ export function MarketingNav({ signedIn = false, guideCountries = [] }: { signed
             <li><Link href="/guides" onClick={() => setMobileOpen(false)}>Guides<ArrowRight size={18} aria-hidden /></Link></li>
           </ul>
           <GuidesMobileGroups countries={guideCountries} signedIn={signedIn} onPick={() => setMobileOpen(false)} />
+          <ProvidersMobileGroups onPick={() => setMobileOpen(false)} />
           {LINKS.filter((link): link is { label: string; menu: MenuLink[] } => "menu" in link).map((group) => (
             <div key={group.label} className={styles.sheetGroup}>
               <p>{group.label}</p>

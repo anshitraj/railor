@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="1200" height="440">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6eefc"/><stop offset="1" stop-color="#c9dbf6"/></linearGradient>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#151310" opacity=".07"/></pattern>
+<filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#3a2410" flood-opacity=".16"/><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#3a2410" flood-opacity=".08"/></filter>
+<filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#3a2410" flood-opacity=".14"/></filter>
+<radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".55" stop-color="#f2c14e"/><stop offset="1" stop-color="#c8901c"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d9dee6"/><stop offset="1" stop-color="#a7b0bd"/></linearGradient>
+<linearGradient id="orangeFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset="1" stop-color="#c2410c"/></linearGradient>
+</defs>
+<rect width="1200" height="440" fill="url(#bg)"/>
+<rect width="1200" height="440" fill="url(#dots)"/>
+<ellipse cx="600" cy="230" rx="520" ry="200" fill="url(#glow)" opacity=".55"/>
+<g filter="url(#lift)"><rect x="150" y="46" width="640" height="348" rx="22" fill="#ffffff"/></g>
+<text x="184" y="92" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="21" font-weight="800" fill="#151310" text-anchor="start" letter-spacing="0">USD → INR, ranked</text>
+<rect x="636" y="70" width="120" height="30" rx="15" fill="#dcf3e4"/><circle cx="656" cy="85" r="6" fill="#1f8a4c"/><circle cx="656" cy="85" r="11" fill="none" stroke="#1f8a4c" stroke-width="2" opacity=".4"/><text x="708" y="91" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#1f8a4c" text-anchor="middle" letter-spacing="0">Live</text>
+<circle cx="198" cy="144" r="16" fill="#f2c14e"/><text x="198" y="150" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#6b4500" text-anchor="middle" letter-spacing="0">1</text>
+<rect x="228" y="131" width="380" height="26" rx="13" fill="url(#orangeFill)"/>
+<text x="756" y="151" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#c2410c" text-anchor="end" letter-spacing="0">₹92,369</text>
+<circle cx="198" cy="194" r="16" fill="#eef1f6"/><text x="198" y="200" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#3d3832" text-anchor="middle" letter-spacing="0">2</text>
+<rect x="228" y="181" width="353" height="26" rx="13" fill="#d9e4f7"/>
+<text x="756" y="201" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#151310" text-anchor="end" letter-spacing="0">₹92,210</text>
+<circle cx="198" cy="244" r="16" fill="#eef1f6"/><text x="198" y="250" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#3d3832" text-anchor="middle" letter-spacing="0">3</text>
+<rect x="228" y="231" width="327" height="26" rx="13" fill="#d9e4f7"/>
+<text x="756" y="251" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#151310" text-anchor="end" letter-spacing="0">₹92,102</text>
+<circle cx="198" cy="294" r="16" fill="#eef1f6"/><text x="198" y="300" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#3d3832" text-anchor="middle" letter-spacing="0">4</text>
+<rect x="228" y="281" width="289" height="26" rx="13" fill="#d9e4f7"/>
+<text x="756" y="301" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#151310" text-anchor="end" letter-spacing="0">₹91,880</text>
+<circle cx="198" cy="344" r="16" fill="#eef1f6"/><text x="198" y="350" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" fill="#3d3832" text-anchor="middle" letter-spacing="0">5</text>
+<rect x="228" y="331" width="243" height="26" rx="13" fill="#d9e4f7"/>
+<text x="756" y="351" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" fill="#151310" text-anchor="end" letter-spacing="0">₹91,540</text>
+<!-- trophy -->
+<g filter="url(#soft)">
+<path d="M880 120 H1000 V170 C1000 214 972 240 940 240 C908 240 880 214 880 170 Z" fill="url(#gold)"/>
+<path d="M880 136 H850 C850 176 866 196 888 200" fill="none" stroke="#c8901c" stroke-width="10" stroke-linecap="round"/>
+<path d="M1000 136 H1030 C1030 176 1014 196 992 200" fill="none" stroke="#c8901c" stroke-width="10" stroke-linecap="round"/>
+<rect x="926" y="238" width="28" height="44" fill="#c8901c"/><rect x="894" y="280" width="92" height="24" rx="6" fill="#151310"/>
+<text x="940" y="196" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="46" font-weight="900" fill="#8a5a06" text-anchor="middle" letter-spacing="0">1</text>
+</g>
+<g filter="url(#soft)"><circle cx="1100" cy="110" r="39" fill="#fff"/></g><clipPath id="clip-US-1100-110"><circle cx="1100" cy="110" r="34"/></clipPath><g clip-path="url(#clip-US-1100-110)"><rect x="1066" y="76" width="68" height="68" fill="#fff"/><rect x="1066" y="76" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="85.71428571428571" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="95.42857142857143" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="105.14285714285714" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="114.85714285714286" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="124.57142857142857" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="134.28571428571428" width="68" height="4.857142857142857" fill="#b22234"/><rect x="1066" y="76" width="35.7" height="35.7" fill="#3c3b6e"/><circle cx="1072.8" cy="82.8" r="2.04" fill="#fff"/><circle cx="1083.68" cy="82.8" r="2.04" fill="#fff"/><circle cx="1094.56" cy="82.8" r="2.04" fill="#fff"/><circle cx="1072.8" cy="93.67999999999999" r="2.04" fill="#fff"/><circle cx="1083.68" cy="93.67999999999999" r="2.04" fill="#fff"/><circle cx="1094.56" cy="93.67999999999999" r="2.04" fill="#fff"/><circle cx="1072.8" cy="104.56" r="2.04" fill="#fff"/><circle cx="1083.68" cy="104.56" r="2.04" fill="#fff"/><circle cx="1094.56" cy="104.56" r="2.04" fill="#fff"/></g><g filter="url(#soft)"><circle cx="1110" cy="330" r="39" fill="#fff"/></g><clipPath id="clip-IN-1110-330"><circle cx="1110" cy="330" r="34"/></clipPath><g clip-path="url(#clip-IN-1110-330)"><rect x="1076" y="296" width="68" height="22.666666666666668" fill="#ff9933"/><rect x="1076" y="318.6666666666667" width="68" height="22.666666666666668" fill="#fff"/><rect x="1076" y="341.3333333333333" width="68" height="22.666666666666668" fill="#138808"/><circle cx="1110" cy="330" r="7.48" fill="none" stroke="#000080" stroke-width="1.7000000000000002"/></g>
+</svg>

@@ -123,3 +123,12 @@
   .menu, .mega, .sheet, .chevron { transition: opacity .12s ease; transform: none; }
   .searchBackdrop, .searchPanel { animation: none; }
 }
+
+/* Companies and For business: providers with their logos, and plain links at the end of the rail. */
+.megaCompanies { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; }
+.megaCompanies a { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 4px 8px; border-radius: 10px; color: var(--color-ink-soft); font-size: 14.5px; font-weight: 550; transition: background-color .15s ease, color .15s ease; }
+.megaCompanies a > :first-child { flex: none; border-radius: 7px; box-shadow: 0 0 0 1px rgb(21 19 16 / .06); }
+.megaCompanies a:hover { background: var(--color-canvas); color: var(--color-ink); }
+.megaRailLink { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; margin-top: 4px; padding: 0 12px; border-top: 1px solid var(--color-line); border-radius: 0 0 11px 11px; color: var(--color-ink-soft); font-size: 14px; font-weight: 550; }
+.megaRailLink svg { flex: none; color: var(--color-orange-deep); }
+.megaRailLink:hover { color: var(--color-ink); }
