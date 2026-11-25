@@ -2,7 +2,8 @@
 .rows { display: grid; gap: clamp(56px, 9vw, 112px); }
 .feature { display: grid; gap: 28px; align-items: center; }
 .copy h3 { color: var(--color-ink); font-size: clamp(30px, 3.8vw, 46px); font-weight: 650; letter-spacing: -.032em; line-height: 1.04; text-wrap: balance; }
-.copy > p { max-width: 44ch; margin-top: 16px; color: var(--color-muted); font-size: clamp(16px, 1.4vw, 18px); line-height: 1.6; }
+.chip { display: inline-flex; height: 30px; align-items: center; gap: 6px; margin-bottom: 16px; padding: 0 12px 0 10px; border: 1px solid var(--color-lavender-deep); border-radius: 999px; background: var(--color-lavender); color: var(--color-orange-deep); font-size: 13px; font-weight: 650; }
+.copy > .lead { max-width: 44ch; margin-top: 16px; color: var(--color-muted); font-size: clamp(16px, 1.4vw, 18px); line-height: 1.6; }
 .points { margin-top: 26px; border-top: 1px solid var(--color-line); }
 .points li { display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid var(--color-line); color: var(--color-muted); font-size: 15px; line-height: 1.5; }
 .points strong { display: block; margin-bottom: 2px; color: var(--color-ink); font-size: 16px; font-weight: 650; }
@@ -13,9 +14,10 @@
 .cta:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 3px; }
 
 /* The picture panel */
-.picture { min-width: 0; }
+.picture { position: relative; min-width: 0; }
 .visual { position: relative; display: grid; min-height: 360px; place-items: center; padding: clamp(18px, 4vw, 44px); overflow: hidden; border-radius: 32px; background: var(--tint, #f4e8d0); }
-.tag { position: absolute; top: 16px; left: 18px; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / .6); color: var(--color-ink-soft); font-size: 12px; font-weight: 600; }
+/* A quiet caption, not a badge: the figures are examples, and it says so without shouting. */
+.tag { position: absolute; right: 20px; bottom: 14px; color: rgb(21 19 16 / .42); font-size: 11.5px; font-weight: 550; letter-spacing: .01em; }
 .stack { width: min(100%, 400px); }
 .card { display: grid; gap: 14px; padding: 18px; border-radius: 22px; background: var(--color-surface); box-shadow: 0 24px 40px -28px rgb(21 19 16 / .45), 0 2px 6px rgb(21 19 16 / .06); }
 .cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--color-muted); font-size: 13px; }
@@ -106,3 +108,26 @@
   .feature { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 88px); }
   .feature[data-flip] .picture { order: -1; }
 }
+
+/* Phones: one chapter per screen. Chip, headline, a short line, the point titles as a checklist, then the picture. */
+@media (max-width: 719px) {
+  .rows { gap: 72px; }
+  .feature { gap: 22px; }
+  .chip { height: 28px; margin-bottom: 12px; font-size: 12.5px; }
+  .copy h3 { font-size: clamp(29px, 8.4vw, 34px); }
+  .copy > .lead { margin-top: 12px; font-size: 15.5px; line-height: 1.55; }
+  .points { display: grid; gap: 10px; margin-top: 18px; border-top: 0; }
+  .points li { align-items: center; gap: 10px; padding: 0; border: 0; font-size: 0; }
+  .points strong { margin: 0; color: var(--color-ink-soft); font-size: 15px; font-weight: 600; }
+  .icon { width: 28px; height: 28px; border-radius: 9px; background: var(--color-lavender); box-shadow: none; }
+  .icon svg { width: 15px; height: 15px; }
+  .cta { height: 44px; margin-top: 16px; padding: 0; background: transparent; color: var(--color-orange-deep); font-size: 15px; font-weight: 650; }
+  .visual { min-height: 0; padding: 22px 16px 36px; border-radius: 28px; }
+  .tag { right: 18px; bottom: 12px; }
+}
+
+/* One sticker per picture, slapped on as the picture plays. */
+.sticker { position: absolute; z-index: 3; top: -14px; right: 18px; }
+.feature[data-flip] .sticker { right: auto; left: 18px; }
+.picture:has(.visual[data-armed]:not([data-in])) .sticker { animation-play-state: paused; }
+@media (max-width: 719px) { .sticker { top: -12px; right: 12px; font-size: 12.5px; } .feature[data-flip] .sticker { left: 12px; } }

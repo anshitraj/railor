@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Landmark, Play, ReceiptText, RefreshCw, ShieldCheck, Waypoints, Zap } from "lucide-react";
-import { RailorMark } from "../../brand";
+import { ArrowRight, Play, RefreshCw, ShieldCheck, Waypoints, Zap } from "lucide-react";
+import { ProviderLogo } from "../../app/provider-logo";
 import { HeroGlobe } from "./hero-globe";
 import { ProviderMarquee } from "./provider-marquee";
 import styles from "./home.module.css";
@@ -35,13 +35,21 @@ export function HomeHero({ calculator, providerCount }: { calculator: React.Reac
             </ul>
           </div>
           <div className={styles.heroCalc} id="calculator">
-            <div className={styles.heroRoute} aria-hidden="true">
-              <span className={styles.routeSignal} />
-              <span className={styles.routeDeparture}><Landmark size={17} /><ArrowUpRight size={10} /></span>
-              <span className={styles.routeJunction}><RailorMark size={25} /></span>
-              <span className={styles.routeArrival}><ReceiptText size={17} /><Check size={10} /></span>
+            {/* On phones the calculator sits in a device that rises into place; on larger screens this wrapper is invisible. */}
+            <div className={styles.phone}>
+              <span className={styles.phoneIsland} aria-hidden="true" />
+              {calculator}
             </div>
-            {calculator}
+            <div className={styles.phoneStickers} aria-hidden="true">
+              <span className="sticker" data-tone="green" style={{ "--tilt": "-8deg", "--delay": "1.05s" } as React.CSSProperties}>Free to compare</span>
+              <span className="sticker" data-tone="orange" style={{ "--tilt": "7deg", "--delay": "1.2s" } as React.CSSProperties}>No sign-up</span>
+              <span className={`sticker ${styles.logoSticker}`} style={{ "--tilt": "-4deg", "--delay": "1.35s" } as React.CSSProperties}>
+                <span className={styles.logoStack}>
+                  {[["wise", "Wise"], ["remitly", "Remitly"], ["revolut", "Revolut"], ["western-union", "Western Union"]].map(([slug, name]) => <ProviderLogo key={slug} slug={slug!} name={name!} size={22} />)}
+                </span>
+                {providerCount > 0 ? `${providerCount.toLocaleString("en-US")}+ providers` : "Every provider"}
+              </span>
+            </div>
           </div>
         </div>
 

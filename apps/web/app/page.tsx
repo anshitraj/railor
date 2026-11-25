@@ -10,6 +10,7 @@ import { RouteMapSection } from "../components/marketing/home/route-map";
 import { AudiencesSection, DevelopersSection, FaqSection, FinalCta, TrustSection } from "../components/marketing/home/sections";
 import { WhyRailor } from "../components/marketing/home/why-railor";
 import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
+import { MobileCompareBar } from "../components/marketing/home/mobile-compare-bar";
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
@@ -65,6 +66,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <TrustSection />
         <FaqSection />
         <FinalCta />
+        <MobileCompareBar providerCount={remittanceProviderCatalog().length} />
       </main>
       <MarketingFooter />
     </>

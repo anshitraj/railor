@@ -24,7 +24,7 @@ export function GuidesSection({ destinations, signedIn }: { destinations: readon
           <p className={home.lead}>Plain answers to what people search before they send money abroad. Every guide ends in a live comparison.</p>
         </div>
 
-        <div className={styles.grid}>
+        <div className={`${styles.grid} ${styles.homeGrid}`} data-rail>
           {GUIDES.map((guide) => <GuideCard key={guide.slug} guide={guide} />)}
         </div>
 

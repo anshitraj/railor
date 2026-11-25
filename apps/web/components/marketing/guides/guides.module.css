@@ -138,3 +138,15 @@
   .card, .cardMeta svg, .moreLink svg, .faq summary svg { transition: none; }
   .skeleton { animation: none; }
 }
+
+/* Home page on phones: guides become a swipeable rail and the country list a compact two-column grid. */
+@media (max-width: 639px) {
+  .homeGrid { display: flex; gap: 12px; margin-inline: -16px; padding: 2px 16px 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-inline: contain; }
+  .homeGrid::-webkit-scrollbar { display: none; }
+  .homeGrid > * { flex: 0 0 min(80vw, 320px); scroll-snap-align: start; }
+  .homeGrid .art { height: 112px; }
+  .homeFoot { margin-top: 28px; padding-top: 26px; }
+  .homeFoot .countries { grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+  .homeFoot .countries > :nth-child(n+9) { display: none; }
+  .homeFoot .country { min-height: 44px; gap: 8px; padding: 6px 4px; font-size: 14px; }
+}

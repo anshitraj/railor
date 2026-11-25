@@ -19,6 +19,12 @@ type Scene = {
 };
 
 const networkAnchor = "[data-home-reveal]:has([data-home-provider-motion])";
+/**
+ * Phone choreography, all tied to scroll position so it runs forwards and
+ * backwards with the thumb: headings arrive from the left, their explanations
+ * from the right, feature rows alternate sides, card rails slide in sideways,
+ * and the hero phone leans back as you scroll past it.
+ */
 const mobileScenes: Scene[] = [
   {
     select: `.${styles.heroIntro}`,
@@ -33,46 +39,45 @@ const mobileScenes: Scene[] = [
     offset: ["start start", "end .28"],
   },
   {
-    select: `.${styles.routeDeparture}`,
-    anchor: `.${styles.heroCalc}`,
-    frames: { transform: ["translate(-55px, -16px) rotate(-17deg) scale(.83)", "translate(6px, 3px) rotate(3deg) scale(1.04)", "translate(0) rotate(0) scale(1)"] },
-    offset: ["start .37", "start .15"],
-    times: [0, .83, 1],
-  },
-  {
-    select: `.${styles.routeJunction}`,
-    anchor: `.${styles.heroCalc}`,
-    frames: { transform: ["translateY(19px) rotate(-6deg) scale(.78)", "translateY(-3px) rotate(1deg) scale(1.06)", "translateY(0) rotate(0) scale(1)"] },
-    offset: ["start .34", "start .12"],
-    times: [0, .82, 1],
-  },
-  {
-    select: `.${styles.routeArrival}`,
-    anchor: `.${styles.heroCalc}`,
-    frames: { transform: ["translate(58px, -23px) rotate(17deg) scale(.86)", "translate(-5px, 3px) rotate(-3deg) scale(1.04)", "translate(0) rotate(0) scale(1)"] },
-    offset: ["start .36", "start .1"],
-    times: [0, .86, 1],
-  },
-  {
-    select: `.${styles.routeSignal}`,
-    anchor: `.${styles.heroCalc}`,
-    frames: { transform: ["scaleX(0)", "scaleX(1)"], opacity: [.15, 1] },
-    offset: ["start .38", "start .13"],
+    select: `.${styles.heroCalc}`,
+    anchor: `.${styles.hero}`,
+    frames: { transform: ["perspective(1300px) rotateX(0deg) scale(1)", "perspective(1300px) rotateX(16deg) scale(.9)"], opacity: [1, .55] },
+    offset: ["start -.42", "end .02"],
   },
   {
     select: `.${styles.head} > :first-child, .${styles.dev} > :first-child, .${styles.trust} > :first-child, .${styles.faq} > :first-child`,
-    frames: { transform: ["translateY(44px)", "translateY(0)"], opacity: [.72, 1] },
-    offset: ["start .98", "start .39"],
+    frames: { transform: ["translateX(-48px)", "translateX(0)"], opacity: [.3, 1] },
+    offset: ["start .98", "start .5"],
   },
   {
     select: `.${styles.head} > .${styles.lead}, .${styles.heroExtras}, .${styles.logos}, .${styles.routeChips}, .${styles.faqList}, .${styles.stepControls}, .${styles.profileControls}`,
-    frames: { transform: ["translateY(32px)", "translateY(0)"], opacity: [.8, 1] },
-    offset: ["start .92", "start .36"],
+    frames: { transform: ["translateX(40px)", "translateX(0)"], opacity: [.35, 1] },
+    offset: ["start .96", "start .52"],
   },
   {
-    select: `.${styles.heroCalc}, .${styles.steps}, .${styles.provider}, .${styles.audiences}, .${styles.devCode}, .${styles.basis}, .${styles.final}, [data-home-reveal]`,
+    select: "article:not([data-flip]) > [data-why-copy], article[data-flip] > [data-why-picture]",
+    frames: { transform: ["translateX(-56px) rotate(-2deg)", "translateX(0) rotate(0)"], opacity: [.25, 1] },
+    offset: ["start 1", "start .5"],
+  },
+  {
+    select: "article:not([data-flip]) > [data-why-picture], article[data-flip] > [data-why-copy]",
+    frames: { transform: ["translateX(64px) rotate(4deg) scale(.94)", "translateX(0) rotate(0) scale(1)"], opacity: [.25, 1] },
+    offset: ["start 1", "start .48"],
+  },
+  {
+    select: "[data-rail]",
+    frames: { transform: ["translateX(88px)", "translateX(0)"], opacity: [.4, 1] },
+    offset: ["start 1", "start .55"],
+  },
+  {
+    select: `.${styles.steps}, .${styles.audiences}, .${styles.devCode}, [data-home-reveal]`,
     frames: { transform: ["translateY(38px) scale(.97)", "translateY(0) scale(1)"] },
     offset: ["start 1", "start .52"],
+  },
+  {
+    select: `.${styles.final}`,
+    frames: { transform: ["perspective(900px) rotateX(22deg) scale(.88)", "perspective(900px) rotateX(0deg) scale(1)"], opacity: [.4, 1] },
+    offset: ["start 1", "start .45"],
   },
   {
     select: "[data-home-provider-motion]:nth-child(odd)",
@@ -98,19 +103,59 @@ const mobileScenes: Scene[] = [
     frames: { transform: ["translateY(46px) scale(1.12)", "translateY(0) scale(1)"], opacity: [.64, 1] },
     offset: ["start 1", "start .29"],
   },
-  {
-    select: `.${styles.finalCoins} > :first-child`,
-    anchor: `.${styles.final}`,
-    frames: { transform: ["translate(46px, 14px) rotate(28deg) scale(.76)", "translate(0) rotate(0) scale(1)"] },
-    offset: ["start .93", "start .39"],
-  },
-  {
-    select: `.${styles.finalCoins} > :nth-child(3)`,
-    anchor: `.${styles.final}`,
-    frames: { transform: ["translate(-38px, 20px) rotate(-30deg) scale(.82)", "translate(0) rotate(0) scale(1)"] },
-    offset: ["start .86", "start .34"],
-  },
 ];
+
+/**
+ * A pinned rail: the section holds still while its cards slide sideways as
+ * you scroll down, then lets go. The section is made just tall enough for the
+ * cards to travel their own width.
+ */
+function attachPinnedRails(home: HTMLElement) {
+  const stops: Array<() => void> = [];
+  home.querySelectorAll<HTMLElement>("[data-pin-rail]").forEach((section) => {
+    const track = section.querySelector<HTMLElement>("[data-pin-track]");
+    if (!track) return;
+    let distance = 0;
+    let frame = 0;
+    // Plain scroll maths (not a scroll timeline), so it behaves the same in every phone browser.
+    const paint = () => {
+      frame = 0;
+      const travel = section.offsetHeight - window.innerHeight;
+      const progress = travel > 0 ? Math.min(1, Math.max(0, -section.getBoundingClientRect().top / travel)) : 0;
+      track.style.transform = `translate3d(${(-progress * distance).toFixed(1)}px, 0, 0)`;
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint); };
+    const detach = () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      track.style.transform = "";
+    };
+    const layout = () => {
+      detach();
+      section.style.removeProperty("--rail-travel");
+      delete section.dataset.pinned;
+      distance = Math.ceil(track.scrollWidth - track.clientWidth);
+      if (distance < 40) return;
+      section.dataset.pinned = "";
+      // One pixel of scroll moves the cards about 1.4 pixels: brisk, never a chore.
+      // CSS adds this to the large viewport height, so a phone's sliding toolbar can't change it.
+      section.style.setProperty("--rail-travel", `${Math.ceil(distance / 1.4)}px`);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      paint();
+    };
+    layout();
+    const resize = new ResizeObserver(() => layout());
+    resize.observe(track);
+    stops.push(() => {
+      resize.disconnect();
+      detach();
+      section.style.removeProperty("--rail-travel");
+      delete section.dataset.pinned;
+    });
+  });
+  return () => stops.forEach((stop) => stop());
+}
 
 function attachMobileScenes(home: HTMLElement) {
   const sections = new Map<Element, { tracks: { element: HTMLElement; scene: Scene }[]; stop?: () => void }>();
@@ -172,7 +217,12 @@ export function HomeScrollMotion() {
       detach = undefined;
       if (!motion.matches) return;
       if (mobile.matches) {
-        detach = attachMobileScenes(home);
+        const scenes = attachMobileScenes(home);
+        const rails = attachPinnedRails(home);
+        detach = () => {
+          scenes();
+          rails();
+        };
       } else if (!CSS.supports("animation-timeline: view()")) {
         const observer = new IntersectionObserver((entries) => {
           for (const { isIntersecting, target } of entries) {

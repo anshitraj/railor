@@ -6,6 +6,10 @@ import styles from "./why-rows.module.css";
 
 interface Row {
   id: string;
+  /** A short label above the heading, so each row reads as its own chapter. */
+  chip: { icon: LucideIcon; label: string };
+  /** A sticker slapped on the picture as it plays. */
+  sticker: { text: string; tone: "orange" | "gold" | "green" | "sky" | "ink"; tilt: number };
   title: string;
   lead: string;
   points: Array<{ icon: LucideIcon; title: string; body: string }>;
@@ -22,6 +26,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
   const rows: Row[] = [
     {
       id: "compare",
+      chip: { icon: Layers, label: "Compare" },
+      sticker: { text: "Most arrives, first", tone: "orange", tilt: 6 },
       title: "Every provider, one list.",
       lead: "Apps, banks and payment platforms side by side, ranked by what actually arrives.",
       points: [
@@ -33,6 +39,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
     },
     {
       id: "cost",
+      chip: { icon: Percent, label: "Real cost" },
+      sticker: { text: "Fee + rate", tone: "gold", tilt: -6 },
       title: "See the real cost, not just the fee.",
       lead: "A low fee can hide a weak exchange rate. Railor measures every option against the fair mid-market rate.",
       points: [
@@ -44,6 +52,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
     },
     {
       id: "profile",
+      chip: { icon: UserCheck, label: "Your profile" },
+      sticker: { text: "Only what fits you", tone: "green", tilt: 5 },
       title: "Only the prices you can use.",
       lead: "Services that can’t serve your profile are hidden, and Railor tells you why.",
       points: [
@@ -55,6 +65,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
     },
     {
       id: "alerts",
+      chip: { icon: Bell, label: "Rate alerts" },
+      sticker: { text: "We’ll email you", tone: "sky", tilt: -5 },
       title: "Know when it’s worth sending.",
       lead: "Save a route and Railor emails you when the rate reaches the one you are waiting for.",
       points: [
@@ -67,6 +79,8 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
     },
     {
       id: "paid",
+      chip: { icon: FileText, label: "Get paid" },
+      sticker: { text: "Matched to the invoice", tone: "ink", tilt: 4 },
       title: "Get paid, then check the money arrived.",
       lead: "Upload an invoice, compare ways to get paid and match the credit when it lands.",
       points: [
@@ -93,9 +107,10 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
         <div className={styles.rows}>
           {rows.map((row, index) => (
             <article key={row.id} className={styles.feature} data-flip={index % 2 === 1 || undefined} aria-labelledby={`why-${row.id}`}>
-              <div className={styles.copy}>
+              <div className={styles.copy} data-why-copy>
+                <p className={styles.chip}><row.chip.icon size={14} aria-hidden />{row.chip.label}</p>
                 <h3 id={`why-${row.id}`}>{row.title}</h3>
-                <p>{row.lead}</p>
+                <p className={styles.lead}>{row.lead}</p>
                 <ul className={styles.points}>
                   {row.points.map(({ icon: Icon, title, body }) => (
                     <li key={title}>
@@ -106,7 +121,10 @@ export function WhyRailor({ signedIn = false }: { signedIn?: boolean }) {
                 </ul>
                 <Link href={row.cta.href} className={`${styles.cta} press`}>{row.cta.label}<ArrowRight size={16} aria-hidden /></Link>
               </div>
-              <div className={styles.picture}>{row.visual}</div>
+              <div className={styles.picture} data-why-picture>
+                {row.visual}
+                <span className={`sticker ${styles.sticker}`} data-tone={row.sticker.tone} style={{ "--tilt": `${row.sticker.tilt}deg`, "--delay": ".35s" } as React.CSSProperties} aria-hidden="true">{row.sticker.text}</span>
+              </div>
             </article>
           ))}
         </div>

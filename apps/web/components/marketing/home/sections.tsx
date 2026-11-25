@@ -117,7 +117,7 @@ export function TrustSection() {
               <Link href="/company/trust" className={styles.textLink}>How Railor checks prices<ArrowRight size={16} aria-hidden /></Link>
             </div>
           </div>
-          <ul className={styles.basisGrid}>
+          <ul className={styles.basisGrid} data-rail>
             {BASES.map((basis, index) => (
               <li key={basis.label} className={styles.basis}>
                 <span className="sticker" data-tone={basis.tone} style={{ "--tilt": `${index % 2 ? 3 : -3}deg` } as React.CSSProperties}>{basis.label}</span>
@@ -178,6 +178,11 @@ export function FinalCta() {
             <span className="coin" data-metal="silver">€</span>
             <span className="coin" data-metal="bronze">₹</span>
             <span className="coin" data-metal="gold">£</span>
+          </div>
+          <div className={styles.finalStickers} aria-hidden="true">
+            <span className="sticker" data-tone="gold" style={{ "--tilt": "-9deg" } as React.CSSProperties}>Free</span>
+            <span className="sticker" style={{ "--tilt": "7deg" } as React.CSSProperties}>No account needed</span>
+            <span className="sticker" data-tone="ink" style={{ "--tilt": "-4deg" } as React.CSSProperties}>Source on every price</span>
           </div>
           <h2 id="final-title">Check before you send.</h2>
           <p>Enter two currencies and an amount to compare public prices.</p>

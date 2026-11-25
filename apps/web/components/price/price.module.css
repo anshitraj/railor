@@ -214,7 +214,9 @@
 .heroTrustCost { display: inline-flex; align-items: center; gap: 7px; color: var(--color-ink-soft); font-weight: 550; }
 .heroTrustCost svg { flex: none; color: var(--color-ok); }
 @media (max-width: 639px) {
-  .quote[data-variant="hero"] .card { padding: 14px; border-radius: 22px; }
+  /* Inside the phone frame: the card is the screen. */
+  .quote[data-variant="hero"] .card { padding: 52px 12px 14px; border: 0; border-radius: 42px; box-shadow: none; }
+  .quote[data-variant="hero"] .progress { inset: 0 24px auto; }
   .quote[data-variant="hero"] .segment button { height: 42px; padding: 0 4px; font-size: 13px; }
   .quote[data-variant="hero"] .segmentLabel { gap: 6px; }
   .heroBest { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 12px; }
