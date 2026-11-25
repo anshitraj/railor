@@ -1,7 +1,7 @@
 /* At the top the bar sits flush; once you scroll it lifts into a floating pill. The header stays 68px tall either way, so nothing below moves. */
 .header { position: sticky; top: 0; z-index: 60; height: 68px; padding-top: 0; transition: padding .3s var(--ease-out); }
 .header[data-scrolled] { padding-top: 7px; }
-.bar { display: flex; align-items: center; gap: 8px; width: min(1240px, calc(100% - 32px)); height: 68px; margin-inline: auto; padding: 0 2px; border: 1px solid transparent; border-radius: 22px; transition: height .3s var(--ease-out), width .3s var(--ease-out), padding .3s var(--ease-out), background-color .25s ease, border-color .25s ease, box-shadow .3s var(--ease-out); }
+.bar { position: relative; display: flex; align-items: center; gap: 8px; width: min(1240px, calc(100% - 32px)); height: 68px; margin-inline: auto; padding: 0 2px; border: 1px solid transparent; border-radius: 22px; transition: height .3s var(--ease-out), width .3s var(--ease-out), padding .3s var(--ease-out), background-color .25s ease, border-color .25s ease, box-shadow .3s var(--ease-out); }
 .header[data-scrolled] .bar { width: min(1160px, calc(100% - 20px)); height: 54px; padding: 0 7px 0 14px; border-color: color-mix(in srgb, var(--color-line) 80%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 82%, transparent); box-shadow: 0 10px 30px -18px rgb(21 19 16 / .45), 0 1px 0 rgb(255 255 255 / .6) inset; backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px); }
 .header[data-scrolled] .cta, .header[data-scrolled] .signIn, .header[data-scrolled] .iconButton { height: 40px; }
 .brand { display: inline-flex; flex: none; align-items: center; gap: 10px; margin-right: 18px; color: var(--color-ink); font-size: 21px; font-weight: 700; letter-spacing: -.035em; }
@@ -20,7 +20,8 @@
 .menu { position: absolute; top: calc(100% + 8px); left: -8px; width: 330px; padding: 8px; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-panel); opacity: 0; transform: translateY(-4px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s var(--ease-out), transform .2s var(--ease-out); }
 .menu::before { content: ""; position: absolute; inset: -12px 0 auto; height: 12px; }
 .menu[data-open] { opacity: 1; transform: none; pointer-events: auto; }
-.menu[data-wide] { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 8px; width: 560px; }
+/* The wide Developers menu hangs from the right edge of its button: with Guides added it sits further right, and from the left it ran past a 1160px window. */
+.menu[data-wide] { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 8px; width: 560px; left: auto; right: -8px; transform-origin: top right; }
 .feature { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: linear-gradient(160deg, var(--color-ink), #2c2620); color: #fff; transition: transform .2s var(--ease-out); }
 .feature:hover { transform: translateY(-1px); }
 .featureIcon { display: inline-grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; background: rgb(255 255 255 / .1); color: var(--color-accent-light, #ffb08a); }
@@ -28,6 +29,31 @@
 .feature small { color: rgb(255 255 255 / .68); font-size: 12.5px; line-height: 1.45; }
 .feature code { margin-top: 4px; padding: 6px 8px; border-radius: 8px; background: rgb(255 255 255 / .08); color: #ffd7c2; font: 500 11px var(--font-mono, ui-monospace, monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .featureCta { display: inline-flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 6px; color: var(--color-accent-light, #ffb08a); font-size: 13px; font-weight: 650; }
+/* Guides: a wide panel that lines up with the bar instead of the button, so it never runs off a narrow window. */
+.megaItem { position: static; }
+.mega { position: absolute; top: calc(100% + 8px); left: 0; right: 0; width: min(960px, 100%); margin-inline: auto; padding: 10px; border: 1px solid var(--color-line); border-radius: 22px; background: var(--color-surface); box-shadow: var(--shadow-panel); opacity: 0; transform: translateY(-4px) scale(.99); transform-origin: top center; pointer-events: none; transition: opacity .16s var(--ease-out), transform .2s var(--ease-out); }
+.mega::before { content: ""; position: absolute; inset: -12px 0 auto; height: 12px; }
+.mega[data-open] { opacity: 1; transform: none; pointer-events: auto; }
+.megaGrid { display: grid; grid-template-columns: 200px 210px minmax(0, 1fr); gap: 10px; min-height: 380px; }
+.megaRail { display: grid; align-content: start; gap: 2px; padding: 6px; border-radius: 16px; background: var(--color-canvas); }
+.megaRail button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 12px; border-radius: 11px; color: var(--color-ink-soft); font-size: 14.5px; font-weight: 550; text-align: left; transition: background-color .15s ease, color .15s ease; }
+.megaRail button svg { flex: none; color: var(--color-orange-deep); }
+.megaRail button:hover { color: var(--color-ink); }
+.megaRail button[data-active] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgb(21 19 16 / .08), 0 0 0 1px var(--color-line); }
+.megaRail button:focus-visible { outline: 2px solid var(--color-orange); outline-offset: -2px; }
+.megaPane { display: flex; flex-direction: column; min-width: 0; padding: 4px 6px 2px; }
+.megaCountries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.megaCountries a { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 4px 8px; border-radius: 10px; color: var(--color-ink-soft); font-size: 14px; font-weight: 500; line-height: 1.25; transition: background-color .15s ease, color .15s ease; }
+.megaCountries a img { flex: none; }
+.megaCountries a:hover { background: var(--color-canvas); color: var(--color-ink); }
+.megaGuides { display: grid; gap: 2px; }
+.megaGuides a { display: block; padding: 11px 12px; border-radius: 12px; transition: background-color .15s ease; }
+.megaGuides a:hover { background: var(--color-canvas); }
+.megaGuides strong { display: block; color: var(--color-ink); font-size: 14.5px; font-weight: 600; line-height: 1.3; }
+.megaGuides small { display: block; margin-top: 3px; color: var(--color-muted); font-size: 13px; line-height: 1.4; }
+.megaMore { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding: 10px 8px 4px; color: var(--color-ink); font-size: 14px; font-weight: 650; }
+.megaMore:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sheetGroup ul.sheetList { grid-template-columns: minmax(0, 1fr); }
 .menuLink { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; transition: background-color .15s ease; }
 .menuLink:hover { background: var(--color-canvas); }
 .menuLink strong { display: block; color: var(--color-ink); font-size: 14px; font-weight: 600; line-height: 1.3; }
@@ -87,12 +113,13 @@
   .signIn { display: inline-flex; }
   .iconButton { display: grid; }
 }
-@media (min-width: 1000px) {
+/* Seven links need more room than six did, so the bar swaps to the menu button a little later: at 1090px it overflowed by 76px. */
+@media (min-width: 1160px) {
   .links { display: flex; }
   .menuButton { display: none; }
   .sheet { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .menu, .sheet, .chevron { transition: opacity .12s ease; transform: none; }
+  .menu, .mega, .sheet, .chevron { transition: opacity .12s ease; transform: none; }
   .searchBackdrop, .searchPanel { animation: none; }
 }

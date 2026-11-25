@@ -3,17 +3,18 @@ import { ensureMigrated } from "@railor/database";
 import { MarketingNav } from "../../components/marketing/nav";
 import { MarketingFooter } from "../../components/marketing/footer";
 import { getSession } from "../../lib/auth";
+import { loadGuideDestinations } from "../../lib/guides/load";
 
 export const dynamic = "force-dynamic";
 
 /** Shell for every public page that isn't the homepage. */
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   await ensureMigrated();
-  const [counts, session] = await Promise.all([loadPlatformCounts(), getSession()]);
+  const [counts, session, destinations] = await Promise.all([loadPlatformCounts(), getSession(), loadGuideDestinations()]);
 
   return (
     <>
-      <MarketingNav signedIn={Boolean(session)} />
+      <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
       <main id="main" className="mx-auto w-[min(1180px,calc(100%-2rem))] py-12">
         {children}
       </main>

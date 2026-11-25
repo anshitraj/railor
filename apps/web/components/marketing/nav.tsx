@@ -24,16 +24,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { RailorMark } from "../brand";
+import type { Destination } from "../../lib/guides/destinations";
+import { GuidesMenu, GuidesMobileGroups } from "./guides/guides-menu";
 import styles from "./nav.module.css";
 export { RailorMark } from "../brand";
 
 interface MenuLink { label: string; href: string; hint: string; icon: LucideIcon }
-type NavLink = { label: string; href: string } | { label: string; menu: MenuLink[] };
+type NavLink = { label: string; href: string } | { label: string; menu: MenuLink[] } | { label: string; guides: true };
 
 const LINKS: NavLink[] = [
   { label: "Compare prices", href: "/prices" },
   { label: "Providers", href: "/providers" },
   { label: "Coverage", href: "/coverage" },
+  { label: "Guides", guides: true },
   { label: "Pricing", href: "/pricing" },
   {
     label: "Developers",
@@ -75,7 +78,8 @@ function DevelopersFeature({ signedIn, onPick }: { signedIn: boolean; onPick: ()
   );
 }
 
-export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
+/** `guideCountries`: where the Guides menu offers to send money, already limited to currencies Railor can price. */
+export function MarketingNav({ signedIn = false, guideCountries = [] }: { signedIn?: boolean; guideCountries?: readonly Destination[] }) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const [hover, setHover] = useState<string | null>(null);
@@ -133,6 +137,22 @@ export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
                 {hover === link.label ? <motion.span layoutId="nav-hover" className={styles.hoverPill} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.3, bounce: 0 }} /> : null}
                 <span className={styles.linkText}>{link.label}</span>
               </Link>
+            </li>
+          ) : "guides" in link ? (
+            <li key={link.label} className={styles.megaItem} onMouseEnter={() => { setHover(link.label); openMenu(link.label); }} onMouseLeave={closeSoon}>
+              <button
+                type="button"
+                className={styles.link}
+                aria-expanded={open === link.label}
+                onClick={() => setOpen((current) => (current === link.label ? null : link.label))}
+              >
+                {hover === link.label || open === link.label ? <motion.span layoutId="nav-hover" className={styles.hoverPill} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.3, bounce: 0 }} /> : null}
+                <span className={styles.linkText}>{link.label}</span>
+                <ChevronDown size={14} aria-hidden className={styles.chevron} data-open={open === link.label || undefined} />
+              </button>
+              <div className={styles.mega} data-open={open === link.label || undefined} inert={open !== link.label}>
+                <GuidesMenu countries={guideCountries} signedIn={signedIn} onPick={() => setOpen(null)} />
+              </div>
             </li>
           ) : (
             <li key={link.label} className={styles.menuItem} onMouseEnter={() => { setHover(link.label); openMenu(link.label); }} onMouseLeave={closeSoon}>
@@ -199,7 +219,9 @@ export function MarketingNav({ signedIn = false }: { signedIn?: boolean }) {
             {LINKS.filter((link): link is { label: string; href: string } => "href" in link).map((link) => (
               <li key={link.href}><Link href={link.href} onClick={() => setMobileOpen(false)}>{link.label}<ArrowRight size={18} aria-hidden /></Link></li>
             ))}
+            <li><Link href="/guides" onClick={() => setMobileOpen(false)}>Guides<ArrowRight size={18} aria-hidden /></Link></li>
           </ul>
+          <GuidesMobileGroups countries={guideCountries} signedIn={signedIn} onPick={() => setMobileOpen(false)} />
           {LINKS.filter((link): link is { label: string; menu: MenuLink[] } => "menu" in link).map((group) => (
             <div key={group.label} className={styles.sheetGroup}>
               <p>{group.label}</p>

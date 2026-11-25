@@ -13,6 +13,8 @@ import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
+import { GuidesSection } from "../components/marketing/guides/home-guides";
+import { loadGuideDestinations } from "../lib/guides/load";
 import { QuickQuote, QuickQuoteSkeleton } from "../components/price/quick-quote";
 import { loadPricePage } from "../lib/pricing";
 import { getSession } from "../lib/auth";
@@ -46,11 +48,11 @@ async function HeroQuote({ params }: { params: Record<string, string | undefined
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureMigrated();
-  const [params, session] = await Promise.all([searchParams, getSession()]);
+  const [params, session, destinations] = await Promise.all([searchParams, getSession(), loadGuideDestinations()]);
 
   return (
     <>
-      <MarketingNav signedIn={Boolean(session)} />
+      <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
       <main id="main" className={homeStyles.motionPage}>
         <HomeScrollMotion />
         <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
@@ -58,6 +60,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
+        <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />
         <CompanyRulesSection />
         <AudiencesSection />
         <TestimonialsSection />
