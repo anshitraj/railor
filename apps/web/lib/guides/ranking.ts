@@ -55,13 +55,3 @@ export function rankProviders(result: PriceCheckResult | null, now: number, limi
   }
   return ranked;
 }
-
-/**
- * What a visitor may see of the same list: who was checked, in alphabetical
- * order, never an amount or a position. Signing in unlocks the ranking.
- */
-export function listedProviders(ranked: readonly RankedProvider[]): Array<Pick<RankedProvider, "slug" | "name" | "logoUrl">> {
-  return ranked
-    .map(({ slug, name, logoUrl }) => ({ slug, name, ...(logoUrl ? { logoUrl } : {}) }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}

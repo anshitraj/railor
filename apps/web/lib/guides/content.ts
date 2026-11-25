@@ -333,7 +333,7 @@ export const GUIDE_CONTENT: Record<string, GuideContent> = {
     faq: [
       { q: "Which is the best way to send USD to INR?", a: "The one that delivers the most rupees for your amount and that your recipient can use. It changes through the day, so the ranking above is live." },
       { q: "Is the ranking the same for 100 and 10,000 dollars?", a: "Not always. Fixed fees weigh more on small transfers and the exchange rate weighs more on large ones. Change the amount to see it." },
-      { q: "Why do I need to sign in to see the ranking?", a: "Prices change by the minute and depend on who is sending, so Railor shows the full ranking in a free account, where it can match your profile and amount." },
+      { q: "Is this ranking the same for everyone?", a: "It is for a personal sender in the US. Prices can differ by who is sending and how they pay, so a free Railor account matches the comparison to your profile and amount." },
     ],
   },
 };

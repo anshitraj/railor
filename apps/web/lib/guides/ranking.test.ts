@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PriceCheckResult, PriceRow } from "@railor/core";
-import { listedProviders, rankProviders } from "./ranking";
+import { rankProviders } from "./ranking";
 
 const NOW = Date.parse("2026-11-25T12:00:00Z");
 
@@ -46,12 +46,5 @@ describe("ranking the providers for a guide", () => {
     const ranked = rankProviders(result([row("known", "Known", 93_000), row("partial", "Partial", 92_000, { partial: true })]), NOW);
     expect(ranked.find((provider) => provider.slug === "known")!.costPct).toBe(0.01);
     expect(ranked.find((provider) => provider.slug === "partial")!.costPct).toBeNull();
-  });
-
-  it("gives a visitor the names in alphabetical order and nothing that reveals the ranking", () => {
-    const ranked = rankProviders(result([row("z", "Zed", 94_000), row("a", "Alpha", 91_000), row("m", "Mid", 93_000)]), NOW);
-    const listed = listedProviders(ranked);
-    expect(listed.map((provider) => provider.name)).toEqual(["Alpha", "Mid", "Zed"]);
-    for (const provider of listed) expect(Object.keys(provider).sort()).toEqual(["name", "slug"]);
   });
 });

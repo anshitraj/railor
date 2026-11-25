@@ -65,7 +65,7 @@ export default async function GuidePage({ params, searchParams }: Props) {
             signedIn={signedIn}
             beforeSections={guide.live ? (
               <Suspense key={amount} fallback={<RankingSkeleton />}>
-                <LiveRanking amount={amount} signedIn={signedIn} next={`${guideHref(guide.slug)}?amount=${amount}`} />
+                <LiveRanking amount={amount} signedIn={signedIn} />
               </Suspense>
             ) : null}
           />

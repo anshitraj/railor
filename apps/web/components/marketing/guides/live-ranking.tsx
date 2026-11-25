@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { loadPricePage } from "../../../lib/pricing";
 import { convertHref } from "../../../lib/guides/destinations";
-import { listedProviders, rankProviders } from "../../../lib/guides/ranking";
+import { rankProviders } from "../../../lib/guides/ranking";
 import { ProviderLogo } from "../../app/provider-logo";
 import styles from "./guides.module.css";
 
@@ -29,12 +29,11 @@ export function RankingSkeleton() {
 }
 
 /**
- * Today's ranking for USD to INR from Railor's own price check. Signed in, it
- * shows the order and the rupees that arrive. Signed out, it names the
- * providers alphabetically with the amounts blurred and never sent, the same
- * rule every other price on the public site follows.
+ * Today's ranking for USD to INR from Railor's own price check, open to
+ * everyone: the order and the rupees that arrive, each labelled with where its
+ * price comes from.
  */
-export async function LiveRanking({ amount, signedIn, next }: { amount: number; signedIn: boolean; next: string }) {
+export async function LiveRanking({ amount, signedIn }: { amount: number; signedIn: boolean }) {
   const page = await loadPricePage(
     { from: "USD", to: "INR", amount: String(amount), destinationCountry: "IN", direction: "send", country: "US", profile: "personal", purpose: "personal", market: "1" },
     null, null, "personal",
@@ -58,7 +57,7 @@ export async function LiveRanking({ amount, signedIn, next }: { amount: number; 
 
       {ranked.length === 0 ? (
         <p className={styles.liveNote}>{page.error ?? "Railor couldn’t load these prices just now."} Try again in a moment, or open the full comparison.</p>
-      ) : signedIn ? (
+      ) : (
         <ol className={styles.rank}>
           {ranked.map((provider, index) => (
             <li key={provider.slug} className={styles.rankRow} data-first={index === 0 ? "" : undefined}>
@@ -76,24 +75,6 @@ export async function LiveRanking({ amount, signedIn, next }: { amount: number; 
             </li>
           ))}
         </ol>
-      ) : (
-        <>
-          <ul className={styles.rank}>
-            {listedProviders(ranked).map((provider) => (
-              <li key={provider.slug} className={styles.rankRow}>
-                <span className={styles.rankNum} aria-hidden>·</span>
-                <ProviderLogo slug={provider.slug} name={provider.name} src={provider.logoUrl} size={34} />
-                <span className={styles.rankName}><strong>{provider.name}</strong></span>
-                {/* A placeholder, not a price: the server never sends a visitor an amount. */}
-                <span className={`${styles.rankAmount} ${styles.blur}`} aria-hidden>₹00,000.00</span>
-              </li>
-            ))}
-          </ul>
-          <div className={styles.liveLock}>
-            <p><LockKeyhole size={15} aria-hidden style={{ display: "inline", verticalAlign: "-2px", marginRight: 6 }} />Railor checked these {ranked.length} for your amount. Sign in free to see the order and the rupees each one delivers.</p>
-            <Link href={`/login?intent=start&next=${encodeURIComponent(next)}`} className={`${styles.ctaButton} press`}>Unlock the ranking</Link>
-          </div>
-        </>
       )}
 
       {ranked.length ? (
