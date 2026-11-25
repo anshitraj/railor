@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, FileBadge, FileSearch, Info, Layers3, LockKeyhole, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, FileBadge, FileSearch, Info, Landmark, Layers3, LockKeyhole, Megaphone, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
 import type { MarketCoverageProvider, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
@@ -47,6 +47,35 @@ export function PriceProviderBrowser(props: Props) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("recommended");
   const [showResearch, setShowResearch] = useState(false);
+  const [promotions, setPromotions] = useState<{ pair: string; rows: { slug: string; endsAt: string }[] }>();
+  const pair = `${from}:${to}`;
+  useEffect(() => {
+    if (from === to) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function refresh() {
+      let delay = 30_000;
+      try {
+        const response = await fetch(`/api/prices/promotions?${new URLSearchParams({ from, to })}`, { signal: controller.signal, cache: "no-store" });
+        const data: { promotions: { slug: string; endsAt: string }[] } = response.ok ? await response.json() : { promotions: [] };
+        if (!controller.signal.aborted) {
+          const now = Date.now();
+          const active = data.promotions.filter(item => Date.parse(item.endsAt) > now);
+          setPromotions({ pair, rows: active });
+          delay = Math.max(100, Math.min(delay, ...active.map(item => Date.parse(item.endsAt) - now)));
+        }
+      } catch {
+        if (!controller.signal.aborted) setPromotions({ pair, rows: [] });
+      }
+      if (!controller.signal.aborted) timer = setTimeout(refresh, delay);
+    }
+    void refresh();
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, [from, to, pair]);
+
+  const activePromotions = useMemo(() => new Set(promotions?.pair === pair
+    ? promotions.rows.filter(item => Date.parse(item.endsAt) > Date.now()).map(item => item.slug)
+    : []), [pair, promotions]);
   const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to, showResearch]);
   const filtered = useMemo(() => {
@@ -59,8 +88,11 @@ export function PriceProviderBrowser(props: Props) {
     if (sort === "receive") list.sort((a, b) => (b.quote?.recipientAmount ?? -Infinity) - (a.quote?.recipientAmount ?? -Infinity));
     if (sort === "cost") list.sort((a, b) => (a.quote?.totalCostPct ?? Infinity) - (b.quote?.totalCostPct ?? Infinity));
     if (sort === "name") list.sort((a, b) => a.providerName.localeCompare(b.providerName));
+    if (sort === "recommended") list.sort((a, b) =>
+      Number(b.quote?.recipientAmount != null && activePromotions.has(providerIdentity(b.providerSlug))) -
+      Number(a.quote?.recipientAmount != null && activePromotions.has(providerIdentity(a.providerSlug))));
     return list;
-  }, [rows, best, props.candidates, query, sort, showResearch]);
+  }, [rows, best, props.candidates, query, sort, showResearch, activePromotions]);
   const priceCount = filtered.filter(({ quote }) => quote?.recipientAmount != null).length;
   function choose(slug: string, rowKey?: string) {
     onSelect(slug, rowKey);
@@ -73,27 +105,55 @@ export function PriceProviderBrowser(props: Props) {
     });
   }
   return <>
-    <section className={styles.providers} aria-label="Provider comparison">
+    <section className={`${styles.providers} ${styles.compactProviders}`} aria-label="Provider comparison">
       <div className={styles.browserTabs} role="tablist" aria-label="Pricing view" onKeyDown={tabKeys}>{["Providers", "Market view", "Historical data"].map((label, index) => <button type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`price-tab-${index}`} aria-controls={`price-panel-${index}`} aria-selected={tab === label} key={label} onClick={() => setTab(label)}>{index === 0 ? "Prices" : label}{index === 0 && <span>{rows.filter(row => row.recipientAmount != null).length}</span>}</button>)}</div>
       <div id="price-panel-0" role="tabpanel" aria-labelledby="price-tab-0" hidden={tab !== "Providers"}>
         <div className={styles.tableTools}><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search providers" placeholder="Search providers" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => setQuery("")}><X size={13} /></button>}</label><label className={styles.sort}>Sort by<select aria-label="Sort providers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">Recommended</option><option value="receive">Highest recipient amount</option><option value="cost">Lowest total cost</option><option value="name">Provider name</option></select></label></div>
-        <div className={styles.tableHeader} aria-hidden><span>Provider</span><span>Recipient gets</span><span>Fee · cost vs mid-market</span><span>Data status</span></div>
+        <div className={styles.tableHeader} aria-hidden><span>Provider</span><span>Fee &amp; rate</span><span>Recipient gets</span></div>
         <ol id="price-provider-list" ref={listRef} className={styles.providerRows} tabIndex={filtered.length > 5 ? 0 : undefined} aria-label="Provider prices" aria-busy={props.loading}>
-          {filtered.map((entry) => <li key={entry.quote ? priceRowKey(entry.quote) : entry.providerSlug}>
-            <button type="button" className={styles.providerRow} data-quoted-fee={entry.quote?.feeAmount != null} aria-pressed={entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug} aria-label={`Select ${entry.providerName}`} onClick={() => choose(entry.providerSlug, entry.quote ? priceRowKey(entry.quote) : undefined)}>
-              {(entry.quote ? entry.quote === selected : entry.providerSlug === props.selectedCandidate?.providerSlug) && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
-              <span className={styles.providerName}>
-                <ProviderLogo slug={entry.providerSlug} name={entry.providerName} src={entry.quote?.logoUrl} size={29} />
-                <span><strong>{entry.providerName}</strong>{(() => { const label = entry.quote?.product?.label.replace(`${entry.providerName.split(" · ")[0]} · `, ""); const flat = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ""); return label && !flat(entry.providerName).includes(flat(label)) && !flat(label).includes(flat(entry.providerName)) ? <em className={styles.productLabel} title={label}>{label}</em> : null; })()}{entry.quote && entry.quote === best ? <small title={entry.quote?.basis === "exact" ? "Best account quote among comparable options" : "Highest estimated INR among comparable options"}>{entry.quote?.basis === "exact" ? "Best account quote" : `Highest estimated ${to}`}</small> : entry.quote?.partial && entry.quote.basis === "published" && entry.quote.profileAssessment?.priceApplicable && entry.quote.recipientAmount !== null && best?.recipientAmount != null && entry.quote.recipientAmount > best.recipientAmount && <small>Potentially cheaper · confirm total</small>}</span></span>
-              <span className={styles.rowAmount}><strong data-move={entry.quote ? flashes[priceRowKey(entry.quote)] : undefined}>{entry.quote?.recipientAmount != null ? <RollingPrice key={to} value={entry.quote.recipientAmount} /> : "No payout quote"}{entry.quote?.recipientAmount != null && <small> {to}</small>}</strong>{entry.quote?.publicOffer ? <small className={styles.partial}>First transfer · bank-funded</small> : entry.quote?.missing?.length ? <small className={styles.partial} title={entry.quote.missing.join(" ")}>Missing: {entry.quote.missing[0]}</small> : entry.quote?.partial ? <small className={styles.partial}>{entry.quote.costComplete ? "Confirm eligibility" : "Partial · a cost is unknown"}</small> : entry.quote?.publicComparison ? <small className={styles.partial}>{entry.quote.publicComparison.sourceCountry ?? "Origin not supplied"} → {entry.quote.publicComparison.destinationCountry ?? to} · last 24h</small> : !entry.quote && <small className={styles.partial} title={entry.candidate?.pricingStatus?.reason}>{entry.candidate?.pricingStatus?.label ?? (entry.candidate?.currencyMatch === "unverified" ? "Check route availability" : "Provider sets your price")}</small>}</span>
-              <span className={styles.rowFee}><strong title={entry.candidate?.feeHighlight}>{entry.quote?.feeAmount == null ? entry.candidate?.feeHighlight ?? (entry.quote?.feeBreakdown || entry.candidate?.feeEvidence?.length ? "Fee details available" : "Research details") : `${money(entry.quote.feeAmount)} ${entry.quote.feeCurrency ?? ""}`}</strong>{entry.quote ? (() => {
-                const cost = benchmarkCost(entry.quote, amount, props.reference?.rate, to);
-                const difference = benchmarkPayoutDifference(entry.quote.recipientAmount, amount, props.reference?.rate, to);
-                return <small>{cost.kind === "cost" ? `Cost ${formatBenchmarkCost(cost, "percent")}` : difference.kind === "cost" ? formatPayoutDifference(difference) : "No mid-market comparison"}</small>;
-              })() : null}</span>
-              <span className={styles.rowSource}><i data-basis={entry.quote?.basis ?? "unavailable"} />{entry.quote ? pricingSourceLabel(entry.quote) : entry.candidate?.pricingReviewedAt ? "Public research" : "Provider pricing"}</span>
-            </button>
-          </li>)}
+          {filtered.map(({ providerSlug, providerName, quote, candidate }) => {
+            const promoted = quote?.recipientAmount != null && activePromotions.has(providerIdentity(providerSlug));
+            const current = quote ? quote === selected : providerSlug === props.selectedCandidate?.providerSlug;
+            const method = quote ? fundingMethod(quote) : null;
+            const MethodIcon = method && /card/i.test(method) ? CreditCard : Landmark;
+            const difference = quote ? benchmarkPayoutDifference(quote.recipientAmount, amount, props.reference?.rate, to) : null;
+            const cost = quote ? benchmarkCost(quote, amount, props.reference?.rate, to) : null;
+            const warning = quote?.missing?.[0] ?? (quote?.partial ? quote.costComplete ? "Confirm eligibility" : "Cost to confirm" : null);
+            const source = quote ? pricingSourceLabel(quote) : candidate?.pricingStatus?.label ?? "Check provider";
+            const key = quote ? priceRowKey(quote) : providerSlug;
+            return <li key={key}>
+              <button type="button" className={styles.providerRow} data-promoted={promoted || undefined} aria-pressed={current}
+                aria-label={`Select ${providerName}${promoted ? ", promoted" : ""}`} onClick={() => choose(providerSlug, quote ? key : undefined)}>
+                {current && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
+                <span className={styles.providerName}>
+                  <ProviderLogo slug={providerSlug} name={providerName} src={quote?.logoUrl} size={29} />
+                  <span>
+                    <strong>{providerName}</strong>
+                    {method && <span className={styles.fundingBadge}><MethodIcon size={12} aria-hidden /><span>Pay via {method}</span></span>}
+                    {quote?.product?.label && !method && <em className={styles.productLabel}>{quote.product.label}</em>}
+                    <span className={styles.quoteRowBadges}>
+                      {promoted && <span className={styles.promotedBadge} title="Paid placement"><Megaphone size={11} aria-hidden />Promoted</span>}
+                      {quote && quote === best && <span className={styles.comparableBadge}>Best comparable</span>}
+                    </span>
+                  </span>
+                </span>
+                <span className={styles.rowFee}>
+                  <strong>{quote?.feeAmount != null ? `${money(quote.feeAmount)} ${quote.feeCurrency ?? ""}` : candidate?.feeHighlight ?? "Check fee"}</strong>
+                  {quote?.rate != null && <span className={styles.quoteRowRate}>1 {from} = {quote.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}</span>}
+                  {difference?.kind === "cost" && <span className={styles.quoteRowDifference} data-favorable={difference.costMinor < 0 || undefined}>
+                    <b title={cost?.kind === "gap" ? "Payout difference. Total cost still needs confirmation." : "Cost compared with mid-market"}>{signedPercent(difference.bps)}</b>
+                    <span>{formatPayoutDifference(difference)}</span>
+                  </span>}
+                </span>
+                <span className={styles.rowAmount}>
+                  <strong data-move={quote ? flashes[key] : undefined}>{quote?.recipientAmount != null ? <><RollingPrice key={to} value={quote.recipientAmount} /><small> {to}</small></> : "No payout quote"}</strong>
+                  {quote?.delivery && <span className={styles.rowSource}><Clock3 size={12} aria-hidden />{quote.delivery}</span>}
+                  <span className={styles.rowSource}><i data-basis={quote?.basis ?? "unavailable"} aria-hidden />{source}</span>
+                  {warning && <small className={styles.partial} title={warning}>{warning}</small>}
+                </span>
+              </button>
+            </li>;
+          })}
         </ol>
         {!filtered.length && <div className={styles.empty}>{props.loading && !query ? <><PriceLoadingMark /><strong role="status">Checking provider prices…</strong></> : <><FileSearch size={22} /><strong>{query ? "No providers match your search" : "No provider price for this setup yet"}</strong><p>{query ? "Try another name or clear your search." : "Try another currency pair, or review broader coverage in Market view."}</p>{query && <button type="button" onClick={() => setQuery("")}>Clear search</button>}</>}</div>}
         <div className={styles.tableFooter}>
@@ -171,7 +231,20 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
   </aside>;
 }
 
-const METHOD_NAME: Record<string, string> = { local_bank: "Local bank transfer", wire: "International wire", card: "Card", transfer_service: "Transfer app" };
+const METHOD_NAME: Record<string, string> = { local_bank: "Bank transfer", wire: "International wire", card: "Card", transfer_service: "Transfer app" };
+
+function fundingMethod(quote: PriceRow) {
+  if (quote.publicOffer?.fundingMethod) return quote.publicOffer.fundingMethod;
+  if (quote.fundingLabel) return quote.fundingLabel;
+  const methods = quote.paymentMethods?.filter(method => method !== "transfer_service") ?? [];
+  const specific = methods.length ? methods : quote.paymentMethods ?? [];
+  return specific.map(method => METHOD_NAME[method] ?? method).join(" / ") || null;
+}
+
+function signedPercent(bps: number) {
+  const sign = bps < 0 ? "−" : bps > 0 ? "+" : "";
+  return `${sign}${(Math.abs(bps) / 100).toFixed(2)}%`;
+}
 
 function QuoteFacts({ items }: { items: Array<[string, ReactNode]> }) {
   return <dl className={styles.factList}>{items.map(([label, value]) => (
@@ -331,7 +404,7 @@ function SelectedProvider({ row, best, reference, from, to, amount, checked, web
                   </summary>
                   <div className={styles.overviewBody}>
                     <QuoteFacts items={[
-                      ["Payment method", row.paymentMethods?.length ? row.paymentMethods.map((method) => METHOD_NAME[method] ?? method).join(", ") : "Confirm with provider"],
+                      ["Payment method", fundingMethod(row) ?? "Confirm with provider"],
                       ["Who pays the fee", row.side === "payer" ? "Sender" : row.side === "recipient" ? "Deducted before payout" : "Confirm with provider"],
                     ]} />
                     {requirements}

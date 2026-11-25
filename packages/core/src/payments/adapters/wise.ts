@@ -85,15 +85,17 @@ interface WiseQuoteBody {
 
 /**
  * The option a business payout would use: from the Wise balance when that is
- * enabled for the profile, otherwise a bank transfer into Wise. Card pay-ins
- * are consumer options and never chosen.
+ * enabled for the profile, otherwise a bank transfer into Wise. Public prices
+ * can fall back to an enabled card option when neither bank nor balance is available.
  */
 function pickOption(options: WiseOption[] = [], publicQuote = false): WiseOption | undefined {
   const enabled = options.filter((o) => !o.disabled && o.payOut === "BANK_TRANSFER");
   const chosen = enabled.find((o) => o.payIn === "BALANCE") ?? enabled.find((o) => o.payIn === "BANK_TRANSFER");
   // An anonymous quote's "disabled" balance option reflects the caller's location, not the
   // customer's; for pairs Wise only funds from a balance (e.g. from AED), show that price.
-  return chosen ?? (publicQuote ? options.find((o) => o.payIn === "BALANCE" && o.payOut === "BANK_TRANSFER") : undefined);
+  if (chosen || !publicQuote) return chosen;
+  return options.find((o) => o.payIn === "BALANCE" && o.payOut === "BANK_TRANSFER")
+    ?? enabled.find((o) => ["DEBIT", "CREDIT", "CARD"].includes(o.payIn));
 }
 
 export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, accountContext: UnifiedQuote["accountContext"], now = new Date()): UnifiedQuote {
@@ -128,8 +130,16 @@ export function wiseQuoteToUnified(body: WiseQuoteBody, request: QuoteRequest, a
   };
 }
 
+const PUBLIC_FUNDING_LABELS: Record<string, string> = {
+  BANK_TRANSFER: "Bank transfer",
+  DEBIT: "Debit card",
+  CREDIT: "Credit card",
+  CARD: "Card",
+  BALANCE: "Wise balance",
+};
+
 /** Wise's public price for anyone — not the customer's own pricing, and it cannot be used to send. */
-export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch, preferBankTransfer = false, allowIndiaBankReference = false): Promise<UnifiedQuote & { payInLabel: string; payInMethod?: string; deliveryLabel?: string }> {
+export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fetch = fetch, preferBankTransfer = false, allowIndiaBankReference = false): Promise<UnifiedQuote & { payInLabel: string; payInMethod?: string; fundingLabel?: string; deliveryLabel?: string }> {
   const sourceCurrency = assertFiat(request.sourceAsset);
   const response = await fetcher(`${PUBLIC_BASE}/v3/quotes`, {
     method: "POST",
@@ -147,17 +157,20 @@ export async function wisePublicQuote(request: QuoteRequest, fetcher: typeof fet
       && o.sourceAmount === request.amount && Number.isFinite(o.targetAmount) && o.targetAmount > 0)
     : undefined;
   const option = bank ?? indianBank ?? pickOption(body.paymentOptions, true);
+  const fundingLabel = option ? PUBLIC_FUNDING_LABELS[option.payIn] : undefined;
   const selectedBank = bank ?? (indianBank ? { ...indianBank, disabled: false } : undefined);
   return {
     ...wiseQuoteToUnified(selectedBank ? { ...body, paymentOptions: [selectedBank] } : body, request, "public_published"),
     ...(indianBank ? { costPartial: true, costNote: "Public Indian bank-transfer calculator. Verify your transfer purpose, account eligibility and any applicable tax with Wise." } : {}),
+    ...(option && ["DEBIT", "CREDIT", "CARD"].includes(option.payIn) ? { costPartial: true, costNote: "Public card-funded reference. Confirm card and sender eligibility, including any card issuer fees." } : {}),
     payInMethod: option?.payIn,
+    fundingLabel,
     payInLabel:
       option?.payIn === "BALANCE"
         ? option.disabled
           ? `from a Wise ${sourceCurrency} balance (${sourceCurrency === "AED" ? "the only way Wise funds this pair; " : ""}availability depends on your account's country)`
           : "from a Wise balance"
-        : "by bank transfer into Wise",
+        : fundingLabel ? `via ${fundingLabel.toLowerCase()}` : "with funding to confirm",
     deliveryLabel: option?.formattedEstimatedDelivery,
   };
 }

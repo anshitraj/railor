@@ -85,6 +85,8 @@ export interface PriceRow {
   product?: { id: string; label: string };
   /** Payment methods the price applies to, as published. */
   paymentMethods?: PaymentMethod[];
+  /** The funding rail selected by a provider when it priced this quote. */
+  fundingLabel?: string;
   /** Exact inputs the source leaves out; shown next to the amount. */
   missing?: string[];
   /** Whether the provider's fee includes tax: true, false, or null when the source doesn't say. */
@@ -528,6 +530,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
         source: { label: "Wise public quote", url: "https://wise.com/" },
         notes: [`Paying ${wisePublic.payInLabel}. Your own account's price can be lower — connect Wise to see it.`, ...(input.sourceCurrency === "AED" ? ["Wise's AED funding guide limits sending AED to money already held in a Wise balance. This public reference does not confirm a UAE bank-funded transfer or its complete cost. https://wise.com/help/articles/2932360/guide-to-aed-transfers"] : [])],
       });
+      if (wisePublic.fundingLabel) wiseRow.fundingLabel = wisePublic.fundingLabel;
       if (wisePublic.payInMethod === "BANK_TRANSFER") wiseRow.paymentMethods = ["local_bank", "transfer_service"];
       if (indiaBankReference && wisePublic.payInMethod === "BANK_TRANSFER") {
         wiseRow.product = { id: "wise:india-bank", label: "Wise · Indian bank-funded transfer" };

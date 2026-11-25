@@ -94,6 +94,13 @@ describe("Wise quotes", () => {
     expect(q.estimatedArrivalMinutes).toBeGreaterThan(24 * 60);
   });
 
+  it("pairs the provider's debit-card funding label with the matching fee and payout", async () => {
+    const body = { ...WISE_PUBLIC, paymentOptions: WISE_PUBLIC.paymentOptions.filter(option => option.payIn === "DEBIT") };
+    const { impl } = stubFetch([{ match: /^POST https:\/\/api\.wise\.com\/v3\/quotes$/, body }]);
+    const quote = await wisePublicQuote({ sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, impl);
+    expect(quote).toMatchObject({ payInMethod: "DEBIT", fundingLabel: "Debit card", feeAmount: 17.39, recipientAmount: 94113.6 });
+  });
+
   it("prefers the Wise balance when it is enabled", () => {
     const enabled = { ...WISE_PUBLIC, paymentOptions: WISE_PUBLIC.paymentOptions.map((o) => ({ ...o, disabled: false })) };
     expect(wiseQuoteToUnified(enabled, { sourceAsset: "USD", destinationCurrency: "INR", amount: 1000 }, "customer_connected").feeAmount).toBe(4.75);

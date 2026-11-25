@@ -395,3 +395,46 @@
 .providerQuoteRequest p { color: var(--color-muted); font-size: 12px; line-height: 1.45; }
 .providerQuoteRequest button:disabled { opacity: .65; cursor: wait; }
 .providerQuoteRequest + a { background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-line); }
+
+/* Compact bank comparisons. The stablecoin list uses the shared row styles above. */
+.compactProviders .tableHeader,
+.compactProviders .providerRow {
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.compactProviders .tableHeader > span { display: block; }
+.compactProviders .tableHeader > span:nth-child(2) { text-align: left; }
+.compactProviders .tableHeader > span:last-child { text-align: right; }
+.compactProviders .providerRow { min-height: 76px; align-items: start; padding-block: 12px; }
+.compactProviders .providerName,
+.compactProviders .rowFee,
+.compactProviders .rowAmount { grid-column: auto; grid-row: auto; min-width: 0; max-width: none; }
+.compactProviders .rowFee { display: grid; gap: 3px; padding-inline: 0; }
+.compactProviders .rowFee > strong::before { content: none; }
+.compactProviders .rowFee > strong { font-weight: 680; }
+.compactProviders .rowAmount { text-align: right; }
+.compactProviders .rowAmount > strong { font-size: clamp(14px, 3.25cqi, 18px); font-weight: 720; }
+.compactProviders .rowSource { display: flex; justify-content: flex-end; gap: 4px; margin-top: 2px; padding: 0; white-space: normal; font-size: 11px; line-height: 1.35; }
+.compactProviders .rowSource svg { flex: none; }
+.compactProviders .providerName { align-items: flex-start; }
+.compactProviders .providerName strong { font-size: 14px; font-weight: 700; }
+.quoteRowBadges { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.fundingBadge { display: inline-grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 4px; width: fit-content; max-width: 100%; margin-top: 4px; padding: 3px 5px; border-radius: 5px; background: var(--color-sand); color: var(--color-ink-soft); font-size: 11px; font-weight: 620; line-height: 1.3; overflow-wrap: anywhere; }
+.fundingBadge svg { margin-top: 1px; }
+.quoteRowBadges:not(:empty) { margin-top: 4px; }
+.promotedBadge, .comparableBadge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 5px; border-radius: 4px; font-size: 10.5px; font-weight: 680; line-height: 1.4; }
+.promotedBadge { background: #e8edf8; color: #2d4878; }
+.comparableBadge { background: var(--color-ok-bg); color: var(--color-ok); }
+.compactProviders .providerRow[data-promoted]:not([aria-pressed="true"]) { background: #f5f7fc; }
+.quoteRowRate, .quoteRowDifference { color: var(--color-muted); font-size: 11px; line-height: 1.3; overflow-wrap: anywhere; }
+.quoteRowDifference { display: grid; }
+.quoteRowDifference b { color: var(--color-ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
+.quoteRowDifference[data-favorable] b { color: var(--color-ok); }
+@container providers (max-width: 410px) {
+  .compactProviders .providerRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 5px 10px; padding-block: 11px; }
+  .compactProviders .tableHeader { display: none; }
+  .compactProviders .providerName { grid-column: 1; grid-row: 1; }
+  .compactProviders .rowAmount { grid-column: 2; grid-row: 1 / span 2; }
+  .compactProviders .rowFee { grid-column: 1; grid-row: 2; padding-inline-start: 37px; }
+  .compactProviders .rowFee > strong::before { content: "Fee "; font-weight: 500; }
+}

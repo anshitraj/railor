@@ -2570,3 +2570,23 @@ export type BillingCheckout = typeof billingCheckouts.$inferSelect;
 export type BillingSubscription = typeof billingSubscriptions.$inferSelect;
 
 export const schemaVersion = sql`3`;
+
+/** Paid placement is confirmed by an operator and applies to one direction of a currency pair. */
+export const providerPromotions = pgTable("provider_promotions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  providerSlug: text("provider_slug").notNull().references(() => providers.slug, { onDelete: "cascade" }),
+  sourceCurrency: text("source_currency").notNull(),
+  destinationCurrency: text("destination_currency").notNull(),
+  paymentReference: text("payment_reference").notNull().unique(),
+  paidUsdCents: integer("paid_usd_cents").notNull(),
+  confirmedBy: uuid("confirmed_by").references(() => users.id, { onDelete: "set null" }),
+  confirmedAt: timestamp("confirmed_at", { withTimezone: true }).defaultNow().notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+}, (t) => [
+  index("provider_promotions_pair_idx").on(t.sourceCurrency, t.destinationCurrency, t.endsAt),
+  check("provider_promotions_paid_usd_cents_check", sql`${t.paidUsdCents} > 0`),
+  check("provider_promotions_ends_at_check", sql`${t.endsAt} > ${t.confirmedAt}`),
+  check("provider_promotions_distinct_currencies", sql`${t.sourceCurrency} <> ${t.destinationCurrency}`),
+  check("provider_promotions_reference_present", sql`length(btrim(${t.paymentReference})) > 0`),
+]);

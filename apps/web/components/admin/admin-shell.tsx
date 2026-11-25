@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Activity, Banknote, Building2, ClipboardCheck, FileClock, Globe2, KeyRound, LayoutDashboard, Menu, Plug, Radar, ScrollText, X, type LucideIcon } from "lucide-react";
+import { Activity, Banknote, Building2, ClipboardCheck, FileClock, Globe2, KeyRound, LayoutDashboard, Menu, Megaphone, Plug, Radar, ScrollText, X, type LucideIcon } from "lucide-react";
 import { cn, useModalFocus } from "@railor/ui";
 import { RailorMark } from "../marketing/nav";
 
@@ -12,6 +12,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon; exact?: boolea
   { href: "/admin/payments", label: "Payments ops", icon: Banknote },
   { href: "/admin/organizations", label: "Organizations", icon: Building2 },
   { href: "/admin/providers", label: "Providers", icon: Plug },
+  { href: "/admin/promotions", label: "Promotions", icon: Megaphone },
   { href: "/admin/review", label: "Review queue", icon: ClipboardCheck },
   { href: "/admin/discovery", label: "Web discovery", icon: Radar },
   { href: "/admin/research", label: "Country research", icon: Globe2 },
