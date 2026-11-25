@@ -1,18 +1,35 @@
 import { NextResponse } from "next/server";
 import { getSession } from "../../../../lib/auth";
-import { paymentLink } from "../../../../lib/security";
+import { BillingError, startCheckout } from "../../../../lib/billing/service";
+import { consumeLimit } from "../../../../lib/rate-limit";
 
-const PLANS = new Set(["plus", "pro", "business"] as const);
-
-/** Sends an owner or admin to the payment link for the plan they picked. */
+/**
+ * Opens a checkout for a plan or a wallet top-up and sends the person to pay.
+ * A plain form post, so it works before the page's script has loaded.
+ * Fields: purpose (plan | top_up), plan, amount (US cents), method (card | usdc).
+ */
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session?.organization) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  if (session.role !== "owner" && session.role !== "admin") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!session?.organization) return NextResponse.redirect(new URL("/login", request.url), 303);
   const form = await request.formData().catch(() => null);
-  const requested = String(form?.get("plan") ?? "business");
-  if (!PLANS.has(requested as "plus")) return NextResponse.json({ error: "unknown_plan" }, { status: 400 });
-  const destination = paymentLink(requested as "plus" | "pro" | "business");
-  if (!destination) return NextResponse.json({ error: "checkout_unavailable" }, { status: 503 });
-  return NextResponse.redirect(destination, 303);
+  const purpose = form?.get("purpose") === "top_up" ? "top_up" : "plan";
+  const back = purpose === "plan" ? "/app/upgrade" : "/app/wallet";
+  const fail = (code: string) => NextResponse.redirect(new URL(`${back}?billing_error=${code}`, request.url), 303);
+  const method = form?.get("method");
+  // No default: a form that lost its button's value must not open the wrong checkout.
+  if (method !== "card" && method !== "usdc") return fail("method_unavailable");
+  if (!await consumeLimit("billing-checkout", session.organization.id, 20, 3_600_000)) return fail("provider_unavailable");
+  try {
+    const { redirect } = await startCheckout(session, {
+      purpose,
+      method,
+      plan: purpose === "plan" ? String(form?.get("plan") ?? "") : null,
+      amountCents: purpose === "top_up" ? Number(form?.get("amount")) : null,
+    });
+    return NextResponse.redirect(new URL(redirect, request.url), 303);
+  } catch (error) {
+    if (error instanceof BillingError) return fail(error.code);
+    console.error("[billing] checkout", error);
+    return fail("provider_unavailable");
+  }
 }

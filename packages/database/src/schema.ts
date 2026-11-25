@@ -2489,4 +2489,84 @@ export const walletSettings = pgTable("wallet_settings", {
   updatedAt: updated(),
 });
 
+/* -------------------------------------------------------------------------- */
+/* Billing: card (Dodo Payments) and USDC (ArcPay) checkouts                  */
+/* -------------------------------------------------------------------------- */
+
+export const BILLING_PROVIDERS = ["dodo", "arcpay"] as const;
+export type BillingProvider = (typeof BILLING_PROVIDERS)[number];
+export const BILLING_PURPOSES = ["plan", "top_up"] as const;
+export type BillingPurpose = (typeof BILLING_PURPOSES)[number];
+export type BillingPlan = "plus" | "pro" | "business";
+export type BillingCheckoutStatus = "pending" | "paid" | "failed";
+
+/**
+ * One row per checkout Railor opened. It turns "paid" only after Railor reads
+ * the payment back from the provider, through a conditional update, so a
+ * webhook and a status poll racing each other credit the workspace once.
+ */
+export const billingCheckouts = pgTable(
+  "billing_checkouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    provider: text("provider").$type<BillingProvider>().notNull(),
+    purpose: text("purpose").$type<BillingPurpose>().notNull(),
+    plan: text("plan").$type<BillingPlan>(),
+    /** What Railor priced, in US cents: the plan price or the top-up credited. */
+    amountCents: integer("amount_cents").notNull(),
+    status: text("status").$type<BillingCheckoutStatus>().default("pending").notNull(),
+    testMode: boolean("test_mode").default(false).notNull(),
+    /** Dodo checkout session id (cks_…) or ArcPay payment id. */
+    providerSessionId: text("provider_session_id"),
+    providerPaymentId: text("provider_payment_id"),
+    providerSubscriptionId: text("provider_subscription_id"),
+    checkoutUrl: text("checkout_url"),
+    failureReason: text("failure_reason"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    sessionIdx: uniqueIndex("billing_checkouts_session_idx").on(t.provider, t.providerSessionId).where(sql`provider_session_id is not null`),
+    orgIdx: index("billing_checkouts_org_idx").on(t.organizationId, t.createdAt),
+    providerCheck: check("billing_checkouts_provider_check", sql`provider in ('dodo','arcpay')`),
+    purposeCheck: check("billing_checkouts_purpose_check", sql`purpose in ('plan','top_up')`),
+    planCheck: check("billing_checkouts_plan_check", sql`(purpose = 'plan') = (plan is not null) and (plan is null or plan in ('plus','pro','business'))`),
+    statusCheck: check("billing_checkouts_status_check", sql`status in ('pending','paid','failed')`),
+    amountCheck: check("billing_checkouts_amount_check", sql`amount_cents > 0`),
+  }),
+);
+
+/** A workspace's card subscription as the provider last reported it. */
+export const billingSubscriptions = pgTable(
+  "billing_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    provider: text("provider").$type<"dodo">().notNull(),
+    providerSubscriptionId: text("provider_subscription_id").notNull(),
+    providerCustomerId: text("provider_customer_id"),
+    plan: text("plan").$type<BillingPlan>().notNull(),
+    /** The provider's word: active, on_hold, cancelled, expired, failed… */
+    status: text("status").notNull(),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
+    testMode: boolean("test_mode").default(false).notNull(),
+    createdAt: now(),
+    updatedAt: updated(),
+  },
+  (t) => ({
+    providerIdx: uniqueIndex("billing_subscriptions_provider_idx").on(t.provider, t.providerSubscriptionId),
+    orgIdx: index("billing_subscriptions_org_idx").on(t.organizationId, t.updatedAt),
+    providerCheck: check("billing_subscriptions_provider_check", sql`provider in ('dodo')`),
+    planCheck: check("billing_subscriptions_plan_check", sql`plan in ('plus','pro','business')`),
+  }),
+);
+
+export type BillingCheckout = typeof billingCheckouts.$inferSelect;
+export type BillingSubscription = typeof billingSubscriptions.$inferSelect;
+
 export const schemaVersion = sql`3`;

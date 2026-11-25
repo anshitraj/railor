@@ -4,7 +4,7 @@ import { useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BellRing, Check, CreditCard, LockKeyhole, Plus, RefreshCw, Ticket, X } from "lucide-react";
+import { BellRing, Check, CircleDollarSign, CreditCard, LockKeyhole, Plus, RefreshCw, Ticket, X } from "lucide-react";
 import { useModalFocus } from "@railor/ui";
 import { addTestTopUpAction, redeemPromoAction, saveAutoReloadAction } from "../../../app/app/wallet/actions";
 import {
@@ -38,7 +38,9 @@ function AmountChoices({ label, options, value, onPick, disabled }: { label: str
 /* Add money                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceCents: number; testMode: boolean; canManage: boolean }) {
+export interface TopUpMethods { card: boolean; usdc: boolean; cardTest: boolean; usdcTest: boolean }
+
+export function AddMoneyButton({ balanceCents, testMode, canManage, methods }: { balanceCents: number; testMode: boolean; canManage: boolean; methods: TopUpMethods }) {
   const router = useRouter();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -46,12 +48,15 @@ export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceC
   const [requestId, setRequestId] = useState("");
   const [notified, setNotified] = useState(false);
   const [error, setError] = useState("");
+  const [leaving, setLeaving] = useState(false);
   const [pending, startTransition] = useTransition();
+  const canPay = canManage && (methods.card || methods.usdc);
   const titleId = useId();
   const panel = useModalFocus<HTMLDivElement>(open, () => setOpen(false));
 
   function openDialog() {
     setError("");
+    setLeaving(false);
     // One id per open dialog: a double click or a retry adds the money once.
     setRequestId(crypto.randomUUID());
     setOpen(true);
@@ -107,27 +112,49 @@ export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceC
                     <span className={styles.cardIcon}><Plus size={20} aria-hidden /></span>
                     <div><h2 id={titleId}>Add money</h2><p>Choose an amount in USD.</p></div>
                   </div>
-                  <AmountChoices label="Top-up amount" options={TOP_UP_AMOUNTS_CENTS} value={amount} onPick={setAmount} disabled={pending} />
+                  <AmountChoices label="Top-up amount" options={TOP_UP_AMOUNTS_CENTS} value={amount} onPick={setAmount} disabled={pending || leaving} />
                   <dl className={styles.preview}>
                     <div><dt>Current balance</dt><dd>{formatCents(balanceCents)}</dd></div>
                     <div><dt>Top-up</dt><dd>{formatCents(amount, { signed: true })}</dd></div>
                     <div><dt>Balance after top-up</dt><dd>{formatCents(balanceCents + amount)}</dd></div>
                   </dl>
-                  <div className={styles.soon}>
-                    <LockKeyhole size={17} aria-hidden />
-                    <span><strong>Card payments are coming soon</strong>Get an email when you can top up at checkout.</span>
-                  </div>
+                  {canPay ? (
+                    // A plain form post: the server opens the checkout and sends the browser to pay.
+                    // Buttons stay enabled while leaving: a disabled submitter drops its method from the post.
+                    <form method="post" action="/api/billing/checkout" className={styles.dialogActions} onSubmit={(event) => { if (leaving) { event.preventDefault(); return; } setLeaving(true); }}>
+                      <input type="hidden" name="purpose" value="top_up" />
+                      <input type="hidden" name="amount" value={amount} />
+                      {methods.card ? (
+                        <button type="submit" name="method" value="card" className={styles.primary} aria-disabled={leaving || undefined}>
+                          <CreditCard size={16} aria-hidden />{leaving ? "Opening checkout…" : `Pay ${formatCents(amount)} by card or UPI`}{methods.cardTest ? <span className={styles.testTag}>TEST</span> : null}
+                        </button>
+                      ) : null}
+                      {methods.usdc ? (
+                        <button type="submit" name="method" value="usdc" className={methods.card ? styles.ghost : styles.primary} aria-disabled={leaving || undefined}>
+                          <CircleDollarSign size={16} aria-hidden />Pay {formatCents(amount)} in USDC{methods.usdcTest ? <span className={styles.testTag}>TEST</span> : null}
+                        </button>
+                      ) : null}
+                    </form>
+                  ) : canManage ? (
+                    <div className={styles.soon}>
+                      <LockKeyhole size={17} aria-hidden />
+                      <span><strong>Card payments are coming soon</strong>Get an email when you can top up at checkout.</span>
+                    </div>
+                  ) : null}
                   {error ? <p role="alert" className={styles.status} data-tone="bad">{error}</p> : null}
                   <div className={styles.dialogActions}>
                     {testMode && canManage ? (
-                      <button type="button" className={styles.primary} onClick={addTestCredit} disabled={pending || !requestId}>
-                        <CreditCard size={16} aria-hidden />Add {formatCents(amount)} test credit<span className={styles.testTag}>TEST</span>
+                      <button type="button" className={canPay ? styles.ghost : styles.primary} onClick={addTestCredit} disabled={pending || leaving || !requestId}>
+                        <Plus size={16} aria-hidden />Add {formatCents(amount)} test credit<span className={styles.testTag}>TEST</span>
                       </button>
                     ) : null}
-                    <button type="button" className={styles.ghost} onClick={notify} disabled={pending || notified}>
-                      {notified ? <><Check size={16} aria-hidden />We’ll email you when it’s live</> : <><BellRing size={16} aria-hidden />Tell me when payments are live</>}
-                    </button>
+                    {canManage && !canPay ? (
+                      <button type="button" className={styles.ghost} onClick={notify} disabled={pending || notified}>
+                        {notified ? <><Check size={16} aria-hidden />We’ll email you when it’s live</> : <><BellRing size={16} aria-hidden />Tell me when payments are live</>}
+                      </button>
+                    ) : null}
                   </div>
+                  {canPay ? <p className={styles.footnote}>{[methods.card ? "Card and UPI payments go through Dodo Payments" : null, methods.usdc ? "USDC goes through ArcPay" : null].filter(Boolean).join("; ")}. Credit lands as soon as the payment confirms.</p> : null}
                   {testMode && canManage ? <p className={styles.footnote}>Test credit appears as “Test top-up” in billing history.</p> : null}
                   {!canManage ? <p className={styles.footnote}>Only owners and admins can add money.</p> : null}
                 </div>
@@ -190,7 +217,7 @@ export function AutoReloadCard({ initial, canManage }: { initial: AutoReloadPref
       <AmountChoices label="When balance drops below" options={AUTO_RELOAD_THRESHOLDS_CENTS} value={pref.thresholdCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, thresholdCents: cents })} />
       <AmountChoices label="Top-up amount" options={AUTO_RELOAD_AMOUNTS_CENTS} value={pref.amountCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, amountCents: cents })} />
       <div className={styles.controlFoot}>
-        <p className={styles.footnote}><LockKeyhole size={14} aria-hidden />{canManage ? "Auto-reload starts when card payments launch." : "Only owners and admins can change auto-reload."}</p>
+        <p className={styles.footnote}><LockKeyhole size={14} aria-hidden />{canManage ? "Auto-reload needs a saved card, which is coming next. Add money by hand for now." : "Only owners and admins can change auto-reload."}</p>
         <p className={styles.status} data-tone={status.tone} role="status">{status.tone === "ok" ? <Check size={13} aria-hidden /> : null}{status.text}</p>
       </div>
     </section>

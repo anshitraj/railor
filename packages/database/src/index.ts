@@ -13,6 +13,28 @@ export {
 } from "./client.js";
 export { seedDemoData, type SeedSummary } from "./seed/run.js";
 export {
+  SUBSCRIPTION_GRACE_MS,
+  addMonthsUtc,
+  applyPlanPeriod,
+  attachCheckoutSession,
+  createBillingCheckout,
+  currentBillingSubscription,
+  findBillingSubscription,
+  findCheckoutBySession,
+  getBillingCheckout,
+  isBillingPlan,
+  noteCheckoutChecked,
+  recentBillingCheckouts,
+  settleBillingCheckout,
+  syncBillingSubscription,
+  type CheckoutEffect,
+  type NewBillingCheckout,
+  type PlanApplied,
+  type PlanPeriod,
+  type Settlement,
+  type SubscriptionSnapshot,
+} from "./billing.js";
+export {
   SIGNUP_CREDIT_CENTS,
   appendWalletEntry,
   debitWalletUsage,

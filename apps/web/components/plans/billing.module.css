@@ -1,0 +1,17 @@
+/* Plans page billing: pay buttons inside plan cards, the card-subscription panel and notices. */
+
+.payForm { display: grid; gap: 6px; }
+.payForm button { gap: 6px; }
+.payForm button[data-quiet] { border-color: var(--color-line-strong) !important; background: var(--color-surface) !important; color: var(--color-ink) !important; }
+.test { margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--color-lavender); color: var(--color-ink); font: 700 10px/1.5 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; vertical-align: middle; }
+
+.notice { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 1px solid var(--color-line-strong); border-radius: 14px; background: var(--color-surface); font-size: 14px; font-weight: 600; line-height: 1.5; }
+.notice[data-tone="bad"] { border-color: var(--color-bad); color: var(--color-bad); }
+.notice[data-tone="ok"] { border-color: var(--color-ok); color: var(--color-ok); }
+.notice svg { flex: none; }
+
+.panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 16px 20px; border: 1px solid var(--color-line-strong); border-radius: 18px; background: var(--color-surface); }
+.panel h2 { color: var(--color-ink); font-size: 16px; font-weight: 750; letter-spacing: -0.01em; }
+.panel p { margin-top: 4px; color: var(--color-muted); font-size: 14px; line-height: 1.5; text-wrap: pretty; }
+.panelButton { min-height: 42px; padding: 8px 16px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 14px; font-weight: 650; cursor: pointer; transition: border-color 0.15s ease; }
+@media (hover: hover) and (pointer: fine) { .panelButton:hover { border-color: var(--color-ink); } }

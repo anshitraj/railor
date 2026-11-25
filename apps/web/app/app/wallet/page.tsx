@@ -5,6 +5,8 @@ import { Activity, ArrowUpRight, Building2, Gift, History, Plus, RotateCcw, Slid
 import type { WalletEntry } from "@railor/database";
 import { getSession } from "../../../lib/auth";
 import { ensureWallet, getAutoReload, listWalletEntries, walletTestModeEnabled } from "../../../lib/wallet";
+import { availableMethods } from "../../../lib/billing/config";
+import { billingErrorText } from "../../../lib/billing/errors";
 import { WALLET_RANGES, formatCents, parseWalletRange, type WalletRange } from "../../../lib/wallet-options";
 import { AddMoneyButton, AutoReloadCard, PromoCard } from "../../../components/app/wallet/wallet-controls";
 import styles from "../../../components/app/wallet/wallet.module.css";
@@ -49,7 +51,7 @@ function EntryRow({ entry }: { entry: WalletEntry }) {
  * Wallet: prepaid Railor credit. The balance is the sum of the ledger below,
  * so what you see in history always adds up to the number at the top.
  */
-export default async function WalletPage({ searchParams }: { searchParams: Promise<{ range?: string; code?: string }> }) {
+export default async function WalletPage({ searchParams }: { searchParams: Promise<{ range?: string; code?: string; billing_error?: string }> }) {
   const session = await getSession();
   if (!session?.organization) redirect("/login");
   const params = await searchParams;
@@ -60,7 +62,8 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
 
   const totals = await ensureWallet(organizationId, session.user.id);
   const [entries, autoReload] = await Promise.all([listWalletEntries(organizationId, range), getAutoReload(organizationId)]);
-  const promoFromLink = typeof params.code === "string" ? params.code.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32).toUpperCase() : "";
+  const billingError = billingErrorText(params.billing_error);
+  const promoFromLink =typeof params.code === "string" ? params.code.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32).toUpperCase() : "";
 
   return (
     <div className={styles.page}>
@@ -72,6 +75,8 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
         <span className={styles.workspace}><Building2 size={15} aria-hidden />{session.organization.name}</span>
       </header>
 
+      {billingError ? <p role="alert" className={styles.notice}>{billingError}</p> : null}
+
       <div className={styles.grid}>
         <section className={styles.hero} aria-labelledby="wallet-balance-label">
           <div className={styles.balanceSurface}>
@@ -79,7 +84,7 @@ export default async function WalletPage({ searchParams }: { searchParams: Promi
             <p className={styles.balance}>{formatCents(totals.balanceCents)} <small>USD</small></p>
             <p className={styles.balanceNote}>Use credit for eligible price checks and API calls as they become available.</p>
             <div className={styles.heroActions}>
-              <AddMoneyButton balanceCents={totals.balanceCents} testMode={walletTestModeEnabled()} canManage={canManage} />
+              <AddMoneyButton balanceCents={totals.balanceCents} testMode={walletTestModeEnabled()} canManage={canManage} methods={availableMethods("top_up")} />
               {canRedeem ? <a href="#promo" className={styles.secondary}>Redeem a code<ArrowUpRight size={15} aria-hidden /></a> : null}
             </div>
           </div>

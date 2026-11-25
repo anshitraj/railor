@@ -1,0 +1,56 @@
+.page { display: grid; min-height: min(70vh, 640px); place-items: center; padding-block: 1.5rem; }
+
+.card {
+  display: grid;
+  width: min(100%, 34rem);
+  justify-items: start;
+  gap: 0.9rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.02), 0 18px 40px -28px rgb(33 26 22 / 0.35);
+}
+
+.card h1 { color: var(--color-ink); font: 800 clamp(1.5rem, 3.4vw, 1.9rem)/1.15 var(--font-display); letter-spacing: -0.035em; text-wrap: balance; }
+.card p { color: var(--color-ink-soft); font-size: 0.9375rem; line-height: 1.55; text-wrap: pretty; }
+
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; color: var(--color-muted); font-size: 0.8125rem; font-weight: 650; }
+.test { padding: 0.12rem 0.45rem; border-radius: 999px; background: var(--color-lavender); color: var(--color-ink); font: 700 0.6875rem/1.5 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; }
+
+.icon { display: grid; width: 3rem; height: 3rem; place-items: center; border-radius: 0.9rem; background: var(--color-lavender); color: var(--color-orange-deep); }
+.icon[data-tone="ok"] { background: color-mix(in srgb, var(--color-ok) 14%, transparent); color: var(--color-ok); }
+.icon[data-tone="bad"] { background: color-mix(in srgb, var(--color-bad) 12%, transparent); color: var(--color-bad); }
+
+.waitLine { display: flex; align-items: center; gap: 0.5rem; }
+.waitLine svg { flex: none; }
+.note { padding: 0.7rem 0.85rem; border-radius: 0.75rem; background: var(--color-paper); font-size: 0.8125rem !important; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+.primary, .ghost {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.16s var(--ease-out, ease), border-color 0.16s var(--ease-out, ease);
+}
+.primary { background: var(--color-action); color: var(--color-on-dark); }
+.ghost { border-color: var(--color-line-strong); background: var(--color-surface); color: var(--color-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover { background: var(--color-orange-deep); }
+  .ghost:hover { border-color: var(--color-ink); }
+}
+
+/* Settling into place when the state changes, never a bounce. */
+@media (prefers-reduced-motion: no-preference) {
+  .card { animation: settle 0.24s var(--ease-out, ease-out) both; }
+  .spin { animation: spin 0.9s linear infinite; }
+}
+@keyframes settle { from { opacity: 0; transform: translateY(6px); } }
+@keyframes spin { to { transform: rotate(360deg); } }

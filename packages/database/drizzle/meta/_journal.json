@@ -232,6 +232,13 @@
       "when": 1795651200000,
       "tag": "0032_settlement_analysis",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795737600000,
+      "tag": "0033_billing",
+      "breakpoints": true
     }
   ]
 }

@@ -53,19 +53,3 @@ export function contactEmail(): string | null {
   return value && /^[^\s@<>"]+@[^\s@<>"]+\.[a-z]{2,}$/i.test(value) ? value : null;
 }
 
-/**
- * Checkout link for a plan: PLUS_PAYMENT_LINK, PRO_PAYMENT_LINK or
- * BUSINESS_PAYMENT_LINK. Business falls back to the original
- * FOUNDING_PAYMENT_LINK, which was the same $29 a month.
- */
-export function paymentLink(plan: "plus" | "pro" | "business" = "business"): string | null {
-  const byPlan = { plus: process.env.PLUS_PAYMENT_LINK, pro: process.env.PRO_PAYMENT_LINK, business: process.env.BUSINESS_PAYMENT_LINK || process.env.FOUNDING_PAYMENT_LINK };
-  const raw = byPlan[plan]?.trim();
-  if (!raw) return null;
-  const url = new URL(raw);
-  const allowed = (process.env.PAYMENT_LINK_ALLOWED_HOSTS ?? "buy.stripe.com,checkout.stripe.com").split(",").map((s) => s.trim().toLowerCase());
-  if (url.protocol !== "https:" || url.username || url.password || url.port || !allowed.includes(url.hostname.toLowerCase())) {
-    throw new Error("Payment link host is not allowed");
-  }
-  return url.toString();
-}
