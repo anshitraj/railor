@@ -11,7 +11,7 @@ import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
 import { RollingPrice } from "../price/animated-amount";
-import { priceRowKey, pricingSourceLabel, providerIdentity } from "../../lib/price-display";
+import { priceCollectedLabel, priceRowKey, priceStatus, pricingSourceLabel, providerIdentity } from "../../lib/price-display";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
@@ -126,7 +126,7 @@ export function PriceProviderBrowser(props: Props) {
             const MethodIcon = method && /card/i.test(method) ? CreditCard : Landmark;
             const difference = quote ? benchmarkPayoutDifference(quote.recipientAmount, amount, props.reference?.rate, to) : null;
             const cost = quote ? benchmarkCost(quote, amount, props.reference?.rate, to) : null;
-            const warning = quote?.missing?.[0] ?? (quote?.partial ? quote.costComplete ? "Confirm eligibility" : "Cost to confirm" : null);
+            const status = quote ? priceStatus(quote) : null;
             const source = quote ? pricingSourceLabel(quote) : candidate?.pricingStatus?.label ?? "Check provider";
             const key = quote ? priceRowKey(quote) : providerSlug;
             return <li key={key}>
@@ -158,7 +158,8 @@ export function PriceProviderBrowser(props: Props) {
                   <strong data-move={quote ? flashes[key] : undefined}>{quote?.recipientAmount != null ? <><RollingPrice key={to} value={quote.recipientAmount} /><small> {to}</small></> : "No payout quote"}</strong>
                   {quote?.delivery && <span className={styles.rowSource}><Clock3 size={12} aria-hidden />{quote.delivery}</span>}
                   <span className={styles.rowSource}><i data-basis={quote?.basis ?? "unavailable"} aria-hidden />{source}</span>
-                  {warning && <small className={styles.partial} title={warning}>{warning}</small>}
+                  {quote ? <span className={styles.rowSource}>{priceCollectedLabel(quote)}</span> : null}
+                  {status ? <span className={styles.statusChip} data-status={status.kind} title={status.reason}>{status.label}</span> : <span className={styles.statusChip} data-status="confirm">Confirm at provider</span>}
                 </span>
               </button>
             </li>;

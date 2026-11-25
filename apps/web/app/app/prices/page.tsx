@@ -50,6 +50,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           savedPairs={savedPairs}
           initialProvider={initialProvider}
           connected={connected}
+          entityCountry={org.entityCountry ?? null}
         />
       <PriceHelpLinks />
     </div>

@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { contextForPair } from "../../lib/price-destination";
+import { ProviderHandoff } from "./provider-handoff";
+
+const PAY_BY: Record<string, string> = { local_bank: "local bank transfer", wire: "international wire", card: "card", transfer_service: "transfer app" };
 import { PairActions, SavedPairsStrip, TransferBookmarkButton } from "../price/pair-actions";
 import { savedProviderSlug } from "../../lib/saved-transfer";
 import type { SavedPair } from "../../lib/saved-pairs";
@@ -17,7 +21,7 @@ import { PriceHistoryTabs } from "../price/price-history-tabs";
 import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-navigation";
 import { PriceProviderBrowser, type ProviderQuoteAdvice } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
-import { providerSite } from "../../lib/provider-sites";
+import { providerLink, providerSite } from "../../lib/provider-sites";
 import { AmountInput, QuoteAmount } from "../price/animated-amount";
 import { CurrencyPicker } from "../price/currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "../price/pay-method-select";
@@ -132,9 +136,11 @@ export interface SwapQuoteProps {
   /** Pairs saved from this calculator (signed-in dashboards only). */
   savedPairs?: SavedPair[];
   initialProvider?: string;
+  /** The workspace's registered country, which decides whether a pair is received or sent. */
+  entityCountry?: string | null;
 }
 
-export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider, guest = false }: SwapQuoteProps) {
+export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider, guest = false, entityCountry = null }: SwapQuoteProps) {
   const [saved, setSaved] = useState<SavedPair[]>(savedPairs ?? []);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -273,10 +279,13 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const elapsed = (now - fetchedAt) / 1000;
   const sym = (code: string) => currencies.find((c) => c.value === code)?.emoji;
 
-  const swap = () => {
-    setFrom(to);
-    setTo(from);
+  // A new pair gets a fresh context: receiving INR and sending from INR follow different rules.
+  const setPair = (nextFrom: string, nextTo: string) => {
+    setFrom(nextFrom);
+    setTo(nextTo);
+    setContext((current) => contextForPair(current, entityCountry, nextFrom, nextTo));
   };
+  const swap = () => setPair(to, from);
 
   // A working next step: the chosen provider's own site, or the page its price came from.
   const chosenSlug = selected?.providerSlug ?? selectedCandidate?.providerSlug ?? null;
@@ -284,7 +293,11 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const bookmarkSlug = savedProviderSlug(chosenSlug);
   const transfer = { from, to, amount: amount || 0 };
   const bookmark = bookmarkSlug ? { ...transfer, context, destinationCountry: result?.input.destinationCountry, provider: { slug: bookmarkSlug, name: chosenName } } : null;
-  const site = chosenSlug ? providerSite(chosenSlug) : null;
+  // The provider's own page for this transfer: Wise with the amount filled in, others on the route where checked.
+  const link = chosenSlug && valid ? providerLink(chosenSlug, transfer) : null;
+  const site = link?.href ?? (chosenSlug ? providerSite(chosenSlug) : null);
+  const funding = selected?.publicOffer?.fundingMethod ?? selected?.fundingLabel ?? (context.direction === "receive" && context.paymentMethod ? PAY_BY[context.paymentMethod] ?? null : null);
+  const handoff = link && chosenName ? { provider: chosenName, from, to, amount, funding, recipientAmount: selected?.recipientAmount ?? null, observedAt: selected?.observedAt || null, carries: link.carries } : null;
   const sourceUrl = selected?.source?.url && /^https:\/\//.test(selected.source.url) ? selected.source.url : null;
   const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = !valid
     ? { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true }
@@ -381,8 +394,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                   onChange={(e) => setAmountText(e.target.value.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 12))}
                   className="min-w-0 flex-1 bg-transparent font-display text-[clamp(1.7rem,6vw,2.25rem)] font-semibold tracking-tight text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
                 />
-                <QuickPicks options={currencies} exclude={[from, to]} onPick={setFrom} />
-                <CurrencyPicker label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setFrom(c))} />
+                <QuickPicks options={currencies} exclude={[from, to]} onPick={(c) => setPair(c, to)} />
+                <CurrencyPicker label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setPair(c, to))} />
               </div>
               <p className="mt-2 text-[12px] text-[var(--color-muted)]">{midValue !== null ? `≈ ${money(midValue)} ${to} at the mid-market rate` : " "}</p>
             </div>
@@ -417,8 +430,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 >
                   <QuoteAmount key={`${from}-${to}`} value={selected?.recipientAmount ?? null} identity={selected ? priceRowKey(selected) : undefined} placeholder={loading ? "…" : "—"} />
                 </output>
-                <QuickPicks options={currencies} exclude={[from, to]} onPick={setTo} />
-                <CurrencyPicker label="Receive currency" value={to} options={currencies} onChange={(c) => (c === from ? swap() : setTo(c))} />
+                <QuickPicks options={currencies} exclude={[from, to]} onPick={(c) => setPair(from, c)} />
+                <CurrencyPicker label="Receive currency" value={to} options={currencies} onChange={(c) => (c === from ? swap() : setPair(from, c))} />
               </div>
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[var(--color-muted)]">
                 <span>
@@ -460,6 +473,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
             </button>
           )}
+          {handoff && "href" in cta && cta.href ? <ProviderHandoff setup={handoff} /> : null}
           {"secondary" in cta && cta.secondary ? (
             <Link
               href={cta.secondary.href}

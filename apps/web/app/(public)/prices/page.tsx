@@ -44,6 +44,7 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
         initialError={page.error}
         executable={page.executable}
         connected={[]}
+        entityCountry={session?.organization?.entityCountry ?? null}
       />
       <PriceHelpLinks />
     </div>

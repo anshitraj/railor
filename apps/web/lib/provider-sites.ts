@@ -47,3 +47,33 @@ export function providerSite(slug: string): string | null {
   const key = slug.replace(/^market:/, "").toLowerCase();
   return SITES[key] ?? null;
 }
+
+export interface ProviderLink {
+  href: string;
+  /** What the link carries over: the amount and pair, the corridor only, or nothing (the homepage). */
+  carries: "amount" | "corridor" | "home";
+}
+
+/**
+ * The most specific page of a provider's own site for this transfer. Only
+ * formats checked against the live site are used: Wise's converter takes the
+ * pair and amount; Remitly's and Xoom's US-to-India pages take the corridor.
+ * Everything else opens the homepage, and the hand-off card carries the setup.
+ */
+export function providerLink(slug: string, transfer: { from: string; to: string; amount: number }): ProviderLink | null {
+  const key = slug.replace(/^market:/, "").toLowerCase();
+  const home = SITES[key];
+  if (!home) return null;
+  const from = transfer.from.toUpperCase();
+  const to = transfer.to.toUpperCase();
+  const amount = Number.isFinite(transfer.amount) && transfer.amount > 0 ? Math.round(transfer.amount * 100) / 100 : null;
+  if (key === "wise" && /^[A-Z]{3}$/.test(from) && /^[A-Z]{3}$/.test(to)) {
+    const page = `https://wise.com/gb/currency-converter/${from.toLowerCase()}-to-${to.toLowerCase()}-rate`;
+    return amount ? { href: `${page}?amount=${amount}`, carries: "amount" } : { href: page, carries: "corridor" };
+  }
+  if (from === "USD" && to === "INR") {
+    if (key === "remitly") return { href: "https://www.remitly.com/us/en/money-transfer/send-money-to-india", carries: "corridor" };
+    if (key === "xoom") return { href: "https://www.xoom.com/india/send-money", carries: "corridor" };
+  }
+  return { href: home, carries: "home" };
+}
