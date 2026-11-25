@@ -11,7 +11,7 @@ import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { asporaBankQuote, asporaQuoteCurrency, usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
-import { careemPublicPrice, lemfiPublicPrice, sendwavePublicPrice } from "./public-pricing/retail-calculators.js";
+import { careemPublicPrice, lemfiPublicPrice, sendwavePublicPrice, taptapSendPublicPrice } from "./public-pricing/retail-calculators.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
@@ -487,6 +487,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     cache(`sendwave:${consumerPair}`, 60_000, () => sendwavePublicPrice(input, fetcher, now)),
     cache(`lemfi:${consumerPair}`, 60_000, () => lemfiPublicPrice(input, fetcher, now)),
     careemPublicPrice(input, fetcher, now, !deps.fetcher),
+    taptapSendPublicPrice(input, fetcher, now, !deps.fetcher),
   ]) : Promise.resolve([]);
   const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic, retailReferences] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),

@@ -180,3 +180,71 @@ export async function careemPublicPrice(input: PriceCheckInput, fetcher: typeof 
     notes: ["The website calculator shows the recipient amount before any account-specific charge. Careem Plus and first-transfer offers can change fees and rates.", careemFees],
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Taptap Send                                                                 */
+/* -------------------------------------------------------------------------- */
+
+const money = z.string().regex(/^\d+(?:\.\d+)?$/).transform(Number);
+const taptapFees = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("standard"), flatFee: money }),
+  z.object({ type: z.literal("tiered"), tiers: z.array(z.object({ fee: money, minValue: money })).min(1) }),
+]);
+const taptapRates = z.object({
+  availableCountries: z.array(z.object({
+    isoCountryCode: z.string().length(2),
+    currency: z.string().length(3),
+    corridors: z.array(z.object({ isoCountryCode: z.string().length(2), currency: z.string().length(3), fxRate: money, feeSchedule: z.unknown().optional() })),
+  })),
+});
+type TaptapRates = z.infer<typeof taptapRates>;
+
+async function taptapRatesLoad(fetcher: typeof fetch): Promise<TaptapRates> {
+  // The same public rates file Taptap Send's website reads for its calculator.
+  const response = await fetcher("https://api.taptapsend.com/api/fxRates", {
+    redirect: "error", signal: AbortSignal.timeout(6_000),
+    headers: { Accept: "application/json", "Appian-Version": "web/2022-05-03.0", "X-Device-Id": "web", "X-Device-Model": "web" },
+  });
+  if (!response.ok) throw new Error(`Taptap Send answered ${response.status}`);
+  return taptapRates.parse(await response.json());
+}
+
+/** The fee Taptap Send publishes for this amount, or null when the route publishes none. */
+export function taptapFee(schedule: unknown, amount: number): number | null {
+  const parsed = taptapFees.safeParse(schedule);
+  if (!parsed.success) return null;
+  if (parsed.data.type === "standard") return parsed.data.flatFee;
+  const tier = [...parsed.data.tiers].sort((a, b) => b.minValue - a.minValue).find((item) => amount >= item.minValue);
+  return tier ? tier.fee : null;
+}
+
+/**
+ * Taptap Send's own published rate and fee for a person sending from one of
+ * its sending countries. The fee is paid on top, so what arrives is the amount
+ * times the rate. Routes without a published fee are shown with the fee left
+ * for the app to confirm, never assumed to be free.
+ */
+export async function taptapSendPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date, cache: boolean): Promise<PriceRow | null> {
+  const context = personalTransfer(input);
+  if (!context || (context.paymentMethod && context.paymentMethod !== "transfer_service")) return null;
+  const rates = await (cache ? shared("taptap:fx-rates", 10 * 60_000, () => taptapRatesLoad(fetcher)) : taptapRatesLoad(fetcher)).catch(() => null);
+  if (!rates) return null;
+  const senders = rates.availableCountries.filter((country) => country.currency === input.sourceCurrency);
+  const sender = context.direction === "send" ? senders.find((country) => country.isoCountryCode === context.country) : senders.length === 1 ? senders[0] : undefined;
+  if (!sender) return null;
+  const corridors = sender.corridors.filter((corridor) => corridor.currency === input.destinationCurrency);
+  const wanted = input.destinationCountry ?? (context.direction === "receive" ? context.country : undefined);
+  const corridor = wanted ? corridors.find((item) => item.isoCountryCode === wanted) : corridors.length === 1 ? corridors[0] : undefined;
+  if (!corridor || !(corridor.fxRate > 0) || !(input.amount > 0)) return null;
+  const fee = taptapFee(corridor.feeSchedule, input.amount);
+  const recipientAmount = Math.round(input.amount * corridor.fxRate * 100) / 100;
+  return {
+    ...publicPrice(now), providerSlug: "taptap-send", providerName: "Taptap Send", senderCountry: sender.isoCountryCode,
+    product: { id: "taptap-send:public-rates", label: "Taptap Send · published rate and fee" },
+    recipientAmount, feeAmount: fee, feeCurrency: input.sourceCurrency, rate: corridor.fxRate,
+    paymentMethods: ["transfer_service"], delivery: null,
+    source: { label: "Taptap Send published rates", url: "https://www.taptapsend.com/" },
+    missing: fee === null ? ["Taptap Send doesn’t publish a fee for this route. Check it in the app.", "Confirm the delivery method in Taptap Send."] : ["Confirm the delivery method in Taptap Send."],
+    notes: [`Rate and fee as Taptap Send publishes them for sending from ${sender.isoCountryCode}. The fee is paid on top of the amount sent.`],
+  };
+}
