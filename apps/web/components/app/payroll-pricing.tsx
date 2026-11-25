@@ -2,10 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Download, FileSpreadsheet, FileText, Loader2, Lock, RotateCcw, Sparkles, UploadCloud, Users } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Loader2, Lock, RotateCcw, Sparkles, Users } from "lucide-react";
 import { amountColumn, detectPayrollColumns, EXAMPLE_PAYROLL_CSV, PAYROLL_MAX_ROWS, readPayroll, sideForColumns, type AmountSide, type PayrollColumns, type PayrollQuote, type PayrollRow } from "../../lib/payroll";
 import { parseCsv, readTable, type Table } from "../../lib/spreadsheet";
 import { toast } from "../toast";
+import { BasketballDrop } from "./arcade-drop/basketball-drop";
 import { PayslipImport, type PayslipFigures } from "./payslip-import";
 import styles from "./company-tools.module.css";
 
@@ -42,7 +43,6 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [priced, setPriced] = useState<{ side: AmountSide; currency: string; quotes: Map<string, PayrollQuote> } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [importing, setImporting] = useState(false);
 
   // A price is only shown for the reading and currency it was made for.
@@ -155,12 +155,16 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
 
       <input ref={input} type="file" className="sr-only" accept=".csv,.xlsx,text/csv" aria-label="Choose a payroll sheet" onChange={(event) => void choose(event.target.files?.[0])} />
       {!sheet ? (
-        <button type="button" className={`${styles.bigDrop} press`} data-dragging={dragging || undefined} onClick={() => input.current?.click()}
-          onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void choose(event.dataTransfer.files[0]); }}>
-          <span className={styles.slotIcon}><UploadCloud size={20} aria-hidden /></span>
-          <strong>Drop your payroll sheet, or browse</strong>
-          <small>CSV or Excel (.xlsx). One row per person: an amount (what you send, or their net pay), the currency they’re paid in, and their country if you have it.</small>
-        </button>
+        <BasketballDrop
+          title="Send your payroll sheet"
+          subtitle="Drop it in, or take the shot."
+          dropText="Drop your payroll sheet here"
+          dropHint="CSV or Excel. One row per person: amount, currency, country."
+          accept=".csv,.xlsx,text/csv"
+          inputLabel="Choose a payroll sheet"
+          rejects={(file) => !/\.(csv|xlsx)$/i.test(file.name)}
+          onFile={(file) => void choose(file)}
+        />
       ) : (
         <section className={styles.results} aria-label="Payroll">
           {sheet.source === "example" ? <p className={styles.example}>Example sheet — fictional people, for trying payroll pricing.</p> : null}

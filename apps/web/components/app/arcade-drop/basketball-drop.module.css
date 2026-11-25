@@ -1,0 +1,58 @@
+/* A dark arcade card on purpose: the lime rim only reads against ink, in both themes. */
+.card { --ink: #12151a; --ink-2: #1b2027; --line: #2a303a; --lime: #b9e32f; --paper: #e9ebef; --text: #f2f3f6; --muted: #8e95a1; position: relative; display: grid; gap: 14px; width: min(100%, 500px); margin-inline: auto; padding: 22px 22px 18px; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(120% 70% at 50% 0%, var(--ink-2) 0%, var(--ink) 62%, #0d0f13 100%); color: var(--text); box-shadow: 0 34px 60px -34px rgb(8 10 14 / .7), inset 0 1px 0 rgb(255 255 255 / .04); }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.head h3 { color: var(--text); font-size: 22px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+.head p { margin-top: 5px; color: var(--muted); font-size: 14.5px; line-height: 1.45; }
+.sent { display: inline-flex; flex: none; align-items: baseline; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #232830; color: #b4bac5; font-size: 14px; font-weight: 500; }
+.sent b { display: inline-block; min-width: 1ch; color: #fff; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sent b[data-pop] { animation: pop .42s var(--ease-out); }
+
+.stage { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: 22px; background: none; color: inherit; text-align: center; cursor: pointer; aspect-ratio: 360 / 380; }
+.stage:disabled { cursor: progress; }
+.stage:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; }
+.copy { position: absolute; inset: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6% 12px 0; pointer-events: none; }
+.copy svg { color: var(--muted); }
+.copy strong { color: #f3eee3; font-size: clamp(16px, 4.4vw, 20px); font-weight: 650; letter-spacing: -.015em; }
+.copy small { max-width: 40ch; color: var(--muted); font-size: 12.5px; line-height: 1.4; text-wrap: balance; }
+.spin { animation: spin 1s linear infinite; }
+
+.scene { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.zone { fill: rgb(255 255 255 / .02); stroke: #3b424d; stroke-width: 1.5; stroke-dasharray: 6 6; transition: stroke .2s, fill .2s; }
+.stage[data-dragging] .zone { stroke: var(--lime); stroke-dasharray: none; fill: rgb(185 227 47 / .06); }
+.board { fill: none; stroke: #d4d8de; stroke-width: 2; }
+.target { fill: none; stroke: var(--lime); stroke-width: 2; opacity: .9; }
+.mount { fill: #8a909b; }
+.net { transform-box: fill-box; transform-origin: 50% 0; fill: none; stroke: #cdd1d8; stroke-width: 1.2; stroke-linecap: round; opacity: .85; }
+.rim { fill: none; }
+.rimBack { stroke: var(--lime); stroke-width: 4.5; fill: none; }
+.rimFront { stroke: var(--lime); stroke-width: 4.5; fill: none; }
+.rimGlow { stroke: var(--lime); stroke-width: 7; fill: none; opacity: .55; transition: opacity .25s; }
+.stage[data-dragging] .rimGlow, .card[data-phase="made"] .rimGlow { opacity: 1; }
+.card[data-phase="missed"] .rimGlow { opacity: .25; }
+
+.dot { fill: var(--lime); opacity: .35; animation: aim 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * 110ms); }
+.stage[data-dragging] .dot { animation-duration: 1.1s; }
+.card[data-phase="flying"] .dot, .card[data-phase="made"] .dot, .card[data-phase="missed"] .dot { animation: none; opacity: .12; }
+
+.sprite { filter: drop-shadow(0 6px 8px rgb(0 0 0 / .45)); }
+.bob { animation: bob 2.6s ease-in-out infinite; }
+.stage[data-dragging] .bob { animation-duration: 1.2s; }
+.card[data-phase="flying"] .bob, .card[data-phase="made"] .bob, .card[data-phase="missed"] .bob { animation: none; }
+.paper { fill: var(--paper); stroke: #c9cdd4; stroke-width: 1; }
+.lines { fill: none; stroke: #aeb4be; stroke-width: 2; stroke-linecap: round; }
+.ball { fill: #f08a24; stroke: #b4580f; stroke-width: 1.2; }
+.seams { fill: none; stroke: #7a3a08; stroke-width: 1; stroke-linecap: round; }
+
+/* Nothing loops while the card is off screen. */
+.card[data-live="false"] :is(.dot, .bob, .spin) { animation-play-state: paused; }
+
+@keyframes aim { 0%, 100% { opacity: .22; } 45% { opacity: 1; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.5); color: var(--lime); } 100% { transform: scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dot, .bob, .sent b[data-pop], .spin { animation: none; }
+  .dot { opacity: .5; }
+  .zone, .rimGlow { transition: none; }
+}
