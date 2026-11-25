@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Code2, Globe2, PartyPopper } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { RailorMark } from "../brand";
+import { AGENT_SETUP_PATH } from "../../lib/developer-setup";
 import { ProviderLogo } from "../app/provider-logo";
 import styles from "./onboarding.module.css";
 
@@ -40,7 +41,7 @@ export function WorkspacePreview({ step, profile, country, targets, api }: {
       <p>Routes you’ll see first</p>
       {country && targets.length ? <ul>{targets.slice(0, 3).map((target) => <li key={target.code}><Flag code={country.code} size={18} round /><span aria-hidden>→</span><Flag code={target.code} size={18} round /><span>{country.name} to {target.name}</span></li>)}</ul> : <span className={styles.previewEmpty}>Choose a country and a market to see them here.</span>}
     </div>
-    {api ? <p className={styles.previewApi}><Code2 size={15} />An API key will be ready on the next screen</p> : null}
+    {api ? <p className={styles.previewApi}><Code2 size={15} />Connect an agent and get a test API key after setup</p> : null}
     <div className={styles.previewProviders} aria-hidden><ProviderLogo slug="wise" name="Wise" size={22} /><ProviderLogo slug="remitly" name="Remitly" size={22} /><ProviderLogo slug="skydo" name="Skydo" size={22} /><ProviderLogo slug="airwallex" name="Airwallex" size={22} /><span>and more, compared for you</span></div>
   </aside>;
 }
@@ -55,7 +56,7 @@ export function OnboardingComplete({ destination, markets }: { destination: stri
     const timer = window.setTimeout(() => setCelebrating(false), 2600);
     return () => window.clearTimeout(timer);
   }, []);
-  const developer = destination.split(/[?#]/)[0] === "/app/developers";
+  const developer = destination.split(/[?#]/)[0] === AGENT_SETUP_PATH;
   const targetCount = markets.length;
   return <motion.section className={styles.complete} aria-label="Setup complete" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .3 }}>
     {celebrating && !reduce && <div className={styles.confetti} aria-hidden="true">{Array.from({ length: 32 }, (_, i) => <i key={i} style={{ "--x": `${(i % 2 ? 1 : -1) * (55 + i * 8)}px`, "--y": `${90 + (i * 37) % 160}px`, "--spin": `${(i % 2 ? 1 : -1) * (140 + i * 29)}deg`, "--delay": `${(i % 8) * 32}ms`, "--confetti-color": ["var(--color-orange)", "var(--color-brand)", "var(--color-lime)", "var(--color-ok)"][i % 4] } as CSSProperties} />)}</div>}
@@ -63,7 +64,7 @@ export function OnboardingComplete({ destination, markets }: { destination: stri
     <h1 ref={heading} tabIndex={-1}>You’re all set!</h1>
     <p>Your preferences are saved. Let’s put your next move in focus.</p>
     <div className={styles.successChips}><span><Check size={14} />Preferences saved</span><span>{targetCount ? markets.slice(0, 2).map(code => <Flag key={code} code={code} size={13} />) : <Globe2 size={14} />}{targetCount ? `${targetCount} market${targetCount === 1 ? "" : "s"} to explore` : "Ready to explore"}</span></div>
-    <Link href={destination} className={styles.primaryLink}>{developer ? <><Code2 size={17} />Get my API key</> : destination === "/app" ? "Open my workspace" : "Continue to Railor"}<ArrowRight size={17} /></Link>
+    <Link href={destination} className={styles.primaryLink}>{developer ? <><Code2 size={17} />Set up your agent</> : destination === "/app" ? "Open my workspace" : "Continue to Railor"}<ArrowRight size={17} /></Link>
     <small>Your quick-start guide is waiting on Overview. Open it anytime.</small>
   </motion.section>;
 }

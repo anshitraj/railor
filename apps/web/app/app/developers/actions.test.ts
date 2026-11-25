@@ -5,14 +5,14 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import { eq } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import path from "node:path";
-const state = vi.hoisted(() => ({ db: null as any, role: "owner", orgId: "", userId: "" }));
+const state = vi.hoisted(() => ({ db: null as any, role: "owner", orgId: "", userId: "", ensureAgentTestKey: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@railor/database", async original => ({ ...await original<typeof import("@railor/database")>(), getDb: async () => state.db }));
 vi.mock("../../../lib/auth", () => ({ requireSession: async () => ({ organization: { id: state.orgId }, user: { id: state.userId }, role: state.role }), hashApiKey: (value: string) => createHash("sha256").update(value).digest("hex") }));
-vi.mock("../../../lib/org", () => ({ createApiKey: vi.fn() }));
+vi.mock("../../../lib/org", () => ({ createApiKey: vi.fn(), ensureAgentTestKey: state.ensureAgentTestKey }));
 const database = await import("@railor/database");
-const { regenerateKey, revokeKey } = await import("./actions");
+const { prepareAgentKey, regenerateKey, revokeKey } = await import("./actions");
 const client = new PGlite(); let otherOrg: string;
 beforeAll(async () => {
   state.db = drizzle(client, { schema: database.schema });
@@ -47,5 +47,17 @@ describe("primary API key replacement", () => {
     expect(await regenerateKey(key.id)).toMatchObject({ ok: false, error: "insufficient_role" });
     expect(await revokeKey(key.id)).toMatchObject({ ok: false, error: "insufficient_role" });
     const [unchanged] = await state.db.select().from(database.apiKeys).where(eq(database.apiKeys.id, key.id)); expect(unchanged.revokedAt).toBeNull();
+  });
+});
+
+describe("agent setup", () => {
+  it("provisions a key for the signed-in workspace only when the role can manage keys", async () => {
+    state.role = "member";
+    expect(await prepareAgentKey()).toEqual({ ok: false });
+    expect(state.ensureAgentTestKey).not.toHaveBeenCalled();
+    state.role = "admin";
+    state.ensureAgentTestKey.mockResolvedValueOnce({ secret: "rail_test_example", created: true });
+    expect(await prepareAgentKey()).toEqual({ ok: true, secret: "rail_test_example", created: true });
+    expect(state.ensureAgentTestKey).toHaveBeenCalledWith(state.orgId, state.userId);
   });
 });

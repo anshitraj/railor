@@ -1,0 +1,89 @@
+.shell { display: grid; gap: 0.9rem; width: min(100%, 1050px); margin-inline: auto; container-type: inline-size; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; gap: clamp(1rem, 2vw, 1.5rem); }
+.wizard { display: grid; gap: clamp(1.2rem, 3vw, 2rem); min-width: 0; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--color-line-strong); border-radius: 1.25rem; background: var(--color-surface); }
+.step { display: grid; gap: 1rem; min-width: 0; }
+.header { display: grid; gap: 0.5rem; }
+.header h1 { color: var(--color-ink); font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.052em; line-height: 1.1; }
+.header h1:focus { outline: none; }
+.header p, .note { color: var(--color-muted); line-height: 1.55; }
+.header p { font-size: 0.95rem; }
+.note { font-size: 0.8125rem; overflow-wrap: anywhere; }
+.progress { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+.progress li { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-muted); font-size: 0.75rem; font-weight: 550; }
+.progress li span { display: grid; width: 1.45rem; aspect-ratio: 1; place-items: center; border: 1px solid var(--color-line-strong); border-radius: 50%; font-family: var(--font-mono); font-weight: 600; }
+.progress li[aria-current] { color: var(--color-orange-deep); font-weight: 700; }
+.progress li[aria-current] span { border-color: var(--color-orange-deep); background: var(--color-lavender); }
+.progress li[data-done] span { border-color: var(--color-ok-bg); background: var(--color-ok-bg); color: var(--color-ok); }
+
+.clients { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; min-width: 0; border: 0; }
+.client { position: relative; min-width: 0; }
+.clientTile { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.55rem; min-height: 3.45rem; padding: 0.5rem 0.65rem; border: 1px solid var(--color-line-strong); border-radius: 0.72rem; color: var(--color-ink); background: var(--color-paper); font-size: 0.875rem; font-weight: 650; cursor: pointer; }
+.client input:checked + .clientTile { border-color: var(--color-orange-deep); background: var(--color-lavender); }
+.client input:disabled + .clientTile { opacity: 0.65; cursor: wait; }
+.client input:not(:disabled) + .clientTile:hover { border-color: var(--color-orange-deep); }
+.selectedIcon { visibility: hidden; color: var(--color-orange-deep); }
+.client input:checked + .clientTile .selectedIcon { visibility: visible; }
+
+.keyBox, .promptBox, .snippetBox { display: grid; min-width: 0; gap: 0.65rem; padding: clamp(0.7rem, 2vw, 1rem); border: 1px solid var(--color-line-strong); border-radius: 0.75rem; background: var(--color-paper); }
+.keyBox { background: var(--color-lavender); border-color: var(--color-lavender-deep); }
+.boxHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.45rem; }
+.boxHead h2 { display: flex; align-items: center; gap: 0.45rem; color: var(--color-ink); font-size: 0.9375rem; font-weight: 700; }
+.keyBox h2 svg { color: var(--color-orange-deep); }
+.boxHead > span { color: var(--color-orange-deep); font-size: 0.75rem; font-weight: 700; }
+.keyLine { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.15rem; padding-left: 0.55rem; border: 1px solid var(--color-line-strong); border-radius: 0.55rem; background: var(--color-surface); }
+.keyLine code, .snippetBox pre { font: 500 0.8125rem/1.45 var(--font-mono); overflow-wrap: anywhere; white-space: pre-wrap; }
+.snippetBox > :not(summary) { margin-top: 0.65rem; }
+.snippetBox pre { padding: 0.7rem; border: 1px solid var(--color-line); border-radius: 0.55rem; background: var(--color-surface); }
+.shell summary { min-height: 2.75rem; align-content: center; width: fit-content; color: var(--color-ink); font-size: 0.875rem; font-weight: 650; cursor: pointer; }
+.promptText, .promptPreview { color: var(--color-ink-soft); font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.promptBox:has(details[open]) .promptPreview { display: none; }
+.platform { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.platform button { min-height: 2.75rem; padding-inline: 0.55rem; border: 1px solid var(--color-line-strong); border-radius: 0.5rem; font-size: 0.8125rem; cursor: pointer; }
+.platform button[aria-pressed="true"] { border-color: var(--color-orange-deep); color: var(--color-orange-deep); background: var(--color-lavender); font-weight: 650; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; padding-top: 0.3rem; }
+.primary, .secondary, .back, .iconAction { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 2.75rem; width: fit-content; border-radius: 0.58rem; font-size: 0.875rem; font-weight: 650; cursor: pointer; }
+.primary, .secondary { padding: 0.45rem 0.85rem; border: 1px solid var(--color-line-strong); text-align: center; }
+.primary { margin-left: auto; border-color: var(--color-orange-deep); background: var(--color-orange-deep); color: var(--color-on-dark); }
+.primary:hover:not(:disabled) { background: var(--color-ink); border-color: var(--color-ink); }
+.primary:disabled { opacity: 0.7; cursor: wait; }
+.secondary { background: var(--color-surface); color: var(--color-ink); }
+.secondary:hover, .iconAction:hover { background: var(--color-canvas); }
+.back { color: var(--color-ink-soft); }
+.back:hover { color: var(--color-orange-deep); }
+.iconAction { width: 2.75rem; color: var(--color-ink-soft); }
+.notice, .error { color: var(--color-ink-soft); font-size: 0.8125rem; }
+.notice:empty { margin-bottom: -0.65rem; }
+.error { color: var(--color-bad); }
+.shell :is(a, button, summary):focus-visible, .client input:focus-visible + .clientTile { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
+
+.diagram { --diagram-warm: #37231b; --diagram-text: #e2cbbd; display: grid; gap: clamp(1.5rem, 5vw, 3rem); min-width: 0; padding: clamp(1rem, 3vw, 1.8rem); border-radius: 1.25rem; color: var(--color-on-dark); background: radial-gradient(ellipse at 90% 0%, var(--diagram-warm), transparent 75%), var(--color-ink); }
+.diagramTitle { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; }
+.diagramTitle svg { color: var(--color-accent-light); }
+.connection { display: grid; grid-template-columns: minmax(0, 1fr) minmax(1rem, 1fr) minmax(0, 1fr); align-items: start; gap: 0.4rem; padding: 0.85rem; border: 1px solid color-mix(in srgb, var(--color-accent-light) 28%, transparent); border-radius: 0.95rem; text-align: center; }
+.connection > div { display: grid; justify-items: center; gap: 0.6rem; min-width: 0; }
+.connection strong { font-size: 0.8125rem; line-height: 1.4; overflow-wrap: anywhere; }
+.nodeIcon { display: grid; place-items: center; width: 2.8rem; aspect-ratio: 1; border-radius: 0.75rem; background: var(--color-surface); color: var(--color-ink); }
+.line { position: relative; height: 0; margin-top: 1.4rem; border-top: 1px dashed var(--color-accent-light); }
+.line i { position: absolute; top: -0.25rem; inset-inline: 0; display: grid; place-items: center; }
+.line i::before { width: 0.44rem; aspect-ratio: 1; border-radius: 50%; background: var(--color-accent-light); content: ""; }
+.diagramInfo { display: grid; gap: 0.55rem; }
+.diagramInfo h2 { font-weight: 700; letter-spacing: -0.022em; font-size: 1.3rem; }
+.diagramInfo p { color: var(--diagram-text); font-size: 0.875rem; line-height: 1.55; }
+.diagramInfo a { display: inline-flex; align-items: center; gap: 0.3rem; width: fit-content; min-height: 2.75rem; color: var(--color-accent-light); font-size: 0.875rem; font-weight: 650; }
+.diagramInfo a:focus-visible { outline-color: var(--color-accent-light); }
+.diagramInfo a:hover { text-decoration: underline; }
+
+@container (max-width: 750px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .diagram { gap: 1rem; }
+}
+@container (max-width: 385px) {
+  .clients { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .step { animation: step-in 220ms var(--ease-out) both; }
+  .line i { animation: mcp-signal 2.5s 2 ease-in-out both; }
+}
+@keyframes step-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes mcp-signal { from { transform: translateX(calc(-50% + 0.22rem)); opacity: 0; } 20%, 80% { opacity: 1; } to { transform: translateX(calc(50% - 0.22rem)); opacity: 0; } }

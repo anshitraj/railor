@@ -1,6 +1,8 @@
 import "server-only";
-import { eq, sql } from "drizzle-orm";
-import { getDb, organizationEntitlements, organizations, type RailorDb } from "@railor/database";
+import { cache } from "react";
+import { and, eq, sql } from "drizzle-orm";
+import { monthStart } from "@railor/core";
+import { getDb, organizationEntitlements, organizations, rateLimitBuckets, type RailorDb } from "@railor/database";
 import { effectivePlan, PLAN_LIMITS } from "./plans";
 
 export async function getEntitlement(organizationId: string, db?: RailorDb) {
@@ -9,6 +11,19 @@ export async function getEntitlement(organizationId: string, db?: RailorDb) {
   const plan = effectivePlan(row);
   return { plan, limits: PLAN_LIMITS[plan], validUntil: row?.validUntil ?? null, status: row?.status === "revoked" ? "revoked" : row && row.plan !== "free" && plan === "free" ? "expired" : "active" };
 }
+
+/** Uses the same monthly counter that enforces the workspace API allowance. */
+export const getWorkspaceApiUsage = cache(async (organizationId: string) => {
+  const db = await getDb();
+  const since = monthStart();
+  const [entitlement, [usage]] = await Promise.all([
+    getEntitlement(organizationId, db),
+    db.select({ count: rateLimitBuckets.count }).from(rateLimitBuckets)
+      .where(and(eq(rateLimitBuckets.key, `api-month:${organizationId}`), eq(rateLimitBuckets.windowStart, since)))
+      .limit(1),
+  ]);
+  return { entitlement, used: usage?.count ?? 0, since };
+});
 
 /** Serializes quota checks and resource creation against the organization's stable row. */
 export async function withOrgLock<T>(organizationId: string, action: (db: RailorDb, entitlement: Awaited<ReturnType<typeof getEntitlement>>) => Promise<T>): Promise<T> {
@@ -24,9 +39,8 @@ export async function consumeApiAllowance(organizationId: string, keyId: string,
   // Persistent counters survive usage-rollup pruning. Organization and optional per-key caps are atomic.
   return withOrgLock(organizationId, async (tx, entitlement) => {
     const now = new Date();
-    const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const month = monthStart(now);
     const expires = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-    const { rateLimitBuckets } = await import("@railor/database");
     const orgKey = `api-month:${organizationId}`;
     const perKey = `api-month-key:${keyId}`;
     const rows = await tx.select().from(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} = ${month} and ${rateLimitBuckets.key} in (${orgKey}, ${perKey})`);

@@ -27,6 +27,7 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  Plug,
   Radar,
   Route,
   ScanSearch,
@@ -93,6 +94,7 @@ export const NAV_GROUPS: Array<{ title: string | null; icon?: LucideIcon; items:
   ] },
   { title: "Developers", icon: Code2, items: [
     { href: "/app/developers", label: "API & AI tools", icon: Code2 },
+    { href: "/app/connectors", label: "Connectors", icon: Plug },
     { href: "/app/settings/connections", label: "Provider accounts", icon: Link2 },
   ] },
 ];
@@ -110,6 +112,7 @@ const PRIMARY_NAV: Array<{ title: string; items: NavItem[] }> = [
     { href: "/app/audit", label: "Company", icon: Building2 },
     { href: "/app/payments", label: "Activity", icon: Activity },
     { href: "/app/developers", label: "Developers", icon: Code2 },
+    { href: "/app/connectors", label: "Connectors", icon: Plug },
   ] },
 ];
 
@@ -135,6 +138,7 @@ export function AppShell({
   isDemo = false,
   company = true,
   walletBalanceCents = null,
+  planUsage,
   palette,
 }: {
   children: React.ReactNode;
@@ -148,6 +152,7 @@ export function AppShell({
   company?: boolean;
   /** Prepaid credit shown in the sidebar pill; null hides it (wallet unavailable). */
   walletBalanceCents?: number | null;
+  planUsage: { name: string; used: number; limit: number; accessUntil: string | null };
   palette: Array<{ id: string; label: string; group: string; href: string; hint?: string; keywords?: string }>;
 }) {
   const pathname = usePathname();
@@ -236,7 +241,9 @@ export function AppShell({
   ];
 
   const area = workspaceArea(pathname);
-  const settingsActive = area === "Settings" && !walletActive;
+  const sidebarArea = pathname === "/app/connectors" ? "Connectors" : area;
+  const planActive = pathname === "/app/upgrade";
+  const settingsActive = area === "Settings" && !walletActive && !planActive;
 
   return (
     <div className={cn("workspace-frame flex min-h-screen bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
@@ -286,7 +293,7 @@ export function AppShell({
               {!compact && <p aria-hidden="true" className={sidebarStyles.groupTitle}>{title}</p>}
               <ul aria-label={title}>
                 {items.map((item) => {
-                  const active = area === item.label;
+                  const active = sidebarArea === item.label;
                   return (
                     <li key={item.href}>
                       <Link
@@ -321,6 +328,20 @@ export function AppShell({
         </nav>
 
         <div className={sidebarStyles.footer}>
+          {compact ? (
+            <Link href="/app/upgrade" className={sidebarStyles.link} title="Manage plan" aria-label="Manage plan" aria-current={planActive ? "page" : undefined}>
+              <span className={sidebarStyles.linkIcon}><Calculator size={17} aria-hidden /></span>
+            </Link>
+          ) : (
+            <section className={sidebarStyles.plan} aria-label="Workspace plan">
+              <div className={sidebarStyles.planRow}><strong>{planUsage.name} plan</strong><Link href="/app/upgrade" aria-current={planActive ? "page" : undefined} onClick={() => setMobileOpen(false)}>Manage plan</Link></div>
+              <div className={sidebarStyles.planUsage}><span>Monthly API requests</span><span>{planUsage.used.toLocaleString("en-US")} / {planUsage.limit.toLocaleString("en-US")}</span></div>
+              <div className={sidebarStyles.planMeter} role="meter" aria-label="API requests used this month" aria-valuemin={0} aria-valuemax={planUsage.limit} aria-valuenow={Math.min(planUsage.limit, planUsage.used)}>
+                <span style={{ width: `${Math.min(100, planUsage.used / planUsage.limit * 100)}%` }} />
+              </div>
+              {planUsage.accessUntil ? <p>Access through {planUsage.accessUntil}</p> : null}
+            </section>
+          )}
           <Link
             href="/app/settings"
             title={compact ? "Settings" : undefined}

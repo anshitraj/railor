@@ -58,6 +58,14 @@
 .currentArrow { color: var(--nav-accent); }
 .stageBadge > span { border-color: #ffb79038; background: #ffb79013; color: var(--nav-accent); }
 .footer { display: grid; gap: 4px; padding: 8px 2px 0; border-top: 1px solid var(--nav-border); }
+.plan { display: grid; gap: 7px; margin-bottom: 4px; padding: 10px; border: 1px solid var(--nav-border); border-radius: 11px; background: #170e0a45; }
+.planRow, .planUsage { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 8px; font-size: 11px; }
+.planRow strong { color: var(--nav-ink); font-size: 12px; font-weight: 650; }
+.planRow a { border-radius: 3px; color: var(--nav-accent); text-decoration: underline; text-underline-offset: 3px; }
+.planUsage, .plan p { color: var(--nav-muted); font-size: 11px; }
+.planUsage span:last-child { color: var(--nav-ink); font-variant-numeric: tabular-nums; }
+.planMeter { height: 4px; overflow: hidden; border-radius: 99px; background: #ffffff1b; }
+.planMeter span { display: block; height: 100%; border-radius: inherit; background: var(--nav-accent); }
 .settings[aria-current="page"] { background: #59392e; }
 .account { display: flex; min-width: 0; align-items: center; gap: 9px; margin-top: 5px; padding: 8px; border: 1px solid var(--nav-border); border-radius: 12px; background: #170e0a45; }
 .avatar { display: grid; width: 32px; height: 32px; flex: none; place-items: center; border-radius: 9px; background: #eec2a9; color: #48271d; font-size: 13px; font-weight: 750; }
@@ -65,7 +73,7 @@
 .accountText > * { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .accountText strong { color: var(--nav-ink); font-size: 12px; font-weight: 650; }
 .accountText small { margin-top: 2px; color: var(--nav-muted); font-size: 11px; }
-.link:focus-visible, .brand:focus-visible, .control:focus-visible { outline: 2px solid var(--nav-accent); outline-offset: -2px; }
+.link:focus-visible, .brand:focus-visible, .control:focus-visible, .plan a:focus-visible { outline: 2px solid var(--nav-accent); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) { .brand:hover .mark { transform: rotate(0); } }
 @media (min-width: 768px) {
@@ -76,6 +84,10 @@
   .sidebar[data-compact="true"] .nav { padding-inline: 1px; }
   .scrim, .close { display: none; }
   .collapse { display: grid; width: 34px; height: 34px; }
+}
+@media (max-height: 760px) {
+  .sidebar { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #ffffff36 transparent; }
+  .nav { flex: 1 0 auto; overflow-y: visible; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .scrim { animation: scrimIn .24s var(--ease-out) both; }

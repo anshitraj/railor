@@ -17,19 +17,20 @@ import {
 } from "../../../lib/wallet-options";
 import styles from "./wallet.module.css";
 
-function Chips({ label, options, value, onPick, disabled, big }: { label: string; options: readonly number[]; value: number; onPick: (cents: number) => void; disabled?: boolean; big?: boolean }) {
+function AmountChoices({ label, options, value, onPick, disabled }: { label: string; options: readonly number[]; value: number; onPick: (cents: number) => void; disabled?: boolean }) {
   const id = useId();
   return (
-    <div className={styles.field}>
-      <span id={id} className={styles.fieldLabel}>{label}</span>
-      <div role="radiogroup" aria-labelledby={id} className={big ? `${styles.chips} ${styles.bigChips}` : styles.chips}>
+    <fieldset className={styles.field} disabled={disabled}>
+      <legend className={styles.fieldLabel}>{label}</legend>
+      <div className={styles.chips}>
         {options.map((cents) => (
-          <button key={cents} type="button" role="radio" aria-checked={cents === value} disabled={disabled} className={styles.chip} onClick={() => onPick(cents)}>
-            {formatChoice(cents)}
-          </button>
+          <label key={cents} className={styles.choice}>
+            <input className="sr-only" type="radio" name={id} checked={cents === value} onChange={() => onPick(cents)} />
+            <span className={styles.chip}>{formatChoice(cents)}</span>
+          </label>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -66,6 +67,7 @@ export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceC
   }
 
   function notify() {
+    setError("");
     startTransition(async () => {
       try {
         const response = await fetch("/api/notify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ feature: "wallet-top-up" }) });
@@ -93,26 +95,27 @@ export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceC
                 aria-modal="true"
                 aria-labelledby={titleId}
                 tabIndex={-1}
-                className="access-dialog"
+                className={`access-dialog ${styles.dialogPanel}`}
                 initial={{ opacity: 0, y: reduce ? 0 : 16, scale: reduce ? 1 : 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: reduce ? 0 : 8 }}
                 transition={{ duration: reduce ? 0 : 0.22 }}
               >
-                <button className="access-close" type="button" aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></button>
+                <button className={`access-close ${styles.dialogClose}`} type="button" aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></button>
                 <div className={styles.dialog}>
-                  <div>
-                    <p className="product-eyebrow">Add money</p>
-                    <h2 id={titleId}>How much credit?</h2>
+                  <div className={styles.dialogHead}>
+                    <span className={styles.cardIcon}><Plus size={20} aria-hidden /></span>
+                    <div><h2 id={titleId}>Add money</h2><p>Choose an amount in USD.</p></div>
                   </div>
-                  <Chips label="Amount" options={TOP_UP_AMOUNTS_CENTS} value={amount} onPick={setAmount} big />
-                  <div className={styles.preview}>
-                    <span>Balance after</span>
-                    <strong>{formatCents(balanceCents + amount)}</strong>
-                  </div>
+                  <AmountChoices label="Top-up amount" options={TOP_UP_AMOUNTS_CENTS} value={amount} onPick={setAmount} disabled={pending} />
+                  <dl className={styles.preview}>
+                    <div><dt>Current balance</dt><dd>{formatCents(balanceCents)}</dd></div>
+                    <div><dt>Top-up</dt><dd>{formatCents(amount, { signed: true })}</dd></div>
+                    <div><dt>Balance after top-up</dt><dd>{formatCents(balanceCents + amount)}</dd></div>
+                  </dl>
                   <div className={styles.soon}>
                     <LockKeyhole size={17} aria-hidden />
-                    <span><strong>Card payments are coming soon.</strong>Railor never asks for card details on this page. When payments go live you’ll pay on a secure checkout.</span>
+                    <span><strong>Card payments are coming soon</strong>Get an email when you can top up at checkout.</span>
                   </div>
                   {error ? <p role="alert" className={styles.status} data-tone="bad">{error}</p> : null}
                   <div className={styles.dialogActions}>
@@ -125,7 +128,7 @@ export function AddMoneyButton({ balanceCents, testMode, canManage }: { balanceC
                       {notified ? <><Check size={16} aria-hidden />We’ll email you when it’s live</> : <><BellRing size={16} aria-hidden />Tell me when payments are live</>}
                     </button>
                   </div>
-                  {testMode ? <p className={styles.footnote}>Test mode: test credit is labelled “Test top-up” in billing history and moves no real money.</p> : null}
+                  {testMode && canManage ? <p className={styles.footnote}>Test credit appears as “Test top-up” in billing history.</p> : null}
                   {!canManage ? <p className={styles.footnote}>Only owners and admins can add money.</p> : null}
                 </div>
               </motion.div>
@@ -166,33 +169,30 @@ export function AutoReloadCard({ initial, canManage }: { initial: AutoReloadPref
           <span className={styles.cardIcon}><RefreshCw size={17} aria-hidden /></span>
           <div>
             <h2 id={titleId}>Auto-reload</h2>
-            <p>Top up by itself so credit never runs out mid-check.</p>
+            <p>Top up at a balance you choose.</p>
           </div>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={pref.enabled}
-          aria-label="Auto-reload"
-          className={styles.switch}
-          disabled={!canManage || pending}
-          onClick={() => save({ ...pref, enabled: !pref.enabled })}
-        >
-          <span className={styles.knob} />
-        </button>
+        <div className={styles.switchGroup}>
+          <span aria-hidden>{pref.enabled ? "On" : "Off"}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pref.enabled}
+            aria-label="Auto-reload"
+            className={styles.switch}
+            disabled={!canManage || pending}
+            onClick={() => save({ ...pref, enabled: !pref.enabled })}
+          >
+            <span className={styles.knob} />
+          </button>
+        </div>
       </div>
-      <Chips label="When balance drops below" options={AUTO_RELOAD_THRESHOLDS_CENTS} value={pref.thresholdCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, thresholdCents: cents })} />
-      <Chips label="Add" options={AUTO_RELOAD_AMOUNTS_CENTS} value={pref.amountCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, amountCents: cents })} />
-      <p className={styles.sentence} aria-live="polite">
-        {pref.enabled
-          ? <>On. We’ll add <strong>{formatCents(pref.amountCents)}</strong> whenever your balance drops below <strong>{formatCents(pref.thresholdCents)}</strong>.</>
-          : <>Off. Turn it on to add <strong>{formatCents(pref.amountCents)}</strong> whenever your balance drops below <strong>{formatCents(pref.thresholdCents)}</strong>.</>}
-      </p>
-      <div className={styles.cardHead}>
-        <p className={styles.footnote}><LockKeyhole size={13} aria-hidden />Starts charging once card payments launch. Until then, this only saves your choice.</p>
-        <span className={styles.status} data-tone={status.tone} role="status">{status.tone === "ok" ? <Check size={13} aria-hidden /> : null}{status.text}</span>
+      <AmountChoices label="When balance drops below" options={AUTO_RELOAD_THRESHOLDS_CENTS} value={pref.thresholdCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, thresholdCents: cents })} />
+      <AmountChoices label="Top-up amount" options={AUTO_RELOAD_AMOUNTS_CENTS} value={pref.amountCents} disabled={!canManage || pending} onPick={(cents) => save({ ...pref, amountCents: cents })} />
+      <div className={styles.controlFoot}>
+        <p className={styles.footnote}><LockKeyhole size={14} aria-hidden />{canManage ? "Auto-reload starts when card payments launch." : "Only owners and admins can change auto-reload."}</p>
+        <p className={styles.status} data-tone={status.tone} role="status">{status.tone === "ok" ? <Check size={13} aria-hidden /> : null}{status.text}</p>
       </div>
-      {!canManage ? <p className={styles.footnote}>Only owners and admins can change auto-reload.</p> : null}
     </section>
   );
 }
@@ -221,13 +221,13 @@ export function PromoCard({ initialCode = "", canRedeem }: { initialCode?: strin
   }
 
   return (
-    <section id="promo" className={styles.card} aria-labelledby={titleId}>
+    <section id="promo" className={styles.card} aria-labelledby={titleId} tabIndex={-1}>
       <div className={styles.cardHead}>
         <div className={styles.titleRow}>
           <span className={styles.cardIcon}><Ticket size={17} aria-hidden /></span>
           <div>
-            <h2 id={titleId}>Promo code</h2>
-            <p>Got a code from Railor or a partner? Add its credit here.</p>
+            <h2 id={titleId}>Redeem credit</h2>
+            <p>Add credit from a Railor or partner code.</p>
           </div>
         </div>
       </div>
@@ -244,13 +244,14 @@ export function PromoCard({ initialCode = "", canRedeem }: { initialCode?: strin
           spellCheck={false}
           maxLength={32}
           disabled={!canRedeem}
+          aria-invalid={status.tone === "bad" || undefined}
           aria-describedby={`${titleId}-status`}
         />
         <button type="submit" className={styles.dark} disabled={!canRedeem || pending || !code.trim()}>{pending ? "Applying…" : "Apply"}</button>
       </form>
       <p id={`${titleId}-status`} className={styles.status} data-tone={status.tone} role="status">
         {status.tone === "ok" ? <Check size={13} aria-hidden /> : null}
-        {status.text || "Each code works once per workspace. Codes in links fill in by themselves."}
+        {status.text || (canRedeem ? "Each code can be used once per workspace." : "A workspace member can redeem this code.")}
       </p>
     </section>
   );

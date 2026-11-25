@@ -56,7 +56,7 @@ export default async function CorridorsPage({
   const [reference, satisfied, apiKey, saved] = await Promise.all([
     getReferenceOptions(),
     getSatisfiedRequirements(org.id),
-    getOrgTestKey(org.id),
+    getOrgTestKey(org.id, session.role),
     getSavedCorridors(org.id),
   ]);
 

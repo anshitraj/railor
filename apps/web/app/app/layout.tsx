@@ -4,6 +4,8 @@ import { getSession } from "../../lib/auth";
 import { DEMO_EMAIL } from "../../lib/demo";
 import { getSavedCorridors } from "../../lib/org";
 import { shellWalletBalance } from "../../lib/wallet";
+import { getWorkspaceApiUsage } from "../../lib/entitlements";
+import { planName } from "../../lib/plans";
 import { AppShell } from "../../components/app/shell";
 import { isCompanyPath, isCompanyWorkspace } from "../../lib/workspace-profile";
 
@@ -14,11 +16,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) redirect("/login");
   if (!session.organization) redirect("/welcome");
 
-  const [providers, corridors, walletBalanceCents] = await Promise.all([
+  const [providers, corridors, walletBalanceCents, { entitlement, used }] = await Promise.all([
     loadProviderNavigation(),
     getSavedCorridors(session.organization.id),
     // First signed-in visit also grants the one-time signup credit.
     shellWalletBalance(session.organization.id, session.user.id),
+    getWorkspaceApiUsage(session.organization.id),
   ]);
 
   const company = isCompanyWorkspace(session.organization.building);
@@ -66,6 +69,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       isDemo={session.user.email === DEMO_EMAIL}
       company={company}
       walletBalanceCents={walletBalanceCents}
+      planUsage={{
+        name: planName(entitlement.plan),
+        used,
+        limit: entitlement.limits.apiRequests,
+        accessUntil: entitlement.plan === "free" || !entitlement.validUntil ? null :
+          new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" }).format(entitlement.validUntil),
+      }}
       palette={company ? palette : palette.filter((item) => !isCompanyPath(item.href))}
     >
       {children}

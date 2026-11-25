@@ -22,7 +22,7 @@ const TOOLS: Array<[string, string]> = [
 
 export default async function McpDocs() {
   const session = await getSession();
-  const key = session?.organization ? await getOrgTestKey(session.organization.id) : null;
+  const key = session?.organization ? await getOrgTestKey(session.organization.id, session.role) : null;
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   return (
@@ -79,7 +79,7 @@ url = "${base}/api/mcp"
 bearer_token_env_var = "RAILOR_KEY"`,
             },
           ]}
-          caption="Cursor and VS Code read the mcp.json shape directly. Antigravity needs serverUrl instead of url — its own docs say the legacy field isn't supported. Codex reads the token from an env var, not an inline string. The developer portal has a one-click Cursor install link."
+          caption="Use the configuration format for your client. Antigravity uses serverUrl, and Codex reads the token from an environment variable. Developers → Set up your agent walks through each step."
         />
       </section>
 

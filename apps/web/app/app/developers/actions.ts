@@ -6,7 +6,17 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { apiKeys, getDb } from "@railor/database";
 import { requireSession, hashApiKey } from "../../../lib/auth";
-import { createApiKey } from "../../../lib/org";
+import { createApiKey, ensureAgentTestKey } from "../../../lib/org";
+
+export async function prepareAgentKey() {
+  const session = await requireSession();
+  if (!session.organization || (session.role !== "owner" && session.role !== "admin")) {
+    return { ok: false as const };
+  }
+  const key = await ensureAgentTestKey(session.organization.id, session.user.id);
+  if (key.created) revalidatePath("/app/developers");
+  return { ok: true as const, ...key };
+}
 
 /**
  * Creates a key. Test keys stay revealable so the docs can keep rendering with

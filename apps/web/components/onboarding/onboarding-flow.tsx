@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Banknote, Wallet, Landmark, Store, CreditCard, Vault, Coins, ArrowLeftRight, CircleHelp, ArrowDownToLine, ArrowUpFromLine, ShieldCheck, Building2, BriefcaseBusiness, UserRound, Check, ChevronRight, Code2 } from "lucide-react";
+import { Banknote, Wallet, Landmark, Store, CreditCard, Vault, Coins, ArrowLeftRight, CircleHelp, ArrowDownToLine, ArrowUpFromLine, ShieldCheck, Building2, BriefcaseBusiness, UserRound, Check, Code2, MessagesSquare, Search, Twitter, Linkedin, Youtube, Mic, Terminal, Users, CalendarDays, Ellipsis } from "lucide-react";
+import type { ReferralSource } from "@railor/types";
 import { ChoiceGrid, SmartPicker, StepFlow, Flag, type Choice, type PickerOption } from "@railor/ui";
 import { completeOnboarding, saveStep } from "../../app/welcome/actions";
+import { AGENT_SETUP_PATH } from "../../lib/developer-setup";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { OnboardingComplete, WorkspacePreview } from "./onboarding-feedback";
 import styles from "./onboarding.module.css";
@@ -16,6 +18,8 @@ export interface OnboardingSeed {
   targetCountries: string[];
   settlementCurrencies: string[];
   interests: string[];
+  collectReferral?: boolean;
+  referralSource?: ReferralSource;
   assumptions?: string[];
   initialStep?: number;
   fromQuery?: string;
@@ -54,10 +58,23 @@ const INTERESTS: Choice[] = [
   { value: "treasury", label: "Treasury", icon: <Vault size={20} aria-hidden /> },
   { value: "wallet_infrastructure", label: "Wallet infrastructure", icon: <Wallet size={20} aria-hidden /> },
 ];
+const REFERRAL_OPTIONS = [
+  { value: "ai_assistant", label: "AI assistant", hint: "ChatGPT, Claude, and others", icon: <MessagesSquare size={20} aria-hidden /> },
+  { value: "google_search", label: "Google Search", icon: <Search size={20} aria-hidden /> },
+  { value: "x", label: "X (Twitter)", icon: <Twitter size={20} aria-hidden /> },
+  { value: "linkedin", label: "LinkedIn", icon: <Linkedin size={20} aria-hidden /> },
+  { value: "youtube", label: "YouTube", icon: <Youtube size={20} aria-hidden /> },
+  { value: "podcast", label: "Podcast", icon: <Mic size={20} aria-hidden /> },
+  { value: "coding_agent", label: "Coding agent", hint: "Codex, Cursor, and others", icon: <Terminal size={20} aria-hidden /> },
+  { value: "friend_or_colleague", label: "Friend or colleague", icon: <Users size={20} aria-hidden /> },
+  { value: "event", label: "At an event", icon: <CalendarDays size={20} aria-hidden /> },
+  { value: "other", label: "Other", icon: <Ellipsis size={20} aria-hidden /> },
+] satisfies Array<Choice & { value: ReferralSource }>;
 const QUESTIONS = [
   ["How will you use Railor?", "Let’s find the right providers for you. Choose the closest fit."],
   ["Where is your company based?", "This helps us find providers that can work with your business."],
   ["Where does money need to go?", "Choose the markets you want to reach."],
+  ["How did you hear about us?", "Pick the one that best describes how you found Railor."],
 ] as const;
 const SKIPPED = [
   "Account use not specified — Railor assumed general business payments. Confirm your customer type.",
@@ -66,16 +83,18 @@ const SKIPPED = [
 ];
 
 export function OnboardingFlow({ seed, countries, currencies }: { seed: OnboardingSeed; countries: PickerOption[]; currencies: PickerOption[] }) {
-  const [step, setStep] = useState(Math.max(0, Math.min(2, seed.initialStep ?? 0)));
+  const lastStep = seed.collectReferral ? 3 : 2;
+  const [step, setStep] = useState(Math.max(0, Math.min(lastStep, seed.initialStep ?? 0)));
   const [building, setBuilding] = useState<string[]>(seed.building ? [seed.building] : []);
   const [entityCountry, setEntityCountry] = useState<string[]>(seed.entityCountry ? [seed.entityCountry] : seed.detectedCountry ? [seed.detectedCountry] : []);
   const [targets, setTargets] = useState(seed.targetCountries);
   const [settlement, setSettlement] = useState(seed.settlementCurrencies);
   const [interests, setInterests] = useState(seed.interests);
+  const [referralSource, setReferral] = useState(seed.referralSource);
   const [assumptions, setAssumptions] = useState(seed.assumptions ?? []);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  const [setupApi, setSetupApi] = useState(seed.returnTo === "/app/developers");
+  const [setupApi, setSetupApi] = useState(seed.returnTo === "/app/developers" || seed.returnTo === AGENT_SETUP_PATH);
   const [completed, setCompleted] = useState<{ destination: string; markets: string[] } | null>(null);
   const apiPreferenceKey = seed.workspaceId ? `railor:onboarding:${seed.workspaceId}:api` : null;
   useEffect(() => {
@@ -95,25 +114,27 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
   const isBusiness = Boolean(selectedBuilding && selectedBuilding !== "personal" && selectedBuilding !== "freelancer");
   const quickCountries = countries.filter((item) => [seed.detectedCountry, "IN", "US", "GB", "AE", "SG", "DE"].includes(item.value));
   const choices = (items: PickerOption[]): Choice[] => items.map((item) => ({ value: item.value, label: item.label, hint: item.value, icon: <Flag code={item.value} size={20} /> }));
-  const selections = [building, entityCountry, targets];
-  const answers = () => ({ building: building[0], entityCountry: entityCountry[0], targetCountries: targets, settlementCurrencies: settlement, interests: interests.length ? interests : ["bank_payouts"], assumptions });
+  const selections = [building, entityCountry, targets, referralSource ? [referralSource] : []];
+  const answers = () => ({ building: building[0], entityCountry: entityCountry[0], targetCountries: targets, settlementCurrencies: settlement, interests: interests.length ? interests : ["bank_payouts"], assumptions, referralSource: seed.collectReferral ? referralSource : undefined });
 
   const advance = (skip = false) => {
     if (pending) return;
     setError("");
-    const skippedAnswer = SKIPPED[step]!;
-    const nextAssumptions = [...new Set([...assumptions.filter((item) => item !== skippedAnswer), ...(skip ? [skippedAnswer] : [])])];
+    const skippedAnswer = SKIPPED[step];
+    const nextAssumptions = skippedAnswer ? [...new Set([...assumptions.filter((item) => item !== skippedAnswer), ...(skip ? [skippedAnswer] : [])])] : assumptions;
     const nextAnswers = { ...answers(), assumptions: nextAssumptions };
     if (skip) {
       // A skipped answer must not remain populated from a previous visit.
       if (step === 0) nextAnswers.building = undefined;
       if (step === 1) nextAnswers.entityCountry = undefined;
       if (step === 2) nextAnswers.targetCountries = [];
+      if (step === 3) nextAnswers.referralSource = undefined;
     }
     startTransition(async () => {
       try {
-        if (step === 2) {
-          const result = await completeOnboarding(nextAnswers, setupApi && (!seed.returnTo || seed.returnTo === "/app") ? "/app/developers" : seed.returnTo);
+        if (step === lastStep) {
+          const returnTo = setupApi && (!seed.returnTo || seed.returnTo === "/app" || seed.returnTo === "/app/developers") ? AGENT_SETUP_PATH : seed.returnTo;
+          const result = await completeOnboarding(step === 3 && skip ? { ...nextAnswers, referralSource: null } : nextAnswers, returnTo);
           if (apiPreferenceKey) try { sessionStorage.removeItem(apiPreferenceKey); } catch { /* Optional preference only. */ }
           setCompleted({ destination: result.destination, markets: nextAnswers.targetCountries });
         }
@@ -123,6 +144,7 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
           if (skip) {
             if (step === 0) setBuilding([]);
             if (step === 1) setEntityCountry([]);
+            if (step === 2) setTargets([]);
           }
           setAssumptions(nextAssumptions);
           setStep(step + 1);
@@ -150,12 +172,12 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
   const nameOf = (code: string) => countries.find((item) => item.value === code)?.label ?? code;
   return <section className={styles.shell} aria-label="Personalize your workspace">
     <div className={styles.columns}>
-    <StepFlow className={`onboarding-screen ${styles.flow}`} step={step} total={3} title={question[0]} subtitle={question[1]}
+    <StepFlow className={`onboarding-screen ${styles.flow}`} step={step} total={lastStep + 1} title={question[0]} subtitle={question[1]}
     onBack={step > 0 && !pending ? () => { setError(""); setStep(step - 1); } : undefined}
     onNext={() => advance()} onSkip={!pending ? () => advance(true) : undefined}
-    nextLabel={pending ? (step === 2 ? "Preparing your workspace…" : "Saving…") : step === 2 ? "Finish setup" : "Continue"}
-    nextDisabled={pending || !selections[step]!.length} skipLabel="Decide later"
-    footnote={step === 0 && seed.fromQuery ? <>Pre-filled from your search: “{seed.fromQuery}”.</> : <>Your answers save as you continue. You can change them later.</>}>
+    nextLabel={pending ? (step === lastStep ? "Preparing your workspace…" : "Saving…") : step === lastStep ? "Finish setup" : "Continue"}
+    nextDisabled={pending || !selections[step]!.length} skipLabel={step === 3 ? "Skip question" : "Decide later"}
+    footnote={step === 3 ? "This question is optional." : step === 0 && seed.fromQuery ? <>Pre-filled from your search: “{seed.fromQuery}”.</> : <>Your answers save as you continue. You can change them later.</>}>
     <fieldset disabled={pending} className="min-w-0">
       {step === 0 ? <div className="space-y-6">
         <ChoiceGrid className="onboarding-choices onboarding-profiles" options={PROFILES} value={profile ? [profile] : []} onChange={([value]) => setBuilding([value === "business" ? "payments" : value!])} columns={3} name="How will you use Railor" />
@@ -166,6 +188,7 @@ export function OnboardingFlow({ seed, countries, currencies }: { seed: Onboardi
       {step === 1 ? <div className="space-y-5"><ChoiceGrid className="onboarding-choices onboarding-quick" options={choices(quickCountries)} value={entityCountry} onChange={setEntityCountry} name="Common home countries" /><SmartPicker suggestionCount={0} label={isBusiness ? "Company country" : "Home country"} options={countries} value={entityCountry} onChange={setEntityCountry} detected={seed.detectedCountry} placeholder="Search all countries" /></div> : null}
       {step === 2 ? <div className="space-y-5"><ChoiceGrid className="onboarding-choices onboarding-quick" options={choices(quickCountries)} value={targets} onChange={setTargets} multiple name="Common destination markets" /><p className={styles.selectionHint} role="status"><Check size={13} aria-hidden />{targets.length ? `${targets.length} market${targets.length === 1 ? "" : "s"} selected. You can choose more than one.` : "Choose as many as you like. You can add more later."}</p><SmartPicker suggestionCount={0} label="Target markets" options={countries} value={targets} onChange={setTargets} multiple placeholder="Search all markets" /></div> : null}
       {step === 2 ? <details className="rounded-xl border border-[var(--color-line)] p-4 text-sm"><summary className="cursor-pointer">Currency & product preferences · optional</summary><div className="mt-4 space-y-5"><SmartPicker suggestionCount={0} label="Receiving currencies" options={currencies} value={settlement} onChange={setSettlement} multiple placeholder="Choose currencies" renderMark={option => <CurrencyLogo symbol={option.value} size={20} />} /><ChoiceGrid className="onboarding-choices onboarding-interests" options={INTERESTS} value={interests} onChange={setInterests} multiple columns={3} name="Which infrastructure matters" /></div></details> : null}
+      {step === 3 ? <ChoiceGrid className="onboarding-choices" options={REFERRAL_OPTIONS} value={selections[3]!} onChange={([value]) => setReferral(REFERRAL_OPTIONS.find((source) => source.value === value)?.value)} columns={2} name="How did you hear about us" /> : null}
     </fieldset>
     {error ? <p role="alert" className="text-sm text-[var(--color-bad)]">{error}</p> : null}
     {step === 2 ? <details className="onboarding-review" aria-label="Review your answers"><summary className="cursor-pointer text-sm font-semibold">Review your answers</summary><section><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Check size={16} aria-hidden />Your workspace, at a glance</div><dl>{review.map((item) => <div key={item.label} className="onboarding-review-row"><div><dt className="text-xs text-[var(--color-muted)]">{item.label}</dt><dd className="mt-1 text-sm">{item.value}</dd></div><button type="button" disabled={pending} className="text-xs font-medium text-[var(--color-purple)]" aria-label={`Edit ${item.label.toLowerCase()}`} onClick={() => setStep(Math.min(2, item.step))}>Edit</button></div>)}</dl></section></details> : null}

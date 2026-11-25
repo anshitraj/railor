@@ -1057,6 +1057,7 @@ export const organizations = pgTable(
     interests: jsonb("interests").$type<string[]>().default([]).notNull(),
     /** Skipped onboarding steps recorded as explicit, visible assumptions. */
     assumptions: jsonb("assumptions").$type<string[]>().default([]).notNull(),
+    referralSource: text("referral_source"),
     onboardingStep: integer("onboarding_step").default(0).notNull(),
     onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
     createdAt: now(),

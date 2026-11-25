@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { interpretRules } from "@railor/core";
+import { ReferralSource } from "@railor/types";
 import { getSession } from "../../lib/auth";
 import { getReferenceOptions } from "../../lib/reference";
 import { createOrganizationForUser } from "../../lib/org";
@@ -102,6 +103,8 @@ export default async function WelcomePage({
                   ? [interpretation.query.destinationCurrency]
                   : [],
             interests: org.interests ?? [],
+            collectReferral: !org.onboardingCompletedAt,
+            referralSource: ReferralSource.safeParse(org.referralSource).data,
             fromQuery: query,
             returnTo,
           }}
