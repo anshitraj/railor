@@ -1,26 +1,23 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ChartNoAxesColumnIncreasing, Check, Landmark, ReceiptText } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Landmark, Play, ReceiptText, RefreshCw, ShieldCheck, Waypoints, Zap } from "lucide-react";
 import { RailorMark } from "../../brand";
+import { HeroGlobe } from "./hero-globe";
 import { ProviderMarquee } from "./provider-marquee";
 import styles from "./home.module.css";
 
-/** First screen: what Railor does in one line, and the calculator that does it. */
-export function HomeHero({ calculator }: { calculator: React.ReactNode }) {
+/** First screen: what Railor does in one line, and the calculator that does it, over a globe of the routes it prices. */
+export function HomeHero({ calculator, providerCount }: { calculator: React.ReactNode; providerCount: number }) {
   return (
     <section className={styles.hero} aria-labelledby="home-title">
       <div className={styles.heroGlow} aria-hidden />
       <div className={styles.container}>
         <div className={styles.heroInner}>
+          <HeroGlobe />
           <div className={styles.heroIntro}>
-            <p className={styles.heroLabel}><ChartNoAxesColumnIncreasing size={15} aria-hidden />Free transfer comparison</p>
+            <p className={styles.heroBadge}><Zap size={14} aria-hidden />Free transfer comparison</p>
             <h1 id="home-title" className={styles.heroTitle}>
               <span>Move money abroad.</span>
-              <span>
-                Keep{" "}
-                <span className={styles.underline}>
-                  more of it.
-                </span>
-              </span>
+              <span>Keep <span className={styles.heroAccent}>more of it.</span></span>
             </h1>
             <p className={styles.heroLead}>
               Compare exchange rates, fees and what arrives across banks and transfer apps before you send.
@@ -28,12 +25,13 @@ export function HomeHero({ calculator }: { calculator: React.ReactNode }) {
           </div>
           <div className={styles.heroExtras}>
             <div className={styles.heroActions}>
-              <Link href="/prices" className={`${styles.btn} ${styles.btnPrimary} press`}>Compare prices<ArrowRight size={17} aria-hidden /></Link>
-              <Link href="/login?intent=start" className={`${styles.btn} ${styles.btnSecondary} press`}>Create account</Link>
+              <Link href="/prices" className={`${styles.heroCta} press`}>Compare prices<ArrowRight size={17} aria-hidden /></Link>
+              <a href="#how-it-works" className={`${styles.heroGhost} press`}><span className={styles.heroPlay}><Play size={11} aria-hidden /></span>See how it works</a>
             </div>
-            <ul className={styles.heroProof}>
-              <li><Check size={16} aria-hidden />No account needed to compare</li>
-              <li><Check size={16} aria-hidden />Source and time on every price</li>
+            <ul className={styles.heroFeatures}>
+              <li><RefreshCw size={18} aria-hidden />Rechecked every 30s</li>
+              <li><Waypoints size={18} aria-hidden />{providerCount > 0 ? `${providerCount.toLocaleString("en-US")} providers tracked` : "Banks and transfer apps"}</li>
+              <li><ShieldCheck size={18} aria-hidden />Source on every price</li>
             </ul>
           </div>
           <div className={styles.heroCalc} id="calculator">

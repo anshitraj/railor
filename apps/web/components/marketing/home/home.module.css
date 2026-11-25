@@ -37,25 +37,47 @@
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
-.hero { position: relative; overflow: hidden; padding: 28px 0 56px; }
-.heroGlow { position: absolute; z-index: -1; top: -120px; right: -10%; width: 70%; height: 760px; background: radial-gradient(closest-side, rgb(255 214 190 / .55), transparent 70%); pointer-events: none; }
-.heroInner { display: grid; grid-template-areas: "intro" "calc" "extras"; gap: 32px; align-items: center; }
+.hero { position: relative; isolation: isolate; overflow: hidden; padding: 28px 0 56px; background: radial-gradient(900px 520px at 68% 8%, #fffefb 0%, transparent 70%), linear-gradient(180deg, #fffcf7 0%, var(--color-canvas) 100%); }
+.heroGlow { position: absolute; z-index: -1; top: -120px; right: -10%; width: 70%; height: 760px; background: radial-gradient(closest-side, rgb(255 214 190 / .38), transparent 70%); pointer-events: none; }
+.heroInner { position: relative; display: grid; grid-template-areas: "intro" "calc" "extras"; gap: 32px; align-items: center; }
+.heroIntro, .heroExtras, .heroCalc { position: relative; z-index: 1; }
 .heroIntro { grid-area: intro; max-width: 620px; }
 .heroExtras { grid-area: extras; max-width: 620px; }
 .heroExtras .heroActions { margin-top: 0; }
-.heroLabel { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-soft); font-size: 13px; font-weight: 650; animation: rise .45s var(--ease-out) both; }
-.heroLabel svg { color: var(--color-orange-deep); }
-.heroTitle { margin-top: 14px; color: var(--color-ink); font-size: clamp(40px, 6vw, 76px); font-weight: 700; letter-spacing: -.048em; line-height: 1; }
+.heroBadge { display: inline-flex; height: 32px; align-items: center; gap: 7px; padding: 0 13px 0 11px; border: 1px solid var(--color-lavender-deep); border-radius: 999px; background: color-mix(in srgb, var(--color-lavender) 82%, var(--color-surface)); color: var(--color-ink-soft); font-size: 13px; font-weight: 600; animation: rise .45s var(--ease-out) both; }
+.heroBadge svg { color: var(--color-orange); fill: currentColor; }
+.heroTitle { margin-top: 20px; color: var(--color-ink); font-size: clamp(40px, 5.7vw, 74px); font-weight: 750; letter-spacing: -.045em; line-height: 1.02; text-wrap: balance; }
 .heroTitle > span { display: block; animation: rise .6s var(--ease-out) both; }
 .heroTitle > span:nth-child(2) { animation-delay: .06s; }
-.underline { position: relative; display: inline-block; white-space: nowrap; }
-.underline::after { position: absolute; inset: auto 0 -.09em; height: 3px; border-radius: 2px; background: var(--color-orange); transform-origin: left; animation: draw .55s var(--ease-out) .34s both; content: ""; }
-.heroLead { max-width: 52ch; margin-top: 22px; color: var(--color-muted); font-size: clamp(17px, 1.5vw, 19px); line-height: 1.6; animation: rise .6s var(--ease-out) .12s both; }
-.heroActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; animation: rise .6s var(--ease-out) .18s both; }
-.heroProof { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 30px; color: var(--color-ink-soft); font-size: 14px; font-weight: 550; animation: rise .6s var(--ease-out) .24s both; }
-.heroProof li { display: inline-flex; align-items: center; gap: 7px; }
-.heroProof svg { color: var(--color-ok); }
-.heroCalc { grid-area: calc; position: relative; display: grid; justify-items: center; animation: calcIn .7s var(--ease-out) .1s both; }
+.heroAccent { color: var(--color-orange); white-space: nowrap; }
+.heroLead { max-width: 50ch; margin-top: 22px; color: var(--color-muted); font-size: clamp(17px, 1.45vw, 19px); line-height: 1.6; text-wrap: pretty; animation: rise .6s var(--ease-out) .12s both; }
+.heroActions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; animation: rise .6s var(--ease-out) .18s both; }
+.heroCta, .heroGhost { display: inline-flex; height: 52px; align-items: center; justify-content: center; gap: 9px; padding: 0 24px; border-radius: 13px; font-size: 15.5px; font-weight: 650; white-space: nowrap; transition: background-color .18s var(--ease-out), border-color .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+.heroCta { background: linear-gradient(180deg, #f0663a 0%, var(--color-orange) 55%, #dc4c22 100%); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), 0 1px 2px rgb(120 40 10 / .2), 0 12px 26px -12px rgb(233 86 42 / .75); }
+.heroGhost { border: 1px solid var(--color-line-strong); background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgb(21 19 16 / .05), 0 8px 20px -14px rgb(21 19 16 / .25); }
+.heroPlay { display: grid; width: 22px; height: 22px; place-items: center; border: 1.5px solid currentColor; border-radius: 50%; }
+.heroPlay svg { margin-left: 1px; fill: currentColor; }
+@media (hover: hover) and (pointer: fine) {
+  .heroCta:hover { background: linear-gradient(180deg, #e85a2f 0%, #d94c22 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), 0 1px 2px rgb(120 40 10 / .25), 0 14px 30px -12px rgb(233 86 42 / .85); }
+  .heroGhost:hover { border-color: var(--color-ink); }
+}
+.heroFeatures { display: flex; flex-wrap: wrap; gap: 12px 30px; margin-top: 36px; color: var(--color-ink-soft); font-size: 14.5px; font-weight: 550; animation: rise .6s var(--ease-out) .24s both; }
+.heroFeatures li { display: inline-flex; align-items: center; gap: 10px; }
+.heroFeatures svg { flex: none; color: var(--color-orange); }
+.heroCalc { grid-area: calc; display: grid; justify-items: center; animation: calcIn .7s var(--ease-out) .1s both; }
+
+/* The dotted globe behind the hero, with corridors drawn over it. */
+.globe { position: absolute; z-index: 0; display: none; pointer-events: none; }
+.globe > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.globeDots { opacity: .82; animation: globeIn 1.1s var(--ease-out) both; }
+.globeArc { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawArc 1.4s var(--ease-out) var(--arc-delay) forwards; }
+.globeComet { fill: none; stroke: var(--color-orange); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: .1 1.2; stroke-dashoffset: .1; opacity: 0; filter: drop-shadow(0 0 3px rgb(233 86 42 / .7)); animation: comet 3.6s cubic-bezier(.45, 0, .55, 1) var(--comet-delay) infinite; }
+.globeNode { fill: var(--color-orange); stroke: #fff; stroke-width: 2; }
+.globeHalo { fill: rgb(233 86 42 / .16); stroke: rgb(233 86 42 / .28); stroke-width: 1; transform-box: fill-box; transform-origin: center; animation: halo 2.8s ease-out var(--halo-delay) infinite; }
+@keyframes globeIn { from { opacity: 0; transform: scale(.97); } to { opacity: .82; } }
+@keyframes drawArc { to { stroke-dashoffset: 0; } }
+@keyframes comet { 0% { stroke-dashoffset: .1; opacity: 0; } 8% { opacity: 1; } 70% { opacity: 1; } 80%, 100% { stroke-dashoffset: -1.05; opacity: 0; } }
+@keyframes halo { 0% { transform: scale(.55); opacity: 1; } 70%, 100% { transform: scale(1.5); opacity: 0; } }
 .heroRoute { display: none; }
 .logos { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--color-line); }
 .logosIntro { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; }
@@ -239,6 +261,9 @@
 .finalCoins :global(.coin):nth-child(3) { --size: 72px; right: 8%; top: 16%; rotate: 12deg; }
 .finalCoins :global(.coin):nth-child(4) { --size: 58px; right: 14%; bottom: 16%; rotate: -8deg; }
 
+@media (min-width: 720px) and (max-width: 999px) {
+  .globe { display: block; top: 300px; right: -18%; width: 620px; aspect-ratio: 1; opacity: .55; mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); }
+}
 @media (min-width: 720px) {
   .steps, .audiences { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .providerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -247,10 +272,12 @@
 @media (min-width: 1000px) {
   .head { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
   .head > .lead { justify-self: end; margin-bottom: 6px; }
-  .hero { padding: 40px 0 64px; }
-  .heroInner { grid-template-columns: minmax(0, 1fr) minmax(0, 500px); grid-template-areas: "intro calc" "extras calc"; gap: 0 56px; align-items: end; }
-  .heroExtras { align-self: start; padding-top: 30px; }
+  .hero { padding: 56px 0 72px; }
+  .heroGlow { opacity: .6; }
+  .heroInner { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); grid-template-areas: "intro calc" "extras calc"; gap: 0 56px; align-items: end; }
+  .heroExtras { align-self: start; padding-top: 32px; }
   .heroCalc { justify-items: end; }
+  .globe { display: block; top: 50%; left: 53%; width: clamp(580px, 57vw, 820px); aspect-ratio: 1; translate: -50% -50%; mask-image: linear-gradient(90deg, transparent 6%, #000 36%), radial-gradient(closest-side, #000 80%, transparent 100%); mask-composite: intersect; }
   .providerGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .dev { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 56px; padding: 64px; }
   .trust { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 64px; }
@@ -268,8 +295,11 @@
   .heroInner { gap: 22px; }
   .heroTitle { font-size: clamp(36px, 10.2vw, 57px); }
   .heroLead { margin-top: 16px; font-size: 15.5px; line-height: 1.5; }
-  .heroActions .btn { flex: 1; height: 46px; padding-inline: 12px; font-size: 14px; }
-  .heroProof { gap: 6px 14px; margin-top: 14px; font-size: 12px; }
+  .heroBadge { height: 30px; font-size: 12.5px; }
+  .heroTitle { margin-top: 16px; }
+  .heroActions .heroCta, .heroActions .heroGhost { flex: 1; height: 48px; padding-inline: 12px; font-size: 14px; }
+  .heroFeatures { display: grid; gap: 10px; margin-top: 18px; font-size: 13.5px; }
+  .heroFeatures svg { width: 16px; height: 16px; }
   .heroCalc { scroll-margin-top: 92px; }
   .heroRoute { position: relative; isolation: isolate; display: grid; width: min(222px, 84%); height: 43px; grid-template-columns: 1fr 1fr 1fr; align-items: center; justify-items: center; margin-bottom: 8px; }
   .routeSignal { position: absolute; z-index: -1; inset: 50% 28px auto; height: 1px; background: var(--color-line-strong); }
@@ -332,7 +362,9 @@
 @media (max-width: 360px) { .dev { padding-inline: 10px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroLabel, .heroTitle > span, .heroLead, .heroActions, .heroProof, .heroCalc, .underline::after { animation: none; }
+  .heroBadge, .heroTitle > span, .heroLead, .heroActions, .heroFeatures, .heroCalc, .globeDots { animation: none; }
+  .globeArc { stroke-dashoffset: 0; animation: none; }
+  .globeComet, .globeHalo { display: none; }
   .stepDots button span, .profileControls button { transition: none; }
   .mapArc { stroke-dashoffset: 0; transition: none; }
   .faqItem[open] .faqAnswer { animation: none; }

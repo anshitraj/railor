@@ -18,7 +18,7 @@ const CHECKING = [
  */
 export function HowItWorks() {
   return (
-    <section className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="how-title">
+    <section id="how-it-works" className={`${styles.section} ${styles.sectionAlt}`} style={{ scrollMarginTop: 72 }} aria-labelledby="how-title">
       <div className={styles.container}>
         <div className={styles.head}>
           <div>

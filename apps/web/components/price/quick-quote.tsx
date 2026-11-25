@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowDownUp, ArrowRight, CircleAlert, FileUp, RefreshCw } from "lucide-react";
+import { ArrowDownUp, ArrowRight, Building2, ChevronRight, CircleAlert, CircleCheck, FileUp, Laptop, RefreshCw, UserRound } from "lucide-react";
 import type { CustomerContext, PriceCheckResult, PriceRow } from "@railor/core";
 import { type PickerOption } from "@railor/ui";
 import { ProviderLogo } from "../app/provider-logo";
@@ -27,10 +27,12 @@ import styles from "./price.module.css";
 const REFRESH_SECONDS = 30;
 const PRESETS = [100, 500, 1_000, 5_000, 10_000];
 const PROFILES = [
-  { value: "personal", label: "Personal" },
-  { value: "freelancer", label: "Freelancer" },
-  { value: "business", label: "Business" },
+  { value: "personal", label: "Personal", icon: UserRound },
+  { value: "freelancer", label: "Freelancer", icon: Laptop },
+  { value: "business", label: "Business", icon: Building2 },
 ] as const;
+
+const percent = (bps: number) => (Math.abs(bps) / 10_000).toLocaleString("en-US", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 type Profile = (typeof PROFILES)[number]["value"];
 
@@ -215,6 +217,8 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const activeProfile: Profile = context.profile === "sole_proprietor" ? "freelancer" : (context.profile as Profile);
   const amountDisplay = focused ? amountText : amount > 0 ? amount.toLocaleString("en-US", { maximumFractionDigits: 2 }) : amountText;
   const pending = loading || (valid && !result && !error);
+  const hero = variant === "hero";
+  const topCost = top ? benchmarkCost(top, amount, midRate, to) : null;
 
   return (
     <div className={styles.quote} data-variant={variant}>
@@ -225,11 +229,11 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
             {PROFILES.map((option) => (
               <button key={option.value} type="button" aria-pressed={activeProfile === option.value} onClick={() => setProfile(option.value)}>
                 {activeProfile === option.value ? <motion.span layoutId={`${variant}-profile`} className={styles.segmentThumb} transition={reduce ? { duration: 0 } : { type: "spring", duration: 0.32, bounce: 0 }} /> : null}
-                <span className={styles.segmentLabel}>{option.label}</span>
+                <span className={styles.segmentLabel}>{variant === "hero" ? <option.icon size={16} aria-hidden /> : null}{option.label}</span>
               </button>
             ))}
           </div>
-          {!cardComingSoon && <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
+          {!cardComingSoon && variant !== "hero" && <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
             {pending ? <PriceLoadingMark size={14} /> : fetchedAt ? <span aria-hidden className={styles.liveDot} /> : null}
             {pending ? "Checking prices" : fetchedAt ? `Checked ${ago(now - fetchedAt)}` : "Ready to compare"}
           </span>}
@@ -259,7 +263,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
         {cardComingSoon ? <CardPricingComingSoon personal={context.profile === "personal"} onCompare={() => setContext(c => ({ ...c, paymentMethod: c.profile === "personal" ? "transfer_service" : "local_bank" }))} /> : <>
         <div className={styles.fields}>
           <div className={styles.field}>
-            <label htmlFor={`${variant}-amount`} className={styles.fieldLabel}>Sending</label>
+            <label htmlFor={`${variant}-amount`} className={styles.fieldLabel}>{hero ? "You send" : "Sending"}</label>
             <div className={styles.fieldRow}>
               <input
                 id={`${variant}-amount`}
@@ -291,14 +295,14 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </button>
 
           <div className={styles.field} data-output>
-            <span className={styles.fieldLabel}>{topIsEstimate ? "Arrives (estimate)" : "Arrives"}</span>
+            <span className={styles.fieldLabel}>{hero ? (topIsEstimate ? "Recipient gets (estimate)" : "Recipient gets") : topIsEstimate ? "Arrives (estimate)" : "Arrives"}</span>
             <div className={styles.fieldRow}>
               <output aria-live="polite" className={styles.amount} data-pending={pending || undefined}>
                 {receive === null ? (pending ? "…" : "—") : money(receive)}
               </output>
               <CurrencyPicker label="Arriving currency" value={to} options={currencies} onChange={pickTo} />
             </div>
-            <p className={styles.via}>
+            {hero ? null : <p className={styles.via}>
               {top ? (
                 <>
                   via <strong>{top.providerName.split(" · ")[0]}</strong>
@@ -307,7 +311,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
                   {top.delivery ? <> · arrives {top.delivery}</> : null}
                 </>
               ) : midRate ? <>Mid-market rate 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}</> : <>&nbsp;</>}
-            </p>
+            </p>}
           </div>
         </div>
 
@@ -319,6 +323,42 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           </div>
         ) : !valid ? (
           <p className={styles.hint}>{from === to ? "Pick two different currencies." : "Enter an amount above zero."}</p>
+        ) : hero ? (
+          <div className={styles.heroPick} aria-busy={pending || undefined}>
+            {top ? (
+              <Link href={compareHref} className={`${styles.heroBest} press`} data-estimate={topIsEstimate || undefined} aria-label={`${top.providerName.split(" · ")[0]}: ${money(top.recipientAmount)} ${to} arrives. See every option`}>
+                <ProviderLogo slug={top.providerSlug} name={top.providerName} src={top.logoUrl} size={38} />
+                <span className={styles.heroBestName}>
+                  <span>
+                    <strong>{top.providerName.split(" · ")[0]}</strong>
+                    {top === best
+                      ? <em className={styles.heroBestTag} title={`Highest ${to} among comparable live prices`}>{estimateBeatsBest ? "Best live price" : "Best rate"}</em>
+                      : topIsEstimate ? <em className={styles.heroEstimateTag}>Estimate</em> : null}
+                  </span>
+                  <small>{[top.basis === "market_estimate" ? collected(top.observedAt, now) : top.delivery ? `Arrives ${top.delivery}` : pricingSourceLabel(top), top.feeAmount != null && top.feeCurrency ? `Fee ${money(top.feeAmount)} ${top.feeCurrency}` : null].filter(Boolean).join(" · ")}</small>
+                </span>
+                <span className={styles.heroBestAmount}><strong>{money(top.recipientAmount)}</strong><small>{to}</small></span>
+                <ChevronRight size={18} aria-hidden className={styles.heroBestChevron} />
+              </Link>
+            ) : pending ? (
+              <div className={`${styles.heroBest} ${styles.rowSkeleton}`} aria-hidden><span /><span /><span /></div>
+            ) : (
+              <p className={styles.empty}>No provider we track has a price this {activeProfile} profile can use for {from} → {to} yet.</p>
+            )}
+            <div className={styles.heroTrust}>
+              <span className={styles.heroTrustCost}>
+                <CircleCheck size={15} aria-hidden />
+                {topCost?.kind === "cost" ? (topCost.costMinor >= 0 ? `${percent(topCost.bps)} total cost vs mid-market` : `${percent(topCost.bps)} above mid-market`) : "Source and time on every price"}
+              </span>
+              <span className={styles.live} title={`Prices refresh every ${REFRESH_SECONDS} seconds`}>
+                {pending ? <PriceLoadingMark size={14} /> : fetchedAt ? <span aria-hidden className={styles.liveDot} /> : null}
+                {pending ? "Checking" : fetchedAt ? `Checked ${ago(now - fetchedAt)}` : "Ready"}
+              </span>
+            </div>
+            {excluded.length ? (
+              <p className={styles.hidden}>{excluded.length} {excluded.length === 1 ? "option is" : "options are"} hidden — {excluded.length === 1 ? "it doesn’t" : "they don’t"} serve this profile.</p>
+            ) : null}
+          </div>
         ) : (
           <div className={styles.ranking}>
             <p className={styles.rankingTitle}>
@@ -377,7 +417,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
         )}
 
         <Link href={compareHref} className={`${styles.compare} press`} aria-disabled={!valid || undefined} onClick={(event) => { if (!valid) event.preventDefault(); }}>
-          {options.length > 3 ? `Compare all ${options.length} options` : "See the full comparison"}
+          {options.length > (hero ? 1 : 3) ? `Compare all ${options.length} options` : "See the full comparison"}
           <ArrowRight size={17} aria-hidden />
         </Link>
         <p className={styles.footnote}>
@@ -392,6 +432,7 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
 
 /** Same footprint as the calculator, so the hero doesn't jump when prices stream in. */
 export function QuickQuoteSkeleton({ variant = "hero" }: { variant?: "hero" | "app" }) {
+  const hero = variant === "hero";
   return (
     <div className={styles.quote} data-variant={variant} aria-busy="true" aria-label="Loading prices">
       <div className={styles.card}>
@@ -401,20 +442,27 @@ export function QuickQuoteSkeleton({ variant = "hero" }: { variant?: "hero" | "a
             {PROFILES.map((option, index) => (
               <button key={option.value} type="button" disabled tabIndex={-1} aria-pressed={index === 0}>
                 {index === 0 ? <span className={styles.segmentThumb} /> : null}
-                <span className={styles.segmentLabel}>{option.label}</span>
+                <span className={styles.segmentLabel}>{hero ? <option.icon size={16} aria-hidden /> : null}{option.label}</span>
               </button>
             ))}
           </div>
-          <span className={styles.live} role="status"><PriceLoadingMark size={14} />Checking prices</span>
+          {hero ? null : <span className={styles.live} role="status"><PriceLoadingMark size={14} />Checking prices</span>}
         </div>
         <div className={styles.fields}>
-          <div className={styles.field}><span className={styles.fieldLabel}>Sending</span><div className={styles.fieldRow}><span className={styles.amount} data-pending>1,000</span></div><div className={styles.presets} style={{ height: 28 }} /></div>
-          <div className={styles.field} data-output><span className={styles.fieldLabel}>Arrives</span><div className={styles.fieldRow}><span className={styles.amount} data-pending>…</span></div><p className={styles.via}>&nbsp;</p></div>
+          <div className={styles.field}><span className={styles.fieldLabel}>{hero ? "You send" : "Sending"}</span><div className={styles.fieldRow}><span className={styles.amount} data-pending>1,000</span></div><div className={styles.presets} style={{ height: 28 }} /></div>
+          <div className={styles.field} data-output><span className={styles.fieldLabel}>{hero ? "Recipient gets" : "Arrives"}</span><div className={styles.fieldRow}><span className={styles.amount} data-pending>…</span></div>{hero ? null : <p className={styles.via}>&nbsp;</p>}</div>
         </div>
-        <div className={styles.ranking}>
-          <p className={styles.rankingTitle}>Checking providers…</p>
-          <ol className={styles.rows}>{[0, 1, 2].map((key) => <li key={key} className={`${styles.row} ${styles.rowSkeleton}`} aria-hidden><span /><span /><span /></li>)}</ol>
-        </div>
+        {hero ? (
+          <div className={styles.heroPick}>
+            <div className={`${styles.heroBest} ${styles.rowSkeleton}`} aria-hidden><span /><span /><span /></div>
+            <div className={styles.heroTrust}><span className={styles.heroTrustCost}><CircleCheck size={15} aria-hidden />Source and time on every price</span><span className={styles.live} role="status"><PriceLoadingMark size={14} />Checking</span></div>
+          </div>
+        ) : (
+          <div className={styles.ranking}>
+            <p className={styles.rankingTitle}>Checking providers…</p>
+            <ol className={styles.rows}>{[0, 1, 2].map((key) => <li key={key} className={`${styles.row} ${styles.rowSkeleton}`} aria-hidden><span /><span /><span /></li>)}</ol>
+          </div>
+        )}
         <span className={styles.compare} aria-disabled>See the full comparison<ArrowRight size={17} aria-hidden /></span>
       </div>
     </div>

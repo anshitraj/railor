@@ -52,7 +52,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
       <main id="main" className={homeStyles.motionPage}>
         <HomeScrollMotion />
-        <HomeHero calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
+        <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <HowItWorks />
         <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
