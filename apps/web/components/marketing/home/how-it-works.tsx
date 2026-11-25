@@ -30,7 +30,7 @@ export function HowItWorks() {
 
         <MobileCardSlider mode="steps" label="How Railor works" labels={["Choose an amount", "Compare providers", "Check the details"]}>
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
               <div className={styles.mini} aria-hidden>
                 <p className={styles.miniLabel}>Sending</p>
                 <div className={styles.miniField}>
@@ -40,7 +40,7 @@ export function HowItWorks() {
                 <p className={styles.miniLabel} style={{ marginTop: 10 }}>Arrives in</p>
                 <div className={styles.miniField}>
                   <span className={styles.miniAmount} style={{ fontSize: 18, color: "var(--color-muted)" }}>India</span>
-                  <span className={styles.miniPill}><Flag code="IN" size={20} round />INR</span>
+                  <span className={styles.miniPill} style={{ animationDelay: ".25s" }}><Flag code="IN" size={20} round />INR</span>
                 </div>
               </div>
             </LoopOnView>
@@ -52,7 +52,7 @@ export function HowItWorks() {
           </li>
 
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
               <div className={`${styles.mini} ${styles.miniRows}`} aria-hidden>
                 <p className={styles.miniLabel}>Example payouts</p>
                 {CHECKING.map((row, index) => (
@@ -77,7 +77,7 @@ export function HowItWorks() {
           </li>
 
           <li className={styles.step}>
-            <LoopOnView className={`${styles.stepStage} ${styles.loop}`} once>
+            <LoopOnView className={`${styles.stepStage} ${styles.loop}`}>
               <div className={styles.mini} aria-hidden>
                 <div className={styles.receiptHead}>
                   <ProviderLogo slug="wise" name="Wise" size={32} />

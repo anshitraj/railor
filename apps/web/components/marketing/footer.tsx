@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { RailorMark } from "../brand";
@@ -44,6 +45,15 @@ export function MarketingFooter(_props: { counts?: unknown } = {}) {
           <p>© {new Date().getFullYear()} Railor. Prices are public quotes, published fees or dated estimates — confirm the final amount with the provider before you send.</p>
           <Link href="/status" className={styles.status}><span aria-hidden />Service status<ArrowUpRight size={13} aria-hidden /></Link>
         </div>
+      </div>
+      {/* The sign-off: Railor's rail running across the map, with the name set large over it. Decorative only. */}
+      <div className={styles.scene} aria-hidden="true">
+        <Image className={styles.sceneImage} src="/images/railor-hero-route.png" alt="" fill sizes="100vw" quality={70} />
+        <p className={styles.wordmark}>
+          {"Railor".split("").map((letter, index) => (
+            <span key={index} style={{ "--l": index } as React.CSSProperties}>{letter}</span>
+          ))}
+        </p>
       </div>
     </footer>
   );

@@ -2,21 +2,27 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Bell, Check, FileText, Mail, X } from "lucide-react";
+import { ProviderLogo } from "../../app/provider-logo";
+import { RailorMark } from "../../brand";
 import styles from "./why-rows.module.css";
 
 /**
- * The moving pictures beside each "Why Railor" row. Each one plays once, the
- * first time it is mostly on screen, and then stays as a readable still. All
- * figures are an illustration, labelled as one, and use generic provider names.
- * With reduced motion nothing is hidden or animated: the finished picture is
- * simply there.
+ * The moving pictures beside each "Why Railor" row. Each one plays when it is
+ * mostly on screen, holds so it can be read, rewinds and plays again for as
+ * long as it stays in view; off screen it rests as a finished still. Figures
+ * are examples, labelled as such. With reduced motion nothing is hidden or
+ * animated: the finished picture is simply there.
  */
 
 const SeenContext = createContext(false);
 const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** The tinted panel a picture sits on. It arms its children, then releases them when it is on screen. */
-export function Scene({ tint, label, children }: { tint: string; label: string; children: ReactNode }) {
+/** How long a picture holds once played, and how long its rewind takes. */
+const HOLD_MS = 5200;
+const REWIND_MS = 750;
+
+/** The tinted panel a picture sits on. It arms its children, then plays them on a loop while it is on screen. */
+export function Scene({ tint, label, tone, children }: { tint: string; label?: string; tone?: "dark"; children: ReactNode }) {
   const node = useRef<HTMLDivElement>(null);
   const [armed, setArmed] = useState(false);
   const [seen, setSeen] = useState(false);
@@ -25,17 +31,37 @@ export function Scene({ tint, label, children }: { tint: string; label: string; 
     const element = node.current;
     if (!element || typeof IntersectionObserver === "undefined" || prefersReducedMotion()) return;
     setArmed(true);
+    let timer = 0;
+    let visible = false;
+    const play = () => {
+      setSeen(true);
+      timer = window.setTimeout(rewind, HOLD_MS);
+    };
+    const rewind = () => {
+      if (!visible) return;
+      setSeen(false);
+      timer = window.setTimeout(play, REWIND_MS);
+    };
     const watcher = new IntersectionObserver(([entry]) => {
-      if (entry?.isIntersecting) { setSeen(true); watcher.disconnect(); }
+      const now = Boolean(entry?.isIntersecting);
+      if (now === visible) return;
+      visible = now;
+      window.clearTimeout(timer);
+      if (visible) play();
+      // Leaving the screen: stop the loop on the finished picture.
+      else setSeen(true);
     }, { threshold: 0.18, rootMargin: "0px 0px -6% 0px" });
     watcher.observe(element);
-    return () => watcher.disconnect();
+    return () => {
+      watcher.disconnect();
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
     <SeenContext.Provider value={seen}>
-      <div ref={node} className={styles.visual} style={{ "--tint": tint } as CSSProperties} data-armed={armed || undefined} data-in={seen || undefined}>
-        <span className={styles.tag}>{label}</span>
+      <div ref={node} className={styles.visual} style={{ "--tint": tint } as CSSProperties} data-tone={tone} data-armed={armed || undefined} data-in={seen || undefined}>
+        {label ? <span className={styles.tag}>{label}</span> : null}
         <div className={styles.stack} aria-hidden>{children}</div>
       </div>
     </SeenContext.Provider>
@@ -53,7 +79,12 @@ function CountUp({ to, prefix = "", suffix = "", duration = 900 }: { to: number;
   }, []);
 
   useEffect(() => {
-    if (!seen || prefersReducedMotion()) return;
+    if (typeof IntersectionObserver === "undefined" || prefersReducedMotion()) return;
+    if (!seen) {
+      // Rewinding: drop back to zero once the rows have faded out.
+      const reset = window.setTimeout(() => setValue(0), REWIND_MS - 100);
+      return () => window.clearTimeout(reset);
+    }
     let frame = 0;
     const start = performance.now();
     const step = (now: number) => {
@@ -70,30 +101,41 @@ function CountUp({ to, prefix = "", suffix = "", duration = 900 }: { to: number;
 
 const at = (index: number) => ({ "--i": index }) as CSSProperties;
 
-/** 1. Every provider in one list. */
+const NETWORK = [
+  ["wise", "Wise"],
+  ["remitly", "Remitly"],
+  ["revolut", "Revolut"],
+  ["paypal", "PayPal"],
+  ["xoom", "Xoom"],
+  ["skydo", "Skydo"],
+] as const;
+
+/** Where each provider flies in from before it settles into the grid. */
+const FROM = [["-46px", "-30px", "-9deg"], ["0px", "-44px", "6deg"], ["46px", "-30px", "9deg"], ["-52px", "26px", "7deg"], ["0px", "40px", "-6deg"], ["52px", "26px", "-8deg"]];
+
+/** 1. Every provider in one list: the services you would otherwise check one by one gather into one Railor comparison. */
 export function CompareVisual() {
-  const rows = [
-    { name: "Transfer app", note: "Fee 0 · about 1 day", amount: 92_610, gap: 0 },
-    { name: "Money app", note: "Fee 2.99 · minutes", amount: 92_205, gap: 405 },
-    { name: "Your bank", note: "Fee 0 · 2 days", amount: 91_840, gap: 770 },
-    { name: "Card transfer", note: "Fee 4.50 · minutes", amount: 91_350, gap: 1_260 },
-  ];
   return (
-    <Scene tint="linear-gradient(160deg, #fbefd9, #f4dcb5)" label="Example figures">
-      <div className={styles.card}>
-        <div className={styles.cardHead}><strong>1,000 USD to INR</strong><span>What arrives</span></div>
-        <ul className={styles.list}>
-          {rows.map((row, index) => (
-            <li key={row.name} className={`${styles.row} ${styles.item}`} style={at(index + 1)} data-best={index === 0 || undefined}>
-              <span className={styles.avatar} data-tone={index}>{row.name.slice(0, 1)}</span>
-              <span className={styles.rowText}><strong>{row.name}</strong><small>{row.note}</small></span>
-              <span className={styles.amount}>
-                <b>₹<CountUp to={row.amount} /></b>
-                {index === 0 ? <i className={styles.best}>Best</i> : <small>−₹{row.gap.toLocaleString("en-US")}</small>}
-              </span>
+    <Scene tint="radial-gradient(ellipse at 72% 85%, #6d362b 0%, #341f1a 48%, #211815 88%)" tone="dark">
+      <div className={styles.network}>
+        <ul className={styles.converge}>
+          {NETWORK.map(([slug, name], index) => (
+            <li
+              key={slug}
+              className={`${styles.pchip} ${styles.item}`}
+              style={{ "--i": index, "--fx": FROM[index]![0], "--fy": FROM[index]![1], "--fr": FROM[index]![2] } as CSSProperties}
+            >
+              <ProviderLogo slug={slug} name={name} size={24} loading="eager" />
+              <span>{name}</span>
             </li>
           ))}
         </ul>
+        <div className={`${styles.wire} ${styles.item}`} style={at(7)}><i /><i /><i /></div>
+        <div className={`${styles.result} ${styles.item}`} style={at(9)}>
+          <span className={styles.resultMark}><RailorMark size={28} /></span>
+          <span className={styles.resultText}><strong>One comparison</strong><small>Price · speed · eligibility</small></span>
+          <span className={styles.resultCheck}><Check size={15} strokeWidth={3} /></span>
+        </div>
       </div>
     </Scene>
   );

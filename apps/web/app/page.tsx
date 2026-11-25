@@ -58,13 +58,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
-        <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />
         <CompanyRulesSection />
         <AudiencesSection />
         <TestimonialsSection />
         <DevelopersSection />
         <TrustSection />
         <FaqSection />
+        <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />
         <FinalCta />
         <MobileCompareBar providerCount={remittanceProviderCatalog().length} />
       </main>
