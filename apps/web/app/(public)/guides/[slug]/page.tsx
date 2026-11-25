@@ -11,6 +11,7 @@ import { convertHref } from "../../../../lib/guides/destinations";
 import { guideJsonLd, jsonLdScript } from "../../../../lib/guides/schema";
 import { ArticleFaq, ArticleSections } from "../../../../components/marketing/guides/article-body";
 import { GuideCard } from "../../../../components/marketing/guides/guide-card";
+import { WaysToSendSection, WaysToSendSkeleton } from "../../../../components/marketing/guides/ways-section";
 import { LiveRanking, RankingSkeleton, rankAmount } from "../../../../components/marketing/guides/live-ranking";
 import styles from "../../../../components/marketing/guides/guides.module.css";
 
@@ -69,6 +70,9 @@ export default async function GuidePage({ params, searchParams }: Props) {
               </Suspense>
             ) : null}
           />
+          <Suspense fallback={<WaysToSendSkeleton />}>
+            <WaysToSendSection route={guide.route} signedIn={signedIn} />
+          </Suspense>
           <ArticleFaq faq={content.faq} signedIn={signedIn} />
           <section className={styles.related} aria-labelledby="related-title">
             <h2 id="related-title">Keep reading</h2>
@@ -90,6 +94,7 @@ export default async function GuidePage({ params, searchParams }: Props) {
           <nav className={styles.toc} aria-label="In this guide">
             <p>In this guide</p>
             {content.sections.map((section) => <a key={section.id} href={`#${section.id}`}>{section.heading}</a>)}
+            <a href="#ways-to-send">Ways to send {guide.route.label}</a>
           </nav>
         </aside>
       </div>

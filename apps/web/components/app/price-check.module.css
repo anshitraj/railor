@@ -451,3 +451,6 @@
 .statusChip[data-status="comparable"] { background: var(--color-ok-bg); color: var(--color-ok); }
 .statusChip[data-status="offer"] { background: #fff1d6; color: #7a4f0e; }
 .statusChip[data-status="confirm"] { background: var(--color-canvas); color: var(--color-ink-soft); box-shadow: inset 0 0 0 1px var(--color-line-strong); }
+/* Four views fit on a laptop; on a phone the tab bar scrolls sideways instead of wrapping. */
+.browserTabs { overflow-x: auto; scrollbar-width: none; }
+.browserTabs::-webkit-scrollbar { display: none; }

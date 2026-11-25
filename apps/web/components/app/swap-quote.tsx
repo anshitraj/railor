@@ -496,7 +496,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       </section>
       {!cardComingSoon && <>
       <PriceProviderBrowser
-        rows={quotes} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
+        rows={quotes} estimates={estimates} receiving={context.direction === "receive" || context.profile !== "personal"} selected={selected} best={best} onSelect={setPicked} candidates={candidates} selectedCandidate={selectedCandidate}
         bookmark={savedPairs && bookmark && valid ? <TransferBookmarkButton transfer={bookmark} saved={saved} onSaved={setSaved} /> : null}
         onGetQuote={valid && !cardComingSoon ? getProviderQuote : undefined}
         from={from} to={to} amount={amount} loading={loading} checked={ago(now - fetchedAt)} flashes={flashes}
