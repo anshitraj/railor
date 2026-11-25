@@ -45,6 +45,7 @@ export * from "./pricing.js";
 export * from "./public-pricing/receiving-products.js";
 export * from "./public-pricing/remittances.js";
 export * from "./public-pricing/exchange-rates.js";
+export * from "./public-pricing/mid-market.js";
 export * from "./customer-profiles.js";
 export * from "./web-check.js";
 export * from "./web-check-store.js";

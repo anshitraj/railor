@@ -5,6 +5,7 @@ import { alAnsariPublicReference, hasAlAnsariPublicReference } from "./public-pr
 import type { UnifiedQuote } from "./unified.js";
 import { remittanceSurvey, type RemittanceSurvey } from "./public-pricing/remittances.js";
 import { shared } from "./public-pricing/shared-cache.js";
+import { publicMidMarketRate } from "./public-pricing/mid-market.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
@@ -185,6 +186,8 @@ export interface PriceCheckDeps {
   /** Known web checks for these claims, and which are still running. Must not wait for new checks. */
   webChecks?: (claims: WebCheckClaim[]) => Promise<{ results: WebCheckResult[]; pending: ReadonlySet<string>; configured: boolean; paused?: boolean }>;
   fetcher?: typeof fetch;
+  /** Where the independent mid-market fallback reads from. Defaults to the network, but never when a test injects `fetcher`, so existing call counts stay put. */
+  fallbackFetcher?: typeof fetch;
   now?: Date;
 }
 
@@ -553,6 +556,13 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     }
   } else {
     unavailable.push({ providerSlug: "wise", providerName: "Wise", reason: `No public quote: ${wisePublic.message}` });
+  }
+  // Wise has no public quote for some pairs (USD to SAR). Without a benchmark, nothing can be measured against the fair rate,
+  // so read an independent mid-market rate instead. It is labelled as such and never stands in for any provider's price.
+  const fallbackFetcher = deps.fallbackFetcher ?? (deps.fetcher ? undefined : fetch);
+  if (!reference && fallbackFetcher) {
+    const fallback = await cache(`mid-market:${input.sourceCurrency}:${input.destinationCurrency}`, 300_000, () => publicMidMarketRate(input.sourceCurrency, input.destinationCurrency, fallbackFetcher, now)).catch(() => null);
+    if (fallback) reference = fallback;
   }
 
   const amountUsd = usdRate ? input.amount * usdRate : null;
