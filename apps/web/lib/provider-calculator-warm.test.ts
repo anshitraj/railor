@@ -9,7 +9,7 @@ vi.stubEnv("DATABASE_URL", "");
 vi.stubEnv("PGLITE_DATA_DIR", mkdtempSync(join(tmpdir(), "railor-calculator-warm-")));
 
 const { ensureMigrated } = await import("@railor/database");
-const { attemptProviderCalculator, loadPublicQuoteObservations, warmProviderCalculators } = await import("./public-quote-observations");
+const { attemptProviderCalculator, loadPublicQuoteObservations, tinyFishApiKey, warmProviderCalculators } = await import("./public-quote-observations");
 
 const input: PriceCheckInput = { sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000, includeMarket: true, context: { profile: "personal", country: "US", direction: "send", purpose: "personal" } };
 const MID = 92.7;
@@ -38,7 +38,8 @@ function agent(byHost: Record<string, unknown>) {
 }
 
 describe("reading provider calculators for a price check", () => {
-  beforeEach(async () => { await ensureMigrated(); vi.stubEnv("TINYFISH_API_KEY", "test-key"); });
+  // The alternate spelling is cleared too, so a key in the developer's own .env can never reach these tests.
+  beforeEach(async () => { await ensureMigrated(); vi.stubEnv("TINY_FISH_API_KEY", ""); vi.stubEnv("TINYFISH_API_KEY", "test-key"); });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.stubEnv("DATABASE_URL", ""); });
 
   it("explains why a calculator gave no price instead of leaving a blank", async () => {
@@ -72,6 +73,21 @@ describe("reading provider calculators for a price check", () => {
     const before = fetcher.mock.calls.length;
     await warmProviderCalculators(input, MID, present);
     expect(fetcher.mock.calls.length).toBe(before);
+  });
+
+  it("reads the key from either spelling of its name", async () => {
+    vi.stubEnv("TINYFISH_API_KEY", "");
+    vi.stubEnv("TINY_FISH_API_KEY", "  alt-key  ");
+    expect(tinyFishApiKey()).toBe("alt-key");
+    vi.stubEnv("TINYFISH_API_KEY", "primary-key");
+    expect(tinyFishApiKey()).toBe("primary-key");
+    vi.stubEnv("TINYFISH_API_KEY", "");
+    vi.stubEnv("TINY_FISH_API_KEY", "");
+    expect(tinyFishApiKey()).toBeUndefined();
+    // With only the alternate spelling set, a calculator is really read.
+    vi.stubEnv("TINY_FISH_API_KEY", "alt-key");
+    vi.stubGlobal("fetch", agent({ "xe.com": quote("xe", 92.5614) }).fetcher);
+    expect((await attemptProviderCalculator("xe", input, MID, 5_000)).row).toMatchObject({ providerSlug: "xe" });
   });
 
   it("does nothing without a key", async () => {

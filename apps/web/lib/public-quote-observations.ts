@@ -84,6 +84,15 @@ const browserResult = z.object({
   }),
 });
 
+/**
+ * The browser-agent key. Documented as TINYFISH_API_KEY; TINY_FISH_API_KEY is
+ * accepted too, because that is the spelling a hand-written .env tends to use
+ * and a misspelt name otherwise switches every live calculator off silently.
+ */
+export function tinyFishApiKey(): string | undefined {
+  return process.env.TINYFISH_API_KEY?.trim() || process.env.TINY_FISH_API_KEY?.trim() || undefined;
+}
+
 export type CalculatorAttempt = { row: PriceRow; reason?: undefined } | { row: null; reason: string | null };
 
 /**
@@ -96,7 +105,7 @@ export type CalculatorAttempt = { row: PriceRow; reason?: undefined } | { row: n
 export async function attemptProviderCalculator(slug: string, input: PriceCheckInput, referenceRate: number | null = null, budgetMs = 50_000): Promise<CalculatorAttempt> {
   if (slug === "xoom" || slug === "remitly") return { row: await readProviderCalculator(slug, input), reason: null } as CalculatorAttempt;
   if (!calculatorProvider(slug)) return { row: null, reason: null };
-  const apiKey = process.env.TINYFISH_API_KEY?.trim();
+  const apiKey = tinyFishApiKey();
   if (!apiKey) return { row: null, reason: null };
   if (!await consumeLimit("provider-quote-browser", slug, 24, 3_600_000)) return { row: null, reason: "This provider has been checked many times this hour. Try again shortly." };
   const result = await readCalculator(slug, input, referenceRate, { apiKey, budgetMs });
@@ -111,7 +120,7 @@ export async function attemptProviderCalculator(slug: string, input: PriceCheckI
  * without a browser-agent key.
  */
 export async function warmProviderCalculators(input: PriceCheckInput, referenceRate: number | null, present: ReadonlySet<string>) {
-  if (!process.env.TINYFISH_API_KEY?.trim()) return;
+  if (!tinyFishApiKey()) return;
   const wanted = calculatorSlugsFor(input).filter((slug) => !present.has(slug));
   const queue: string[] = [];
   for (const slug of wanted) {
@@ -132,7 +141,7 @@ export async function readProviderCalculator(slug: string, input: PriceCheckInpu
   if (slug === "ria") return readRiaCalculator(input);
   if (slug !== "xoom" && slug !== "remitly") return null;
   const currency = usBankRemittanceCorridor(input);
-  const apiKey = process.env.TINYFISH_API_KEY?.trim();
+  const apiKey = tinyFishApiKey();
   if (!currency || !apiKey) return null;
   const url = slug === "xoom" ? xoomCalculatorUrl(currency) : remitlyCalculatorUrl(currency);
   if (!url || !await consumeLimit("provider-quote-browser", slug, 24, 3_600_000)) return null;
