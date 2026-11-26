@@ -40,11 +40,32 @@ describe("the KYC tab", () => {
 });
 
 describe("the fees and delivery tabs", () => {
-  it("does not print the same fee text twice", () => {
-    const tax = "Wise says its funding methods are exempt from the U.S. 1% remittance tax.";
-    const shown = text(renderToStaticMarkup(<FeesAndLimits row={row()} assessment={{ ...base, fees: tax }} feeTax={tax} method="Bank transfer" to="EUR" />));
-    expect(shown.split(tax).length - 1).toBe(1);
+  const fees = (over: Partial<Parameters<typeof FeesAndLimits>[0]> = {}) => text(renderToStaticMarkup(
+    <FeesAndLimits row={row({ providerSlug: "someprovider", feeAmount: 9.87, feeCurrency: "USD", feeBreakdown: "6.11 funding + 3.76 provider fee", rate: 0.911452, recipientAmount: 902.46 } as Partial<PriceRow>)} assessment={base} method="Bank transfer" from="USD" to="EUR" amount={1000} reference={0.9114} provider="Acme" {...over} />,
+  ));
+
+  it("shows the numbers that are in the price itself first", () => {
+    const shown = fees();
+    expect(shown).toContain("Fee in this price: 9.87 USD (6.11 funding + 3.76 provider fee)");
+    expect(shown).toContain("Exchange rate used: 1 USD = 0.911452 EUR");
+    expect(shown).toContain("Recipient gets: 902.46 EUR for 1,000.00 USD sent");
     expect(shown).toContain("Bank transfer");
+  });
+
+  it("says plainly what a provider doesn't publish instead of calling it unverified", () => {
+    const shown = fees({ assessment: { ...base, fees: "Account and purpose-specific fees are unconfirmed", limits: "Not verified for this product. No unlimited-transfer assumption." }, feeTax: "No verified tax treatment for this payment method." });
+    expect(shown).toContain("Acme doesn’t publish a fee schedule for this route that Railor can read");
+    expect(shown).toContain("Acme doesn’t publish a limit for this route that Railor can read");
+    expect(shown).toContain("Acme doesn’t state how tax applies to its fee");
+    expect(shown).not.toMatch(/not verified|unconfirmed|no verified/i);
+  });
+
+  it("adds what a provider itself publishes, with limits for the currencies on the route", () => {
+    const shown = fees({ row: row({ providerSlug: "wise", feeAmount: 9.87, feeCurrency: "USD" } as Partial<PriceRow>), provider: "Wise" });
+    expect(shown).toContain("percentage of the amount you send, plus a fixed fee");
+    expect(shown).toContain("up to 1 million USD per local ACH transfer");
+    expect(shown).toContain("up to 6 million EUR per transfer");
+    expect(shown).not.toContain("doesn’t publish a limit");
   });
 
   it("hides topics with nothing to say and explains an empty tab", () => {

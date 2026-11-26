@@ -10,6 +10,7 @@ import type { MarketCoverageProvider, PricePromotions, PriceRow } from "@railor/
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
 import { DeliveryAndPaperwork, FeesAndLimits, KycGuide } from "./provider-detail-panels";
+import { providerFacts } from "../../lib/provider-facts";
 import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
@@ -322,6 +323,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
   const providerSources = Array.from(new Map([
     ...(assessment?.sources ?? []),
     ...(kyc ? [{ label: `${providerName} · KYC documents`, url: kyc.documentsUrl }, ...(kyc.approvalTime ? [{ label: `${providerName} · KYC approval time`, url: kyc.approvalTime.url }] : [])] : []),
+    ...(() => { const facts = providerFacts(row.providerSlug, { from, to }); return facts ? [...(facts.fees?.sources ?? []), ...(facts.limits?.sources ?? []), ...(facts.tax?.sources ?? [])] : []; })(),
   ].map(source => [source.url, source])).values());
   const sourceDetails = (
     <div className={styles.quoteSources}>
@@ -455,7 +457,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
           </>
         )}
         {tab === "KYC" && <KycGuide assessment={assessment} provider={providerName} />}
-        {tab === "Fees & limits" && <FeesAndLimits row={row} assessment={assessment} feeTax={feeTax} method={fundingMethod(row)} to={to} />}
+        {tab === "Fees & limits" && <FeesAndLimits row={row} assessment={assessment} feeTax={feeTax} method={fundingMethod(row)} from={from} to={to} amount={amount} reference={reference?.rate ?? null} provider={providerName} />}
         {tab === "Delivery & paperwork" && <DeliveryAndPaperwork row={row} assessment={assessment} delivery={delivery} receipt={receipt} />}
       </div>
     </aside>

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Banknote, CalendarClock, Clock3, CreditCard, FileBadge, FileText, Gauge, Globe2, IdCard, Info, Landmark, Percent, ReceiptText, ScanFace, ShieldCheck, Target, Timer, TriangleAlert, UserRoundCheck, Users, Wallet } from "lucide-react";
 import type { PriceRow } from "@railor/core";
 import { DOC_LABEL, kycDocumentRows, type KycDocumentRow } from "../../lib/kyc-documents";
+import { benchmarkPayoutDifference } from "../../lib/price-cost";
+import { isPlaceholder, providerFacts } from "../../lib/provider-facts";
 import { DocumentArt } from "./kyc-document-art";
 import styles from "./price-check.module.css";
 
@@ -134,20 +136,31 @@ export function KycGuide({ assessment, provider }: { assessment: Assessment; pro
 }
 
 /** What the transfer costs beyond the headline, and the limits on it. */
-export function FeesAndLimits({ row, assessment, feeTax, method, to }: { row: PriceRow; assessment: Assessment; feeTax?: string | null; method: string | null; to: string }) {
+export function FeesAndLimits({ row, assessment, feeTax, method, from, to, amount, reference, provider }: {
+  row: PriceRow; assessment: Assessment; feeTax?: string | null; method: string | null; from: string; to: string; amount: number; reference: number | null; provider: string;
+}) {
+  const facts = providerFacts(row.providerSlug, { from, to });
+  const money = (value: number, currency: string) => `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+  const gap = reference && row.recipientAmount != null ? benchmarkPayoutDifference(row.recipientAmount, amount, reference, to) : null;
+  // What this price actually contains: every figure here comes from the quote itself.
+  const inQuote = [
+    row.feeAmount != null ? `Fee in this price: ${money(row.feeAmount, row.feeCurrency ?? from)}${row.feeBreakdown ? ` (${row.feeBreakdown})` : ""}.` : row.feeBreakdown ? `Fee in this price: ${row.feeBreakdown}.` : "This price doesn’t state a fee.",
+    row.rate != null ? `Exchange rate used: 1 ${from} = ${row.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}.` : null,
+    row.recipientAmount != null ? `Recipient gets: ${money(row.recipientAmount, to)} for ${money(amount, from)} sent.` : null,
+    gap?.kind === "cost" ? `Against mid-market: ${gap.costMinor === 0 ? "level" : `${money(Math.abs(gap.costMinor) / 100, to)} ${gap.costMinor < 0 ? "above" : "below"}`} (${(Math.abs(gap.bps) / 100).toFixed(2)}%).` : null,
+  ];
+  const name = provider || "the provider";
   const topics: Topic[] = [
-    { label: "Provider fees", icon: Banknote, tone: "orange", emphasis: true, details: [assessment?.fees, row.feeBreakdown] },
+    { label: "In this price", icon: Banknote, tone: "orange", emphasis: true, list: true, details: inQuote },
+    { label: "How the provider charges", icon: Wallet, tone: "neutral", details: facts?.fees ? facts.fees.lines : isPlaceholder(assessment?.fees) ? [`${name} doesn’t publish a fee schedule for this route that Railor can read. The fee above is the one in the price source. Account-specific or purpose-specific fees can still apply, so confirm the final fee before you pay.`] : [assessment?.fees] },
     { label: "Who pays the fee", icon: Wallet, tone: "neutral", details: [row.side === "payer" ? "The sender pays through this service. The recipient only needs a bank account." : row.side === "recipient" ? "Deducted from the payout before it arrives." : null] },
-    { label: "Tax on provider fees", icon: Percent, tone: "orange", details: [feeTax && feeTax !== assessment?.fees ? feeTax : null] },
-    { label: "Transfer limits", icon: Gauge, tone: "neutral", details: [assessment?.limits] },
+    { label: "Tax on provider fees", icon: Percent, tone: "orange", details: [feeTax && !isPlaceholder(feeTax) && feeTax !== assessment?.fees ? feeTax : facts?.tax ? facts.tax.lines.join(" ") : `${name} doesn’t state how tax applies to its fee for this payment method. If tax is added, it appears before you confirm the transfer.`] },
+    { label: "Transfer limits", icon: Gauge, tone: "neutral", list: Boolean(facts?.limits), details: facts?.limits ? facts.limits.lines : isPlaceholder(assessment?.limits) ? [`${name} doesn’t publish a limit for this route that Railor can read. Limits usually depend on your account’s verification level and on how you pay, so check before sending a large amount.`] : [assessment?.limits] },
     { label: "How you pay", icon: CreditCard, tone: "green", details: [method] },
     { label: "Still to confirm", icon: TriangleAlert, tone: "orange", list: true, details: row.missing ?? [] },
-    { label: "Against the best payout", icon: Target, tone: "neutral", details: [row.shortfall ? `${Math.abs(row.shortfall).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${to} ${row.shortfall > 0 ? "less" : "more"} than the best documented payout.` : null] },
+    { label: "Against the best payout", icon: Target, tone: "neutral", details: [row.shortfall ? `${money(Math.abs(row.shortfall), to)} ${row.shortfall > 0 ? "less" : "more"} than the best documented payout.` : null] },
   ];
-  const shown = topics.filter(hasContent);
-  return shown.length
-    ? <div className={styles.requirementsPanel}><Topics topics={shown} /></div>
-    : <p className={styles.detailIntro}>This source doesn’t break down fees or limits for this setup. Ask the provider, or open the source on the Overview tab.</p>;
+  return <div className={styles.requirementsPanel}><Topics topics={topics.filter(hasContent)} /></div>;
 }
 
 /** Timing, where the money lands and the paperwork around it. */
