@@ -66,6 +66,29 @@ function attachHeroSettle(home: HTMLElement) {
   };
 }
 
+/** The footer trails the scroll as it comes up, so the page seems to lift off it. */
+function attachFooterReveal(home: HTMLElement) {
+  const footer = home.nextElementSibling instanceof HTMLElement && home.dataset.curtain !== undefined ? home.nextElementSibling : null;
+  if (!footer) return () => undefined;
+  let frame = 0;
+  const paint = () => {
+    frame = 0;
+    const top = footer.getBoundingClientRect().top;
+    const seen = Math.min(1, Math.max(0, (window.innerHeight - top) / Math.min(window.innerHeight, footer.offsetHeight)));
+    footer.style.setProperty("--footer-lag", ((1 - seen) * Math.min(window.innerHeight * 0.4, 320)).toFixed(1));
+  };
+  const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint); };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  paint();
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("resize", onScroll);
+    if (frame) cancelAnimationFrame(frame);
+    footer.style.removeProperty("--footer-lag");
+  };
+}
+
 /**
  * A pinned rail: the section holds still while its cards slide sideways as
  * you scroll down, then lets go. The section is made just tall enough for the
@@ -131,7 +154,7 @@ export function HomeScrollMotion() {
       detach?.();
       detach = undefined;
       if (!motion.matches) return;
-      const stops = [attachReveals(home), attachHeroSettle(home)];
+      const stops = [attachReveals(home), attachHeroSettle(home), attachFooterReveal(home)];
       if (mobile.matches) stops.push(attachPinnedRails(home));
       detach = () => stops.forEach((stop) => stop());
     };

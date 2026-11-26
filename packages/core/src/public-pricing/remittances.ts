@@ -91,3 +91,56 @@ export function remittanceSurvey(input: PriceCheckInput): RemittanceSurvey {
     samples: unique.map(sample => ({ ...sample })),
   };
 }
+
+export interface RemittanceCostBenchmarks {
+  period: string;
+  sourceUrl: string;
+  attribution: string;
+  /** Median total cost (fee plus exchange-rate margin) of a transfer sent through a bank. */
+  bankPct: number;
+  /** The same for money transfer operators (apps and transfer companies). */
+  operatorPct: number;
+  /** Median cost of the cheapest service in each corridor and amount the survey priced at least three times. */
+  cheapestPct: number;
+  corridors: number;
+}
+
+let benchmarks: RemittanceCostBenchmarks | null = null;
+const medianOf = (values: number[]) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
+};
+
+/**
+ * What sending money abroad usually costs, by who sends it, from the World
+ * Bank's survey: banks, transfer operators, and the cheapest option on each
+ * route. These are the figures behind "do the maths" on the home page.
+ */
+export function remittanceCostBenchmarks(): RemittanceCostBenchmarks {
+  if (benchmarks) return benchmarks;
+  const typeOf = new Map(data.providers.map((provider) => [provider.slug, provider.type]));
+  const bank: number[] = [];
+  const operator: number[] = [];
+  const groups = new Map<string, number[]>();
+  for (const sample of samples) {
+    if (sample.totalCostPct === null) continue;
+    const type = typeOf.get(sample.provider);
+    if (type === "Bank") bank.push(sample.totalCostPct);
+    if (type === "Money Transfer Operator") operator.push(sample.totalCostPct);
+    const key = `${sample.sourceCountry}:${sample.destinationCountry}:${sample.amount}`;
+    groups.set(key, [...(groups.get(key) ?? []), sample.totalCostPct]);
+  }
+  const cheapest = [...groups.values()].filter((costs) => costs.length >= 3).map((costs) => Math.min(...costs));
+  const round = (value: number) => Math.round(value * 100) / 100;
+  benchmarks = {
+    period: data.period,
+    sourceUrl: data.sourceUrl,
+    attribution: data.attribution,
+    bankPct: round(medianOf(bank)),
+    operatorPct: round(medianOf(operator)),
+    cheapestPct: round(medianOf(cheapest)),
+    corridors: cheapest.length,
+  };
+  return benchmarks;
+}

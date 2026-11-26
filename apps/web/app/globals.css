@@ -768,3 +768,12 @@ html[data-smooth-scroll] { scroll-behavior: auto !important; }
   }
   html[data-reveal-ready] [data-reveal]:not([data-revealed]) { opacity: 0; translate: 0 32px; filter: blur(8px); }
 }
+
+/* Footer curtain (landing): the page lifts away with rounded bottom corners and
+   the footer is already waiting underneath it, the way GetOn and Due end. */
+main[data-curtain] { position: relative; z-index: 1; background: var(--color-canvas); border-radius: 0 0 clamp(28px, 4vw, 52px) clamp(28px, 4vw, 52px); box-shadow: 0 40px 80px -40px rgb(21 19 16 / .45); }
+main[data-curtain] + footer { position: relative; z-index: 0; margin-top: -56px; padding-top: 56px; }
+/* The footer's contents trail the scroll, so they appear to be waiting underneath (HomeScrollMotion sets the lag). */
+@media (prefers-reduced-motion: no-preference) {
+  main[data-curtain] + footer > * { transform: translate3d(0, calc(var(--footer-lag, 0) * -1px), 0); will-change: transform; }
+}

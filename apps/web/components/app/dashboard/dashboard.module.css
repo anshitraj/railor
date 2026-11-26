@@ -1,6 +1,6 @@
 /* Dashboard home. Few boxes, no icon headers: white surfaces on the warm page,
    plain labels, numbers that carry the weight, and one calm entrance. */
-.home { display: grid; gap: 16px; max-width: 1240px; margin: 0 auto; padding: 4px 0 48px; }
+.home { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 1240px; margin: 0 auto; padding: 4px 0 48px; }
 
 .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; padding: 6px 2px 10px; }
 .eyebrow { color: var(--color-muted); font-size: 13px; font-weight: 600; }
@@ -108,3 +108,23 @@ a.row:hover .go svg { transform: translateX(2px); }
 .tool svg { color: var(--color-faint); transition: transform .2s var(--ease-out), color .2s ease; }
 .tool:hover svg { color: var(--color-ink); transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) { .pill, .tool svg, a.row .go svg { transition: none; } }
+
+/* Phones: tighter surfaces, one swipeable row of header actions, the big number still big. */
+@media (max-width: 719px) {
+  .home { gap: 12px; padding-bottom: 24px; }
+  .head { padding: 0 2px 4px; }
+  .head h1 { font-size: 30px; }
+  .summary { font-size: 14px; }
+  .head > * { min-width: 0; }
+  .headActions { flex: 1 1 100%; flex-wrap: nowrap; min-width: 0; padding: 2px 0 6px; overflow-x: auto; scrollbar-width: none; }
+  .headActions::-webkit-scrollbar { display: none; }
+  .pill { height: 40px; padding: 0 16px; font-size: 13.5px; }
+  .grid, .stack { gap: 12px; }
+  .card { padding: 18px 18px 20px; border-radius: 24px; }
+  .overview { padding: 20px 18px 16px; }
+  .big { font-size: 52px; }
+  .stats { gap: 14px 0; }
+  .stat { padding: 0 0 0 14px; }
+  .statValue { font-size: 21px; }
+  .row { min-height: 50px; }
+}
