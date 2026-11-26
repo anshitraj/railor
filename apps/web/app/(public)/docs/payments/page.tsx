@@ -150,7 +150,7 @@ console.log(sent.status, sent.selected_provider)`,
   "include_market": true,
   "context": { "profile": "personal", "country": "IN", "direction": "receive", "purpose": "personal" }
 }`}</code></pre>
-        <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">Responses retain <code>profile_assessment</code>, <code>public_comparison</code> and <code>public_offer</code> metadata. Use <code>comparable</code> to identify complete estimates that fit the documented profile; consumer observations and conditional offers never become universal cheapest-price claims. Source time and expiry still apply.</p>
+        <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">Responses retain <code>profile_assessment</code>, <code>public_comparison</code> and <code>public_offer</code> metadata. Use <code>comparable</code> to identify complete estimates that fit the documented profile; consumer observations and conditional offers never become universal cheapest-price claims. Source time and expiry still apply. <code>profile_assessment.kyc</code> carries the identity-check documents the provider publishes and how long its own pages say approval takes (<code>approval_time</code> is <code>null</code> when the provider publishes none), each with its source page and review date.</p>
       </section>
 
       <section className="flex flex-col gap-3">

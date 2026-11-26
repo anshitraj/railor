@@ -43,6 +43,7 @@ export * from "./net-guard.js";
 export * from "./logos.js";
 export * from "./pricing.js";
 export * from "./public-pricing/receiving-products.js";
+export * from "./public-pricing/provider-kyc.js";
 export * from "./public-pricing/remittances.js";
 export * from "./public-pricing/exchange-rates.js";
 export * from "./public-pricing/mid-market.js";
