@@ -10,7 +10,61 @@ import styles from "./company-tools.module.css";
 
 type Slot = { name: string; table: Table; columns: AuditColumns; example: boolean };
 const ORDER: AuditStatus[] = ["matched", "check_amount", "missing_at_bank", "not_in_report", "ambiguous", "duplicate"];
-const TONE: Record<AuditStatus, string> = { matched: "good", check_amount: "warn", missing_at_bank: "bad", not_in_report: "info", ambiguous: "warn", duplicate: "bad" };
+const TONE: Record<AuditStatus, string> = { matched: "good", check_amount: "warn", missing_at_bank: "bad", not_in_report: "info", ambiguous: "amber", duplicate: "dup" };
+const MEANING: Record<AuditStatus, string> = {
+  matched: "One credit carries the reference and the amount is within 5%.",
+  check_amount: "Paired by reference, but the amounts are far apart.",
+  missing_at_bank: "The provider reports it; no credit carries the reference.",
+  not_in_report: "A bank credit no provider row explains.",
+  ambiguous: "More than one credit could be this payment.",
+  duplicate: "The same reference appears more than once.",
+};
+
+/** Where every row went: one ring, a slice per outcome, the matched share in the middle. */
+function AuditDonut({ counts, total, reduce, filter, onPick }: { counts: Record<AuditStatus, number>; total: number; reduce: boolean | null; filter: AuditStatus | "all"; onPick: (status: AuditStatus | "all") => void }) {
+  const radius = 62;
+  const circumference = 2 * Math.PI * radius;
+  const slices = ORDER.filter((status) => counts[status]);
+  const gap = slices.length > 1 ? 3 : 0;
+  let offset = 0;
+  const arcs = slices.map((status) => {
+    const share = counts[status] / total;
+    const length = Math.max(0, share * circumference - gap);
+    const arc = { status, length, offset };
+    offset += share * circumference;
+    return arc;
+  });
+  const percent = total ? Math.round((counts.matched / total) * 100) : 0;
+  return (
+    <div className={styles.donutPanel}>
+      <div className={styles.donut} role="img" aria-label={`${counts.matched} of ${total} rows matched. ${slices.map((status) => `${STATUS_LABEL[status]} ${counts[status]}`).join(", ")}`}>
+        <svg viewBox="0 0 160 160" aria-hidden="true">
+          <circle cx="80" cy="80" r={radius} className={styles.donutTrack} />
+          {arcs.map(({ status, length, offset: start }, index) => (
+            <motion.circle key={status} cx="80" cy="80" r={radius} className={styles.donutArc} data-tone={TONE[status]} data-active={filter === status || undefined} data-dim={(filter !== "all" && filter !== status) || undefined}
+              strokeDashoffset={-start}
+              initial={reduce ? false : { strokeDasharray: `0 ${circumference}` }}
+              animate={{ strokeDasharray: `${length} ${circumference - length}` }}
+              transition={{ duration: 0.7, delay: index * 0.08, ease: [0.23, 1, 0.32, 1] }}
+              onClick={() => onPick(filter === status ? "all" : status)} />
+          ))}
+        </svg>
+        <div className={styles.donutCenter}><strong>{percent}<small>%</small></strong><span>{counts.matched} of {total} matched</span></div>
+      </div>
+      <ul className={styles.donutLegend}>
+        {slices.map((status) => (
+          <li key={status}>
+            <button type="button" data-tone={TONE[status]} aria-pressed={filter === status} onClick={() => onPick(filter === status ? "all" : status)}>
+              <i aria-hidden />
+              <span><strong>{STATUS_LABEL[status]}</strong><small>{MEANING[status]}</small></span>
+              <b>{counts[status]}<em>{Math.round((counts[status] / total) * 100)}%</em></b>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function money(minor: number, currency: string | null) {
   const value = Math.abs(minor) / 100;
@@ -80,11 +134,7 @@ export function PaymentAudit() {
             ))}
             <div className={styles.tile} data-tone={flagged ? "warn" : "good"}><span>Need a look</span><strong>{flagged}<small> {flagged === 1 ? "row" : "rows"}</small></strong></div>
           </div>
-          <div className={styles.bar} role="img" aria-label={ORDER.map((status) => `${STATUS_LABEL[status]} ${result.summary.counts[status]}`).join(", ")}>
-            {ORDER.filter((status) => result.summary.counts[status]).map((status, index) => (
-              <motion.span key={status} data-tone={TONE[status]} initial={reduce ? false : { scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.5, delay: index * 0.06, ease: [0.23, 1, 0.32, 1] }} style={{ flexGrow: result.summary.counts[status] }} />
-            ))}
-          </div>
+          <AuditDonut counts={result.summary.counts} total={total} reduce={reduce} filter={filter} onPick={setFilter} />
           <div className={styles.filters} role="group" aria-label="Show">
             <button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>All <span>{total}</span></button>
             {ORDER.filter((status) => result.summary.counts[status]).map((status) => (

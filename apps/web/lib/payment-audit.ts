@@ -90,6 +90,32 @@ function mentions(bankReference: string, providerKey: string) {
   return bank === providerKey || (providerKey.length >= 5 && bank.includes(providerKey));
 }
 
+const amountText = (amount: number, currency: string | null) => `${currency === "INR" ? "₹" : ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency && currency !== "INR" ? ` ${currency}` : ""}`;
+
+/** Bank credits in the same currency whose amount is within the sanity band of a reported payment. */
+function nearAmount(reported: AuditRow, credits: AuditRow[], sanityBps: number) {
+  return credits.filter((credit) => (!credit.currency || !reported.currency || credit.currency === reported.currency)
+    && Math.abs(difference(reported.amount, credit.amount).bps ?? Infinity) <= sanityBps);
+}
+
+/**
+ * Why a bank credit has no provider row. The narration usually says what it
+ * is (a UPI self-transfer, interest, a refund); otherwise it is either a
+ * payment that lost its reference or income from somewhere outside this report.
+ */
+export function explainUnreported(credit: AuditRow, missing: AuditLine[], sanityBps: number): string {
+  const similar = missing.filter((line) => line.provider && nearAmount(line.provider, [credit], sanityBps).length);
+  if (similar.length === 1) {
+    return `No reference matches, but the amount is close to ${similar[0]!.reference} (${amountText(similar[0]!.provider!.amount, similar[0]!.currency)}), which no credit carries. This may be that payment without its reference — check the narration.`;
+  }
+  const text = credit.reference.toUpperCase();
+  if (/\bSELF\b|OWN\s*(ACC|A\/C|AC)|OWN ACCOUNT|SELF TRANSFER/.test(text)) return "Money moved between your own accounts (the narration says SELF), not a payout from any provider.";
+  if (/\bINT\.?\s*(PD|PAID|CR)\b|INTEREST/.test(text)) return "Bank interest, not a provider payout.";
+  if (/REFUND|REVERS|CHARGEBACK|REJECT/.test(text)) return "A refund or reversal from the bank, not a provider payout.";
+  if (/^UPI\b|\bUPI\//.test(text)) return "A UPI credit — usually a person or an app paying you directly. None of your provider’s references appear in it, and no reported payment is close in amount.";
+  return "None of the report’s references appear in this narration and no reported payment is close in amount. It may be income from a provider or client that isn’t in this report.";
+}
+
 export interface AuditOptions { sanityBps?: number }
 
 export function auditPayments(provider: AuditRow[], bank: AuditRow[], options: AuditOptions = {}): AuditLine[] {
@@ -147,10 +173,16 @@ export function auditPayments(provider: AuditRow[], bank: AuditRow[], options: A
   }
 
   const used = new Set(lines.flatMap((line) => (line.bank ? [line.bank] : [])));
-  for (const credit of bank) {
-    if (used.has(credit) || claimed.has(credit)) continue;
+  const leftover = bank.filter((credit) => !used.has(credit) && !claimed.has(credit));
+  const missing = lines.filter((line) => line.status === "missing_at_bank" && line.provider);
+  for (const credit of leftover) {
     const duplicate = (bankCounts.get(key(credit.reference)) ?? 0) > 1;
-    lines.push({ status: duplicate ? "duplicate" : "not_in_report", reference: credit.reference, provider: null, bank: credit, currency: credit.currency, differenceMinor: null, bps: null, note: duplicate ? `Reference appears ${bankCounts.get(key(credit.reference))} times in the bank file.` : "No provider row explains this credit." });
+    lines.push({ status: duplicate ? "duplicate" : "not_in_report", reference: credit.reference, provider: null, bank: credit, currency: credit.currency, differenceMinor: null, bps: null, note: duplicate ? `Reference appears ${bankCounts.get(key(credit.reference))} times in the bank file.` : explainUnreported(credit, missing, sanityBps) });
+  }
+  // A report row with no credit may be a leftover credit that lost its reference: say so, but never pair them silently.
+  for (const line of missing) {
+    const near = nearAmount(line.provider!, leftover, sanityBps);
+    if (near.length === 1) line.note = `No bank credit carries this reference. The credit on bank line ${near[0]!.line} (${amountText(near[0]!.amount, near[0]!.currency)}) is close in amount but doesn’t mention it — it may be this payment.`;
   }
   return lines;
 }

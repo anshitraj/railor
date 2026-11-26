@@ -49,6 +49,16 @@ describe("payment audit", () => {
     expect(by("UPI/REF77310/SELF").status).toBe("not_in_report");
   });
 
+  it("says why a credit has no provider row instead of a bare 'not in report'", () => {
+    expect(by("UPI/REF77310/SELF").note).toMatch(/your own accounts/);
+    const [rowWithoutReference] = auditPayments(load("Reference,Recipient amount\nINV-9,5000", "provider"), load("Narration,Credit\nNEFT CR 4999.50,4999.50", "bank"));
+    expect(rowWithoutReference).toMatchObject({ status: "missing_at_bank", note: expect.stringContaining("close in amount") });
+    const credit = auditPayments(load("Reference,Recipient amount\nINV-9,5000", "provider"), load("Narration,Credit\nNEFT CR 4999.50,4999.50", "bank")).find((line) => line.status === "not_in_report");
+    expect(credit?.note).toMatch(/close to INV-9/);
+    expect(auditPayments([], load("Narration,Credit\nUPI/123/JOHN,900", "bank"))[0]!.note).toMatch(/UPI credit/);
+    expect(auditPayments([], load("Narration,Credit\nINT.PD:01-10,12.5", "bank"))[0]!.note).toMatch(/interest/i);
+  });
+
   it("calls a credit claimed by two reported payments ambiguous", () => {
     const provider = load("Reference,Recipient amount\nACME-77,100\nACME-77X,100", "provider");
     const bank = load("Narration,Credit\nACME-77X PAYMENT,100", "bank");
