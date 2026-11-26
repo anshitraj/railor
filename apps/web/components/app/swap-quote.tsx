@@ -5,6 +5,7 @@ import { contextForPair } from "../../lib/price-destination";
 
 import { PairActions, SavedPairsStrip, TransferBookmarkButton } from "../price/pair-actions";
 import { RateAlertCard } from "../price/rate-alert-card";
+import { RelatedGuides } from "../marketing/guides/related-guides";
 import type { Plan } from "../../lib/plans";
 import { savedProviderSlug } from "../../lib/saved-transfer";
 import { goHref } from "../../lib/provider-go";
@@ -314,6 +315,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
   const reducedMotion = useReducedMotion();
   return (
+    <>
     <div className={styles.comparisonLayout}>
       <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
@@ -547,6 +549,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       </div>
       </>}
     </div>
+    <RelatedGuides from={from} to={to} />
+    </>
   );
 }
 

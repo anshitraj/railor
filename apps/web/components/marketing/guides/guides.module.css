@@ -197,3 +197,20 @@
 @media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
 .byline { display: inline-flex; align-items: center; gap: 6px; }
 .byline a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── Providers at a glance, and guides under the calculator ── */
+.glance { margin-top: 36px; }
+.glance h2 { margin: 0 0 6px; }
+.glanceLead { margin: 0 0 16px; color: var(--color-muted); font-size: 15px; line-height: 1.6; }
+.glanceTable { width: 100%; min-width: 860px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.glanceTable th, .glanceTable td { padding: 14px 12px; border: 1px solid var(--color-line); text-align: center; vertical-align: middle; color: var(--color-ink); font-size: 14.5px; }
+.glanceTable thead th { background: color-mix(in srgb, var(--color-canvas) 70%, var(--color-surface)); color: var(--color-ink-soft); font-size: 13px; font-weight: 700; font-style: italic; }
+.glanceTable tbody th { text-align: left; font-weight: 600; }
+.glanceTable tbody td:first-child { width: 64px; font-size: 22px; }
+.glanceTable small { display: block; margin-top: 4px; color: var(--color-muted); font-size: 12px; font-weight: 500; }
+.glanceCompany { display: inline-flex; align-items: center; gap: 12px; }
+.glance .visit { min-width: 92px; }
+.glance .tableWrap { border: 1px solid var(--color-line-strong); border-radius: 16px; background: var(--color-surface); }
+.relatedPrices { width: 100%; max-width: 1100px; margin: 44px auto 0; padding: 0 16px 8px; }
+.relatedPrices h2 { margin: 0 0 4px; color: var(--color-ink); font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+.relatedPrices > p { margin: 0 0 18px; color: var(--color-muted); font-size: 14.5px; }

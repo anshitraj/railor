@@ -14,6 +14,7 @@ import { GuideCard } from "../../../../components/marketing/guides/guide-card";
 import { WaysToSendSection, WaysToSendSkeleton } from "../../../../components/marketing/guides/ways-section";
 import { ComparisonSkeleton, RouteComparison } from "../../../../components/marketing/guides/route-comparison";
 import { GuideSearch } from "../../../../components/marketing/guides/guide-search";
+import { GlanceSkeleton, ProviderGlance } from "../../../../components/marketing/guides/provider-glance";
 import { LiveRanking, RankingSkeleton, rankAmount } from "../../../../components/marketing/guides/live-ranking";
 import styles from "../../../../components/marketing/guides/guides.module.css";
 
@@ -83,7 +84,11 @@ export default async function GuidePage({ params, searchParams }: Props) {
               ) : null}
             </>}
           />
-          {guide.live ? null : (
+          {guide.live ? null : guide.glance ? (
+            <Suspense key={`${query.route ?? ""}-${query.amount ?? ""}`} fallback={<GlanceSkeleton />}>
+              <ProviderGlance routeParam={query.route} amountParam={query.amount} signedIn={signedIn} />
+            </Suspense>
+          ) : (
             <Suspense key={query.amount ?? "default"} fallback={<ComparisonSkeleton />}>
               <RouteComparison routes={guide.compare ?? [guide.route]} signedIn={signedIn} amountParam={query.amount} />
             </Suspense>
@@ -112,7 +117,7 @@ export default async function GuidePage({ params, searchParams }: Props) {
           <nav className={styles.toc} aria-label="In this guide">
             <p>In this guide</p>
             {content.sections.map((section) => <a key={section.id} href={`#${section.id}`}>{section.heading}</a>)}
-            {guide.live ? null : <a href="#compare-providers">Compare providers</a>}
+            {guide.live ? null : <a href={guide.glance ? "#at-a-glance" : "#compare-providers"}>{guide.glance ? "Providers at a glance" : "Compare providers"}</a>}
             <a href="#ways-to-send">Ways to send {guide.route.label}</a>
           </nav>
         </aside>

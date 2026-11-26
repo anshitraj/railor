@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { GUIDES, GUIDE_TOPICS, guideBySlug, guidesInTopic } from "./catalog";
+import { GUIDES, GUIDE_TOPICS, guideBySlug, guidesInTopic, relatedGuides } from "./catalog";
 import { GUIDE_CONTENT, type Block } from "./content";
 import { POPULAR_DESTINATIONS, convertHref, currencyForCountry, linkForViewer, resolveDestinations } from "./destinations";
 import { guideJsonLd, jsonLdScript } from "./schema";
@@ -80,6 +80,23 @@ describe("guide catalogue", () => {
     expect(90_000 - 89_152).toBe(848);
     expect(((90_000 - 88_000) / 90_000) * 100).toBeCloseTo(2.2, 1);
     expect(((90_000 - 89_152) / 90_000) * 100).toBeCloseTo(0.9, 1);
+  });
+});
+
+describe("guides for a currency pair", () => {
+  it("puts the guides for the pair first, in either direction, and always returns a full row", () => {
+    const usdInr = relatedGuides("USD", "INR").map((guide) => guide.slug);
+    expect(usdInr).toHaveLength(4);
+    expect(usdInr).toContain("usd-to-inr");
+    expect(usdInr).toContain("send-money-to-india");
+    const inrUsd = relatedGuides("INR", "USD").map((guide) => guide.slug);
+    expect(inrUsd).toHaveLength(4);
+    expect(inrUsd.every((slug) => ["send-money-from-india-to-usa", "best-money-transfer-app-in-india", "lrs-limit-and-tcs-explained", "cheapest-way-to-send-money-abroad-from-india", "send-money-abroad-for-study-from-india", "swift-charges-our-sha-ben-explained", "is-this-money-transfer-service-safe-in-india", "best-money-transfer-services"].includes(slug) || slug.startsWith("send-money") || slug.startsWith("how-to"))).toBe(true);
+    // A pair nobody has written about still gets guides: the general ones.
+    const unusual = relatedGuides("NZD", "PLN");
+    expect(unusual).toHaveLength(4);
+    expect(new Set(unusual.map((guide) => guide.slug)).size).toBe(4);
+    expect(relatedGuides("USD", "INR", 3)).toHaveLength(3);
   });
 });
 

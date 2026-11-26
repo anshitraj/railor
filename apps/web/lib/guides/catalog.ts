@@ -39,6 +39,8 @@ export interface GuideMeta {
   compare?: ReadonlyArray<{ from: string; to: string; country: string }>;
   /** A guide that shows today's ranking from Railor's own price check. */
   live?: boolean;
+  /** A guide built around a live "providers at a glance" table that can be switched between routes. */
+  glance?: boolean;
 }
 
 export const GUIDES: readonly GuideMeta[] = [
@@ -108,6 +110,18 @@ export const GUIDES: readonly GuideMeta[] = [
     banner: "/images/guides/usd-to-inr.svg",
     route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
     live: true,
+  },
+  {
+    slug: "best-money-transfer-services",
+    title: "The best money transfer services, ranked live",
+    summary: "How to choose, and a table of the providers that can serve your route, built from today's prices rather than opinion.",
+    topic: "rates",
+    minutes: 9,
+    updated: "2026-11-26",
+    art: { symbols: ["$", "€"], flags: ["US", "DE"] },
+    banner: "/images/guides/best-money-transfer-services.jpg",
+    route: { from: "USD", to: "EUR", country: "DE", label: "USD to EUR" },
+    glance: true,
   },
   {
     slug: "send-money-from-india-to-usa",
@@ -286,3 +300,27 @@ export function guidesInTopic(topic: GuideTopic): GuideMeta[] {
 }
 
 export const guideHref = (slug: string) => `/guides/${slug}`;
+
+/**
+ * Guides about a currency pair, best match first: the same pair in either
+ * direction, then guides that end in or start from one of its currencies, and
+ * general guides to fill the row, so the calculator always has several to show.
+ */
+export function relatedGuides(from: string, to: string, limit = 4): GuideMeta[] {
+  const a = from.toUpperCase();
+  const b = to.toUpperCase();
+  const score = (guide: GuideMeta) => {
+    const routes = [guide.route, ...(guide.compare ?? [])];
+    let points = 0;
+    if (routes.some((route) => route.from === a && route.to === b)) points += 6;
+    else if (routes.some((route) => route.from === b && route.to === a)) points += 4;
+    if (routes.some((route) => route.to === b)) points += 2;
+    if (routes.some((route) => route.from === a)) points += 1;
+    if (routes.some((route) => route.to === a || route.from === b)) points += 1;
+    return points;
+  };
+  const ranked = GUIDES.map((guide, index) => ({ guide, index, points: score(guide) })).sort((x, y) => y.points - x.points || x.index - y.index);
+  const matched = ranked.filter((item) => item.points >= 4).slice(0, limit).map((item) => item.guide);
+  const general = GUIDES.filter((guide) => guide.topic === "start" && !matched.includes(guide));
+  return [...matched, ...general, ...ranked.map((item) => item.guide).filter((guide) => !matched.includes(guide) && !general.includes(guide))].slice(0, limit);
+}

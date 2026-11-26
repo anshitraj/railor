@@ -9,6 +9,10 @@
 
 import { INDIA_CONTENT } from "./content-india";
 
+const p = (text: string): Block => ({ type: "p", text });
+const list = (items: string[], ordered = false): Block => ({ type: "list", items, ordered });
+const tip = (title: string, text: string): Block => ({ type: "callout", tone: "tip", title, text });
+
 export type Block =
   | { type: "p"; text: string }
   | { type: "list"; items: string[]; ordered?: boolean }
@@ -336,6 +340,94 @@ const BASE_CONTENT: Record<string, GuideContent> = {
       { q: "Which is the best way to send USD to INR?", a: "The one that delivers the most rupees for your amount and that your recipient can use. It changes through the day, so the ranking above is live." },
       { q: "Is the ranking the same for 100 and 10,000 dollars?", a: "Not always. Fixed fees weigh more on small transfers and the exchange rate weighs more on large ones. Change the amount to see it." },
       { q: "Is this ranking the same for everyone?", a: "It is for a personal sender in the US. Prices can differ by who is sending and how they pay, so a free Railor account matches the comparison to your profile and amount." },
+    ],
+  },
+  "best-money-transfer-services": {
+    intro:
+      "The best money transfer service is the one that delivers the most to your recipient for your amount, on your route, the way you want to pay and in the time you have. That changes by corridor and by the hour, so this guide shows how to choose and then builds the ranking from today's prices instead of from opinion.",
+    sections: [
+      {
+        id: "what-best-means",
+        heading: "What \"best\" means",
+        blocks: [
+          list([
+            "**What arrives.** The amount the recipient receives for the amount you send is the figure that matters. A low fee and a weak exchange rate can still cost more than a higher fee and a good rate.",
+            "**The exchange-rate markup.** Providers rarely give you the mid-market rate. The gap between it and the rate you are given is the markup, and it is often the biggest cost. [The real cost of sending money](/guides/real-cost-of-sending-money) shows how to measure it.",
+            "**Fees.** Flat fees, percentage fees and fees that depend on how you pay.",
+            "**Speed.** Minutes, hours or days, and whether a first transfer takes longer while your identity is checked.",
+            "**How you pay and how they receive.** Bank transfer, debit card, credit card, cash pickup, mobile wallet. Each can change the price.",
+            "**Limits and safety.** How much you can send at once, and whether the provider is licensed where you send from.",
+          ]),
+        ],
+      },
+      {
+        id: "kinds",
+        heading: "The kinds of provider",
+        blocks: [
+          list([
+            "**Banks.** Familiar and good for large or unusual transfers, but often with a bank fee and a margin on the rate, and a wire can pick up charges along the way.",
+            "**Specialist online services.** Built for sending abroad, with clear fees and usually the narrowest markup. They differ widely, so compare them.",
+            "**Wallets and multi-currency accounts.** Strong if you already hold and spend several currencies, and often cheaper between the same provider's own users.",
+            "**Cash-pickup and remittance networks.** The widest reach for people without a bank account, usually at a higher cost.",
+            "**Brokers for large amounts.** Useful for property, business or tuition payments, sometimes with forward contracts. They suit larger sums more than small ones.",
+          ]),
+          p("No kind wins every route. A provider that is cheapest from one country to another can be weak on the next corridor, which is why the table below can be switched between routes."),
+        ],
+      },
+      {
+        id: "read-the-table",
+        heading: "How to read the table",
+        blocks: [
+          list([
+            "**Recipient gets.** What arrives in the destination currency, after the fee and the exchange rate. The table ranks by this.",
+            "**Markup.** How far that amount sits below what the mid-market rate would give, fee and exchange rate together. A negative figure means the price beats the mid-market amount, which usually means a first-transfer offer.",
+            "**Fees.** The provider's stated fee for this amount. \"Check fee\" means it isn't published for this setup.",
+            "**Delivery.** The provider's own estimate. It can be slower for a first transfer.",
+            "**How you pay.** The funding method the price is for. A different method can change the price.",
+            "**Source.** Each price is a live public quote, a published fee schedule or a dated estimate, and says so.",
+          ]),
+          tip("Look at the time", "Prices move through the day. Each price shows when it was collected. Confirm the final figure with the provider before you pay."),
+        ],
+      },
+      {
+        id: "situations",
+        heading: "Choosing for your situation",
+        blocks: [
+          list([
+            "**Sending to family regularly.** Compare the same amount every time you send, and check the delivery time and how your family wants to receive.",
+            "**A large one-off transfer.** The markup matters more than the fee, and limits matter. Check how large amounts are handled and the documents asked for.",
+            "**Paying a business or an invoice.** Look for providers that accept commercial payments, can pay an exact amount and give you proof of payment.",
+            "**Receiving payments as a freelancer.** Compare what lands in your account, who pays the fee and what paperwork you get. [Receiving money from abroad in India](/guides/receive-money-from-abroad-in-india) covers it for India.",
+          ]),
+        ],
+      },
+      {
+        id: "safe",
+        heading: "Check that a provider is licensed",
+        blocks: [
+          p("Money transfer services are regulated where they operate. Before a large transfer, check that the provider is authorised in the country you send from, that it verifies your identity and that you pay from your own account in its own name. For India, [how to check a service is authorised](/guides/is-this-money-transfer-service-safe-in-india) shows what to look for."),
+        ],
+      },
+      {
+        id: "mistakes",
+        heading: "Mistakes that cost money",
+        blocks: [
+          list([
+            "Picking by the advertised fee instead of by what arrives.",
+            "Comparing different amounts, or different ways of paying, across providers.",
+            "Sending on a price from earlier in the day.",
+            "Assuming a first-transfer offer applies to you.",
+            "Skipping the recipient's details check, which delays the transfer.",
+          ]),
+        ],
+      },
+    ],
+    faq: [
+      { q: "Which is the best money transfer service?", a: "It depends on the route, the amount and how you pay. The table ranks the providers that can serve your route by what the recipient receives today." },
+      { q: "Is the cheapest service always the best?", a: "Not always. A slightly cheaper option that arrives days later or caps your amount may not suit you. Pick the cheapest one that meets your deadline and limits." },
+      { q: "How often do the rankings change?", a: "Rates move through the day and providers refresh their prices, so the order can change within hours. Each price shows when it was collected." },
+      { q: "Why do some providers show a negative markup?", a: "A negative markup means the amount arriving beats the mid-market amount, which usually comes from a first-transfer offer. Offers apply to new customers only." },
+      { q: "Does Railor earn money from the providers in the table?", a: "The ranking is ordered by what arrives, not by who pays. Railor shows the source of every price so you can check it." },
     ],
   },
 };

@@ -25,6 +25,7 @@ CREAM = (255, 244, 230)
 
 # slug -> (cover title, left city, right city, sender symbol, receiver symbol)
 COVERS = {
+    "best-money-transfer-services": ("The best money transfer services, ranked live", "usa", "uk", "$", "€"),
     "send-money-from-india-to-usa": ("Send money from India to the USA", "india", "usa", "₹", "$"),
     "best-money-transfer-app-in-india": ("Best money transfer app in India", "india", "india", "₹", "$"),
     "cheapest-way-to-send-money-abroad-from-india": ("Cheapest way to send money abroad", "india", "uk", "₹", "£"),
