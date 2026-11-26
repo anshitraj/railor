@@ -8,11 +8,12 @@ import { resolvePriceInput, runPriceCheck } from "./pricing";
 import { listSavedPairs, parsePairInput, type SavedPair } from "./saved-pairs";
 import { savedTransferHref, type TransferBookmark } from "./saved-transfer";
 import { appOrigin } from "./security";
-import { alertDecision, alertTarget, ALERT_STEPS, completePrices, type BestPrice } from "./rate-alert-rules";
+import { alertDecision, alertTarget, ALERT_STEPS, completePrices, digestDecision, type BestPrice } from "./rate-alert-rules";
 import { sendMail, smtpConfigured } from "./mail";
 import { createRateAlertEmail } from "./emails/rate-alert";
+import { createRateDigestEmail } from "./emails/rate-digest";
 import { getEntitlement, withOrgLock } from "./entitlements";
-import { nextPlanFor, PLAN_LIMITS, PLAN_PRICES, type Plan } from "./plans";
+import { ALERT_UPDATES, nextPlanFor, PLAN_LIMITS, PLAN_PRICES, type Plan } from "./plans";
 
 /** What a saved pair shows about its alert. Only active alerts are listed. */
 export interface RateAlertSummary {
@@ -99,6 +100,7 @@ export async function setRateAlert(workspace: Workspace, savedSearchId: string, 
   const values = {
     input: input as unknown as Record<string, unknown>, targetAmount: alertTarget(best.amount, step), baselineAmount: best.amount, active: true,
     lastCheckedAt: now, lastBestAmount: best.amount, lastBestProvider: best.providerName, lastMet: false, updatedAt: now,
+    lastDigestAt: now, lastDigestAmount: best.amount,
   };
   const row = await withOrgLock(workspace.organizationId, async (tx, locked) => {
     if (await otherActiveAlerts(tx, workspace.organizationId, savedSearchId) >= locked.limits.rateAlerts) return null;
@@ -127,7 +129,7 @@ export async function unsubscribeRateAlert(token: string): Promise<{ label: stri
   return { label: saved?.input ?? "this pair" };
 }
 
-export interface RateAlertRun { alerts: number; checks: number; notified: number; failedChecks: number; failedEmails: number; skipped: number; overLimit: number }
+export interface RateAlertRun { alerts: number; checks: number; notified: number; /** Scheduled and price-moved updates, counted apart from target emails. */ updates: number; failedChecks: number; failedEmails: number; skipped: number; overLimit: number }
 
 /**
  * Re-check the least recently checked alerts, one price check per distinct
@@ -147,8 +149,10 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
 
   // A workspace over its plan's limit (after a downgrade) keeps its oldest alerts running; the rest wait.
   const allowed = new Set<string>();
+  const plans = new Map<string, Plan>();
   for (const organizationId of new Set(due.map((row) => row.alert.organizationId))) {
-    const { limits } = await getEntitlement(organizationId);
+    const { limits, plan } = await getEntitlement(organizationId);
+    plans.set(organizationId, plan);
     const kept = await db.select({ id: rateAlerts.id }).from(rateAlerts)
       .where(and(eq(rateAlerts.organizationId, organizationId), eq(rateAlerts.active, true)))
       .orderBy(asc(rateAlerts.createdAt), asc(rateAlerts.id)).limit(limits.rateAlerts);
@@ -162,7 +166,7 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
 
-  const run: RateAlertRun = { alerts: due.length, checks: 0, notified: 0, failedChecks: 0, failedEmails: 0, skipped: 0, overLimit };
+  const run: RateAlertRun = { alerts: due.length, checks: 0, notified: 0, updates: 0, failedChecks: 0, failedEmails: 0, skipped: 0, overLimit };
   const mail = smtpConfigured();
   const origin = appOrigin().replace(/\/$/, "");
   for (const members of groups.values()) {
@@ -192,12 +196,28 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
         const sent = await sendMail(message);
         if (sent.sent) { notified = true; run.notified += 1; } else run.failedEmails += 1;
       }
+      // The plan's own update: weekly or daily, and when the best price moves. A target email counts as an update too.
+      const plan = plans.get(alert.organizationId) ?? "free";
+      const update = decision.notify ? { send: false } : digestDecision(ALERT_UPDATES[plan], { lastDigestAt: alert.lastDigestAt, lastDigestAmount: alert.lastDigestAmount }, best, now);
+      let updated = false;
+      if (update.send && best && pair && mail && "reason" in update && update.reason) {
+        const message = createRateDigestEmail({
+          to: email, from: input.sourceCurrency, toCurrency: input.destinationCurrency, amount: input.amount, providerName: pair.provider?.name,
+          best, others: prices.slice(1, 4), previousAmount: alert.lastDigestAmount, reason: update.reason, plan,
+          compareUrl: `${origin}${savedTransferHref(pair)}`, manageUrl: `${origin}/app/saved`, plansUrl: `${origin}/pricing`,
+          unsubscribeUrl: `${origin}/api/alerts/unsubscribe?token=${encodeURIComponent(alert.unsubscribeToken)}`,
+        });
+        const sent = await sendMail(message);
+        if (sent.sent) { updated = true; run.updates += 1; } else run.failedEmails += 1;
+      }
+      const startsClock = "baseline" in update && update.baseline === true;
       // A failed or skipped email leaves lastMet false, so the next run tries again.
       const met = decision.notify && !notified ? false : decision.met;
       await db.update(rateAlerts).set({
         lastCheckedAt: now, lastMet: met,
         ...(best ? { lastBestAmount: best.amount, lastBestProvider: best.providerName } : {}),
         ...(notified ? { lastNotifiedAt: now } : {}),
+        ...(best && (notified || updated || startsClock) ? { lastDigestAt: now, lastDigestAmount: best.amount } : {}),
       }).where(eq(rateAlerts.id, alert.id));
     }
   }

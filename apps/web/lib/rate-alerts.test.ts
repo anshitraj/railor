@@ -172,3 +172,79 @@ describe("plan limits", () => {
     expect(run).toMatchObject({ alerts: 4, overLimit: 3, notified: 1 });
   });
 });
+
+describe("scheduled updates by plan", () => {
+  const DAY = 86_400_000;
+  const at = (days: number) => () => new Date(Date.now() + days * DAY);
+  async function withPlan(organizationId: string, plan: "plus" | "pro") {
+    await state.db.insert(database.organizationEntitlements).values({ organizationId, plan, validUntil: new Date(Date.now() + 40 * DAY) });
+  }
+
+  it("sends a free workspace one update a week and nothing in between, even when the price moves", async () => {
+    const { workspace, savedId, email } = await savedPair();
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 2);
+    state.rows = [row("infinity", 93_800)];
+    expect(await alerts.checkRateAlerts({ now: at(3) })).toMatchObject({ updates: 0, notified: 0 });
+    expect(await alerts.checkRateAlerts({ now: at(7) })).toMatchObject({ updates: 1, notified: 0 });
+    expect(state.sent[0]).toMatchObject({ to: email, subject: expect.stringContaining("your weekly rate update") });
+    expect(state.sent[0].text).toContain("You're on Free");
+    expect(state.sent[0].text).not.toContain("WhatsApp");
+    expect(await alerts.checkRateAlerts({ now: at(8) })).toMatchObject({ updates: 0 });
+  });
+
+  it("gives Plus the weekly update and an email when the best price moves", async () => {
+    const { workspace, savedId } = await savedPair();
+    await withPlan(workspace.organizationId, "plus");
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 2);
+    state.rows = [row("infinity", 93_000)];
+    expect(await alerts.checkRateAlerts({ now: at(2) })).toMatchObject({ updates: 0 });
+    state.rows = [row("infinity", 93_650)];
+    expect(await alerts.checkRateAlerts({ now: at(3) })).toMatchObject({ updates: 1 });
+    expect(state.sent[0].subject).toContain("best price up 0.70%");
+    // The move is now the baseline: the same price a day later sends nothing.
+    expect(await alerts.checkRateAlerts({ now: at(4) })).toMatchObject({ updates: 0 });
+  });
+
+  it("gives Pro a daily update that mentions WhatsApp as coming", async () => {
+    const { workspace, savedId } = await savedPair();
+    await withPlan(workspace.organizationId, "pro");
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 2);
+    expect(await alerts.checkRateAlerts({ now: at(1) })).toMatchObject({ updates: 1 });
+    expect(state.sent[0].subject).toContain("your daily rate update");
+    expect(state.sent[0].text).toContain("WhatsApp alerts are coming soon.");
+    expect(await alerts.checkRateAlerts({ now: at(2) })).toMatchObject({ updates: 1 });
+  });
+
+  it("sends the target email instead of an update when both are due, and counts it as the update", async () => {
+    const { workspace, savedId } = await savedPair();
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 1);
+    state.rows = [row("infinity", 94_000)];
+    expect(await alerts.checkRateAlerts({ now: at(7) })).toMatchObject({ notified: 1, updates: 0 });
+    expect(state.sent).toHaveLength(1);
+    expect(await alerts.checkRateAlerts({ now: at(8) })).toMatchObject({ updates: 0 });
+  });
+
+  it("starts counting for an alert made before updates existed, instead of mailing at once", async () => {
+    const { workspace, savedId } = await savedPair();
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 2);
+    await state.db.update(database.rateAlerts).set({ lastDigestAt: null, lastDigestAmount: null });
+    expect(await alerts.checkRateAlerts({ now: at(30) })).toMatchObject({ updates: 0 });
+    expect(await alertRow(savedId)).toMatchObject({ lastDigestAmount: 93_000 });
+    expect((await alertRow(savedId)).lastDigestAt).not.toBeNull();
+  });
+
+  it("retries a failed update email on the next run", async () => {
+    const { workspace, savedId } = await savedPair();
+    state.rows = [row("infinity", 93_000)];
+    await alerts.setRateAlert(workspace, savedId, 2);
+    state.mailOk = false;
+    expect(await alerts.checkRateAlerts({ now: at(7) })).toMatchObject({ updates: 0, failedEmails: 1 });
+    state.mailOk = true;
+    expect(await alerts.checkRateAlerts({ now: at(8) })).toMatchObject({ updates: 1 });
+  });
+});

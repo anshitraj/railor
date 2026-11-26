@@ -1151,6 +1151,9 @@ export const rateAlerts = pgTable(
     lastBestProvider: text("last_best_provider"),
     lastMet: boolean("last_met").default(false).notNull(),
     lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+    /** When the last scheduled or price-moved update went out, and the best price it showed. */
+    lastDigestAt: timestamp("last_digest_at", { withTimezone: true }),
+    lastDigestAmount: numeric("last_digest_amount", { precision: 20, scale: 4, mode: "number" }),
     unsubscribeToken: text("unsubscribe_token").notNull(),
     createdAt: now(),
     updatedAt: updated(),

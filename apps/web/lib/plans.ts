@@ -37,3 +37,23 @@ export function effectivePlan(row: { plan: string; status: string; validFrom: Da
   if (!row || row.plan === "free" || !(row.plan in PLAN_LIMITS)) return "free";
   return row.status === "active" && row.validFrom <= now && row.validUntil !== null && row.validUntil > now ? row.plan as Plan : "free";
 }
+
+/**
+ * How often a plan's rate alerts email a price update, besides the email sent
+ * when a target is reached. Free: weekly. Plus: weekly, and again when the best
+ * price moves. Pro and above: daily, and when it moves. WhatsApp is planned for
+ * Pro and above; nothing is sent there yet, so it is only ever shown as coming.
+ */
+export const ALERT_UPDATES: Record<Plan, { everyDays: 1 | 7; onChange: boolean; whatsapp: "soon" | null }> = {
+  free: { everyDays: 7, onChange: false, whatsapp: null },
+  plus: { everyDays: 7, onChange: true, whatsapp: null },
+  pro: { everyDays: 1, onChange: true, whatsapp: "soon" },
+  business: { everyDays: 1, onChange: true, whatsapp: "soon" },
+  founding: { everyDays: 1, onChange: true, whatsapp: "soon" },
+};
+
+/** One plain sentence on what the plan's alerts send. */
+export function alertUpdatesLine(plan: Plan): string {
+  const updates = ALERT_UPDATES[plan];
+  return `${updates.everyDays === 1 ? "A daily" : "A weekly"} rate email${updates.onChange ? ", plus an email when the best price moves" : ""}.`;
+}

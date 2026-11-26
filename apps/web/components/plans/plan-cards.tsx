@@ -12,13 +12,13 @@ function tiers(): Tier[] {
   const { free, plus, pro, business } = PLAN_LIMITS;
   return [
     { id: "free", name: "Free", price: "$0", who: "Check any price, any time.", features: [
-      "Unlimited price checks", `${n(free.savedPairs)} saved transfers`, `${free.rateAlerts} rate alert by email`, `${free.savedCorridors} saved routes · ${free.monitors} monitor`, `${n(free.apiRequests)} API requests a month`,
+      "Unlimited price checks", `${n(free.savedPairs)} saved transfers`, `${free.rateAlerts} rate alert by email, with a weekly rate email`, `${free.savedCorridors} saved routes · ${free.monitors} monitor`, `${n(free.apiRequests)} API requests a month`,
     ] },
     { ...plan("plus"), who: "For people who send money often.", features: [
-      "Everything in Free", `${plus.rateAlerts} rate alerts by email`, `${n(plus.savedPairs)} saved transfers`, `Email when a watched route changes (${plus.monitors} monitors)`, `${n(plus.apiRequests)} API requests a month`,
+      "Everything in Free", `${plus.rateAlerts} rate alerts by email, weekly and when the best price moves`, `${n(plus.savedPairs)} saved transfers`, `Email when a watched route changes (${plus.monitors} monitors)`, `${n(plus.apiRequests)} API requests a month`,
     ] },
     { ...plan("pro"), popular: true, who: "For freelancers and small teams paid from abroad.", features: [
-      "Everything in Plus", `${pro.rateAlerts} rate alerts by email`, `${n(pro.savedPairs)} saved transfers · ${pro.savedCorridors} routes · ${pro.monitors} monitors`, "Connect your own provider accounts for your exact quotes", `${n(pro.apiRequests)} API and MCP requests a month`,
+      "Everything in Plus", `${pro.rateAlerts} rate alerts by email, daily and when the best price moves`, "WhatsApp alerts (coming soon)", `${n(pro.savedPairs)} saved transfers · ${pro.savedCorridors} routes · ${pro.monitors} monitors`, "Connect your own provider accounts for your exact quotes", `${n(pro.apiRequests)} API and MCP requests a month`,
     ] },
     { ...plan("business"), who: "For finance teams and products built on Railor.", features: [
       "Everything in Pro", `${business.rateAlerts} rate alerts by email`, `${n(business.savedPairs)} saved transfers · ${business.savedCorridors} routes · ${business.monitors} monitors`, `${n(business.apiRequests)} API and MCP requests a month`, "Your team shares saved transfers and routes",
