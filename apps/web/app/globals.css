@@ -756,3 +756,15 @@
 .saved-routes > a:hover { border-color: var(--color-ink); color: var(--color-ink); }
 .saved-routes > a[aria-current="page"] { border-color: var(--color-ink); background: var(--color-ink); color: #fff; }
 .saved-routes > a.saved-routes-new { border-style: dashed; color: var(--color-muted); }
+
+/* ── Scroll motion (landing) ─────────────────────────────────────────
+   Elements tagged by HomeScrollMotion rise once into place. Hidden only after
+   the script has run (data-reveal-ready), so nothing disappears without it. */
+html[data-smooth-scroll] { scroll-behavior: auto !important; }
+@media (prefers-reduced-motion: no-preference) {
+  html[data-reveal-ready] [data-reveal] {
+    transition: opacity .9s cubic-bezier(.2, .7, .2, 1), translate 1s cubic-bezier(.2, .7, .2, 1), filter .9s cubic-bezier(.2, .7, .2, 1);
+    transition-delay: calc(var(--reveal-i, 0) * 90ms);
+  }
+  html[data-reveal-ready] [data-reveal]:not([data-revealed]) { opacity: 0; translate: 0 32px; filter: blur(8px); }
+}

@@ -10,6 +10,7 @@ import { RouteMapSection } from "../components/marketing/home/route-map";
 import { AudiencesSection, DevelopersSection, FaqSection, FinalCta, TrustSection } from "../components/marketing/home/sections";
 import { WhyRailor } from "../components/marketing/home/why-railor";
 import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
+import { SmoothScroll } from "../components/marketing/motion/smooth-scroll";
 import { MobileCompareBar } from "../components/marketing/home/mobile-compare-bar";
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
@@ -50,6 +51,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     <>
       <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
       <main id="main" className={homeStyles.motionPage}>
+        <SmoothScroll />
         <HomeScrollMotion />
         <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <NumbersSection stats={stats} />

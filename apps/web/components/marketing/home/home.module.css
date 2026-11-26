@@ -1,7 +1,7 @@
 /* ── Shared ───────────────────────────────────────────────────────── */
 .container { width: min(1240px, calc(100% - 32px)); margin-inline: auto; }
-.section { padding: 96px 0; }
-.sectionAlt { background: var(--color-surface); border-block: 1px solid var(--color-line); }
+.section { padding: 112px 0; }
+.sectionAlt { background: transparent; }
 .eyebrow { color: var(--color-orange-deep); font-size: 14px; font-weight: 650; }
 .title { margin-top: 10px; color: var(--color-ink); font-size: clamp(32px, 4.2vw, 52px); font-weight: 650; letter-spacing: -.032em; line-height: 1.06; }
 .lead { max-width: 56ch; margin-top: 16px; color: var(--color-muted); font-size: clamp(16px, 1.4vw, 18px); line-height: 1.6; }
@@ -16,25 +16,7 @@
 .textLink svg { transition: transform .2s var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { .textLink:hover svg { transform: translateX(3px); } }
 
-@keyframes homeReveal {
-  from { opacity: .84; translate: 0 24px; }
-  to { opacity: 1; translate: 0 0; }
-}
 
-@media (min-width: 720px) and (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .motionPage :is(.head, .step, .provider, .mapViewport, .routeChips, .audience, .devCode, .basis, .faq, .final, .logos, :global([data-home-reveal])):not(:focus-within) {
-      animation: homeReveal var(--ease-out) both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 72%;
-    }
-  }
-  @supports not (animation-timeline: view()) {
-    .motionPage :global([data-home-entered]):not(:focus-within) {
-      animation: homeReveal 580ms var(--ease-out) both;
-    }
-  }
-}
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .hero { position: relative; isolation: isolate; overflow: hidden; padding: 28px 0 56px; background: radial-gradient(900px 520px at 68% 8%, #fffefb 0%, transparent 70%), linear-gradient(180deg, #fffcf7 0%, var(--color-canvas) 100%); }
@@ -183,7 +165,8 @@
 .providerFoot p { color: var(--color-muted); font-size: 14px; }
 
 /* ── Routes map ───────────────────────────────────────────────────── */
-.mapSection { padding: 96px 0; background: var(--color-ink); color: var(--color-on-dark); }
+.mapSection { position: relative; isolation: isolate; overflow: hidden; padding: 112px 0; background: #14100d; color: var(--color-on-dark); }
+.mapSection > :global(div):not([aria-hidden]) { position: relative; z-index: 1; }
 .mapSection .eyebrow { color: var(--color-accent-light); }
 .mapSection .title { color: #fff; }
 .mapSection .lead { color: rgb(250 246 239 / .66); }
@@ -255,18 +238,19 @@
 @keyframes answerIn { from { opacity: 0; transform: translateY(-4px); } }
 
 /* ── Final CTA ────────────────────────────────────────────────────── */
-.final { position: relative; overflow: hidden; display: grid; justify-items: center; gap: 22px; padding: 72px 24px; border-radius: 32px; background: var(--color-orange); color: #fff; text-align: center; }
-.final h2 { max-width: 18ch; font-size: clamp(34px, 5vw, 60px); font-weight: 700; letter-spacing: -.035em; line-height: 1.02; }
-.final p { max-width: 46ch; color: rgb(255 255 255 / .86); font-size: 17px; }
-.final .btnPrimary { background: var(--color-ink); }
-.final .btnSecondary { border-color: rgb(255 255 255 / .5); background: transparent; color: #fff; }
-.final .btnSecondary:hover { border-color: #fff; }
-.finalCoins { position: absolute; inset: 0; pointer-events: none; }
-.finalCoins :global(.coin) { position: absolute; opacity: .9; }
-.finalCoins :global(.coin):nth-child(1) { --size: 92px; left: 6%; top: 18%; rotate: -14deg; }
-.finalCoins :global(.coin):nth-child(2) { --size: 66px; left: 12%; bottom: 14%; rotate: 10deg; }
-.finalCoins :global(.coin):nth-child(3) { --size: 72px; right: 8%; top: 16%; rotate: 12deg; }
-.finalCoins :global(.coin):nth-child(4) { --size: 58px; right: 14%; bottom: 16%; rotate: -8deg; }
+.final { position: relative; isolation: isolate; overflow: hidden; display: grid; min-height: 460px; place-items: center; padding: 88px 24px; border-radius: 36px; background: #14100d; color: #fff; text-align: center; }
+.finalBody { position: relative; z-index: 1; display: grid; justify-items: center; gap: 20px; }
+/* A dark pool behind the words so the moving rails never cross the text. */
+.final::after { content: ""; position: absolute; z-index: 0; inset: 0; background: radial-gradient(ellipse 46% 52% at 50% 50%, rgb(20 16 13 / .92) 0%, rgb(20 16 13 / .6) 55%, transparent 100%); pointer-events: none; }
+.mapSection .head { position: relative; }
+.mapSection .head::before { content: ""; position: absolute; z-index: -1; inset: -40px -60px; background: radial-gradient(ellipse at 30% 50%, rgb(20 16 13 / .85), transparent 70%); pointer-events: none; }
+.final h2 { max-width: 16ch; font-size: clamp(36px, 5.4vw, 68px); font-weight: 720; letter-spacing: -.05em; line-height: 1; text-wrap: balance; }
+.final p { max-width: 44ch; color: rgb(255 246 236 / .72); font-size: 17px; line-height: 1.55; }
+.finalActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
+.finalPrimary, .finalSecondary { display: inline-flex; height: 52px; align-items: center; gap: 8px; padding: 0 24px; border-radius: 999px; font-size: 15.5px; font-weight: 650; white-space: nowrap; transition: transform .2s var(--ease-out), background-color .2s ease; }
+.finalPrimary { background: var(--color-orange); color: #fff; box-shadow: 0 16px 34px -16px rgb(233 86 42 / .8); }
+.finalSecondary { background: rgb(255 255 255 / .1); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+@media (hover: hover) and (pointer: fine) { .finalPrimary:hover, .finalSecondary:hover { transform: translateY(-1px); } }
 
 @media (min-width: 720px) and (max-width: 999px) {
   .globe { display: block; top: 300px; right: -18%; width: 620px; aspect-ratio: 1; opacity: .55; mask-image: radial-gradient(closest-side, #000 70%, transparent 100%); }
@@ -332,8 +316,6 @@
   .basisGrid::-webkit-scrollbar { display: none; }
   .basisGrid > li { flex: 0 0 min(74vw, 280px); scroll-snap-align: start; }
   /* Final call: a warm glow instead of coin art. */
-  .finalCoins { display: none; }
-  .final { isolation: isolate; background: radial-gradient(130% 90% at 50% 0%, #ff8257 0%, var(--color-orange) 46%, #cf4219 100%); }
   .final::before { position: absolute; z-index: -1; inset: -50%; background: conic-gradient(from 90deg, transparent 0 62%, rgb(255 255 255 / .2) 74%, transparent 86%); pointer-events: none; content: ""; }
   .steps, .audiences { position: relative; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; overscroll-behavior-inline: contain; }
   .step, .audience { min-width: 0; flex: 0 0 100%; scroll-snap-align: start; }
@@ -366,10 +348,6 @@
   .logos { margin-top: 44px; }
   .dev { gap: 24px; padding: 28px 14px 14px; }
   .dev > :first-child { padding-inline: 6px; }
-  .final { padding: 88px 20px 52px; border-radius: 28px; }
-  .finalCoins :global(.coin):nth-child(1) { --size: 46px; top: 24px; left: 14%; }
-  .finalCoins :global(.coin):nth-child(3) { --size: 39px; top: 20px; right: 15%; }
-  .finalCoins :global(.coin):nth-child(even) { display: none; }
 }
 
 @media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
@@ -446,7 +424,6 @@
   .phoneStickers > :nth-child(1) { top: -30px; left: -12px; }
   .phoneStickers > :nth-child(2) { top: -28px; right: 2px; }
   .phoneStickers > :nth-child(3) { right: 8px; bottom: -18px; }
-  .finalStickers { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-bottom: 10px; }
 }
 
 /* ── Railor in numbers ───────────────────────────────────────────── */

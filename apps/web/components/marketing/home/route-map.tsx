@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BandVideo } from "../motion/band-video";
 import { ArrowRight } from "lucide-react";
 import { Flag } from "@railor/ui";
 import { MAP_HEIGHT, MAP_WIDTH } from "@railor/core/geo";
@@ -23,6 +24,7 @@ const ROUTES = [
 export function RouteMapSection() {
   return (
     <section className={styles.mapSection} aria-labelledby="routes-title">
+      <BandVideo name="rails" opacity={0.38} />
       <div className={styles.container}>
         <div className={styles.head}>
           <div>
