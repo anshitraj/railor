@@ -8,6 +8,7 @@ import { CardRail } from "./card-rail";
 import home from "./home.module.css";
 import styles from "./one-place.module.css";
 
+const ORBIT = [["US", 50], ["IN", 56], ["GB", 44], ["AE", 46], ["MX", 44], ["SG", 42], ["DE", 46], ["PH", 44]] as const;
 const PHONE_ROWS = [["wise", "Wise", "Best"], ["remitly", "Remitly", null], ["revolut", "Revolut", null], ["western-union", "Western Union", null]] as const;
 
 /** Countries in the World Bank fee survey that Railor prices, with a flag we can draw. */
@@ -42,11 +43,13 @@ export function OnePlaceSection() {
           <h3 id="op-compare">Every provider.<br />One list.</h3>
           <p className={styles.lead}>Banks, apps and payment platforms side by side, ranked by what actually arrives.</p>
           <div className={`${styles.stage} ${styles.compareStage}`}>
-            <span className={styles.ring} aria-hidden />
-            <span className={`${styles.orbit} ${styles.orbitA}`}><Flag code="US" size={50} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitB}`}><Flag code="IN" size={56} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitC}`}><Flag code="GB" size={44} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitD}`}><Flag code="AE" size={46} round /></span>
+            <span className={styles.ring} aria-hidden>
+              {ORBIT.map(([code, size], index) => (
+                <span key={code} className={styles.seat} style={{ "--a": `${index * (360 / ORBIT.length)}deg` } as React.CSSProperties}>
+                  <span className={styles.orbit}><Flag code={code} size={size} round /></span>
+                </span>
+              ))}
+            </span>
             <div className={styles.phone} aria-hidden>
               <div className={styles.screen}>
                 <div className={styles.status}><span>9:41</span><span className={styles.island} /><span className={styles.signal}><i /><i /><i /><i /></span></div>

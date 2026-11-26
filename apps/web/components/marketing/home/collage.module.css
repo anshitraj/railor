@@ -1,13 +1,13 @@
 /* "Built for lives that cross borders": words around a drifting row of photos. */
 .section { display: grid; grid-template-areas: "top" "strip" "bottom" "foot"; overflow: hidden; padding: 112px 0 104px; }
 .title { display: contents; }
-.top, .bottom { width: min(1240px, calc(100% - 32px)); margin-inline: auto; color: var(--color-ink); font-size: clamp(40px, 6vw, 84px); font-weight: 650; letter-spacing: -.05em; line-height: 1; }
+.top, .bottom { flex-wrap: wrap; width: min(1240px, calc(100% - 32px)); margin-inline: auto; color: var(--color-ink); font-size: clamp(36px, 5.2vw, 76px); font-weight: 650; letter-spacing: -.05em; line-height: 1; }
 .top { grid-area: top; display: flex; align-items: center; gap: .2em; }
 .bottom { grid-area: bottom; display: flex; align-items: center; justify-content: flex-end; gap: .2em; }
 .coin { --size: .9em; display: inline-grid; font-size: .4em !important; vertical-align: middle; }
-.strip { grid-area: strip; position: relative; padding: 70px 0 90px; pointer-events: none; }
-.track { display: flex; width: max-content; gap: 18px; padding-inline: 4vw; }
-.photo { width: clamp(150px, 16vw, 230px); height: auto; aspect-ratio: 4 / 5; border-radius: 18px; object-fit: cover; box-shadow: 0 24px 40px -28px rgb(21 19 16 / .55); }
+.strip { grid-area: strip; position: relative; width: min(1240px, calc(100% - 32px)); margin: 36px auto; padding: 56px 0 70px; overflow: hidden; border-radius: 36px; background: linear-gradient(180deg, #fbf6ee, #f3e6d6); box-shadow: inset 0 0 0 1px rgb(21 19 16 / .05); pointer-events: none; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.track { display: flex; width: max-content; gap: 18px; padding-inline: 28px; }
+.photo { width: clamp(150px, 15vw, 200px); height: auto; aspect-ratio: 4 / 5; border-radius: 18px; object-fit: cover; box-shadow: 0 24px 40px -28px rgb(21 19 16 / .55); }
 .photo[data-depth="1"] { translate: 0 30px; }
 .photo[data-depth="2"] { translate: 0 -10px; }
 .photo[data-depth="3"] { translate: 0 60px; }

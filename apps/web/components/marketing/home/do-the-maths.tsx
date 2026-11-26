@@ -74,9 +74,9 @@ export function DoTheMaths({ benchmarks }: { benchmarks: RemittanceCostBenchmark
           ))}
         </div>
         <div className={styles.keep}>
-          <div className={styles.keepTop}><span className={styles.keepTag}><ShieldCheck size={15} aria-hidden />Picked the cheapest with Railor</span><RailorMark size={24} /></div>
+          <div className={styles.keepTop}><span className={styles.keepTag}><ShieldCheck size={15} aria-hidden />Railor saved you money</span><RailorMark size={24} /></div>
           <div className={styles.keepRow}><span>You keep a year</span><strong><NumberFlow value={kept} locales="en-US" format={money} transformTiming={roll} /><i aria-hidden><Check size={13} strokeWidth={3.5} /></i></strong></div>
-          {months > 0 ? <p className={styles.keepNote}>That’s about {months} months of your bank’s fees, back every year.</p> : null}
+          {months > 0 ? <p className={styles.keepNote}>Railor found the cheapest way. That’s about {months} months of your bank’s fees, back in your pocket every year.</p> : null}
           <Link href="/#calculator" className={styles.keepLink}>Check your own route<ArrowRight size={15} aria-hidden /></Link>
         </div>
         <p className={styles.source}>Medians from <a href={benchmarks.sourceUrl} target="_blank" rel="noreferrer noopener">{benchmarks.attribution}</a>, {benchmarks.period}, across {benchmarks.corridors} routes. Your route will differ; compare it for today’s prices.</p>

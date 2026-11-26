@@ -34,7 +34,12 @@
 
 .calcWrap { display: grid; justify-items: center; width: 100%; }
 .calc { position: relative; width: 100%; }
-.island { display: none; }
+/* The calculator lives in a phone, like GetOn's send-money screen. */
+.calc { width: min(100%, 380px); padding: 46px 8px 10px; border-radius: 52px; background: linear-gradient(145deg, #d9dde3, #8a9099 18%, #3b3f45 40%, #2a2d31 60%, #9aa1aa 92%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35), 0 40px 70px -30px rgb(21 19 16 / .55); }
+.calc > :not(.island) { border-radius: 40px; overflow: hidden; }
+.island { position: absolute; top: 14px; left: 50%; display: block; width: 92px; height: 26px; border-radius: 999px; background: #0c0c0d; translate: -50% 0; }
+.calc::before { content: "9:41"; position: absolute; top: 16px; left: 34px; color: #f4f4f5; font-size: 13px; font-weight: 700; }
+.calc { width: min(100%, 440px); }
 /* A hand-written nudge under the calculator, GetOn's "go on, it's a real demo". */
 .scribble { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: var(--color-ink-soft); font-family: "Caveat", "Segoe Print", "Bradley Hand", "Marker Felt", cursive; font-size: 21px; line-height: 1; transform: rotate(-2deg); }
 .scribble svg { color: var(--color-ink); }
@@ -63,11 +68,6 @@
 }
 @media (max-width: 719px) {
   .hero { padding-top: 96px; }
-  /* On a phone the calculator sits inside a phone, like GetOn's send-money screen. */
-  .calc { width: min(100%, 380px); padding: 46px 8px 10px; border-radius: 52px; background: linear-gradient(145deg, #d9dde3, #8a9099 18%, #3b3f45 40%, #2a2d31 60%, #9aa1aa 92%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35), 0 40px 70px -30px rgb(21 19 16 / .55); }
-  .calc > :not(.island) { border-radius: 40px; overflow: hidden; }
-  .island { position: absolute; top: 14px; left: 50%; display: block; width: 92px; height: 26px; border-radius: 999px; background: #0c0c0d; translate: -50% 0; }
-  .calc::before { content: "9:41"; position: absolute; top: 16px; left: 34px; color: #f4f4f5; font-size: 13px; font-weight: 700; }
   .scribble { font-size: 19px; }
   .title { font-size: clamp(42px, 12vw, 56px); }
   .actions { width: 100%; }
