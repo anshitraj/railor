@@ -130,7 +130,7 @@ export async function warmProviderCalculators(input: PriceCheckInput, referenceR
   }
   const worker = async () => {
     for (let slug = queue.shift(); slug; slug = queue.shift()) {
-      const attempt = await attemptProviderCalculator(slug, input, referenceRate, 90_000).catch(() => null);
+      const attempt = await attemptProviderCalculator(slug, input, referenceRate, 150_000).catch(() => null);
       if (attempt?.row) await savePublicQuoteObservation(input, attempt.row).catch(() => undefined);
     }
   };

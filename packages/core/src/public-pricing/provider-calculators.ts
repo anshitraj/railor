@@ -109,7 +109,8 @@ const report = z.object({
   send_amount: number.optional(), send_currency: z.string().optional(), fee: number.optional(), total_to_pay: number.optional(),
   rate: number.optional(), standard_rate: number.optional(), promotional: z.boolean().optional(),
   recipient_gets: number.optional(), receive_currency: z.string().optional(),
-  funding_method: z.string().max(80).optional(), payout_method: z.string().max(80).optional(),
+  // Wording on a page can run long ("Visa/Mastercard debit or bank account (ACH…)"): it is shortened for display, never a reason to drop a good quote.
+  funding_method: z.string().max(600).optional(), payout_method: z.string().max(600).optional(),
   shown_line: z.string().max(400).optional(), error: z.string().max(400).optional(),
 });
 export type CalculatorReport = z.infer<typeof report>;

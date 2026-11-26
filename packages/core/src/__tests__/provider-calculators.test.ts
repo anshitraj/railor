@@ -167,3 +167,19 @@ describe("the agent's real reports under the production goal", () => {
     expect(row("paysend", live.paysend).reject).toMatch(/don't add up/);
   });
 });
+
+describe("long wording on a provider's page", () => {
+  it("keeps a good quote and shortens the funding and payout wording instead of rejecting it", () => {
+    // Paysend's real report on 26 Nov 2026: the funding wording ran to 100+ characters and used to fail the shape check.
+    const raw = {
+      availability: true, send_amount: 1000, send_currency: "USD", fee: 4.72, total_to_pay: 1004.72, rate: 92.401, standard_rate: 0, promotional: false,
+      recipient_gets: 91964.88, receive_currency: "INR", shown_line: "91,964.88",
+      funding_method: "Visa/Mastercard debit or bank account (ACH/direct debit - no specific selection required, default shown)",
+      payout_method: "Bank account or UPI (Unified Payments Interface)",
+    };
+    const result = row("paysend", raw, 92.4);
+    expect(result.reject).toBeUndefined();
+    expect(result.row).toMatchObject({ recipientAmount: 91_964.88, feeAmount: 4.72 });
+    expect(result.row!.product!.label.length).toBeLessThan(160);
+  });
+});
