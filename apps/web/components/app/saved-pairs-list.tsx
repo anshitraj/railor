@@ -5,14 +5,14 @@ import { useState, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, BellRing, Bookmark, Trash2 } from "lucide-react";
 import { Flag, currencyFlagCode } from "@railor/ui";
-import { removePricePair } from "../../app/app/prices/actions";
+import { removePriceAlert, removePricePair } from "../../app/app/prices/actions";
 import type { SavedPair } from "../../lib/saved-pairs";
 import { savedTransferHref } from "../../lib/saved-transfer";
 import { ProviderLogo } from "./provider-logo";
 import { CurrencyLogo } from "../marketing/currency-logo";
 import { toast } from "../toast";
 import { RateAlertButton } from "../price/rate-alert-button";
-import { formatMoney } from "../../lib/rate-alert-rules";
+import { FREQUENCY_LABEL, type Plan } from "../../lib/plans";
 import styles from "./saved.module.css";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
@@ -28,7 +28,7 @@ function ago(iso: string) {
 }
 
 /** Saved pairs, each one tap from a fresh comparison. */
-export function SavedPairsList({ initial, compact = false }: { initial: SavedPair[]; compact?: boolean }) {
+export function SavedPairsList({ initial, compact = false, plan }: { initial: SavedPair[]; compact?: boolean; plan?: Plan }) {
   const reduce = useReducedMotion();
   const [pairs, setPairs] = useState(initial);
   const [, start] = useTransition();
@@ -36,6 +36,13 @@ export function SavedPairsList({ initial, compact = false }: { initial: SavedPai
     const result = await removePricePair(pair.id);
     if (result.ok) { setPairs((current) => current.filter((item) => item.id !== pair.id)); toast.success(`${pair.from} → ${pair.to} removed`); }
     else toast.error("Couldn’t remove it", "Try again in a moment.");
+  });
+
+  const unsubscribe = (pair: SavedPair) => start(async () => {
+    const result = await removePriceAlert(pair.id);
+    if (!result.ok) { toast.error("Couldn’t unsubscribe", "Try again in a moment."); return; }
+    setPairs((current) => current.map((item) => item.id === pair.id ? { ...item, alert: undefined } : item));
+    toast.success("Unsubscribed", `No more rate emails for ${pair.from} → ${pair.to}.`);
   });
 
   if (!pairs.length) {
@@ -59,13 +66,14 @@ export function SavedPairsList({ initial, compact = false }: { initial: SavedPai
                 <span className={styles.text}>
                   <strong>{pair.provider ? `${pair.provider.name} · ` : ""}{pair.from} <span aria-hidden>→</span><span className="sr-only">to</span> {pair.to}</strong>
                   <small>{pair.amount.toLocaleString("en-US")} {pair.from}{compact ? "" : ` · ${ago(pair.createdAt)}`}</small>
-                  {compact && pair.alert ? <small className={styles.alertNote}><BellRing size={11} aria-hidden />Alert at {formatMoney(pair.alert.targetAmount, pair.alert.currency)}</small> : null}
+                  {pair.alert ? <small className={styles.alertNote}><BellRing size={11} aria-hidden />{FREQUENCY_LABEL[pair.alert.frequency]} updates by email</small> : null}
                 </span>
                 <ArrowRight size={16} aria-hidden className={styles.go} />
               </Link>
               {compact ? null : (
                 <div className={styles.side}>
-                  <RateAlertButton pair={pair} compact onChange={(id, alert) => setPairs((current) => current.map((item) => item.id === id ? { ...item, alert } : item))} />
+                  {pair.alert ? <button type="button" className={styles.unsubscribe} onClick={() => unsubscribe(pair)}>Unsubscribe</button> : null}
+                  <RateAlertButton pair={pair} compact plan={plan} onChange={(id, alert) => setPairs((current) => current.map((item) => item.id === id ? { ...item, alert } : item))} />
                   <button type="button" className={styles.remove} onClick={() => remove(pair)} aria-label={`Remove ${pair.from} to ${pair.to}${pair.provider ? ` with ${pair.provider.name}` : ""}`}><Trash2 size={15} /></button>
                 </div>
               )}

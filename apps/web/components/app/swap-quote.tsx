@@ -488,7 +488,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               {cta.secondary.label}
             </Link>
           ) : null}
-          {savedPairs ? <PairActions transfer={{ ...transfer, profile: context.profile }} saved={saved} onSaved={setSaved} /> : null}
+          {savedPairs ? <PairActions transfer={{ ...transfer, profile: context.profile }} saved={saved} onSaved={setSaved} plan={alertPlan} /> : null}
           {error ? (
             <p role="alert" className="rounded-xl bg-[var(--color-bad-bg)] px-3 py-2 text-[12.5px] text-[var(--color-bad)]">
               {error}

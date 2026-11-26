@@ -5,6 +5,7 @@ import { requireSession } from "../../../lib/auth";
 import { removePair, savePair, type SavedPair } from "../../../lib/saved-pairs";
 import type { TransferBookmark } from "../../../lib/saved-transfer";
 import { removeRateAlert, setRateAlert, type RateAlertSummary } from "../../../lib/rate-alerts";
+import type { AlertFrequency } from "../../../lib/plans";
 
 export async function savePricePair(input: TransferBookmark): Promise<{ ok: true; pair: SavedPair } | { ok: false; error: string }> {
   const session = await requireSession();
@@ -22,13 +23,13 @@ export async function removePricePair(id: string): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-export async function setPriceAlert(savedSearchId: string, step: number): Promise<{ ok: true; alert: RateAlertSummary } | { ok: false; error: string }> {
+export async function setPriceAlert(savedSearchId: string, frequency: AlertFrequency): Promise<{ ok: true; alert: RateAlertSummary } | { ok: false; error: string }> {
   const session = await requireSession();
   const org = session.organization;
   if (!org) return { ok: false, error: "Open your dashboard first." };
   const id = z.string().uuid().safeParse(savedSearchId);
   if (!id.success) return { ok: false, error: "Save this transfer first." };
-  const result = await setRateAlert({ organizationId: org.id, userId: session.user.id, entityCountry: org.entityCountry, building: org.building }, id.data, step);
+  const result = await setRateAlert({ organizationId: org.id, userId: session.user.id, entityCountry: org.entityCountry, building: org.building }, id.data, frequency);
   return result.ok ? { ok: true, alert: result.alert } : result;
 }
 

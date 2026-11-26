@@ -267,6 +267,13 @@
       "when": 1796083200000,
       "tag": "0037_rate_alert_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1796169600000,
+      "tag": "0038_rate_update_frequency",
+      "breakpoints": true
     }
   ]
 }

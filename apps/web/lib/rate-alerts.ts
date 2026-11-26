@@ -1,23 +1,22 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
-import type { PriceCheckInput, PriceRow } from "@railor/core";
+import type { PriceCheckInput, PriceCheckResult, PriceRow } from "@railor/core";
 import { getDb, rateAlerts, savedSearches, users } from "@railor/database";
 import { onboardingPriceProfile } from "./onboarding";
 import { resolvePriceInput, runPriceCheck } from "./pricing";
 import { listSavedPairs, parsePairInput, type SavedPair } from "./saved-pairs";
 import { savedTransferHref, type TransferBookmark } from "./saved-transfer";
 import { appOrigin } from "./security";
-import { alertDecision, alertTarget, ALERT_STEPS, completePrices, digestDecision, type BestPrice } from "./rate-alert-rules";
+import { completePrices, updateDecision, type BestPrice } from "./rate-alert-rules";
 import { sendMail, smtpConfigured } from "./mail";
-import { createRateAlertEmail } from "./emails/rate-alert";
-import { createRateDigestEmail } from "./emails/rate-digest";
+import { composeRateUpdate } from "./rate-update-compose";
 import { getEntitlement, withOrgLock } from "./entitlements";
-import { ALERT_UPDATES, nextPlanFor, PLAN_LIMITS, PLAN_PRICES, type Plan } from "./plans";
+import { ALERT_FREQUENCIES, FREQUENCY_LABEL, FREQUENCY_PLAN, allowedFrequencies, nextPlanFor, PLAN_LIMITS, PLAN_PRICES, type AlertFrequency, type Plan } from "./plans";
 
 /** What a saved pair shows about its alert. Only active alerts are listed. */
 export interface RateAlertSummary {
-  targetAmount: number;
+  frequency: AlertFrequency;
   baselineAmount: number | null;
   currency: string;
   lastBestAmount: number | null;
@@ -29,7 +28,8 @@ const PRICE_PAIR = sql`${savedSearches.query}->>'kind' = 'price_pair'`;
 
 function summary(row: typeof rateAlerts.$inferSelect, currency: string): RateAlertSummary {
   return {
-    targetAmount: Number(row.targetAmount), baselineAmount: row.baselineAmount === null ? null : Number(row.baselineAmount), currency,
+    frequency: (ALERT_FREQUENCIES as readonly string[]).includes(row.frequency) ? row.frequency as AlertFrequency : "weekly",
+    baselineAmount: row.baselineAmount === null ? null : Number(row.baselineAmount), currency,
     lastBestAmount: row.lastBestAmount === null ? null : Number(row.lastBestAmount), lastBestProvider: row.lastBestProvider,
     lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
   };
@@ -45,7 +45,7 @@ export async function rateAlertsFor(organizationId: string, userId: string, save
   return new Map(rows.map(({ alert, query }) => [alert.savedSearchId, summary(alert, String(query.to ?? ""))]));
 }
 
-/** The exact check a saved pair opens with in the app, minus market estimates, which never trigger alerts. */
+/** The exact check a saved pair opens with in the app, minus market estimates, which never count as a complete price. */
 async function pairCheckInput(pair: TransferBookmark, entityCountry: string | null | undefined, building: string | null | undefined): Promise<PriceCheckInput> {
   const params = Object.fromEntries(new URL(savedTransferHref(pair), "http://railor.local").searchParams);
   const resolved = await resolvePriceInput(params, entityCountry, onboardingPriceProfile(building));
@@ -73,13 +73,19 @@ export function alertLimitMessage(plan: Plan, limit: number) {
     : `${own} Remove one to add another, or contact us for more.`;
 }
 
+/** Why a plan can't have a frequency, in words that name the plan that can. */
+export function frequencyLockMessage(frequency: AlertFrequency): string {
+  const needs = FREQUENCY_PLAN[frequency];
+  return needs ? `${FREQUENCY_LABEL[frequency]} updates are on ${PLAN_PRICES[needs].name} ($${PLAN_PRICES[needs].monthlyUsd} a month) and above.` : "Choose how often you want updates.";
+}
+
 /**
- * Set (or reset) an alert on a saved pair: today's best complete price plus the
- * chosen step. Checking now gives the baseline, so the target is always a real
- * improvement on what the person just saw.
+ * Turn rate updates on (or change how often) for a saved pair. Checking now
+ * gives the baseline, so a "smart" update later means a real move from what the
+ * person just saw, and the first scheduled update comes after a full interval.
  */
-export async function setRateAlert(workspace: Workspace, savedSearchId: string, step: number): Promise<{ ok: true; alert: RateAlertSummary; best: BestPrice } | { ok: false; error: string; limit?: true }> {
-  if (!ALERT_STEPS.includes(step as (typeof ALERT_STEPS)[number])) return { ok: false, error: "Choose one of the alert options." };
+export async function setRateAlert(workspace: Workspace, savedSearchId: string, frequency: AlertFrequency): Promise<{ ok: true; alert: RateAlertSummary; best: BestPrice } | { ok: false; error: string; limit?: true }> {
+  if (!ALERT_FREQUENCIES.includes(frequency)) return { ok: false, error: "Choose daily, weekly or smart updates." };
   const db = await getDb();
   const [saved] = await db.select().from(savedSearches)
     .where(and(eq(savedSearches.id, savedSearchId), eq(savedSearches.organizationId, workspace.organizationId), PRICE_PAIR)).limit(1);
@@ -87,6 +93,7 @@ export async function setRateAlert(workspace: Workspace, savedSearchId: string, 
   if (!saved || !pair) return { ok: false, error: "Save this transfer first." };
   // Fail fast before the price check; the insert re-checks under the workspace lock.
   const entitlement = await getEntitlement(workspace.organizationId);
+  if (!allowedFrequencies(entitlement.plan).includes(frequency)) return { ok: false, error: frequencyLockMessage(frequency) };
   if (await otherActiveAlerts(db, workspace.organizationId, savedSearchId) >= entitlement.limits.rateAlerts) {
     return { ok: false, error: alertLimitMessage(entitlement.plan, entitlement.limits.rateAlerts), limit: true };
   }
@@ -98,7 +105,9 @@ export async function setRateAlert(workspace: Workspace, savedSearchId: string, 
   if (!best) return { ok: false, error: pair.provider ? `${pair.provider.name} has no complete price for this transfer yet, so there’s nothing to measure from.` : "No provider has a complete price for this transfer yet, so there’s nothing to measure from." };
   const now = new Date();
   const values = {
-    input: input as unknown as Record<string, unknown>, targetAmount: alertTarget(best.amount, step), baselineAmount: best.amount, active: true,
+    input: input as unknown as Record<string, unknown>, frequency,
+    // The percentage-target model is gone; the column keeps the baseline so the row stays valid.
+    targetAmount: best.amount, baselineAmount: best.amount, active: true,
     lastCheckedAt: now, lastBestAmount: best.amount, lastBestProvider: best.providerName, lastMet: false, updatedAt: now,
     lastDigestAt: now, lastDigestAmount: best.amount,
   };
@@ -129,12 +138,13 @@ export async function unsubscribeRateAlert(token: string): Promise<{ label: stri
   return { label: saved?.input ?? "this pair" };
 }
 
-export interface RateAlertRun { alerts: number; checks: number; notified: number; /** Scheduled and price-moved updates, counted apart from target emails. */ updates: number; failedChecks: number; failedEmails: number; skipped: number; overLimit: number }
+export interface RateAlertRun { alerts: number; checks: number; /** Updates emailed: scheduled ones and smart ones that saw a move. */ updates: number; failedChecks: number; failedEmails: number; skipped: number; overLimit: number }
 
 /**
  * Re-check the least recently checked alerts, one price check per distinct
- * workspace + transfer, and email anyone whose target was reached. Stops
- * starting new checks once the time budget is spent; the rest go first next run.
+ * workspace + transfer, and email each person the update they asked for: daily,
+ * weekly, or smart (only when the best price moved). Stops starting new checks
+ * once the time budget is spent; the rest go first next run.
  */
 export async function checkRateAlerts(options: { limit?: number; budgetMs?: number; now?: () => Date } = {}): Promise<RateAlertRun> {
   const clock = options.now ?? (() => new Date());
@@ -166,14 +176,14 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
 
-  const run: RateAlertRun = { alerts: due.length, checks: 0, notified: 0, updates: 0, failedChecks: 0, failedEmails: 0, skipped: 0, overLimit };
+  const run: RateAlertRun = { alerts: due.length, checks: 0, updates: 0, failedChecks: 0, failedEmails: 0, skipped: 0, overLimit };
   const mail = smtpConfigured();
   const origin = appOrigin().replace(/\/$/, "");
   for (const members of groups.values()) {
     if (Date.now() - started > (options.budgetMs ?? 240_000)) { run.skipped += members.length; continue; }
     const input = members[0]!.alert.input as unknown as PriceCheckInput;
-    let rows: PriceRow[];
-    try { rows = (await runPriceCheck(members[0]!.alert.organizationId, input)).rows; run.checks += 1; }
+    let result: PriceCheckResult;
+    try { result = await runPriceCheck(members[0]!.alert.organizationId, input); run.checks += 1; }
     catch {
       run.failedChecks += 1;
       await db.update(rateAlerts).set({ lastCheckedAt: clock() }).where(inArray(rateAlerts.id, members.map((m) => m.alert.id)));
@@ -181,43 +191,29 @@ export async function checkRateAlerts(options: { limit?: number; budgetMs?: numb
     }
     for (const { alert, email, query } of members) {
       const pair = parsePairInput(query);
-      const prices = completePrices(rows, pair?.provider?.slug);
-      const best = prices[0] ?? null;
+      const best = completePrices(result.rows, pair?.provider?.slug)[0] ?? null;
       const now = clock();
-      const decision = alertDecision({ targetAmount: Number(alert.targetAmount), lastMet: alert.lastMet, lastNotifiedAt: alert.lastNotifiedAt }, best, now);
-      let notified = false;
-      if (decision.notify && best && pair && mail) {
-        const message = createRateAlertEmail({
-          to: email, from: input.sourceCurrency, toCurrency: input.destinationCurrency, amount: input.amount, providerName: pair.provider?.name,
-          target: Number(alert.targetAmount), best, others: prices.slice(1, 4),
+      const frequency = (ALERT_FREQUENCIES as readonly string[]).includes(alert.frequency) ? alert.frequency as AlertFrequency : "weekly";
+      const update = updateDecision(frequency, { lastDigestAt: alert.lastDigestAt, lastDigestAmount: alert.lastDigestAmount }, best, now);
+      let updated = false;
+      if (update.send && best && pair && mail && update.reason) {
+        const message = await composeRateUpdate({
+          to: email, priceInput: input, result, providerSlug: pair.provider?.slug, frequency, reason: update.reason, previousAmount: alert.lastDigestAmount,
+          plan: plans.get(alert.organizationId) ?? "free", origin,
           compareUrl: `${origin}${savedTransferHref(pair)}`, manageUrl: `${origin}/app/saved`,
           unsubscribeUrl: `${origin}/api/alerts/unsubscribe?token=${encodeURIComponent(alert.unsubscribeToken)}`,
         });
-        const sent = await sendMail(message);
-        if (sent.sent) { notified = true; run.notified += 1; } else run.failedEmails += 1;
+        if (message) {
+          const sent = await sendMail(message);
+          if (sent.sent) { updated = true; run.updates += 1; } else run.failedEmails += 1;
+        }
       }
-      // The plan's own update: weekly or daily, and when the best price moves. A target email counts as an update too.
-      const plan = plans.get(alert.organizationId) ?? "free";
-      const update = decision.notify ? { send: false } : digestDecision(ALERT_UPDATES[plan], { lastDigestAt: alert.lastDigestAt, lastDigestAmount: alert.lastDigestAmount }, best, now);
-      let updated = false;
-      if (update.send && best && pair && mail && "reason" in update && update.reason) {
-        const message = createRateDigestEmail({
-          to: email, from: input.sourceCurrency, toCurrency: input.destinationCurrency, amount: input.amount, providerName: pair.provider?.name,
-          best, others: prices.slice(1, 4), previousAmount: alert.lastDigestAmount, reason: update.reason, plan,
-          compareUrl: `${origin}${savedTransferHref(pair)}`, manageUrl: `${origin}/app/saved`, plansUrl: `${origin}/pricing`,
-          unsubscribeUrl: `${origin}/api/alerts/unsubscribe?token=${encodeURIComponent(alert.unsubscribeToken)}`,
-        });
-        const sent = await sendMail(message);
-        if (sent.sent) { updated = true; run.updates += 1; } else run.failedEmails += 1;
-      }
-      const startsClock = "baseline" in update && update.baseline === true;
-      // A failed or skipped email leaves lastMet false, so the next run tries again.
-      const met = decision.notify && !notified ? false : decision.met;
+      const startsClock = update.baseline === true;
+      // A failed or skipped email leaves the clock where it was, so the next run tries again.
       await db.update(rateAlerts).set({
-        lastCheckedAt: now, lastMet: met,
+        lastCheckedAt: now,
         ...(best ? { lastBestAmount: best.amount, lastBestProvider: best.providerName } : {}),
-        ...(notified ? { lastNotifiedAt: now } : {}),
-        ...(best && (notified || updated || startsClock) ? { lastDigestAt: now, lastDigestAmount: best.amount } : {}),
+        ...(best && (updated || startsClock) ? { lastDigestAt: now, lastDigestAmount: best.amount } : {}),
       }).where(eq(rateAlerts.id, alert.id));
     }
   }

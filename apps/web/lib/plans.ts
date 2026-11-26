@@ -39,21 +39,22 @@ export function effectivePlan(row: { plan: string; status: string; validFrom: Da
 }
 
 /**
- * How often a plan's rate alerts email a price update, besides the email sent
- * when a target is reached. Free: weekly. Plus: weekly, and again when the best
- * price moves. Pro and above: daily, and when it moves. WhatsApp is planned for
- * Pro and above; nothing is sent there yet, so it is only ever shown as coming.
+ * Rate updates by email, and how often. Weekly is for everyone. Smart (an email
+ * only when the best price moves) needs Plus, and daily needs Pro. WhatsApp is
+ * planned for Pro and above; nothing is sent there yet, so it is only ever
+ * shown as coming.
  */
-export const ALERT_UPDATES: Record<Plan, { everyDays: 1 | 7; onChange: boolean; whatsapp: "soon" | null }> = {
-  free: { everyDays: 7, onChange: false, whatsapp: null },
-  plus: { everyDays: 7, onChange: true, whatsapp: null },
-  pro: { everyDays: 1, onChange: true, whatsapp: "soon" },
-  business: { everyDays: 1, onChange: true, whatsapp: "soon" },
-  founding: { everyDays: 1, onChange: true, whatsapp: "soon" },
-};
+export type AlertFrequency = "daily" | "weekly" | "smart";
+export const ALERT_FREQUENCIES: readonly AlertFrequency[] = ["daily", "weekly", "smart"];
+export const FREQUENCY_LABEL: Record<AlertFrequency, string> = { daily: "Daily", weekly: "Weekly", smart: "Smart" };
+/** The cheapest plan that unlocks each frequency; null when every plan has it. */
+export const FREQUENCY_PLAN: Record<AlertFrequency, PaidPlan | null> = { weekly: null, smart: "plus", daily: "pro" };
 
-/** One plain sentence on what the plan's alerts send. */
-export function alertUpdatesLine(plan: Plan): string {
-  const updates = ALERT_UPDATES[plan];
-  return `${updates.everyDays === 1 ? "A daily" : "A weekly"} rate email${updates.onChange ? ", plus an email when the best price moves" : ""}.`;
+export function allowedFrequencies(plan: Plan): AlertFrequency[] {
+  return ALERT_FREQUENCIES.filter((frequency) => {
+    const needs = FREQUENCY_PLAN[frequency];
+    return !needs || PLAN_LIMITS[plan].rateAlerts >= PLAN_LIMITS[needs].rateAlerts;
+  });
 }
+
+export const whatsappComing = (plan: Plan): boolean => plan === "pro" || plan === "business" || plan === "founding";

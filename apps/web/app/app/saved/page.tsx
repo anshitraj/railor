@@ -24,13 +24,13 @@ export default async function SavedPage() {
     <div className={styles.page}>
       <header className={styles.head}>
         <h1>Saved routes</h1>
-        <p>Open a saved pair or provider corridor to check its current price, or set an alert to get an email when it gets better.</p>
+        <p>Open a saved pair or provider corridor to check its current price, or choose daily, weekly or smart updates by email. Unsubscribe from any of them here.</p>
         <p className={styles.usage}>
           {planName(entitlement.plan)} plan · {pairs.length} of {savedPairs} saved · {alerts} of {rateAlerts} {rateAlerts === 1 ? "alert" : "alerts"}
           {entitlement.plan === "free" ? <> · <Link href="/app/upgrade">Get {PLAN_LIMITS.plus.rateAlerts} alerts for ${PLAN_PRICES.plus.monthlyUsd} a month</Link></> : null}
         </p>
       </header>
-      <SavedPairsList initial={pairs} />
+      <SavedPairsList initial={pairs} plan={entitlement.plan} />
     </div>
   );
 }

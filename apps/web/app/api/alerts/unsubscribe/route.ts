@@ -1,4 +1,5 @@
 import { ensureMigrated } from "@railor/database";
+import { unsubscribeSubscription } from "../../../../lib/email-subscriptions";
 import { unsubscribeRateAlert } from "../../../../lib/rate-alerts";
 
 export const runtime = "nodejs";
@@ -22,14 +23,15 @@ function page(title: string, body: string, status = 200) {
  */
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token") ?? "";
-  return page("Stop this rate alert", `<h1>Stop this rate alert?</h1><p>You won’t get emails for this pair any more. Your saved pair stays.</p>
-<form method="post" action="/api/alerts/unsubscribe?token=${encodeURIComponent(token)}"><button type="submit">Stop alert</button></form>`);
+  return page("Stop these rate updates", `<h1>Stop these rate updates?</h1><p>You won’t get emails for this pair any more. A saved pair stays saved.</p>
+<form method="post" action="/api/alerts/unsubscribe?token=${encodeURIComponent(token)}"><button type="submit">Unsubscribe</button></form>`);
 }
 
 export async function POST(request: Request) {
   const token = new URL(request.url).searchParams.get("token") ?? "";
   await ensureMigrated();
-  const stopped = await unsubscribeRateAlert(token);
-  if (!stopped) return page("Alert not found", `<h1>Alert not found</h1><p>This link is out of date, or the alert was already removed. You can manage alerts in <a href="/app/saved">Saved</a>.</p>`, 404);
-  return page("Alert stopped", `<h1>Alert stopped</h1><p>No more emails for <strong>${escapeHtml(stopped.label)}</strong>. Turn it back on any time from <a href="/app/saved">Saved</a>.</p>`);
+  // A signed-in person's alert, or a confirmed address's subscription: the token says which.
+  const stopped = await unsubscribeRateAlert(token) ?? await unsubscribeSubscription(token);
+  if (!stopped) return page("Alert not found", `<h1>Already stopped</h1><p>This link is out of date, or the updates were already stopped. Signed-in people can manage them in <a href="/app/saved">Saved</a>.</p>`, 404);
+  return page("Updates stopped", `<h1>Updates stopped</h1><p>No more emails for <strong>${escapeHtml(stopped.label)}</strong>. You can ask for them again any time from the <a href="/prices">price comparison</a>.</p>`);
 }

@@ -19,9 +19,13 @@ export async function consumeLimit(scope: string, identity: string, limit: numbe
   return Boolean(row && row.count <= limit);
 }
 
-export function requestIdentity(request: Request): string {
+export function requestIdentityFromHeaders(headers: Pick<Headers, "get">): string {
   // Vercel overwrites this header. Self-hosted deployments must do so at the proxy.
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+}
+
+export function requestIdentity(request: Request): string {
+  return requestIdentityFromHeaders(request.headers);
 }
 
 export const checkBurstLimit = (key: string) => consumeLimit("api-burst", key, 30, 10_000);

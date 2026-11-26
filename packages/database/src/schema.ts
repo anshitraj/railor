@@ -1151,6 +1151,8 @@ export const rateAlerts = pgTable(
     lastBestProvider: text("last_best_provider"),
     lastMet: boolean("last_met").default(false).notNull(),
     lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+    /** How often to email an update: daily, weekly, or smart (only when the best price moves). */
+    frequency: text("frequency").default("weekly").notNull(),
     /** When the last scheduled or price-moved update went out, and the best price it showed. */
     lastDigestAt: timestamp("last_digest_at", { withTimezone: true }),
     lastDigestAmount: numeric("last_digest_amount", { precision: 20, scale: 4, mode: "number" }),
@@ -1162,6 +1164,36 @@ export const rateAlerts = pgTable(
     pairUserIdx: uniqueIndex("rate_alerts_pair_user_idx").on(t.savedSearchId, t.userId),
     unsubscribeIdx: uniqueIndex("rate_alerts_unsubscribe_idx").on(t.unsubscribeToken),
     dueIdx: index("rate_alerts_due_idx").on(t.active, t.lastCheckedAt),
+  }),
+);
+
+/**
+ * Rate updates for people who aren't signed in: an email address and a pair,
+ * confirmed by a link in the address's own inbox before anything is sent.
+ */
+export const emailSubscriptions = pgTable(
+  "email_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    sourceCurrency: text("source_currency").notNull(),
+    destinationCurrency: text("destination_currency").notNull(),
+    amount: numeric("amount", { precision: 18, scale: 2, mode: "number" }).notNull(),
+    frequency: text("frequency").default("weekly").notNull(),
+    confirmToken: text("confirm_token").notNull(),
+    unsubscribeToken: text("unsubscribe_token").notNull(),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    lastConfirmSentAt: timestamp("last_confirm_sent_at", { withTimezone: true }),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    lastAmount: numeric("last_amount", { precision: 20, scale: 4, mode: "number" }),
+    createdAt: now(),
+  },
+  (t) => ({
+    confirmIdx: uniqueIndex("email_subscriptions_confirm_idx").on(t.confirmToken),
+    unsubscribeIdx: uniqueIndex("email_subscriptions_unsubscribe_idx").on(t.unsubscribeToken),
+    pairIdx: index("email_subscriptions_pair_idx").on(t.email, t.sourceCurrency, t.destinationCurrency),
+    dueIdx: index("email_subscriptions_due_idx").on(t.confirmedAt, t.unsubscribedAt, t.lastSentAt),
   }),
 );
 

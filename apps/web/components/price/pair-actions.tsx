@@ -10,6 +10,7 @@ import { savedTransferHref, transferBookmarkKey, type TransferBookmark } from ".
 import { toast } from "../toast";
 import { ProviderLogo } from "../app/provider-logo";
 import { RateAlertButton } from "./rate-alert-button";
+import type { Plan } from "../../lib/plans";
 import styles from "./pair-actions.module.css";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
@@ -40,7 +41,7 @@ export function TransferBookmarkButton({ transfer, saved, onSaved }: SavedContro
   </button>;
 }
 
-export function PairActions({ transfer, saved, onSaved }: SavedControls & { transfer: TransferBookmark }) {
+export function PairActions({ transfer, saved, onSaved, plan }: SavedControls & { transfer: TransferBookmark; plan?: Plan }) {
   const key = transferBookmarkKey(transfer);
   const current = saved.find(pair => transferBookmarkKey(pair) === key) ?? null;
   // An alert lives on a saved pair, so setting one saves the pair first.
@@ -53,7 +54,7 @@ export function PairActions({ transfer, saved, onSaved }: SavedControls & { tran
   return (
     <div className={styles.actions}>
       <TransferBookmarkButton transfer={transfer} saved={saved} onSaved={onSaved} />
-      <RateAlertButton pair={current} ensurePair={ensurePair} disabled={transfer.from === transfer.to || transfer.amount < 1}
+      <RateAlertButton pair={current} ensurePair={ensurePair} plan={plan} disabled={transfer.from === transfer.to || transfer.amount < 1}
         onChange={(id, alert) => onSaved(previous => previous.map(pair => pair.id === id ? { ...pair, alert } : pair))} />
     </div>
   );
