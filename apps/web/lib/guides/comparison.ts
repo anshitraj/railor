@@ -2,7 +2,7 @@ import type { PriceCheckResult, PriceRow } from "@railor/core";
 import { benchmarkPayoutDifference } from "../price-cost";
 import { pricingSourceLabel, providerIdentity } from "../price-display";
 import { priceView } from "../price-view";
-import { providerLink } from "../provider-sites";
+import { goHref } from "../provider-go";
 
 /**
  * The comparison cards inside a guide: for one route and amount, the providers
@@ -101,7 +101,7 @@ export function comparisonColumns(result: PriceCheckResult | null, now: number, 
       payment: fundingText(row),
       source: row.basis === "market_estimate" ? "Dated estimate" : pricingSourceLabel(row),
       estimate: row.basis === "market_estimate",
-      href: providerLink(slug, { from, to, amount })?.href ?? null,
+      href: goHref(slug, { from, to, amount }),
     });
     if (columns.length === limit) break;
   }

@@ -6,6 +6,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { ProviderWordmark } from "../app/provider-wordmark";
 import { FEATURED_PROVIDERS, type Audience } from "../../lib/featured-providers";
 import { providerSite } from "../../lib/provider-sites";
+import { goHref } from "../../lib/provider-go";
 import styles from "./featured-providers.module.css";
 
 const FILTERS: Array<"All" | Audience> = ["All", "Personal", "Freelancers", "Business"];
@@ -32,7 +33,7 @@ export function FeaturedProviders() {
       <ul className={styles.grid}>
         {shown.map((provider) => {
           const audience = filter === "All" ? provider.for[0]! : filter;
-          const site = providerSite(provider.slug);
+          const site = providerSite(provider.slug) ? goHref(provider.slug) : null;
           return (
             <li key={provider.slug} className={styles.card}>
               <div className={styles.top}>

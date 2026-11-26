@@ -7,6 +7,7 @@ import { PairActions, SavedPairsStrip, TransferBookmarkButton } from "../price/p
 import { RateAlertCard } from "../price/rate-alert-card";
 import type { Plan } from "../../lib/plans";
 import { savedProviderSlug } from "../../lib/saved-transfer";
+import { goHref } from "../../lib/provider-go";
 import type { SavedPair } from "../../lib/saved-pairs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -299,12 +300,14 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   const bookmark = bookmarkSlug ? { ...transfer, context, destinationCountry: result?.input.destinationCountry, provider: { slug: bookmarkSlug, name: chosenName } } : null;
   // The provider's own page for this transfer: Wise with the amount filled in, others on the route where checked.
   const link = chosenSlug && valid ? providerLink(chosenSlug, transfer) : null;
+  // Outbound clicks go through the "Taking you to ..." page, which sends the visitor on to the provider's own page.
   const site = link?.href ?? (chosenSlug ? providerSite(chosenSlug) : null);
+  const outbound = chosenSlug && site ? goHref(chosenSlug, transfer) ?? site : null;
   const sourceUrl = selected?.source?.url && /^https:\/\//.test(selected.source.url) ? selected.source.url : null;
   const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = !valid
     ? { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true }
     : site
-      ? { label: `Go to ${chosenName}`, href: site, external: true, ...(sourceUrl && !sourceUrl.startsWith(site) ? { secondary: { label: "See where this price came from", href: sourceUrl, external: true } } : {}) }
+      ? { label: `Go to ${chosenName}`, href: outbound ?? site, external: true, ...(sourceUrl && !sourceUrl.startsWith(site) ? { secondary: { label: "See where this price came from", href: sourceUrl, external: true } } : {}) }
       : sourceUrl
         ? { label: `See ${chosenName}’s pricing`, href: sourceUrl, external: true }
         : { label: loading ? "Fetching prices…" : chosenName ? `${chosenName} has no public site link yet` : "Select a provider", disabled: true };
