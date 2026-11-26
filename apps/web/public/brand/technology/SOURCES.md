@@ -23,3 +23,4 @@ Keep original colors and aspect ratios. Do not recolor or animate the artwork.
 
 Unknown technologies intentionally render no brand artwork; never substitute a
 different company's logo. The adjacent text remains the accessible label.
+| chatgpt.svg | https://commons.wikimedia.org/wiki/File:ChatGPT-Logo.svg (downloaded 2026-11-26) |

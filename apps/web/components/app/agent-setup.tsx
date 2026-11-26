@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Copy, Eye, EyeOff, KeyRound, Radio, Route, Terminal } from "lucide-react";
 import { TechnologyLogo } from "@railor/ui";
 import { prepareAgentKey } from "../../app/app/developers/actions";
-import { AGENT_FIRST_REQUEST, AGENT_KEY_PLACEHOLDER, MCP_CLIENT_INSTRUCTIONS, SETUP_CLIENTS, agentSetupPrompt, setupSnippet, type SetupClient } from "../../lib/developer-setup";
+import { AGENT_FIRST_REQUEST, AGENT_KEY_PLACEHOLDER, MCP_CLIENT_INSTRUCTIONS, SETUP_CLIENTS, agentSetupPrompt, setupSnippet, usesOAuth, type SetupClient } from "../../lib/developer-setup";
 import { RailorMark } from "../brand";
 import styles from "./agent-setup.module.css";
 
@@ -46,7 +46,7 @@ export function AgentSetup({ baseUrl, canManage, initialClient }: { baseUrl: str
 
   function connect() {
     if (pending) return;
-    if (!canManage || key) {
+    if (!canManage || key || usesOAuth(client)) {
       go(1);
       return;
     }
@@ -99,11 +99,11 @@ export function AgentSetup({ baseUrl, canManage, initialClient }: { baseUrl: str
                     <span className={styles.clientTile}><ClientMark client={option} />{option}<Check size={16} className={styles.selectedIcon} aria-hidden /></span>
                   </label>)}
                 </fieldset>
-                <p className={styles.note}>{canManage ? "Railor prepares a workspace test key when you continue." : "Ask a workspace owner or admin for a test key before you connect."}</p>
+                <p className={styles.note}>{usesOAuth(client) ? `${client} asks you to sign in to Railor when you connect. No key to paste.` : canManage ? "Railor prepares a workspace test key when you continue." : "Ask a workspace owner or admin for a test key before you connect."}</p>
               </>
             ) : step === 1 ? (
               <>
-                {key ? <section className={styles.keyBox} aria-labelledby="agent-test-key">
+                {usesOAuth(client) ? <section className={styles.keyBox} aria-labelledby="agent-oauth"><div className={styles.boxHead}><h2 id="agent-oauth"><KeyRound size={16} aria-hidden /> Sign in with Railor</h2></div><p className={styles.note}>When you connect, {client} sends you to Railor to sign in and approve. There is no key to copy, and you can disconnect it later under Developers → All keys.</p></section> : key ? <section className={styles.keyBox} aria-labelledby="agent-test-key">
                   <div className={styles.boxHead}><h2 id="agent-test-key"><KeyRound size={16} aria-hidden /> Your test API key</h2><span>{key.created ? "New key" : "Existing key"}</span></div>
                   <div className={styles.keyLine}>
                     <code>{revealed ? key.secret : `${key.secret.slice(0, 12)}••••••••••••`}</code>
@@ -124,7 +124,7 @@ export function AgentSetup({ baseUrl, canManage, initialClient }: { baseUrl: str
                 <details className={styles.snippetBox}>
                   <summary>Install manually</summary>
                   <p className={styles.note}>{MCP_CLIENT_INSTRUCTIONS[client]}</p>
-                  <p className={styles.note}>Replace <code>{AGENT_KEY_PLACEHOLDER}</code> locally with your test key.</p>
+                  {usesOAuth(client) ? null : <p className={styles.note}>Replace <code>{AGENT_KEY_PLACEHOLDER}</code> locally with your test key.</p>}
                   {client === "Codex" ? <div className={styles.platform} role="group" aria-label="Terminal type">
                     <button type="button" aria-pressed={powershell} onClick={() => setPowershell(true)}>PowerShell</button>
                     <button type="button" aria-pressed={!powershell} onClick={() => setPowershell(false)}>macOS / Linux</button>

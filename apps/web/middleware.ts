@@ -24,7 +24,8 @@ function originAllowed(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const mutating = !["GET", "HEAD", "OPTIONS"].includes(request.method);
-  const api = path.startsWith("/api/") || path.startsWith("/v1/");
+  // OAuth discovery, registration and token exchange are called by other servers, so like the API they stay on the host they were sent to.
+  const api = path.startsWith("/api/") || path.startsWith("/v1/") || path.startsWith("/.well-known/") || path === "/oauth/token" || path === "/oauth/register";
   // Canonicalize pages and auth before issuing host-bound cookies. API requests
   // stay on their original host: fetch drops bearer credentials across hosts.
   if (process.env.VERCEL_ENV === "production" && (!api || path.startsWith("/api/auth/"))) {

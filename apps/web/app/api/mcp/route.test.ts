@@ -44,14 +44,25 @@ beforeEach(() => {
 
 describe("MCP protocol", () => {
   it("negotiates the client's protocol version, or offers the newest it speaks", async () => {
-    const init = (protocolVersion: string) => rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion, capabilities: {}, clientInfo: { name: "t", version: "1" } } }, {});
+    const init = (protocolVersion: string) => rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion, capabilities: {}, clientInfo: { name: "t", version: "1" } } });
     expect((await (await init("2025-03-26")).json()).result.protocolVersion).toBe("2025-03-26");
     expect((await (await init("2099-01-01")).json()).result.protocolVersion).toBe("2025-06-18");
     expect((await (await init("2025-06-18")).json()).result).toMatchObject({ capabilities: { tools: {} }, serverInfo: { name: "railor" } });
   });
 
-  it("answers ping without a key and acknowledges notifications with 202", async () => {
-    const ping = await rpc({ jsonrpc: "2.0", id: 2, method: "ping" }, {});
+  it("tells a client with no credentials how to sign in (OAuth discovery), before any method runs", async () => {
+    const response = await rpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } }, {});
+    expect(response.status).toBe(401);
+    const challenge = response.headers.get("www-authenticate") ?? "";
+    expect(challenge).toContain('resource_metadata="');
+    expect(challenge).toContain("/.well-known/oauth-protected-resource/api/mcp");
+    expect(challenge).not.toContain("error=");
+    expect(mocks.authenticate).not.toHaveBeenCalled();
+    expect((await rpc({ jsonrpc: "2.0", id: 3, method: "tools/list" }, {})).status).toBe(401);
+  });
+
+  it("answers ping and acknowledges notifications with 202", async () => {
+    const ping = await rpc({ jsonrpc: "2.0", id: 2, method: "ping" });
     expect(ping.status).toBe(200);
     expect(await ping.json()).toEqual({ jsonrpc: "2.0", id: 2, result: {} });
     const note = await rpc({ jsonrpc: "2.0", method: "notifications/initialized" }, {});
@@ -61,10 +72,10 @@ describe("MCP protocol", () => {
   });
 
   it("lists the price tools beside the catalog tools, and reports unknown methods as JSON-RPC errors", async () => {
-    const tools = (await (await rpc({ jsonrpc: "2.0", id: 3, method: "tools/list" }, {})).json()).result.tools.map((t: { name: string }) => t.name);
+    const tools = (await (await rpc({ jsonrpc: "2.0", id: 3, method: "tools/list" })).json()).result.tools.map((t: { name: string }) => t.name);
     expect(tools.slice(0, 2)).toEqual(["compare_prices", "stablecoin_offramps"]);
     expect(tools).toContain("search_corridors");
-    const unknown = await rpc({ jsonrpc: "2.0", id: 4, method: "sampling/createMessage" }, {});
+    const unknown = await rpc({ jsonrpc: "2.0", id: 4, method: "sampling/createMessage" });
     expect((await unknown.json()).error).toMatchObject({ code: -32601 });
     expect((await (await rpc("{not json", {})).json()).error.code).toBe(-32700);
   });
@@ -138,7 +149,7 @@ describe("MCP wallet metering", () => {
   });
 
   it("does not charge discovery calls", async () => {
-    await rpc({ jsonrpc: "2.0", id: 9, method: "tools/list" }, {});
+    await rpc({ jsonrpc: "2.0", id: 9, method: "tools/list" });
     await rpc({ jsonrpc: "2.0", id: 10, method: "ping" }, {});
     expect(mocks.charge).not.toHaveBeenCalled();
   });

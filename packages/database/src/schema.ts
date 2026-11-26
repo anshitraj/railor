@@ -2695,3 +2695,61 @@ export const providerPromotions = pgTable("provider_promotions", {
   check("provider_promotions_distinct_currencies", sql`${t.sourceCurrency} <> ${t.destinationCurrency}`),
   check("provider_promotions_reference_present", sql`length(btrim(${t.paymentReference})) > 0`),
 ]);
+
+/**
+ * An application (ChatGPT, Claude, an agent) that asks to use a workspace's
+ * Railor tools on someone's behalf: OAuth 2.1 for the MCP endpoint. Clients
+ * register themselves (RFC 7591) or are named by a metadata document URL.
+ */
+export const oauthClients = pgTable("oauth_clients", {
+  /** `rlc_…` for a registered client, or the https URL of its metadata document. */
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  redirectUris: text("redirect_uris").array().notNull(),
+  source: text("source").$type<"registered" | "metadata_document">().notNull(),
+  createdAt: now(),
+});
+
+/** A one-time authorization code: stored hashed, valid for minutes, bound to the PKCE challenge. */
+export const oauthCodes = pgTable(
+  "oauth_codes",
+  {
+    codeHash: text("code_hash").primaryKey(),
+    clientId: text("client_id").notNull().references(() => oauthClients.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    /** The workspace's identity key for this client: where usage is metered and where access is revoked. */
+    apiKeyId: uuid("api_key_id").notNull().references(() => apiKeys.id, { onDelete: "cascade" }),
+    redirectUri: text("redirect_uri").notNull(),
+    codeChallenge: text("code_challenge").notNull(),
+    scope: text("scope").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => ({ expiryIdx: index("oauth_codes_expiry_idx").on(t.expiresAt) }),
+);
+
+/** Access and refresh tokens (hashed). Revoking the identity key, or the row, ends the grant. */
+export const oauthTokens = pgTable(
+  "oauth_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accessHash: text("access_hash").notNull(),
+    refreshHash: text("refresh_hash").notNull(),
+    clientId: text("client_id").notNull().references(() => oauthClients.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    apiKeyId: uuid("api_key_id").notNull().references(() => apiKeys.id, { onDelete: "cascade" }),
+    scope: text("scope").notNull(),
+    accessExpiresAt: timestamp("access_expires_at", { withTimezone: true }).notNull(),
+    refreshExpiresAt: timestamp("refresh_expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: now(),
+  },
+  (t) => ({
+    accessIdx: uniqueIndex("oauth_tokens_access_idx").on(t.accessHash),
+    refreshIdx: uniqueIndex("oauth_tokens_refresh_idx").on(t.refreshHash),
+    keyIdx: index("oauth_tokens_key_idx").on(t.apiKeyId),
+  }),
+);

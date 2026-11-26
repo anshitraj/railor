@@ -253,6 +253,13 @@
       "when": 1795910400000,
       "tag": "0035_promotions_and_quote_history",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795996800000,
+      "tag": "0036_oauth_for_mcp",
+      "breakpoints": true
     }
   ]
 }

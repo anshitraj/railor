@@ -13,6 +13,7 @@ const MARKS = {
   antigravity: { name: "Antigravity", file: "antigravity.png" },
   claude: { name: "Claude", file: "claude.png" },
   codex: { name: "OpenAI Codex", file: "codex.png" },
+  chatgpt: { name: "ChatGPT", file: "chatgpt.svg" },
 } as const;
 
 const ALIASES: Record<string, keyof typeof MARKS> = {
@@ -20,7 +21,7 @@ const ALIASES: Record<string, keyof typeof MARKS> = {
   nodejs: "nodejs", node: "nodejs", curl: "curl", mcp: "mcp", mcpjson: "mcp",
   google: "google", github: "github", cursor: "cursor", vscode: "vscode",
   visualstudiocode: "vscode", antigravity: "antigravity", claude: "claude", claudecode: "claude",
-  codex: "codex",
+  codex: "codex", chatgpt: "chatgpt",
 };
 
 export function technologyMark(name: string) {

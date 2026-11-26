@@ -10,6 +10,7 @@ import {
 } from "@railor/core";
 import { CorridorQuery } from "@railor/types";
 import { ApiError, authenticate, camelQuery, type ApiContext } from "../../../lib/api-auth";
+import { keyForAccessToken, OAUTH_SCOPE, protectedResourceMetadataUrl, TOKEN_PREFIX } from "../../../lib/oauth-server";
 import { runPriceCheck } from "../../../lib/pricing";
 import { camelTop } from "../../../lib/v1";
 import { chargeWalletUsage } from "../../../lib/wallet";
@@ -434,15 +435,37 @@ const rpcError = (id: JsonRpcId, code: number, message: string, status = 200, he
   NextResponse.json({ jsonrpc: "2.0", id, error: { code, message } }, { status, headers });
 const toolText = (value: unknown, isError: boolean) => ({ content: [{ type: "text", text: typeof value === "string" ? value : JSON.stringify(value, null, 2) }], isError });
 
+/**
+ * The WWW-Authenticate challenge. `resource_metadata` points a chat app at the
+ * OAuth discovery document (RFC 9728), which is how ChatGPT and Claude learn
+ * they can sign in instead of pasting a key.
+ */
+function bearerChallenge(error?: string) {
+  let metadata = "";
+  try { metadata = `, resource_metadata="${protectedResourceMetadataUrl()}"`; } catch { /* APP_ORIGIN unset: the key flow still works */ }
+  return `Bearer realm="railor"${error ? `, error="${error}"` : ""}${metadata}, scope="${OAUTH_SCOPE}"`;
+}
+
+/** Every request needs credentials: a key, or an OAuth token that is still live. Otherwise the client is told how to sign in. */
+async function challenge(request: Request, id: JsonRpcId): Promise<NextResponse | null> {
+  const presented = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!presented) return rpcError(id, -32001, "Sign in to Railor, or send an API key as `Authorization: Bearer rail_…`.", 401, { "WWW-Authenticate": bearerChallenge() });
+  if (presented.startsWith(TOKEN_PREFIX) && !(await keyForAccessToken(presented))) {
+    return rpcError(id, -32001, "That access token has expired or was revoked. Reconnect the app.", 401, { "WWW-Authenticate": bearerChallenge("invalid_token") });
+  }
+  return null;
+}
+
+
 /** Tool calls are metered against the workspace wallet once `api_request` has a price (free until then). */
 async function handleToolCall(request: Request, message: JsonRpcMessage) {
   const id = message.id ?? null;
   let ctx: ApiContext;
   try {
-    ctx = await authenticate(request);
+    ctx = await authenticate(request, { oauth: true });
   } catch (error) {
     const status = error instanceof ApiError ? error.status : 401;
-    return rpcError(id, -32001, (error as Error).message, status, status === 401 ? { "WWW-Authenticate": 'Bearer realm="railor", error="invalid_token"' } : undefined);
+    return rpcError(id, -32001, (error as Error).message, status, status === 401 ? { "WWW-Authenticate": bearerChallenge("invalid_token") } : undefined);
   }
   const name = message.params?.name as ToolName | undefined;
   const args = (message.params?.arguments ?? {}) as Record<string, unknown>;
@@ -474,6 +497,8 @@ export async function POST(request: Request) {
 
   // A notification or a response from the client: acknowledged, nothing to return.
   if (message.id === undefined || message.method === undefined) return new NextResponse(null, { status: 202 });
+  const denied = await challenge(request, id);
+  if (denied) return denied;
 
   switch (message.method) {
     case "initialize": {

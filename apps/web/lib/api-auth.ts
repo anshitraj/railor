@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { hashApiKey } from "./auth";
 import { checkBurstLimit } from "./rate-limit";
 import { ZodError } from "zod";
+import { keyForAccessToken, TOKEN_PREFIX } from "./oauth-server";
 
 export interface ApiContext {
   organizationId: string;
@@ -37,7 +38,7 @@ export function normalizeApiError(error: unknown, requestId?: string) {
  * Bearer-key authentication for /v1. Keys are stored hashed; the presented key
  * is hashed and compared, never looked up in plaintext.
  */
-export async function authenticate(request: Request): Promise<ApiContext> {
+export async function authenticate(request: Request, options: { oauth?: boolean } = {}): Promise<ApiContext> {
   await ensureMigrated();
   const header = request.headers.get("authorization") ?? "";
   const presented = header.replace(/^Bearer\s+/i, "").trim();
@@ -46,13 +47,18 @@ export async function authenticate(request: Request): Promise<ApiContext> {
   }
 
   const db = await getDb();
-  const [key] = await db
-    .select()
-    .from(apiKeys)
-    .where(and(eq(apiKeys.keyHash, hashApiKey(presented)), isNull(apiKeys.revokedAt)))
-    .limit(1);
+  // An OAuth access token (from a chat app that signed in) works on the MCP endpoint only; everything else takes a key.
+  const oauthToken = presented.startsWith(TOKEN_PREFIX);
+  if (oauthToken && !options.oauth) throw new ApiError(401, "invalid_api_key", "That token only works on the MCP endpoint. Use an API key here.");
+  const [key] = oauthToken
+    ? [await keyForAccessToken(presented)]
+    : await db
+      .select()
+      .from(apiKeys)
+      .where(and(eq(apiKeys.keyHash, hashApiKey(presented)), isNull(apiKeys.revokedAt)))
+      .limit(1);
 
-  if (!key) throw new ApiError(401, "invalid_api_key", "That API key is not valid.");
+  if (!key) throw new ApiError(401, oauthToken ? "invalid_token" : "invalid_api_key", oauthToken ? "That access token has expired or was revoked. Reconnect the app." : "That API key is not valid.");
 
   if (!await checkBurstLimit(key.id)) {
     throw new ApiError(

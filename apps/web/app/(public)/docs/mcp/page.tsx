@@ -96,6 +96,21 @@ bearer_token_env_var = "RAILOR_KEY"`,
       </section>
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-[20px] font-semibold">Sign in with OAuth (ChatGPT, Claude)</h2>
+        <p className="text-[14px] text-[var(--color-ink-soft)]">
+          Chat apps can&apos;t send an API-key header, so Railor is also an OAuth 2.1 authorization server. In the app, add a custom
+          connector with the server URL, choose OAuth, leave the client ID and secret empty, then sign in to Railor and approve. Approval
+          creates a connected-app key for your workspace; revoke it under Developers → All keys to disconnect.
+        </p>
+        <Card className="flex flex-col gap-1 p-5 text-[13px] text-[var(--color-ink-soft)]">
+          <span>Resource metadata: <code>{base}/.well-known/oauth-protected-resource/api/mcp</code></span>
+          <span>Authorization server metadata: <code>{base}/.well-known/oauth-authorization-server</code></span>
+          <span>Dynamic client registration: <code>{base}/oauth/register</code>; client ID metadata documents are also accepted.</span>
+          <span>PKCE (S256) is required. Access tokens last an hour; refresh tokens rotate on every use. One scope: <code>prices:read</code>.</span>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-[20px] font-semibold">Ask your agent</h2>
         <Card className="flex flex-col gap-2 bg-[var(--color-lavender)] p-5">
           <p className="text-[14px] text-[var(--color-ink-soft)]">
@@ -104,9 +119,9 @@ bearer_token_env_var = "RAILOR_KEY"`,
           </p>
         </Card>
         <p className="text-[13px] text-[var(--color-muted)]">
-          Tool calls require a key. <code>initialize</code>, <code>ping</code> and <code>tools/list</code> are open so a
-          client can discover the server before authenticating. Each tool call counts toward the
-          workspace&apos;s monthly API allowance, and against its wallet once API calls are priced.
+          Every request needs credentials: an API key, or an OAuth token from signing in. A request with neither gets a{" "}
+          <code>401</code> whose <code>WWW-Authenticate</code> header points at the OAuth discovery document. Each tool call
+          counts toward the workspace&apos;s monthly API allowance, and against its wallet once API calls are priced.
         </p>
       </section>
     </>

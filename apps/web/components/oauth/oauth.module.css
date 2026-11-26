@@ -1,0 +1,26 @@
+.page { display: grid; min-height: 100vh; place-items: center; padding: 28px 16px; background: var(--color-canvas); color: var(--color-ink); }
+.card { width: min(100%, 460px); display: grid; gap: 18px; padding: 28px; border: 1px solid var(--color-line); border-radius: 24px; background: var(--color-surface); box-shadow: 0 24px 60px -34px rgb(21 19 16 / .35); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.02em; }
+.brand img { width: 30px; height: 30px; border-radius: 9px; }
+.card h1 { font: 700 24px/1.15 var(--font-display, inherit); letter-spacing: -.03em; }
+.lead { color: var(--color-muted); font-size: 14.5px; line-height: 1.55; }
+.lead strong { color: var(--color-ink); font-weight: 650; }
+.who { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--color-canvas); font-size: 13.5px; }
+.who small { color: var(--color-muted); font-size: 12px; }
+.list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.list li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; font-size: 14px; line-height: 1.45; }
+.list svg { margin-top: 2px; }
+.yes svg { color: var(--color-ok); }
+.no svg { color: var(--color-muted); }
+.actions { display: grid; gap: 8px; }
+.approve, .cancel { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border-radius: 999px; font-size: 15px; font-weight: 650; }
+.approve { background: var(--color-ink); color: #fff; }
+.approve:disabled { opacity: .7; }
+.cancel { border: 1px solid var(--color-line-strong); color: var(--color-ink-soft); }
+.approve:focus-visible, .cancel:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
+.error { color: var(--color-bad); font-size: 13px; }
+.note { color: var(--color-muted); font-size: 12px; line-height: 1.5; }
+.warn { padding: 12px 14px; border-radius: 14px; background: #fff3e2; color: #7a4f0e; font-size: 13.5px; line-height: 1.5; }
+.spin { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
