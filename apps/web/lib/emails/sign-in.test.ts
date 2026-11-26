@@ -29,7 +29,7 @@ describe("Railor verification email", () => {
     },
   );
 
-  it("builds a real MIME email containing both original PNG logos as inline images", async () => {
+  it("builds a real MIME email carrying every image inline: the logos, the animated hero and the icons", async () => {
     const email = createSignInEmail("member@example.com", verificationUrl);
     const transporter = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "unix" });
     const result = await transporter.sendMail({ from: "Railor <hello@mail.railor.xyz>", ...email });
@@ -38,13 +38,36 @@ describe("Railor verification email", () => {
     expect(mime).toContain("multipart/related");
     expect(mime).toContain("Content-Type: text/plain");
     expect(mime).toContain("Content-Type: text/html");
+    expect(email.attachments!.length).toBeGreaterThanOrEqual(7);
     for (const attachment of email.attachments!) {
       expect(mime).toContain(`Content-ID: <${attachment.cid}>`);
       expect(mime).toContain(`Content-Disposition: inline; filename=${attachment.filename}`);
-      expect(attachment.content.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+      // The bytes are what the type says: a PNG, or the GIF that carries the motion.
+      expect(attachment.content.subarray(0, attachment.contentType === "image/gif" ? 6 : 8).toString(attachment.contentType === "image/gif" ? "ascii" : "hex"))
+        .toBe(attachment.contentType === "image/gif" ? "GIF89a" : "89504e470d0a1a0a");
       expect(email.html).toContain(`src="cid:${attachment.cid}"`);
     }
-    // Both logos are self-contained; there is no remote image or tracking pixel.
+    // Everything is self-contained; there is no remote image or tracking pixel.
     expect(email.html).not.toMatch(/<img[^>]+src="https?:/);
+  });
+
+  it("animates: the hero is a looping GIF with several frames, small enough to send", () => {
+    const hero = createSignInEmail("member@example.com", verificationUrl).attachments!.find((item) => item.contentType === "image/gif")!;
+    const bytes = hero.content;
+    expect(bytes.length).toBeLessThan(400_000);
+    // A GIF with motion has more than one image descriptor (0x2C) after its graphic control extension (0x21 0xF9).
+    const frames = bytes.toString("latin1").split("\x21\xf9").length - 1;
+    expect(frames).toBeGreaterThan(8);
+    // And it loops forever (the NETSCAPE2.0 application extension).
+    expect(bytes.toString("latin1")).toContain("NETSCAPE2.0");
+  });
+
+  it("shows the image-free essentials too: the headline, the button and the safety note", () => {
+    const email = createSignInEmail("member@example.com", verificationUrl);
+    expect(email.html).toContain("Verify your email to sign in.");
+    expect(email.html).toContain("Verify email &amp; sign in");
+    expect(email.html).toContain("WHAT’S INSIDE");
+    expect(email.html).toContain('alt="A price travelling from US dollars to euros, marked Best price"');
+    expect(email.text).toContain("compare every provider's fee and rate");
   });
 });

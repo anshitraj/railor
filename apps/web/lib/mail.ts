@@ -58,7 +58,7 @@ export interface MailMessage {
     filename: string;
     content: Buffer;
     cid: string;
-    contentType: "image/png";
+    contentType: "image/png" | "image/gif";
     contentDisposition: "inline";
   }>;
 }
