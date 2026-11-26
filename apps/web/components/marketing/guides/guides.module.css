@@ -145,7 +145,7 @@
 @media (hover: hover) and (pointer: fine) { .card:hover .artBanner img { transform: scale(1.035); } }
 .articleBanner { overflow: hidden; margin: 8px 0 32px; border-radius: 28px; box-shadow: 0 24px 50px -36px rgb(21 19 16 / .45); }
 .articleBanner img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 440; }
-@media (max-width: 639px) { .articleBanner { border-radius: 20px; } .articleBanner img { aspect-ratio: 16 / 9; object-fit: cover; } }
+@media (max-width: 639px) { .articleBanner { border-radius: 20px; } }
 @media (prefers-reduced-motion: reduce) { .artBanner img { transition: none; } }
 
 /* ── Search form and provider comparison cards inside a guide ── */
