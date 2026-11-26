@@ -669,7 +669,18 @@ export const VERIFIED_PROVIDER_COVERAGE: Record<string, MappedProviderCoverage> 
   "currency-transfer": { countries: ["GB", "DE", "FR", "US", "AU", "CA"], currencies: ["GBP", "EUR", "USD", "AUD", "CAD"], products: ["payout", "treasury"], customerTypes: ["individual", "business"], sourceUrl: "https://www.currencytransfer.com" },
   currencyflow: { countries: ["GB", "DE", "FR", "US"], currencies: ["GBP", "EUR", "USD"], products: ["payout"], customerTypes: ["individual", "business"], sourceUrl: "https://www.currencyflow.com" },
   fiberpay: { countries: ["PL", "DE", "GB"], currencies: ["PLN", "EUR", "GBP"], products: ["collection", "payout"], customerTypes: ["business"], hasApi: true, sourceUrl: "https://fiberpay.pl" },
-  "vfx-financial": { countries: ["GB", "DE", "FR", "US", "AU", "CA"], currencies: ["GBP", "EUR", "USD", "AUD", "CAD"], products: ["payout", "treasury"], customerTypes: ["business", "individual"], sourceUrl: "https://www.vfxplc.com" },
+  "vfx-financial": { countries: ["GB", "DE", "FR", "US", "AU", "CA"], currencies: ["GBP", "EUR", "USD", "AUD", "CAD"], products: ["payout", "treasury"], customerTypes: ["business", "individual"], sourceUrl: "https://www.vfxfinancial.com" },
+  // --- India Export-Collection Receiving Accounts ---
+  briskpe: { countries: ["IN", "US", "GB", "DE", "CA", "AU", "SG"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD", "SGD"], products: ["collection", "virtual_account", "payout"], customerTypes: ["business"], sourceUrl: "https://www.briskpe.com" },
+  infinity: { countries: ["IN", "US", "GB", "DE", "CA", "AU", "SG"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD", "SGD"], products: ["collection", "virtual_account"], customerTypes: ["business"], sourceUrl: "https://www.infinityapp.in" },
+  karbon: { countries: ["IN", "US", "GB", "DE", "SG"], currencies: ["INR", "USD", "GBP", "EUR", "SGD"], products: ["collection", "virtual_account", "payout"], customerTypes: ["business"], sourceUrl: "https://www.karboncard.com" },
+  mulya: { countries: ["IN", "US", "GB", "DE", "CA", "AU"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD"], products: ["collection", "virtual_account"], customerTypes: ["business"], sourceUrl: "https://www.mulya.co" },
+  payzoll: { countries: ["IN", "US", "GB", "DE", "AE"], currencies: ["INR", "USD", "GBP", "EUR", "AED"], products: ["collection", "virtual_account"], customerTypes: ["business"], sourceUrl: "https://payzoll.finance" },
+  pingpong: { countries: ["IN", "US", "GB", "DE", "CA", "AU", "SG", "JP", "AE"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD", "SGD", "JPY", "AED"], products: ["collection", "virtual_account", "payout"], customerTypes: ["business"], sourceUrl: "https://in.pingpongx.com" },
+  razorpay: { countries: ["IN", "US", "GB", "DE", "CA", "AU", "SG", "MY"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD", "SGD", "MYR"], products: ["collection", "virtual_account", "payout"], customerTypes: ["business"], hasApi: true, hasSandbox: true, sourceUrl: "https://razorpay.com" },
+  refrens: { countries: ["IN", "US", "GB", "DE", "AE", "SG"], currencies: ["INR", "USD", "GBP", "EUR", "AED", "SGD"], products: ["collection"], customerTypes: ["business"], sourceUrl: "https://www.refrens.com" },
+  salt: { countries: ["IN", "US", "GB", "DE", "CA", "AU"], currencies: ["INR", "USD", "GBP", "EUR", "CAD", "AUD"], products: ["collection", "virtual_account"], customerTypes: ["business"], sourceUrl: "https://www.salt.pe" },
+  winvesta: { countries: ["IN", "US", "GB", "DE", "CA"], currencies: ["INR", "USD", "GBP", "EUR", "CAD"], products: ["collection", "virtual_account"], customerTypes: ["business"], sourceUrl: "https://www.winvesta.in" },
 };
 
 const corridorMap = new Map<string, MappedProviderCoverage>();

@@ -2653,6 +2653,486 @@ export const PROVIDER_KYC: Record<string, readonly KycEntry[]> = {
       approvalTime: { label: "1–2 business days", detail: "Relay says most online business applications are reviewed and approved within 1–2 business days.", url: "https://relayfi.com" },
     },
   ],
+  // --- Final Universe Infrastructure, Stablecoin & Regional Broker Providers ---
+  alfred: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Alfred Pay stablecoin-to-fiat LatAm payment API.",
+      documents: [],
+      documentsNote: "Alfred Pay supplies dynamic per-country KYC/KYB document requirements via its API (GET /v1/countries/{country}), covering individual government IDs for end users and corporate registration and ownership documents for business accounts.",
+      documentsUrl: "https://alfredpay.io",
+      approvalTime: null,
+    },
+  ],
+  anchorage: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Anchorage Digital institutional custody and settlement.",
+      documents: [],
+      documentsNote: "Anchorage Digital serves institutional clients and Eligible Contract Participants under OCC BSA/AML KYC and KYB onboarding with hardware/iOS quorum verification for Authorized Persons.",
+      documentsUrl: "https://www.anchorage.com",
+      approvalTime: null,
+    },
+  ],
+  anclap: [
+    {
+      for: "account_holder", profiles: ANYONE,
+      scope: "Anclap LatAm Stellar fiat-to-stablecoin anchor.",
+      documents: [],
+      documentsNote: "Anclap requires mandatory KYC/AML identity verification validated against national government databases before fiat-to-stablecoin access.",
+      documentsUrl: "https://www.anclap.com",
+      approvalTime: null,
+    },
+  ],
+  b2c2: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "B2C2 institutional OTC crypto and FX liquidity.",
+      documents: [],
+      documentsNote: "B2C2 onboards institutional counterparties and qualified HNWIs through tailored compliance KYC/KYB packs and AML screening.",
+      documentsUrl: "https://www.b2c2.com",
+      approvalTime: null,
+    },
+  ],
+  baanx: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Baanx Web3 card issuing and wallet infrastructure.",
+      documents: [],
+      documentsNote: "Baanx requires end-user identity verification (KYC) before activating partner-issued cards or wallets, alongside corporate KYB for issuing programs.",
+      documentsUrl: "https://www.baanx.com",
+      approvalTime: { label: "5–30 minutes (automated)", detail: "Baanx says automated end-user KYC checks typically complete in 5–30 minutes, with manual compliance reviews taking longer.", url: "https://www.baanx.com" },
+    },
+  ],
+  bitgo: [
+    {
+      for: "account_holder", profiles: PERSON,
+      scope: "BitGo individual custody and wallet accounts.",
+      documents: ["Full legal name, date of birth, residential address, valid government-issued photo ID, live selfie and proof of residency."],
+      documentsUrl: "https://www.bitgo.com",
+      approvalTime: null,
+    },
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "BitGo institutional custody and settlement accounts.",
+      documents: ["Corporate KYB proof of legal existence, operational footprint, authorised signing delegations and ultimate beneficial owner (UBO) identification."],
+      documentsUrl: "https://www.bitgo.com",
+      approvalTime: null,
+    },
+  ],
+  "bitso-juno": [
+    {
+      for: "account_holder", profiles: ANYONE,
+      scope: "Bitso / Juno LatAm digital dollar and stablecoin rails.",
+      documents: ["Government-issued photo ID and live selfie for standard verification.", "Proof of address and proof of income/funds for higher transaction limit tiers."],
+      documentsUrl: "https://bitso.com",
+      approvalTime: { label: "Within 72 hours (limit increases)", detail: "Bitso says document reviews for transaction limit increases are typically processed within 72 hours.", url: "https://bitso.com" },
+    },
+  ],
+  "cbw-bank": [
+    {
+      for: "account_holder", profiles: ANYONE, countries: ["US"],
+      scope: "CBW Bank US BaaS and payment rail accounts.",
+      documents: [],
+      documentsNote: "CBW Bank enforces individual KYC and corporate KYB with beneficial ownership (UBO) and BSA/AML screening across its banking programs.",
+      documentsUrl: "https://www.cbwbank.com",
+      approvalTime: null,
+    },
+  ],
+  cowrie: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Cowrie Integrated Systems cross-border FX liquidity.",
+      documents: ["Company registration documents, Legal Entity Identifier (LEI), key principal/director and UBO identification, and expected payment corridors and flows."],
+      documentsUrl: "https://cowriesys.com",
+      approvalTime: null,
+    },
+  ],
+  "cross-river": [
+    {
+      for: "account_holder", profiles: BUSINESS, countries: ["US"],
+      scope: "Cross River Bank BaaS and payment rails.",
+      documents: [],
+      documentsNote: "Cross River enforces Customer Record KYC for individuals and Business KYB covering the primary owner and all 25%+ ultimate beneficial owners.",
+      documentsUrl: "https://www.crossriver.com",
+      approvalTime: null,
+    },
+  ],
+  crossmint: [
+    {
+      for: "account_holder", profiles: PERSON,
+      scope: "Crossmint stablecoin wallets and fiat ramps.",
+      documents: ["Tier 1 (<1,000 USD / 12 months): full name, date of birth, nationality, address, email and phone (plus SSN/ID in US/EU).", "Tier 2 (>=1,000 USD): government-issued ID upload and live selfie verification."],
+      documentsUrl: "https://www.crossmint.com",
+      approvalTime: null,
+    },
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Crossmint business stablecoin accounts and APIs.",
+      documents: ["Corporate entity formation documents and ultimate beneficial owner (UBO) verification for KYB onboarding."],
+      documentsUrl: "https://www.crossmint.com",
+      approvalTime: null,
+    },
+  ],
+  eco: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Eco on-chain stablecoin routing infrastructure.",
+      documents: [],
+      documentsNote: "Eco provides execution-time compliance policy engines supporting KYC/KYB gating, OFAC sanctions screening and Travel Rule controls for institutional integrators.",
+      documentsUrl: "https://eco.com",
+      approvalTime: null,
+    },
+  ],
+  "episode-six": [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Episode Six issuer processing and ledger platform.",
+      documents: [],
+      documentsNote: "Episode Six is a technology and ledger provider; deploying banks and fintech programs integrate and enforce their own KYC/KYB workflows.",
+      documentsUrl: "https://episodesix.com",
+      approvalTime: null,
+    },
+  ],
+  ethena: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Ethena institutional USDe/USDtb mint and redeem.",
+      documents: [],
+      documentsNote: "Direct minting and redemption on Ethena is restricted to whitelisted non-US institutional counterparties that pass KYC, KYB, AML and sanctions screening.",
+      documentsUrl: "https://ethena.fi",
+      approvalTime: null,
+    },
+  ],
+  fireblocks: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Fireblocks institutional custody and settlement platform.",
+      documents: [],
+      documentsNote: "Fireblocks serves business entities only and requires corporate KYC/AML documentation to be furnished upon onboarding or within 14 days when requested.",
+      documentsUrl: "https://www.fireblocks.com",
+      approvalTime: null,
+    },
+  ],
+  fuze: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Fuze MENA digital asset and virtual IBAN infrastructure.",
+      documents: [],
+      documentsNote: "Fuze requires corporate registration, UBO disclosures, authorised representative ID and source-of-funds checks for VARA-regulated KYB onboarding (also supports BYO-KYC for partner end users).",
+      documentsUrl: "https://fuze.finance",
+      approvalTime: { label: "Up to 7 working days", detail: "Fuze says corporate KYB compliance onboarding typically takes up to 7 working days once complete documentation is submitted.", url: "https://fuze.finance" },
+    },
+  ],
+  highnote: [
+    {
+      for: "account_holder", profiles: BUSINESS, countries: ["US"],
+      scope: "Highnote US card issuing and ledger platform.",
+      documents: ["Business KYB: legal entity existence, registration documents and beneficial ownership (UBO) details.", "US cardholder KYC: full name, physical address, date of birth, SSN and government ID plus selfie where required."],
+      documentsUrl: "https://highnote.com",
+      approvalTime: { label: "Real-time (automated)", detail: "Highnote says automated cardholder identity verification completes in real time (seconds) when checks pass without manual review.", url: "https://highnote.com" },
+    },
+  ],
+  immersve: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Immersve Mastercard stablecoin card issuing.",
+      documents: ["Cardholder KYC: email, phone number, full name, date of birth, residential address, proof of address, government ID upload and facial liveness check (or Partner API KYC)."],
+      documentsUrl: "https://immersve.com",
+      approvalTime: null,
+    },
+  ],
+  lirium: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Lirium Crypto-as-a-Service platform.",
+      documents: [],
+      documentsNote: "Lirium mandates end-user KYC completed via a Lirium-hosted verification flow or partner API upload under Liechtenstein AML supervision.",
+      documentsUrl: "https://lirium.com",
+      approvalTime: null,
+    },
+  ],
+  mesh: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Mesh Connect crypto transfer and payment network.",
+      documents: [],
+      documentsNote: "Mesh relies on upstream partner KYC, exchange KYC-lite, wallet ownership attestation and iDenfy KYB/KYC compliance flows.",
+      documentsUrl: "https://www.meshconnect.com",
+      approvalTime: null,
+    },
+  ],
+  mobee: [
+    {
+      for: "account_holder", profiles: PERSON, countries: ["ID"],
+      scope: "Mobee Indonesia personal digital asset accounts.",
+      documents: ["Indonesian KTP, valid government ID or passport plus biometric selfie verification."],
+      documentsUrl: "https://mobee.io",
+      approvalTime: null,
+    },
+    {
+      for: "account_holder", profiles: BUSINESS, countries: ["ID"],
+      scope: "Mobee Indonesia corporate accounts.",
+      documents: ["Corporate registration documents and board resolutions authorising account operation."],
+      documentsUrl: "https://mobee.io",
+      approvalTime: null,
+    },
+  ],
+  monavate: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Monavate UK/EU EMI and BIN sponsorship.",
+      documents: [],
+      documentsNote: "Monavate conducts corporate registry KYB for issuing programs alongside embedded Sumsub cardholder KYC (government ID, liveness check and proof of address).",
+      documentsUrl: "https://www.monavate.com",
+      approvalTime: null,
+    },
+  ],
+  moorwand: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Moorwand UK/EEA EMI and card issuing.",
+      documents: [],
+      documentsNote: "Moorwand mandates end-user KYC (name, date of birth, address) and UK/EEA corporate KYB prior to activation, plus source-of-funds checks on request.",
+      documentsUrl: "https://www.moorwand.com",
+      approvalTime: null,
+    },
+  ],
+  "n-exchange": [
+    {
+      for: "sender", profiles: PERSON,
+      scope: "N.exchange non-custodial swaps and fiat gateway.",
+      documents: [],
+      documentsNote: "N.exchange runs wallet-to-wallet swaps with risk-based AML screening and mandatory KYC checks on fiat-gateway orders.",
+      documentsUrl: "https://n.exchange",
+      approvalTime: null,
+    },
+  ],
+  opendue: [
+    {
+      for: "account_holder", profiles: PERSON,
+      scope: "Due (OpenDue) global personal accounts.",
+      documents: ["Full legal name, nationality, residential address, date of birth and valid government-issued ID document."],
+      documentsUrl: "https://due.network",
+      approvalTime: null,
+    },
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Due (OpenDue) business accounts and API.",
+      documents: ["Legal company name, registration and tax ID, country of incorporation, operating address, business activity description and representative IDs."],
+      documentsUrl: "https://due.network",
+      approvalTime: null,
+    },
+  ],
+  parfin: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Parfin institutional Web3 custody and settlement.",
+      documents: [],
+      documentsNote: "Parfin conducts private institutional KYB and compliance onboarding for banks, financial institutions and corporate clients.",
+      documentsUrl: "https://www.parfin.io",
+      approvalTime: null,
+    },
+  ],
+  paycaddy: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "PayCaddy LatAm BaaS and card issuing.",
+      documents: [],
+      documentsNote: "PayCaddy requires AML-supervised corporate KYB (company registry and UBO verification) and embeds end-user KYC for partner wallets and cards.",
+      documentsUrl: "https://www.paycaddy.com",
+      approvalTime: null,
+    },
+  ],
+  "peoples-group": [
+    {
+      for: "account_holder", profiles: ANYONE, countries: ["CA"],
+      scope: "Peoples Group Canadian banking and BaaS accounts.",
+      documents: ["Canadian personal online applications require your SIN, mobile phone number and valid government-issued photo ID (passport or driver’s licence)."],
+      documentsUrl: "https://www.peoplesgroup.com",
+      approvalTime: { label: "2–3 business days (personal online)", detail: "Peoples Group says personal online account applications typically complete identity verification within 2–3 business days.", url: "https://www.peoplesgroup.com" },
+    },
+  ],
+  "pomelo-la": [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Pomelo LatAm card issuing and BIN sponsorship.",
+      documents: [],
+      documentsNote: "Pomelo’s modular IDaaS API manages corporate KYB and end-user KYC document uploads with national registry checks (such as RENAPER and facial recognition).",
+      documentsUrl: "https://pomelo.la",
+      approvalTime: null,
+    },
+  ],
+  scrypt: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Scrypt Swiss institutional OTC and custody.",
+      documents: [],
+      documentsNote: "Scrypt conducts VQF/FINMA-aligned institutional KYB/KYC covering incorporation documents, UBOs, directors and source of wealth/funds.",
+      documentsUrl: "https://www.scrypt.swiss",
+      approvalTime: null,
+    },
+  ],
+  stablecore: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Stablecore bank and credit-union digital asset platform.",
+      documents: [],
+      documentsNote: "Stablecore embeds KYC/KYB and sanctions screening governed by the deploying bank or credit union’s BSA/AML program.",
+      documentsUrl: "https://www.stablecore.com",
+      approvalTime: null,
+    },
+  ],
+  tether: [
+    {
+      for: "account_holder", profiles: ANYONE,
+      scope: "Tether direct USDt issuance and redemption.",
+      documents: [],
+      documentsNote: "Direct minting and redemption through tether.to requires completing personal KYC or corporate KYB verification (subject to a non-refundable 150 USDt verification fee and jurisdiction eligibility).",
+      documentsUrl: "https://tether.to",
+      approvalTime: { label: "Few days to several weeks", detail: "Tether says account verification typically takes from a few days to several weeks depending on application volume and compliance review.", url: "https://tether.to" },
+    },
+  ],
+  thredd: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Thredd global issuer payment processing.",
+      documents: [],
+      documentsNote: "Thredd is an issuer processor that activates card accounts after the client program or BIN sponsor completes KYC/KYB verification.",
+      documentsUrl: "https://www.thredd.com",
+      approvalTime: null,
+    },
+  ],
+  webbank: [
+    {
+      for: "account_holder", profiles: ANYONE, countries: ["US"],
+      scope: "WebBank US banking and partner fintech programs.",
+      documents: [],
+      documentsNote: "WebBank enforces USA PATRIOT Act Customer Identification Program (CIP) and Customer Due Diligence (CDD) checks directly and across its partner fintech programs.",
+      documentsUrl: "https://www.webbank.com",
+      approvalTime: null,
+    },
+  ],
+  "a-place-in-the-sun-currency": [
+    {
+      for: "sender", profiles: PERSON,
+      scope: "A Place in the Sun Currency overseas property and FX transfers.",
+      documents: [],
+      documentsNote: "A Place in the Sun Currency requires mandatory AML/KYC verification including photo ID, proof of address and source-of-funds or property transaction documentation.",
+      documentsUrl: "https://www.aplaceinthesun.com/currency",
+      approvalTime: null,
+    },
+  ],
+  "cambridge-currencies": [
+    {
+      for: "sender", profiles: ANYONE,
+      scope: "Cambridge Currencies personal and business FX transfers.",
+      documents: ["Valid passport or driver’s licence plus proof of address.", "Source-of-funds documentation for transfers above 10,000 GBP or corporate KYB documents for business accounts."],
+      documentsUrl: "https://cambridgecurrencies.com",
+      approvalTime: { label: "Minutes to 7 working days", detail: "Cambridge Currencies says digital UK checks clear in minutes, transfers above 10,000 GBP take 24–72 hours and enhanced due diligence takes 3–7 working days.", url: "https://cambridgecurrencies.com" },
+    },
+  ],
+  "caribe-express": [
+    {
+      for: "sender", profiles: PERSON,
+      scope: "Caribe Express Dominican Republic remittances.",
+      documents: ["Original physical Dominican Cédula or valid Passport (digital copies and photocopies are not accepted at counter/delivery)."],
+      documentsUrl: "https://www.caribeexpress.com.do",
+      approvalTime: null,
+    },
+  ],
+  "cedar-money": [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Cedar Money B2B cross-border emerging-market payments.",
+      documents: ["Certificate of Incorporation and Proof of Business Address.", "National or official government photo ID for directors and ultimate beneficial owners (UBOs)."],
+      documentsUrl: "https://cedar.money",
+      approvalTime: { label: "2–7 business days", detail: "Cedar Money says business KYB onboarding and compliance review typically completes within 2–7 business days.", url: "https://cedar.money" },
+    },
+  ],
+  "currency-solutions": [
+    {
+      for: "sender", profiles: ANYONE,
+      scope: "Currency Solutions personal and corporate FX transfers.",
+      documents: ["Valid passport, driver’s licence or national ID card plus proof of address dated within 3 months (requested if automated UK verification cannot confirm details or for non-UK residents)."],
+      documentsUrl: "https://www.currencysolutions.co.uk",
+      approvalTime: { label: "Immediate (auto UK check)", detail: "Currency Solutions says automated UK electronic identity checks complete immediately when details match.", url: "https://www.currencysolutions.co.uk" },
+    },
+  ],
+  "currency-transfer": [
+    {
+      for: "sender", profiles: ANYONE,
+      scope: "CurrencyTransfer multi-broker FX marketplace.",
+      documents: [],
+      documentsNote: "CurrencyTransfer routes customers through FCA-regulated FX partners that perform standard personal KYC or corporate KYB and AML checks before trading.",
+      documentsUrl: "https://www.currencytransfer.com",
+      approvalTime: null,
+    },
+  ],
+  currencyflow: [
+    {
+      for: "sender", profiles: ANYONE,
+      scope: "CurrencyFlow personal and business FX transfers.",
+      documents: ["Valid passport or photo driver’s licence plus a recent utility bill or bank statement.", "Recipient bank details and stated transfer purpose."],
+      documentsUrl: "https://www.currencyflow.com",
+      approvalTime: { label: "Within 1 working day", detail: "CurrencyFlow says identity verification and account setup typically complete within 1 working day.", url: "https://www.currencyflow.com" },
+    },
+  ],
+  fiberpay: [
+    {
+      for: "account_holder", profiles: BUSINESS, countries: ["PL"],
+      scope: "FiberPay Polish business payment and FiberID platform.",
+      documents: [],
+      documentsNote: "FiberPay requires AML/CFT business KYB verification and supports digital identity confirmation via FiberID (bank login, verification penny transfer or Profil Zaufany).",
+      documentsUrl: "https://fiberpay.pl",
+      approvalTime: null,
+    },
+  ],
+  honeycoin: [
+    {
+      for: "account_holder", profiles: PERSON,
+      scope: "HoneyCoin personal wallets and transfers.",
+      documents: ["Government-issued ID (passport, driver’s licence, national ID, voter’s card or Nigerian BVN)."],
+      documentsUrl: "https://honeycoin.app",
+      approvalTime: { label: "Minutes (individual)", detail: "HoneyCoin says individual identity verification typically completes within minutes via automated checks.", url: "https://honeycoin.app" },
+    },
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "HoneyCoin B2B cross-border payouts and OTC.",
+      documents: ["Corporate incorporation documents, business activity details and identification for directors and UBOs."],
+      documentsUrl: "https://honeycoin.app",
+      approvalTime: { label: "1–3 business days (B2B)", detail: "HoneyCoin says B2B corporate KYB onboarding typically completes within 1–3 business days.", url: "https://honeycoin.app" },
+    },
+  ],
+  juicyway: [
+    {
+      for: "account_holder", profiles: ANYONE,
+      scope: "Juicyway multi-currency accounts and cross-border payouts.",
+      documents: [],
+      documentsNote: "Juicyway requires completing in-app personal KYC or corporate KYB verification to unlock multi-currency virtual accounts and higher transaction limits.",
+      documentsUrl: "https://juicyway.com",
+      approvalTime: { label: "Within minutes", detail: "Juicyway says standard automated identity verification typically completes within minutes.", url: "https://juicyway.com" },
+    },
+  ],
+  kora: [
+    {
+      for: "account_holder", profiles: BUSINESS,
+      scope: "Kora pan-African payment gateway and payouts.",
+      documents: ["Corporate KYB Due Diligence Questionnaire (DDQ) and business registration documents.", "Local identity/registry checks such as BVN/NIN/CAC/TIN (Nigeria), Passport/SSNIT (Ghana), South African ID (South Africa) or Passport/National ID (Kenya)."],
+      documentsUrl: "https://korahq.com",
+      approvalTime: null,
+    },
+  ],
+  "vfx-financial": [
+    {
+      for: "account_holder", profiles: ANYONE,
+      scope: "VFX Financial corporate and personal FX accounts.",
+      documents: [],
+      documentsNote: "VFX Financial conducts mandatory KYC/KYB compliance screening covering legal identity, corporate ownership structure, financials and Authorised Persons.",
+      documentsUrl: "https://www.vfxfinancial.com",
+      approvalTime: { label: "A few days", detail: "VFX Financial says compliance review and account activation typically complete within a few business days.", url: "https://www.vfxfinancial.com" },
+    },
+  ],
 };
 
 const ALIASES: Record<string, string> = {

@@ -65,6 +65,23 @@ const OWN_DOMAINS: Record<string, string[]> = {
   yuh: ["yuh.com"], "neon-ch": ["neon-free.ch"], qonto: ["qonto.com"], finom: ["finom.co"],
   "zen-com": ["zen.com"], walutomat: ["walutomat.pl", "walutomat.com"], "fin-do": ["fin.do"],
   mercury: ["mercury.com"], relay: ["relayfi.com"],
+  alfred: ["alfredpay.io"], anchorage: ["anchorage.com"], anclap: ["anclap.com"], b2c2: ["b2c2.com"],
+  baanx: ["baanx.com"], bitgo: ["bitgo.com"], "bitso-juno": ["bitso.com", "buildwithjuno.com"],
+  "cbw-bank": ["cbwbank.com"], cowrie: ["cowriesys.com"], "cross-river": ["crossriver.com"],
+  crossmint: ["crossmint.com"], eco: ["eco.com"], "episode-six": ["episodesix.com"], ethena: ["ethena.fi"],
+  fireblocks: ["fireblocks.com"], fuze: ["fuze.finance"], highnote: ["highnote.com"], immersve: ["immersve.com"],
+  lirium: ["lirium.com"], mesh: ["meshconnect.com"], mobee: ["mobee.io", "mobee.com"],
+  monavate: ["monavate.com"], moorwand: ["moorwand.com"], "n-exchange": ["n.exchange"],
+  opendue: ["due.network", "opendue.com"], parfin: ["parfin.io"], paycaddy: ["paycaddy.com"],
+  "peoples-group": ["peoplesgroup.com"], "pomelo-la": ["pomelo.la", "pomelogroup.com"],
+  scrypt: ["scrypt.swiss"], stablecore: ["stablecore.com"], tether: ["tether.to"],
+  thredd: ["thredd.com", "thredd.ai"], webbank: ["webbank.com"],
+  "a-place-in-the-sun-currency": ["aplaceinthesun.com", "aplaceinthesuncurrency.com"],
+  "cambridge-currencies": ["cambridgecurrencies.com"], "caribe-express": ["caribeexpress.com.do"],
+  "cedar-money": ["cedar.money"], "currency-solutions": ["currencysolutions.co.uk", "currencysolutions.com"],
+  "currency-transfer": ["currencytransfer.com"], currencyflow: ["currencyflow.com"],
+  fiberpay: ["fiberpay.pl"], honeycoin: ["honeycoin.app"], juicyway: ["juicyway.com"],
+  kora: ["korahq.com", "korapay.com"], "vfx-financial": ["vfxfinancial.com", "vfxplc.com"],
 };
 const onOwnDomain = (slug: string, url: string) => {
   const { protocol, hostname } = new URL(url);
@@ -150,7 +167,7 @@ describe("kycFor", () => {
   });
 
   it("covers Indian banks, core universe rails, established FX brokers and regional underdogs", () => {
-    expect(Object.keys(PROVIDER_KYC).length).toBeGreaterThanOrEqual(200);
+    expect(Object.keys(PROVIDER_KYC).length).toBeGreaterThanOrEqual(270);
     expect(kycFor("hdfc-bank", { profile: "personal", country: "IN", direction: "send" })?.documents.join(" ")).toContain("PAN");
     expect(kycFor("icici-bank", { profile: "personal", country: "IN", direction: "send" })?.approvalTime).toBeNull();
     expect(kycFor("transak", person)?.approvalTime?.label).toContain("30 seconds");
@@ -159,6 +176,9 @@ describe("kycFor", () => {
     expect(kycFor("currencies-direct", { profile: "personal", country: "GB", direction: "send" })?.approvalTime?.label).toBe("Minutes to 24 hours");
     expect(kycFor("mercury", { profile: "business", country: "US", direction: "send" })?.documents.join(" ")).toContain("EIN");
     expect(kycFor("qonto", { profile: "business", country: "FR", direction: "send" })?.approvalTime?.label).toBe("Within 1 business day");
+    expect(kycFor("cedar-money", { profile: "business", country: "US", direction: "send" })?.approvalTime?.label).toBe("2–7 business days");
+    expect(kycFor("currency-solutions", { profile: "personal", country: "GB", direction: "send" })?.approvalTime?.label).toContain("Immediate");
+    expect(kycFor("tether", { profile: "business", country: "GB", direction: "send" })?.documentsNote).toContain("150 USDt");
   });
 
   it("returns nothing for providers Railor has no published facts for, and for the wrong profile", () => {

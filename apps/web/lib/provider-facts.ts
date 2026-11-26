@@ -1239,6 +1239,220 @@ const STATIC_FACTS: Record<string, ProviderFacts> = {
     limits: ["Up to 50 debit cards with customizable spend limits; dynamic ACH/wire caps visible in dashboard."],
     delivery: { label: "Immediate (internal) to 3+ business days", detail: "Relay says internal transfers are immediate, domestic wires same day, ACH 1–3 business days and international wires same-day (SEPA/FPS) to multi-day (SWIFT)." },
   }),
+  // --- Final Universe Infrastructure, Stablecoin & Regional Broker Providers ---
+  circle: entry("Circle · Circle Mint Pricing & Settlement", "https://www.circle.com", {
+    fees: ["0 USD fee on standard USDC minting and standard redemptions; 5 bps (0.05%) fee on Express redemptions (CPN participants exempt)."],
+    limits: ["Custom institutional minting and redemption limits configured per Circle Mint account."],
+    delivery: { label: "Near-instant (Express) to 1–3 business days", detail: "Circle says Express USDC redemptions settle near-instantly, domestic wires same day, standard redemptions >=2 business days and international SWIFT wires 1–3 business days." },
+  }),
+  alfred: entry("Alfred Pay · LatAm Stablecoin API", "https://alfredpay.io", {
+    fees: ["Custom B2B API pricing for LatAm fiat-to-stablecoin collections and payouts."],
+    delivery: { label: "Under 72 seconds (PIX / stablecoins)", detail: "Alfred Pay says local Pix and stablecoin transfers settle in sub-minute windows (under 72 seconds)." },
+  }),
+  anchorage: entry("Anchorage Digital · Institutional Custody", "https://www.anchorage.com", {
+    fees: ["Custom institutional custody, settlement and stablecoin issuance fee schedules."],
+    limits: ["Institutional / Eligible Contract Participant limits tailored per mandate."],
+    delivery: { label: "Off-chain instant (Atlas)", detail: "Anchorage Digital settles institutional trades off-chain via its internal ledger and Atlas settlement network." },
+  }),
+  anclap: entry("Anclap · Stellar LatAm Anchor", "https://www.anclap.com", {
+    fees: ["Quote-based anchor conversion and local rail settlement fees shown per transaction."],
+    delivery: { label: "Stellar local fiat-to-stablecoin rails", detail: "Anclap bridges local LatAm bank rails (ARS/PEN) with Stellar stablecoins once local deposit clears." },
+  }),
+  b2c2: entry("B2C2 · Institutional OTC & PENNY", "https://www.b2c2.com", {
+    fees: ["Spread-based streaming OTC quotes with 0 USD execution/settlement fees and 0 fee on PENNY stablecoin swaps."],
+    limits: ["Supports trade sizes from 0.0005 BTC equivalent up to multi-million-dollar institutional blocks."],
+    delivery: { label: "24/7/365 instant (NDFs T+0/T+2)", detail: "B2C2 offers 24/7/365 instant spot and stablecoin settlement, with USD NDFs settling T+0 or T+2." },
+  }),
+  baanx: entry("Baanx · Web3 Card Issuing", "https://www.baanx.com", {
+    fees: ["Card and conversion fee schedules set per partner program."],
+    delivery: { label: "Real-time POS authorisation", detail: "Baanx settles crypto-to-fiat Mastercard/Visa card spending in real time at point of sale." },
+  }),
+  bitgo: entry("BitGo · Custody & Go Network", "https://www.bitgo.com", {
+    fees: ["Custom institutional AUC storage bps plus blockchain network gas fees (incoming crypto deposits free)."],
+    limits: ["API compliance rate limits: 20/min KYC and 100/min KYB; institutional wallet velocity policies customizable."],
+  }),
+  "bitso-juno": entry("Bitso / Juno · LatAm Digital Dollars", "https://bitso.com", {
+    fees: ["Free crypto deposits; USD ACH 2.99 USD; USD Wire 11.99 USD + 0.17%; transparent orderbook spreads."],
+    limits: ["Minimum transaction 3 USD equivalent; higher fiat caps unlock with proof of address and income."],
+    delivery: { label: "Instant (SPEI / PIX)", detail: "Bitso and Juno settle MXN via SPEI and BRL via PIX instantly 24/7." },
+  }),
+  "cbw-bank": entry("CBW Bank · US BaaS & Payment Rails", "https://www.cbwbank.com", {
+    fees: ["Tiered Essential, Pro and Enterprise banking/BaaS program pricing."],
+    limits: ["Role-specific transaction limits and maker/checker approval controls configured per client."],
+    delivery: { label: "Instant (RTP/FedNow) to ACH/Fedwire", detail: "CBW Bank supports instant 24/7 RTP and FedNow alongside Same-Day ACH, standard ACH and Fedwire." },
+  }),
+  cowrie: entry("Cowrie · Cross-Border FX Liquidity", "https://cowriesys.com", {
+    fees: ["Custom two-way institutional FX and stablecoin liquidity desk quotes."],
+    delivery: { label: "Same-day to T+1 business day", detail: "Cowrie settles cross-border FX and Nigeria/Ghana liquidity corridors same-day or T+1 business day." },
+  }),
+  "cross-river": entry("Cross River · US BaaS Payment Rails", "https://www.crossriver.com", {
+    fees: ["Program-level BaaS and payment-rail pricing agreed per fintech partner."],
+    limits: ["Limits configured per productId; CRNow internal instant ledger carries no inherent transaction cap."],
+    delivery: { label: "Instant 24/7/365 (RTP/FedNow/CRNow)", detail: "Cross River delivers instant 24/7/365 settlement via RTP, FedNow and CRNow, plus Same-Day and standard ACH." },
+  }),
+  crossmint: entry("Crossmint · Wallets & Stablecoin API", "https://www.crossmint.com", {
+    fees: ["Wallets free up to 5,000 MAWs then from 0.01 USD/MAW; Agent Checkout first 1,000 free then 0.05 USD; dynamic network gas."],
+    limits: ["Progressive KYC tiers: Tier 1 below 1,000 USD per 12 months; Tier 2 unlocks 1,000 USD and above."],
+    delivery: { label: "Instant to 1–3 business days", detail: "Crossmint settles on-chain/RTP/SPEI/PIX rails near-instantly and ACH/SEPA bank rails in 1–3 business days." },
+  }),
+  eco: entry("Eco · Cross-Chain Stablecoin Routing", "https://eco.com", {
+    fees: ["Dynamic solver-competed spreads (low basis points) quoted per intent."],
+    limits: ["Configurable API transfer caps set per enterprise integrator."],
+    delivery: { label: "Intent-based cross-chain finality", detail: "Eco Routes settles cross-chain stablecoin transfers via competing liquidity solvers in seconds." },
+  }),
+  "episode-six": entry("Episode Six · Issuer Processing", "https://episodesix.com", {
+    fees: ["Enterprise platform licensing; end-user card and transfer fees are set by the deploying bank or fintech."],
+    limits: ["Program-configurable card and ledger limits managed by the issuing client."],
+  }),
+  ethena: entry("Ethena · Institutional Mint & Redeem", "https://ethena.fi", {
+    fees: ["0 bps (0% protocol fee) for whitelisted non-US Mint Users converting USDe with USDC/USDT, plus Ethereum network gas."],
+    limits: ["Smart-contract per-block and rolling velocity mint/redeem caps enforced on-chain."],
+    delivery: { label: "Atomic on-chain settlement", detail: "Ethena executes whitelisted USDe minting and redemption atomically on-chain alongside OES custody." },
+  }),
+  fireblocks: entry("Fireblocks · Custody & Settlement", "https://www.fireblocks.com", {
+    fees: ["Essentials plan 999 USD/month + 0.20% volume overage; Pro and Enterprise custom institutional pricing plus network gas."],
+    limits: ["Essentials plan includes 1,000,000 USD/quarter outbound volume, 2 workspaces, 5 users and 5,000 embedded wallets."],
+    delivery: { label: "24/7 on-chain settlement", detail: "Fireblocks executes MPC-signed on-chain transfers and Fireblocks Network settlements 24/7." },
+  }),
+  fuze: entry("Fuze · MENA Digital Asset Infrastructure", "https://fuze.finance", {
+    fees: ["Upfront pre-confirmation FX spread and network fee quoted per transaction."],
+    limits: ["Custom corporate allowlists and role-based transaction limits configured in admin portal."],
+    delivery: { label: "Same-day & 24/7 stablecoin settlement", detail: "Fuze offers 24/7 stablecoin settlement and same-day local MENA rails alongside ACH, Fedwire and SWIFT." },
+  }),
+  highnote: entry("Highnote · US Card Issuing & Ledger", "https://highnote.com", {
+    fees: ["Pay-as-you-go and custom enterprise issuing/processing schedules."],
+    limits: ["Programmable real-time spend, velocity and MCC card controls per cardholder."],
+    delivery: { label: "Near real-time (push-to-card) to 1–3 business days", detail: "Highnote says push-to-card payouts settle near real-time while ACH and wire payouts take 1–3 business days." },
+  }),
+  immersve: entry("Immersve · Mastercard Stablecoin Issuing", "https://immersve.com", {
+    fees: ["0 USD card issuance fee charged by Immersve (card network FX conversion fees may apply on non-USD spend)."],
+    delivery: { label: "Real-time Mastercard authorisation", detail: "Immersve authorises USDC/USDT-backed Mastercard spending in real time via just-in-time funding." },
+  }),
+  lirium: entry("Lirium · Crypto-as-a-Service", "https://lirium.com", {
+    fees: ["Institutional fee schedules governed by separate Master Terms & Conditions."],
+    limits: ["Risk-based transaction and volume limits managed per partner program."],
+  }),
+  mesh: entry("Mesh · Crypto Transfer & Payment Network", "https://www.meshconnect.com", {
+    fees: ["Enterprise platform agreements; exchange and blockchain gas fees shown upfront in transfer preview."],
+    limits: ["Session maxAmount caps and upstream exchange withdrawal limits apply."],
+    delivery: { label: "Instant / on-chain settlement", detail: "Mesh executes direct exchange-to-wallet and stablecoin transfers at underlying on-chain settlement speed." },
+  }),
+  mobee: entry("Mobee · Indonesia Fiat-Crypto Exchange", "https://mobee.io", {
+    fees: ["IDR fiat bank withdrawal fee 8,000 IDR per transaction; crypto withdrawals carry dynamic blockchain gas."],
+    limits: ["Minimum IDR withdrawal 28,000 IDR."],
+    delivery: { label: "Local Indonesian bank clearing", detail: "Mobee settles IDR withdrawals to local Indonesian banks including BCA, Mandiri, BRI, Permata, CIMB and Bank Sahabat Sampoerna." },
+  }),
+  monavate: entry("Monavate · UK/EU EMI & BIN Sponsorship", "https://www.monavate.com", {
+    fees: ["Bespoke EMI, vIBAN and Visa/Mastercard BIN sponsorship contracts."],
+    delivery: { label: "Multi-currency FPS / SEPA / card rails", detail: "Monavate supports UK Faster Payments, SEPA, card settlement and stablecoin treasury rails." },
+  }),
+  moorwand: entry("Moorwand · UK/EEA Issuing & Banking", "https://www.moorwand.com", {
+    fees: ["Program-specific Fees & Limits Schedule agreed per fintech client."],
+    limits: ["Card and IBAN velocity limits defined in each program's Fees & Limits Schedule."],
+  }),
+  "n-exchange": entry("N.exchange · Non-Custodial Swaps", "https://n.exchange", {
+    fees: ["2%–3% service fee built into standard swap quotes (0 bps promotional/tier rate on select stablecoin-to-stablecoin pairs)."],
+    limits: ["Live per-pair minimum and maximum swap amounts shown upfront on the quote screen."],
+  }),
+  opendue: entry("Due (OpenDue) · Global Stablecoin & Fiat Rails", "https://due.network", {
+    fees: ["0 USD platform access fee; quote-based FX and transfer fees shown upfront with a 2-minute rate lock."],
+    limits: ["Dynamic transaction caps based on verification tier and payment rail."],
+    delivery: { label: "Near-instant (local/stablecoins) to 1–5 business days (SWIFT)", detail: "Due says SEPA, ACH, FPS, SPEI, PIX and stablecoins clear near-instantly to same day, while SWIFT takes 1–5 business days." },
+  }),
+  parfin: entry("Parfin · Institutional Custody & Web3", "https://www.parfin.io", {
+    fees: ["Custom enterprise custody and Rayls institutional infrastructure agreements."],
+  }),
+  paycaddy: entry("PayCaddy · LatAm BaaS & Issuing", "https://www.paycaddy.com", {
+    fees: ["Custom LatAm BaaS and card-issuing enterprise quotes."],
+  }),
+  "peoples-group": entry("Peoples Group · Canadian Banking & BaaS", "https://www.peoplesgroup.com", {
+    fees: ["Product-specific fee schedules published per personal account or BaaS program."],
+    limits: ["Discretionary EFT transfer limits configured per account profile."],
+    delivery: { label: "1–3 business days (EFT)", detail: "Peoples Group says Canadian Electronic Funds Transfers (EFT) typically settle within 1–3 business days." },
+  }),
+  "pomelo-la": entry("Pomelo · LatAm Card Issuing", "https://pomelo.la", {
+    fees: ["Negotiated LatAm card issuing, processing and BIN sponsorship contracts."],
+    limits: ["Programmable per-card and program-level spending caps."],
+    delivery: { label: "Automated daily settlement", detail: "Pomelo runs automated daily clearing and settlement across its LatAm issuing programs." },
+  }),
+  scrypt: entry("Scrypt · Swiss Institutional OTC & Custody", "https://www.scrypt.swiss", {
+    fees: ["Spread-based OTC/spot pricing with no hidden commissions, plus tiered AUC custody fees."],
+    limits: ["Institutional block-trade limits tailored per VQF/FINMA-onboarded counterparty."],
+    delivery: { label: "T+0 minutes (stablecoins) / local fiat & SWIFT", detail: "Scrypt settles stablecoins in T+0 minutes alongside local fiat and SWIFT bank rails." },
+  }),
+  stablecore: entry("Stablecore · Bank Digital Asset Platform", "https://www.stablecore.com", {
+    fees: ["Enterprise bank and credit-union platform agreements."],
+    delivery: { label: "Real-time core reconciliation", detail: "Stablecore reconciles digital asset and fiat positions directly into participating bank core ledgers in real time." },
+  }),
+  tether: entry("Tether · Direct USDt Issuance & Redemption", "https://tether.to", {
+    fees: ["150 USDt non-refundable verification fee; 0.1% direct acquisition fee; redemption fee is the greater of 1,000 USD or 0.1%."],
+    limits: ["100,000 USD minimum transaction size for direct USDt acquisition or redemption via tether.to."],
+    delivery: { label: "Several days (wire settlement)", detail: "Tether says direct fiat wire settlements for minting and redemption typically take several business days." },
+  }),
+  thredd: entry("Thredd · Global Issuer Processing", "https://www.thredd.com", {
+    fees: ["Setup fee, monthly minimum and per-account issuer processing program fees."],
+    limits: ["Programmable real-time authorisation and spend rules configured per issuing program."],
+  }),
+  webbank: entry("WebBank · US Banking & Partner Programs", "https://www.webbank.com", {
+    fees: ["Free ACH direct deposits, ~25 USD outgoing domestic wires and 5 USD paper statements (partner fintech product schedules vary)."],
+  }),
+  "a-place-in-the-sun-currency": entry("A Place in the Sun Currency · Overseas FX", "https://www.aplaceinthesun.com/currency", {
+    fees: ["0 GBP commission; 0 GBP transfer fee above 30,000 GBP (5–10 GBP below 30,000 GBP; waived on Regular Payment Plans except 5 GBP under 300 GBP)."],
+    limits: ["Handles transfers from under 2,000 GBP to 250,000 GBP+ with no rigid upper cap."],
+    delivery: { label: "Same-day to 1–4 working days", detail: "A Place in the Sun Currency says EUR before midday, USD before 5 PM and GBP over 30,000 GBP settle same day; other currencies take 1–4 working days." },
+  }),
+  "cambridge-currencies": entry("Cambridge Currencies · Personal & Business FX", "https://cambridgecurrencies.com", {
+    fees: ["0 GBP transfer, account setup, inactivity and receiving fees (revenue via FX spread margin)."],
+    limits: ["No upper maximum transfer limit."],
+    delivery: { label: "Same-day (major/SEPA) to 1–2 business days", detail: "Cambridge Currencies says major currencies and SEPA often settle same day, with standard international transfers taking 1–2 business days." },
+  }),
+  "caribe-express": entry("Caribe Express · Dominican Republic Transfers", "https://www.caribeexpress.com.do", {
+    fees: ["6% commission on international transfers and 5% on national transfers; home delivery carries no extra delivery charge."],
+    limits: ["No fixed standard send cap published (third-party pickup capped under 150 USD equivalent)."],
+    delivery: { label: "Immediate (minutes)", detail: "Caribe Express says counter pickup and bank deposits in the Dominican Republic are available within minutes." },
+  }),
+  "cedar-money": entry("Cedar Money · B2B Emerging-Market FX", "https://cedar.money", {
+    fees: ["All-inclusive guaranteed exchange-rate quotes with no hidden intermediary deductions."],
+    delivery: { label: "Same or next business day (T+0 / T+1)", detail: "Cedar Money says cross-border B2B settlements complete same business day (T+0) or next business day (T+1)." },
+  }),
+  "currency-solutions": entry("Currency Solutions · Personal & Corporate FX", "https://www.currencysolutions.co.uk", {
+    fees: ["Personal online: 10 GBP under 3,000 GBP and 0 GBP at 3,000 GBP+; Business standard transfers: 0 GBP fee (revenue via FX spread)."],
+    limits: ["Online limits: 20,000 GBP/tx personal and 50,000 GBP/tx business (max 3/day); telephone dealer trades have no upper cap."],
+    delivery: { label: "3–48 hours (SWIFT) / next-day (SEPA)", detail: "Currency Solutions says SEPA clears next day before 15:00 GMT and SWIFT transfers arrive in 3–48 hours." },
+  }),
+  "currency-transfer": entry("CurrencyTransfer · FX Marketplace", "https://www.currencytransfer.com", {
+    fees: ["0 GBP platform or transfer fees (revenue via FCA-regulated partner FX spread)."],
+    limits: ["5,000 GBP minimum transfer size with no upper maximum cap."],
+  }),
+  currencyflow: entry("CurrencyFlow · Transparent FX Transfers", "https://www.currencyflow.com", {
+    fees: ["0 GBP transfer fees with a transparent 0.25%–0.40% FX margin (~0.25% at 200,000 GBP+)."],
+    limits: ["No upper maximum transfer limit."],
+    delivery: { label: "Same-day to 1–2 working days", detail: "CurrencyFlow says major-currency bank transfers typically settle same day or within 1–2 working days." },
+  }),
+  fiberpay: entry("FiberPay · Polish Business Payments", "https://fiberpay.pl", {
+    fees: ["Custom merchant pricing defined under each business Framework Agreement."],
+    limits: ["Subject to Polish MIP statutory average monthly volume cap of 3,000,000 EUR."],
+    delivery: { label: "Up to 2nd business day (D+2)", detail: "FiberPay says payment payouts settle up to the second business day (D+2)." },
+  }),
+  honeycoin: entry("HoneyCoin · Africa & Global B2B Payments", "https://honeycoin.app", {
+    fees: ["Dynamic per-rail B2B fees, 0.5% flat stablecoin minting fee; virtual cards 0% on USD spend and up to 3% on non-USD FX."],
+    limits: ["Virtual cards up to 10,000 USD/day; institutional OTC desk up to 5,000,000 USD/day."],
+    delivery: { label: "Real-time to T+1 business day", detail: "HoneyCoin says OTC settles same-day (T+0) and bank/mobile-money payouts settle real-time to T+1." },
+  }),
+  juicyway: entry("Juicyway · Multi-Currency Accounts", "https://juicyway.com", {
+    fees: ["Flat per-transaction fees shown upfront with 0 USD monthly maintenance and 0 USD virtual card creation."],
+    limits: ["Bank payouts up to 10,000,000 NGN (99.9M NGN upgraded), 50,000 CAD or 1,000,000 GBP FPS; stablecoins 100k/tx and 500k/day."],
+    delivery: { label: "Near-instant (NGN/Interac) to 1–30 min (crypto)", detail: "Juicyway says Nigerian NGN and Canadian Interac rails settle near-instantly and stablecoin transfers settle in 1–30 minutes." },
+  }),
+  kora: entry("Kora · Pan-African Payments API", "https://korahq.com", {
+    fees: ["Per-merchant transaction fee schedule across African collection/payout rails plus flat Identity API check fees."],
+    delivery: { label: "Instant or scheduled batch / T+1", detail: "Kora says local bank and mobile-money payouts execute instantly or on scheduled batch, with local card settlements at T+1." },
+  }),
+  "vfx-financial": entry("VFX Financial · Corporate & Personal FX", "https://www.vfxfinancial.com", {
+    fees: ["0 GBP e-money redemption fee with transparent FX spreads quoted before execution."],
+    limits: ["SEPA Instant up to 100,000 EUR per transfer; UK CHAPS uncapped."],
+    delivery: { label: "Same business day (before 12:00 PM) or next day", detail: "VFX Financial says funded orders instructed before 12:00 PM settle same business day, otherwise on the next business day." },
+  }),
 };
 
 /** Published delivery windows for existing providers (each sourced from the provider's own site). */
@@ -1306,6 +1520,8 @@ const PROVIDER_DELIVERY: Record<string, ProviderDeliveryFact> = {
   husky: { label: "1–2 business days", detail: "Husky says incoming USD/EUR/GBP transfers typically convert and settle to your Brazilian BRL bank account within 1–2 business days.", sources: [src("Husky", "https://help.husky.io/hc/en-us/articles/360053702513-What-are-the-prices-at-Husky")] },
   "remessa-online": { label: "1–2 business days", detail: "Remessa Online says verified BRL international sends and receipts typically settle within 1–2 business days.", sources: [src("Remessa Online", "https://ajuda.remessaonline.com.br/hc/pt-br/articles/360019629454-Entenda-os-custos-e-taxas-da-sua-transfer%C3%AAncia-internacional-com-a-Remessa-Online")] },
   techfx: { label: "Same day to 1 business day", detail: "TechFX says PJ export wire receipts settled before cut-off credit your Brazilian bank account same day or next business day.", sources: [src("TechFX", "https://www.techfx.com.br/taxas-de-cambio-para-receber-do-exterior/")] },
+  bitso: { label: "Instant (SPEI / PIX) to 1–2 business days", detail: "Bitso settles MXN via SPEI and BRL via PIX instantly 24/7; US wire deposits and withdrawals clear in 1–2 business days.", sources: [src("Bitso", "https://bitso.com")] },
+  bookmyforex: { label: "12–48 working hours (SWIFT wire)", detail: "BookMyForex says verified Indian LRS outward wire remittances typically credit overseas bank accounts within 12–48 working hours.", sources: [src("BookMyForex", "https://www.bookmyforex.com/money-transfer/")] },
 };
 
 const FACT_ALIASES: Record<string, string> = {

@@ -21,7 +21,7 @@ const ACCOUNT_PRICED = [
   { slug: "xflow", name: "Xflow" },
   { slug: "dlocal", name: "dLocal" },
 ];
-const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora", "ofx", "world-remit", "sendwave", "lemfi", "careem-pay", "taptap-send", "instarem", "ria", "western-union", "transfergo", "nala", "bookmyforex", "rextie", "airwallex", "al-ansari-exchange"]);
+const PUBLIC_CALCULATORS = new Set(["wise", "remitly", "xoom", "aspora", "ofx", "world-remit", "sendwave", "lemfi", "careem-pay", "taptap-send", "instarem", "ria", "western-union", "transfergo", "nala", "bookmyforex", "rextie", "walutomat", "bitso", "airwallex", "al-ansari-exchange"]);
 
 /**
  * Price check for a workspace: its own connected accounts first (production

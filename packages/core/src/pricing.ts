@@ -11,7 +11,7 @@ import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
 import { asporaBankQuote, asporaQuoteCurrency, ofxPublicPrice, remitlyPublicPrice, usBankRemittanceCorridor, usBankRemittanceRows, worldRemitPublicPrice } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
-import { bookMyForexPublicPrice, careemPublicPrice, instaremPublicPrice, lemfiPublicPrice, nalaPublicPrice, rextiePublicPrice, riaPublicPrice, sendwavePublicPrice, taptapSendPublicPrice, transferGoPublicPrice, westernUnionPublicPrice } from "./public-pricing/retail-calculators.js";
+import { bitsoPublicPrice, bookMyForexPublicPrice, careemPublicPrice, instaremPublicPrice, lemfiPublicPrice, nalaPublicPrice, rextiePublicPrice, riaPublicPrice, sendwavePublicPrice, taptapSendPublicPrice, transferGoPublicPrice, walutomatPublicPrice, westernUnionPublicPrice } from "./public-pricing/retail-calculators.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { withKycFacts } from "./public-pricing/provider-kyc.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
@@ -813,6 +813,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     ] : []),
     cache(`transfergo:${consumerPair}`, 60_000, () => transferGoPublicPrice(input, fetcher, now)),
     cache(`rextie:${consumerPair}`, 60_000, () => rextiePublicPrice(input, fetcher, now)),
+    walutomatPublicPrice(input, fetcher, now, !deps.fetcher),
+    bitsoPublicPrice(input, fetcher, now, !deps.fetcher),
   ]);
   const revolutRegion = input.context?.direction === "send" ? input.context.country : "GB";
   const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic, retailReferences] = await Promise.all([

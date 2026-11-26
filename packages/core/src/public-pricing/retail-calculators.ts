@@ -973,3 +973,143 @@ export async function rextiePublicPrice(input: PriceCheckInput, fetcher: typeof 
     ],
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Walutomat (verified live HTTP 200 Poland/EU 46-pair FX brief 2026-11-27)   */
+/* -------------------------------------------------------------------------- */
+
+const WALUTOMAT_COUNTRIES = new Set(["PL", "DE", "FR", "ES", "IT", "NL", "BE", "IE", "PT", "AT", "FI", "SE", "DK", "NO"]);
+const walutomatBriefShape = z.array(z.object({
+  pair: z.string().regex(/^[A-Z]{3}_[A-Z]{3}$/),
+  bestOffers: z.object({
+    bid_now: z.number().finite().positive(),
+    ask_now: z.number().finite().positive(),
+  }),
+}));
+
+async function loadWalutomatBrief(fetcher: typeof fetch) {
+  const res = await fetcher("https://user.walutomat.pl/api/public/marketBrief", {
+    redirect: "error", signal: AbortSignal.timeout(4_500), headers: { Accept: "application/json" }, cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const parsed = walutomatBriefShape.safeParse(await res.json());
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * Walutomat's live public 46-pair FX orderbook brief (Poland & EU personal and
+ * business currency exchange). Verified live HTTP 200 on 2026-11-27.
+ */
+export async function walutomatPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date, cache = true): Promise<PriceRow | null> {
+  const context = input.context;
+  if (!context || (context.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod))) return null;
+  if (!WALUTOMAT_COUNTRIES.has(context.country) && input.sourceCurrency !== "PLN" && input.destinationCurrency !== "PLN") return null;
+
+  const brief = await (cache ? shared("walutomat:market-brief", 60_000, () => loadWalutomatBrief(fetcher)) : loadWalutomatBrief(fetcher)).catch(() => null);
+  if (!brief) return null;
+  const directKey = `${input.sourceCurrency}_${input.destinationCurrency}`;
+  const inverseKey = `${input.destinationCurrency}_${input.sourceCurrency}`;
+  const direct = brief.find((item) => item.pair === directKey);
+  const inverse = direct ? undefined : brief.find((item) => item.pair === inverseKey);
+  if (!direct && !inverse) return null;
+
+  const rate = direct ? direct.bestOffers.bid_now : Math.round((1 / inverse!.bestOffers.ask_now) * 1_000_000) / 1_000_000;
+  // Standard Walutomat exchange commission is 0.20% (lower for high volume).
+  const feeAmount = Math.round(input.amount * 0.002 * 100) / 100;
+  const recipientAmount = Math.round((input.amount - feeAmount) * rate * 100) / 100;
+  if (!(recipientAmount > 0)) return null;
+
+  return {
+    ...publicPrice(now),
+    expiresAt: new Date(now.getTime() + quoteLifetime).toISOString(),
+    providerSlug: "walutomat",
+    providerName: "Walutomat",
+    senderCountry: context.country,
+    product: { id: `walutomat:${input.sourceCurrency.toLowerCase()}-${input.destinationCurrency.toLowerCase()}`, label: "Walutomat · live FX orderbook" },
+    recipientAmount,
+    feeAmount,
+    feeCurrency: input.sourceCurrency,
+    rate,
+    paymentMethods: ["local_bank"],
+    delivery: "Immediate to 2 business days",
+    source: { label: "Walutomat live orderbook", url: "https://www.walutomat.pl/" },
+    missing: ["Confirm bank payout rail fee (up to 5 free PLN/EUR SEPA transfers/mo, then 1 PLN; non-SEPA 9 PLN)."],
+    notes: [
+      `Uses Walutomat’s live public best-${direct ? "bid" : "ask"} rate (${direct ? direct.bestOffers.bid_now : inverse!.bestOffers.ask_now}) minus Walutomat’s standard 0.20% exchange commission.`,
+      "Bank withdrawal charges (0–9 PLN depending on SEPA vs non-SEPA) are separate.",
+    ],
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bitso (verified live HTTP 200 LatAm USD<->MXN/BRL/ARS/COP books 2026-11-27)*/
+/* -------------------------------------------------------------------------- */
+
+const BITSO_BOOKS: Record<string, string> = {
+  MXN: "usd_mxn",
+  BRL: "usd_brl",
+  ARS: "usd_ars",
+  COP: "usd_cop",
+};
+const bitsoTickerShape = z.object({
+  success: z.literal(true),
+  payload: z.array(z.object({
+    book: z.string(),
+    bid: tgNumber,
+    ask: tgNumber,
+    created_at: z.string(),
+  })),
+});
+
+async function loadBitsoTickers(fetcher: typeof fetch) {
+  const res = await fetcher("https://api.bitso.com/v3/ticker/", {
+    redirect: "error", signal: AbortSignal.timeout(4_500), headers: { Accept: "application/json" }, cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const parsed = bitsoTickerShape.safeParse(await res.json());
+  return parsed.success ? parsed.data.payload : null;
+}
+
+/**
+ * Bitso live public orderbook rates for LatAm USD <-> MXN, BRL, ARS and COP
+ * (Digital Dollars / USDC rails). Verified live HTTP 200 on 2026-11-27.
+ */
+export async function bitsoPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date, cache = true): Promise<PriceRow | null> {
+  const isUsdToLatam = input.sourceCurrency === "USD" && Object.hasOwn(BITSO_BOOKS, input.destinationCurrency);
+  const isLatamToUsd = input.destinationCurrency === "USD" && Object.hasOwn(BITSO_BOOKS, input.sourceCurrency);
+  if (!isUsdToLatam && !isLatamToUsd) return null;
+  const context = input.context;
+  if (context?.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod)) return null;
+
+  const latamCcy = isUsdToLatam ? input.destinationCurrency : input.sourceCurrency;
+  const bookName = BITSO_BOOKS[latamCcy]!;
+  const tickers = await (cache ? shared("bitso:tickers", 60_000, () => loadBitsoTickers(fetcher)) : loadBitsoTickers(fetcher)).catch(() => null);
+  const ticker = tickers?.find((t) => t.book === bookName);
+  if (!ticker || !(ticker.bid > 0) || !(ticker.ask > 0)) return null;
+  const ts = Date.parse(ticker.created_at);
+  if (!Number.isFinite(ts) || now.getTime() - ts > 6 * 3_600_000 || ts > now.getTime() + 300_000) return null;
+
+  const rate = isUsdToLatam ? ticker.bid : Math.round((1 / ticker.ask) * 1_000_000) / 1_000_000;
+  const recipientAmount = Math.round(input.amount * rate * 100) / 100;
+  if (!(recipientAmount > 0)) return null;
+
+  return {
+    ...publicPrice(new Date(ts)),
+    expiresAt: new Date(now.getTime() + quoteLifetime).toISOString(),
+    providerSlug: "bitso",
+    providerName: "Bitso",
+    product: { id: `bitso:${bookName}`, label: "Bitso · live orderbook FX" },
+    recipientAmount,
+    feeAmount: null,
+    feeCurrency: input.sourceCurrency,
+    rate,
+    paymentMethods: ["local_bank"],
+    delivery: "Instant (SPEI/Pix) to 1 business day",
+    source: { label: "Bitso live orderbook", url: "https://bitso.com/fees" },
+    missing: ["Volume-tiered Bitso trading fee and any USD wire/rail deposit charge."],
+    notes: [
+      `Uses Bitso’s live ${bookName.toUpperCase()} best-${isUsdToLatam ? "bid" : "ask"} orderbook price (${isUsdToLatam ? ticker.bid : ticker.ask}).`,
+      "MXN SPEI deposits and withdrawals are free; confirm volume-tiered trading fee and business/personal eligibility in Bitso.",
+    ],
+  };
+}

@@ -80,6 +80,17 @@ const PROVIDER_METHODS: Record<string, SendMethod[]> = {
   "sbi-remit": ["app", "cash"], "smiles-remit": ["app", "cash"], "kyodai-remittance": ["app", "cash"], "pouch-ph": ["app"],
   yuh: ["bank", "multi"], "neon-ch": ["bank", "app"], qonto: ["bank", "multi"], finom: ["bank", "multi"], "zen-com": ["multi", "app"],
   walutomat: ["online"], "fin-do": ["app"], mercury: ["bank", "multi"], relay: ["bank", "multi"],
+  alfred: ["get_paid", "online"], anchorage: ["bank", "multi"], anclap: ["online", "multi"], b2c2: ["broker", "get_paid"],
+  baanx: ["multi"], bitgo: ["multi"], "bitso-juno": ["get_paid"], "cbw-bank": ["bank", "get_paid"], circle: ["get_paid", "multi"],
+  cowrie: ["get_paid"], "cross-river": ["bank", "get_paid"], crossmint: ["get_paid", "online"], eco: ["online"],
+  "episode-six": ["get_paid"], ethena: ["multi"], fireblocks: ["multi", "get_paid"], fuze: ["get_paid", "multi"],
+  highnote: ["get_paid"], immersve: ["multi"], lirium: ["online", "get_paid"], mesh: ["online"], mobee: ["online"],
+  monavate: ["get_paid"], moorwand: ["get_paid"], "n-exchange": ["online"], opendue: ["get_paid", "multi"],
+  parfin: ["get_paid"], paycaddy: ["get_paid"], "peoples-group": ["bank", "get_paid"], "pomelo-la": ["get_paid"],
+  scrypt: ["broker", "multi"], stablecore: ["get_paid"], tether: ["multi"], thredd: ["get_paid"], vibrant: ["app", "multi"],
+  webbank: ["bank"], "a-place-in-the-sun-currency": ["broker"], "cambridge-currencies": ["broker"], "caribe-express": ["cash", "app"],
+  "cedar-money": ["get_paid"], "currency-solutions": ["broker"], "currency-transfer": ["broker"], currencyflow: ["broker"],
+  fiberpay: ["get_paid"], honeycoin: ["get_paid"], juicyway: ["get_paid", "multi"], kora: ["get_paid"], "vfx-financial": ["broker"],
 };
 const BANK_NAME = /\b(bank|banco|banque|chase|wells fargo|citi(bank)?|hsbc|barclays|lloyds|natwest|santander|bnp|deutsche|icici|hdfc|axis|kotak|sbi|scotiabank|bmo|cibc|emirates nbd)\b/i;
 

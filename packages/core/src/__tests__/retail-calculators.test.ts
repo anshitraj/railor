@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { comparePrices, type PriceCheckInput } from "../pricing.js";
-import { bookMyForexPublicPrice, careemPublicPrice, instaremPublicPrice, lemfiPublicPrice, nalaPublicPrice, rextiePublicPrice, riaPublicPrice, sendwavePublicPrice, transferGoPublicPrice, westernUnionPublicPrice } from "../public-pricing/retail-calculators.js";
+import { bitsoPublicPrice, bookMyForexPublicPrice, careemPublicPrice, instaremPublicPrice, lemfiPublicPrice, nalaPublicPrice, rextiePublicPrice, riaPublicPrice, sendwavePublicPrice, transferGoPublicPrice, walutomatPublicPrice, westernUnionPublicPrice } from "../public-pricing/retail-calculators.js";
 
 const now = new Date("2026-11-19T13:00:00Z");
 const input: PriceCheckInput = { sourceCurrency: "USD", destinationCurrency: "GHS", destinationCountry: "GH", amount: 1000,
@@ -288,6 +288,29 @@ describe("retail publisher calculators", () => {
     };
     expect(await rextiePublicPrice(usPe, rextieFetcher, now)).toMatchObject({
       providerSlug: "rextie", recipientAmount: 3455.5, feeAmount: 0, rate: 3.4555, partial: true,
+    });
+
+    const walFetcher = vi.fn<typeof fetch>(async () => Response.json([
+      { pair: "EUR_PLN", bestOffers: { bid_now: 4.4758, ask_now: 4.4794 } },
+    ]));
+    const plEur: PriceCheckInput = {
+      sourceCurrency: "EUR", destinationCurrency: "PLN", destinationCountry: "PL", amount: 1000,
+      context: { profile: "personal", purpose: "personal", direction: "send", country: "PL", paymentMethod: "local_bank" },
+    };
+    expect(await walutomatPublicPrice(plEur, walFetcher, now, false)).toMatchObject({
+      providerSlug: "walutomat", rate: 4.4758, feeAmount: 2, recipientAmount: 4466.85, partial: true,
+    });
+
+    const bitsoFetcher = vi.fn<typeof fetch>(async () => Response.json({
+      success: true,
+      payload: [{ book: "usd_mxn", bid: "19.712", ask: "19.713", created_at: "2026-11-19T12:55:00Z" }],
+    }));
+    const usMx: PriceCheckInput = {
+      sourceCurrency: "USD", destinationCurrency: "MXN", destinationCountry: "MX", amount: 1000,
+      context: { profile: "personal", purpose: "personal", direction: "send", country: "US", paymentMethod: "local_bank" },
+    };
+    expect(await bitsoPublicPrice(usMx, bitsoFetcher, now, false)).toMatchObject({
+      providerSlug: "bitso", rate: 19.712, recipientAmount: 19712, feeAmount: null, partial: true,
     });
   });
 });
