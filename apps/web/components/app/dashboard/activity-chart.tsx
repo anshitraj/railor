@@ -37,7 +37,7 @@ export function ActivityChart({ points: allPoints }: { points: DayPoint[] }) {
     return () => observer.disconnect();
   }, []);
   const points = W < 520 ? allPoints.slice(-14) : allPoints;
-  const H = W < 520 ? 210 : 280;
+  const H = W < 520 ? 200 : 220;
   const totals = points.map((point) => point.checks + point.visits + point.payments);
   const sums = SERIES.map((series) => allPoints.reduce((sum, point) => sum + point[series.key], 0));
   const empty = totals.every((total) => total === 0);
@@ -78,7 +78,7 @@ export function ActivityChart({ points: allPoints }: { points: DayPoint[] }) {
                   const top = y(base + value);
                   const height = Math.max(1, y(base) - top - (base > 0 ? GAP : 0));
                   base += value;
-                  return <rect key={series.key} x={x} y={top} width={barW} height={height} rx={Math.min(3, barW / 2)} fill={series.color} />;
+                  return <rect key={series.key} className={styles.bar} style={{ "--d": index } as React.CSSProperties} x={x} y={top} width={barW} height={height} rx={Math.min(3, barW / 2)} fill={series.color} />;
                 })}
                 <rect className={styles.hit} x={PAD.left + index * slot} y={PAD.top} width={slot} height={plotH} onMouseEnter={() => setHover(index)} onFocus={() => setHover(index)} />
               </g>
