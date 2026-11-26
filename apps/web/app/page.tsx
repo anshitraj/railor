@@ -14,6 +14,8 @@ import { MobileCompareBar } from "../components/marketing/home/mobile-compare-ba
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
+import { NumbersSection } from "../components/marketing/home/numbers";
+import { siteStats } from "../lib/site-stats";
 import { GuidesSection } from "../components/marketing/guides/home-guides";
 import { loadGuideDestinations } from "../lib/guides/load";
 import { QuickQuote, QuickQuoteSkeleton } from "../components/price/quick-quote";
@@ -42,7 +44,7 @@ async function HeroQuote({ params }: { params: Record<string, string | undefined
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureMigrated();
-  const [params, session, destinations] = await Promise.all([searchParams, getSession(), loadGuideDestinations()]);
+  const [params, session, destinations, stats] = await Promise.all([searchParams, getSession(), loadGuideDestinations(), siteStats()]);
 
   return (
     <>
@@ -50,6 +52,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <main id="main" className={homeStyles.motionPage}>
         <HomeScrollMotion />
         <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
+        <NumbersSection stats={stats} />
         <HowItWorks />
         <WhyRailor signedIn={Boolean(session)} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
