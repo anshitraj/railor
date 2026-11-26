@@ -58,6 +58,17 @@ const SOURCES: Source[] = [
       throw failure;
     },
   },
+  {
+    label: "ExchangeRate-API",
+    async read(from, to, fetcher) {
+      const body = await json(fetcher, `https://open.er-api.com/v6/latest/${from}`) as Record<string, unknown>;
+      const rates = body.rates as Record<string, unknown> | undefined;
+      const rate = rates?.[to];
+      const updated = typeof body.time_last_update_utc === "string" ? Date.parse(body.time_last_update_utc) : NaN;
+      if (body.result !== "success" || !positive(rate) || !Number.isFinite(updated)) throw new Error("no rate for this pair");
+      return { rate, date: new Date(updated).toISOString().slice(0, 10) };
+    },
+  },
 ];
 
 /** The day's mid-market rate for one pair, or null when no source has it. Never throws. */

@@ -9,9 +9,9 @@ import { publicMidMarketRate } from "./public-pricing/mid-market.js";
 import { skydoPublicFx } from "./public-pricing/skydo.js";
 import { mulyaPublicFx } from "./public-pricing/mulya.js";
 import { comparisonRows, type ComparisonFeed } from "./public-pricing/comparisons.js";
-import { asporaBankQuote, asporaQuoteCurrency, usBankRemittanceCorridor, usBankRemittanceRows } from "./public-pricing/us-bank-remittances.js";
+import { asporaBankQuote, asporaQuoteCurrency, ofxPublicPrice, remitlyPublicPrice, usBankRemittanceCorridor, usBankRemittanceRows, worldRemitPublicPrice } from "./public-pricing/us-bank-remittances.js";
 import { publicOfferRows } from "./public-pricing/offers.js";
-import { careemPublicPrice, lemfiPublicPrice, sendwavePublicPrice, taptapSendPublicPrice } from "./public-pricing/retail-calculators.js";
+import { bookMyForexPublicPrice, careemPublicPrice, instaremPublicPrice, lemfiPublicPrice, nalaPublicPrice, rextiePublicPrice, riaPublicPrice, sendwavePublicPrice, taptapSendPublicPrice, transferGoPublicPrice, westernUnionPublicPrice } from "./public-pricing/retail-calculators.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
 import { withKycFacts } from "./public-pricing/provider-kyc.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
@@ -396,6 +396,318 @@ export const PUBLISHED_PRICING: PublishedSchedule[] = [
       "Paying by Swift or wire costs more in the same calculator (USD 39.20 in fees at USD 1,700, against USD 33.19 by ACH) and is not modelled. Wise accepts at least USD 5 and at most INR 2,500,000 per receipt.",
     ],
   },
+  {
+    slug: "toucan-payments", product: "Toucan Payments · CrossStream export collections", payMethods: ["local_bank"], taxIncluded: null,
+    receipt: "Automated e-FIRA", name: "Toucan Payments", sourceUrl: "https://toucanpay.in/",
+    observedAt: "2026-11-26", appliesTo: input => commercialIntoIndia(input) ?? (input.sourceCurrency === "USD" ? null : "Published CrossStream flat slabs are stated in USD."),
+    fee: input => ({
+      amount: round(input.amount <= 3_000 ? 24 : input.amount <= 12_000 ? 25 : input.amount * 0.0025),
+      currency: "USD",
+      parts: [input.amount <= 3_000 ? "USD 24 flat up to USD 3,000" : input.amount <= 12_000 ? "USD 25 flat for USD 3,001–12,000" : "0.25% above USD 12,000"],
+    }),
+    partial: true,
+    missing: ["Applicable GST and partner-bank settlement rate."],
+    notes: ["RBI PA-CB authorised CrossStream export collections. Zero hidden FX markup is advertised; illustrated at Railor's reference rate. Confirm GST and AD-I bank rules before receiving funds."],
+  },
+  {
+    slug: "atlantic-money", product: "Atlantic Money · send from Europe (EUR)", payMethods: ["local_bank"], taxIncluded: null, receipt: null, name: "Atlantic Money",
+    sourceUrl: "https://atlantic.money/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "EUR" && input.amount <= 1_000_000
+      && ["USD", "GBP", "AUD", "CAD", "NOK", "SEK", "DKK", "PLN"].includes(input.destinationCurrency)
+      && input.context?.direction === "send" && ["AT", "BE", "DE", "DK", "ES", "FI", "FR", "IE", "IT", "NL", "NO", "PL", "PT", "SE"].includes(input.context.country)
+      ? null : "This schedule is for European senders paying in EUR, up to EUR 1 million, in the listed currencies.",
+    fee: () => ({ amount: 3, currency: "EUR", parts: ["EUR 3 flat standard transfer fee, 0% FX markup"] }),
+    partial: true,
+    missing: ["Atlantic Money's live mid-market execution rate and account verification tier."],
+    notes: ["Standard EEA pricing: EUR 3 flat fee at live mid-market FX with 0% markup. Express delivery costs extra; destination currency must go to its native country."],
+  },
+  {
+    slug: "higlobe", product: "Higlobe · USD receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null, name: "Higlobe",
+    sourceUrl: "https://www.higlobe.com/pricing", observedAt: "2026-11-26",
+    appliesTo: input => {
+      if (input.sourceCurrency !== "USD" || !input.context || input.context.direction !== "receive" || input.context.profile === "personal") return "Higlobe receiving accounts are for freelancers and businesses receiving USD via ACH.";
+      const pairs: Record<string, string> = { MXN: "MX", ARS: "AR", BRL: "BR", PHP: "PH" };
+      const expected = pairs[input.destinationCurrency];
+      return expected && input.context.country === expected && (!input.destinationCountry || input.destinationCountry === expected)
+        ? null : "Published Higlobe receiving spreads here cover USD to MXN, ARS, BRL and PHP.";
+    },
+    fee: input => {
+      const spreadPct = input.destinationCurrency === "BRL" ? 0.002 : input.destinationCurrency === "PHP" ? 0.006 : 0;
+      const label = spreadPct === 0 ? "$0 ACH receive, 0.00% published FX spread" : `$0 ACH receive, ${(spreadPct * 100).toFixed(2)}% published FX spread`;
+      return { amount: round(input.amount * spreadPct), currency: "USD", parts: [label] };
+    },
+    partial: true,
+    missing: ["Higlobe's live local withdrawal rate and any receiving bank/IOF taxes."],
+    notes: ["Higlobe publishes $0 incoming US ACH and $0 local bank withdrawal fees, with published FX spreads of 0% (MX/AR), 0.20% (BR) and 0.60% (PH). Incoming US wires cost USD 20. Per-withdrawal cap is USD 25,000 (USD 15,000 in PH)."],
+  },
+  {
+    slug: "husky", product: "Husky · receive into Brazil (BRL)", payMethods: ["local_bank", "wire"], taxIncluded: null, receipt: null, name: "Husky",
+    sourceUrl: "https://help.husky.io/hc/en-us/articles/360053702513-What-are-the-prices-at-Husky", observedAt: "2026-11-26",
+    appliesTo: input => ["USD", "EUR", "GBP"].includes(input.sourceCurrency) && input.destinationCurrency === "BRL"
+      && input.context?.country === "BR" && input.context.direction === "receive" && input.context.profile !== "personal"
+      ? null : "Husky published pricing applies to Brazilian freelancers and PJ businesses receiving USD, EUR or GBP into BRL.",
+    fee: (input, amountUsd) => amountUsd !== null
+      ? { amount: round(amountUsd <= 1_000 ? 10 : input.amount * 0.01), currency: amountUsd <= 1_000 ? "USD" : input.sourceCurrency, parts: [amountUsd <= 1_000 ? "USD 10 flat fee up to USD 1,000" : "1% fee above USD 1,000 (commercial exchange rate)"] }
+      : null,
+    partial: true,
+    missing: ["Applicable Brazilian IOF (0% for PJ service exports; varies for PF) and intermediary SWIFT fees."],
+    notes: ["Husky by Nomad converts incoming international transfers at the commercial FX rate with a max 1% fee (or USD 10 flat up to USD 1,000). Eligible PJ service exports carry 0% IOF."],
+  },
+  {
+    slug: "techfx", product: "TechFX · Brazil PJ export receiving", payMethods: ["local_bank", "wire"], taxIncluded: true, receipt: null, name: "TechFX",
+    sourceUrl: "https://www.techfx.com.br/taxas-de-cambio-para-receber-do-exterior/", observedAt: "2026-11-26",
+    appliesTo: input => ["USD", "EUR"].includes(input.sourceCurrency) && input.destinationCurrency === "BRL"
+      && input.context?.country === "BR" && input.context.direction === "receive" && ["business", "sole_proprietor"].includes(input.context.profile) && input.context.purpose === "services"
+      ? null : "TechFX serves Brazilian legal entities (CNPJ/PJ) receiving USD or EUR service-export payments into BRL.",
+    fee: input => ({ amount: round(input.amount * 0.005), currency: input.sourceCurrency, parts: ["0.50% flat spread over commercial exchange rate; 0% IOF for PJ service exports"] }),
+    partial: true,
+    missing: ["TechFX's live commercial execution rate and any originating sender wire fees."],
+    notes: ["Published 0.50% flat FX spread for Brazilian PJ service exporters with zero fixed wire reception fees and 0% IOF. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "priyo-pay", product: "Priyo Pay · Bangladesh USD receiving", payMethods: ["local_bank"], taxIncluded: null, receipt: null, name: "Priyo Pay",
+    sourceUrl: "https://pay.priyo.com/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "USD" && input.destinationCurrency === "BDT"
+      && input.context?.country === "BD" && input.context.direction === "receive" && input.context.profile !== "personal"
+      ? null : "Priyo Pay published pricing here covers Bangladeshi freelancers and businesses converting USD into BDT.",
+    fee: input => ({ amount: round(Math.max(0.99, input.amount * 0.01)), currency: "USD", parts: ["Free incoming US ACH; 1.00% currency conversion fee (min USD 0.99)"] }),
+    partial: true,
+    missing: ["Priyo Pay's live USD-to-BDT conversion rate and any local bank charges."],
+    notes: ["Incoming US ACH is free (domestic wires cost USD 15). Conversion to BDT carries a published 1.00% fee (minimum USD 0.99). Service-export withdrawals are not eligible for Bangladesh's 2.5% Wage Earner remittance cash incentive."],
+  },
+  {
+    slug: "remitbee", product: "RemitBee · send from Canada", payMethods: ["local_bank", "transfer_service"], taxIncluded: null, receipt: null, name: "RemitBee",
+    sourceUrl: "https://www.remitbee.com/our-fees", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "CAD" && input.destinationCurrency !== "CAD"
+      && input.context?.country === "CA" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "RemitBee published transfer fees here cover personal senders in Canada sending CAD abroad.",
+    fee: input => ({ amount: input.amount >= 500 ? 0 : 2.99, currency: "CAD", parts: [input.amount >= 500 ? "CAD 0 transfer fee on transfers of CAD 500 or more (EFT/Interac/Bill Pay)" : "CAD 2.99 transfer fee below CAD 500 (EFT/Interac/Bill Pay)"] }),
+    partial: true,
+    missing: ["RemitBee's live exchange rate spread (typically 0.30%–0.80%)."],
+    notes: ["RemitBee charges CAD 0 on transfers ≥ CAD 500 funded via Balance, Interac e-Transfer, EFT or Bill Payment (CAD 2.99 under CAD 500; card funding costs more). Exchange-rate spread is additional and shown in RemitBee's live quote."],
+  },
+  {
+    slug: "deemoney", product: "DeeMoney · send from Thailand", payMethods: ["local_bank", "transfer_service"], taxIncluded: true, receipt: null, name: "DeeMoney",
+    sourceUrl: "https://www.deemoney.com/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "THB" && input.destinationCurrency !== "THB"
+      && input.context?.country === "TH" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "DeeMoney published personal transfer fee covers Thailand outbound THB sends.",
+    fee: () => ({ amount: 133.75, currency: "THB", parts: ["THB 125 flat fee + 7% VAT (THB 133.75 total; select corridors up to THB 150)"] }),
+    partial: true,
+    missing: ["DeeMoney's live exchange rate and destination-specific fee band."],
+    notes: ["Bank of Thailand licensed outbound transfer specialist. Personal transfers publish THB 125 + 7% VAT (DeeBusiness is THB 449 + 7% VAT). Confirm the corridor fee and live FX rate in the DeeMoney app."],
+  },
+  {
+    slug: "clearshift", product: "Clearshift · Israel zero-markup FX", payMethods: ["local_bank"], taxIncluded: true, receipt: null, name: "Clearshift",
+    sourceUrl: "https://www.clearshiftinc.com/", observedAt: "2026-11-26",
+    appliesTo: input => ["ILS", "USD", "EUR", "GBP", "CHF", "CAD", "AUD", "PLN"].includes(input.sourceCurrency)
+      && ["ILS", "USD", "EUR", "GBP", "CHF", "CAD", "AUD", "PLN"].includes(input.destinationCurrency)
+      && (input.sourceCurrency === "ILS" || input.destinationCurrency === "ILS")
+      && input.context?.country === "IL" && input.context.profile === "personal"
+      ? null : "Clearshift's published individual tariff covers Israeli personal transfers involving ILS and its 7 supported foreign currencies.",
+    fee: (input, _amountUsd, referenceRate) => {
+      if (input.sourceCurrency === "ILS") {
+        return { amount: round(Math.max(180, input.amount * 0.0059)), currency: "ILS", parts: ["0.59% or ILS 180 minimum, VAT included, 0% FX markup over BOI/ECB benchmark"] };
+      }
+      if (!referenceRate) return null;
+      const inIls = input.amount * referenceRate;
+      return { amount: round(Math.max(180, inIls * 0.0059)), currency: "ILS", parts: ["0.59% or ILS 180 minimum, VAT included, 0% FX markup over BOI/ECB benchmark"] };
+    },
+    partial: true,
+    missing: ["Same-owner account eligibility and official Bank of Israel / ECB fixing rate at execution."],
+    notes: ["Clearshift converts at the official Bank of Israel / ECB benchmark fixing rate with 0% FX markup and charges 0.59% (minimum ILS 180, VAT included) for individuals. Personal transfers are restricted to same-owner accounts abroad."],
+  },
+  {
+    slug: "eximpe", product: "EximPe · export collections", payMethods: ["local_bank"], taxIncluded: null,
+    receipt: "Automated e-FIRA", name: "EximPe", sourceUrl: "https://eximpe.com/",
+    observedAt: "2026-11-26", appliesTo: input => commercialIntoIndia(input) ?? (input.sourceCurrency === "USD" ? null : "Published EximPe baseline fee here is stated in USD."),
+    fee: input => ({ amount: round(input.amount * 0.0075 + 0.5), currency: "USD", parts: ["0.75% + USD 0.50 published baseline fee"] }),
+    partial: true,
+    missing: ["Applicable GST, volume tier discount and live settlement rate."],
+    notes: ["RBI PA-CB authorised export collections. Published baseline is 0.75% + USD 0.50 with automated e-FIRA; illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "sunway-money", product: "Sunway Money · send from Malaysia", payMethods: ["local_bank", "transfer_service"], taxIncluded: null, receipt: null,
+    name: "Sunway Money", sourceUrl: "https://sunwaymoney.com/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "MYR" && input.destinationCurrency !== "MYR"
+      && input.context?.country === "MY" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "Sunway Money's published flat fee covers personal outbound MYR sends from Malaysia.",
+    fee: () => ({ amount: 8, currency: "MYR", parts: ["MYR 8 flat standard remittance fee"] }),
+    partial: true,
+    missing: ["Sunway Money's live exchange rate spread for the selected corridor."],
+    notes: ["Licensed Malaysia e-remittance provider publishing a flat MYR 8 transfer fee across 60+ countries (promotional MYR 1 bands may apply on JPY/THB). Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "eand-money", product: "e& money · send from UAE", payMethods: ["local_bank", "transfer_service"], taxIncluded: true, receipt: null,
+    name: "e& money", sourceUrl: "https://www.eandmoney.com/en/send-abroad.html", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "AED" && input.destinationCurrency !== "AED" && input.amount <= 25_000
+      && input.context?.country === "AE" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "e& money's published remittance fee covers personal UAE AED sends up to AED 25,000.",
+    fee: () => ({ amount: 15.75, currency: "AED", parts: ["AED 15 transfer fee + 5% UAE VAT (AED 15.75 total)"] }),
+    partial: true,
+    missing: ["e& money's live exchange rate and any in-app promotional fee waiver."],
+    notes: ["Standard published UAE international transfer fee is AED 15 + 5% VAT (AED 15.75), capped at AED 25,000 per transfer/day/month. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "stc-bank", product: "STC Bank · send from Saudi Arabia", payMethods: ["local_bank", "transfer_service"], taxIncluded: false, receipt: null,
+    name: "STC Bank", sourceUrl: "https://stcbank.com.sa/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "SAR" && input.destinationCurrency !== "SAR"
+      && input.context?.country === "SA" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "STC Bank's published Western Union transfer schedule covers personal SAR sends from Saudi Arabia.",
+    fee: input => {
+      const dest = input.destinationCurrency;
+      if (dest === "PKR" && input.amount >= 375) return { amount: 0, currency: "SAR", parts: ["SAR 0 fee to Pakistan at SAR 375 or above"] };
+      const base = ["INR", "PKR", "BDT", "PHP", "EGP", "NPR", "LKR", "IDR", "VND"].includes(dest)
+        ? 15
+        : ["AED", "BHD", "KWD", "OMR", "QAR", "TRY", "CNY", "KES", "ETB", "MAD"].includes(dest) ? 20 : 25;
+      return { amount: round(base * 1.15), currency: "SAR", parts: [`SAR ${base} transfer fee`, "+15% Saudi VAT"] };
+    },
+    partial: true,
+    missing: ["STC Bank / Western Union live SAR exchange rate margin."],
+    notes: ["Published STC Bank Western Union tariff: Pakistan SAR 0 at SAR 375+ (else SAR 15); SAR 15 South/SE Asia & Egypt; SAR 20 GCC/TR/CN/KE/ET/MA; SAR 25 rest of world, plus 15% VAT. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "walletii", product: "walletii · send from Oman", payMethods: ["local_bank", "transfer_service"], taxIncluded: false, receipt: null,
+    name: "walletii", sourceUrl: "https://www.walletii.om/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "OMR" && input.destinationCurrency !== "OMR" && input.amount <= 1_000
+      && input.context?.country === "OM" && input.context.direction === "send" && input.context.profile === "personal"
+      ? null : "walletii's published tariff covers personal Oman OMR sends up to OMR 1,000 per transfer.",
+    fee: input => {
+      const dest = input.destinationCurrency;
+      if (dest === "PKR" && input.amount >= 78) return { amount: 0, currency: "OMR", parts: ["OMR 0 fee to Pakistan at OMR 78+ via PRI Global"] };
+      const base = ["AED", "SAR", "TRY", "EGP", "GBP"].includes(dest) ? 1 : 2;
+      return { amount: round(base * 1.05), currency: "OMR", parts: [`OMR ${base.toFixed(3)} corridor fee`, "+5% Oman VAT"] };
+    },
+    partial: true,
+    missing: ["walletii's live OMR exchange rate spread."],
+    notes: ["Ooredoo Oman walletii published remittance schedule (capped at OMR 1,000/transfer & day, OMR 15,000/month). Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "currencyfair", product: "CurrencyFair · international transfer", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "CurrencyFair", sourceUrl: "https://www.currencyfair.com/pricing/", observedAt: "2026-11-26",
+    appliesTo: input => ["EUR", "GBP", "USD", "AUD", "CAD", "CHF", "SGD", "HKD", "NZD", "JPY", "PLN", "SEK", "NOK", "DKK", "ZAR", "AED"].includes(input.sourceCurrency)
+      && ["EUR", "GBP", "USD", "AUD", "CAD", "CHF", "SGD", "HKD", "NZD", "JPY", "PLN", "SEK", "NOK", "DKK", "ZAR", "AED", "INR", "PHP"].includes(input.destinationCurrency)
+      && input.sourceCurrency !== input.destinationCurrency
+      && input.context?.direction === "send"
+      ? null : "CurrencyFair's published transfer-out fee covers its supported send currencies.",
+    fee: (input, amountUsd) => {
+      if (input.sourceCurrency === "EUR") return { amount: 3, currency: "EUR", parts: ["EUR 3 flat transfer-out fee (FX margin additional)"] };
+      if (input.sourceCurrency === "GBP") return { amount: 2.5, currency: "GBP", parts: ["GBP 2.50 flat transfer-out fee (FX margin additional)"] };
+      if (input.sourceCurrency === "USD") return { amount: 5, currency: "USD", parts: ["USD 5 flat transfer-out fee (FX margin additional)"] };
+      return amountUsd !== null ? { amount: 4, currency: "USD", parts: ["EUR 3 equivalent flat transfer-out fee (FX margin additional)"] } : null;
+    },
+    partial: true,
+    missing: ["CurrencyFair's live FX margin (averages ~0.53% above interbank)."],
+    notes: ["CurrencyFair publishes a flat transfer-out fee of EUR 3 (GBP 2.50 / USD 5 equivalent) plus a variable FX margin averaging ~0.53%. Illustrated at Railor's reference rate before that FX margin."],
+  },
+  {
+    slug: "alpian", product: "Alpian · Swiss weekday FX", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "Alpian", sourceUrl: "https://www.alpian.com/", observedAt: "2026-11-26",
+    appliesTo: input => ["CHF", "EUR", "USD", "GBP"].includes(input.sourceCurrency)
+      && ["CHF", "EUR", "USD", "GBP"].includes(input.destinationCurrency)
+      && input.sourceCurrency !== input.destinationCurrency
+      && input.context?.country === "CH" && input.context.profile === "personal"
+      ? null : "Alpian's published 0.20% weekday FX fee covers Swiss personal transfers among CHF, EUR, USD and GBP.",
+    fee: input => ({ amount: round(input.amount * 0.002), currency: input.sourceCurrency, parts: ["0.20% weekday FX conversion fee (0.50% on weekends)"] }),
+    partial: true,
+    missing: ["Alpian's live interbank feed and any non-SEPA wire charges."],
+    notes: ["FINMA-licensed Swiss digital bank publishing 0.20% weekday FX fee (0.50% weekend) across CHF, EUR, USD and GBP with free EUR SEPA transfers. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "b-sharpe", product: "b-sharpe · Swiss FX exchange", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "b-sharpe", sourceUrl: "https://www.b-sharpe.com/en/compare-b-sharpe-fees/", observedAt: "2026-11-26",
+    appliesTo: input => (input.sourceCurrency === "CHF" || input.destinationCurrency === "CHF")
+      && ["CHF", "EUR", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "PLN"].includes(input.sourceCurrency)
+      && ["CHF", "EUR", "USD", "GBP", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "PLN"].includes(input.destinationCurrency)
+      && input.sourceCurrency !== input.destinationCurrency
+      && (input.context?.country === "CH" || input.context?.country === "FR")
+      ? null : "b-sharpe's published starting spread covers Swiss/cross-border CHF currency exchanges.",
+    fee: input => ({ amount: round(input.amount * 0.005), currency: input.sourceCurrency, parts: ["CHF 0 fixed transfer fee; ~0.50% standard CHF retail spread (from 0.12% at higher volumes)"] }),
+    partial: true,
+    missing: ["b-sharpe's exact volume-tiered FX spread at execution."],
+    notes: ["Swiss FX specialist with CHF 0 monthly/transfer fee; spread starts from 0.12% for high volumes and ~0.50% standard retail. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "raenest", product: "Raenest · USD receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "Raenest", sourceUrl: "https://help.raenest.com/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "USD" && ["NGN", "KES", "GHS", "UGX", "RWF"].includes(input.destinationCurrency)
+      && input.context?.direction === "receive" && ["NG", "KE", "GH", "UG", "RW"].includes(input.context.country)
+      ? null : "Raenest's published USD ACH schedule here covers African freelancers and businesses receiving USD.",
+    fee: input => {
+      const deposit = input.amount < 500 ? 2 : 4;
+      const conversion = round(Math.min(2.7, (input.amount - deposit) * 0.007));
+      return { amount: round(deposit + Math.max(0, conversion)), currency: "USD", parts: [`USD ${deposit} ACH deposit fee`, "0.70% conversion fee capped at USD 2.70"] };
+    },
+    partial: true,
+    missing: ["Raenest's live local withdrawal FX rate."],
+    notes: ["Published Raenest fees: USD 2 ACH deposit below USD 500 (USD 4 at USD 500+; USD 12 wire), ~0.70% conversion capped at USD 2.70 and free local NGN payout. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "grey", product: "Grey · foreign receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "Grey", sourceUrl: "https://support.grey.co/", observedAt: "2026-11-26",
+    appliesTo: input => ["USD", "GBP", "EUR"].includes(input.sourceCurrency)
+      && ["NGN", "KES", "GHS", "TZS", "UGX", "ZAR"].includes(input.destinationCurrency)
+      && input.context?.direction === "receive" && ["NG", "KE", "GH", "TZ", "UG", "ZA"].includes(input.context.country)
+      ? null : "Grey's published personal local-rail receiving fee covers USD, GBP and EUR receipts into supported African countries.",
+    fee: input => {
+      if (input.context?.profile === "business" && input.sourceCurrency === "USD") {
+        return { amount: 2, currency: "USD", parts: ["Grey Business USD 2 flat ACH deposit fee"] };
+      }
+      const dep = round(Math.min(10, Math.max(2, input.amount * 0.008)));
+      return { amount: dep, currency: input.sourceCurrency, parts: ["0.80% local-rail deposit fee (min 2, max 10 in source currency)"] };
+    },
+    partial: true,
+    missing: ["Grey's live currency conversion spread and local withdrawal fee."],
+    notes: ["Published Grey fees: 0.80% (min 2, max 10) for personal ACH/SEPA/FPS deposits (USD 20 wire; Grey Business USD 2 ACH / USD 15 wire). Illustrated at Railor's reference rate before Grey's FX spread."],
+  },
+  {
+    slug: "cleva", product: "Cleva · USD receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "Cleva", sourceUrl: "https://www.getcleva.com/pricing", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "USD" && input.destinationCurrency === "NGN"
+      && input.context?.direction === "receive" && input.context.country === "NG" && input.amount <= 3_000
+      ? null : "Cleva's published USD ACH schedule here covers Nigerian recipients up to USD 3,000 per transfer (Kenya is excluded).",
+    fee: input => ({ amount: round(Math.min(5, Math.max(2, input.amount * 0.008))), currency: "USD", parts: ["0.80% USD ACH deposit fee (min USD 2, max USD 5; 0% published conversion markup)"] }),
+    partial: true,
+    missing: ["Cleva's live NGN conversion rate at withdrawal."],
+    notes: ["Cleva publishes 0.80% (min USD 2, max USD 5) on USD ACH/FedNow deposits (USD 0 from Upwork, USD 10 wire) and 0% FX conversion markup. Kenya is explicitly excluded."],
+  },
+  {
+    slug: "elevate-pay", product: "Elevate Pay · USD receiving account", payMethods: ["local_bank"], taxIncluded: null, receipt: null,
+    name: "Elevate Pay", sourceUrl: "https://www.elevatepay.co/", observedAt: "2026-11-26",
+    appliesTo: input => input.sourceCurrency === "USD" && ["PHP", "PKR", "BDT", "EGP"].includes(input.destinationCurrency)
+      && input.context?.direction === "receive" && ["PH", "PK", "BD", "EG"].includes(input.context.country)
+      ? null : "Elevate Pay's published USD receiving account covers remote workers in PH, PK, BD and EG.",
+    fee: () => ({ amount: 1.5, currency: "USD", parts: ["USD 0 incoming US ACH; USD 1.50 standard outbound payout fee"] }),
+    partial: true,
+    missing: ["Elevate Pay's live spot FX rate for the withdrawal corridor."],
+    notes: ["Elevate Pay offers free incoming US ACH from platforms/employers and ~USD 1.50 outbound withdrawal fee plus live spot FX. Illustrated at Railor's reference rate."],
+  },
+  {
+    slug: "paysend", product: "Paysend · flat-fee transfer", payMethods: ["card", "local_bank", "transfer_service"], taxIncluded: null, receipt: null,
+    name: "Paysend", sourceUrl: "https://paysend.com/", observedAt: "2026-11-26",
+    appliesTo: input => ["USD", "GBP", "EUR"].includes(input.sourceCurrency) && input.sourceCurrency !== input.destinationCurrency
+      && input.context?.direction === "send" && input.context.profile === "personal"
+      ? null : "Paysend's published flat transfer fee covers personal sends in USD, GBP or EUR.",
+    fee: input => {
+      if (input.sourceCurrency === "GBP") return { amount: 1, currency: "GBP", parts: ["GBP 1.00 published flat transfer fee (FX spread additional)"] };
+      if (input.sourceCurrency === "EUR") return { amount: 1.5, currency: "EUR", parts: ["EUR 1.50 published flat transfer fee (FX spread additional)"] };
+      return { amount: 1.99, currency: "USD", parts: ["USD 1.99 published flat transfer fee (FX spread additional)"] };
+    },
+    partial: true,
+    missing: ["Paysend's live exchange rate spread for this corridor."],
+    notes: ["Paysend publishes a fixed flat fee of USD 1.99, GBP 1.00 or EUR 1.50 (some bank transfers are free) plus an exchange-rate spread. Illustrated at Railor's reference rate before that spread."],
+  },
+  {
+    slug: "uption", product: "UPTION · Turkey international transfer", payMethods: ["local_bank", "transfer_service"], taxIncluded: null, receipt: null,
+    name: "UPTION", sourceUrl: "https://www.uption.com.tr/", observedAt: "2026-11-26",
+    appliesTo: input => (input.sourceCurrency === "EUR" || input.sourceCurrency === "GBP") && input.destinationCurrency === "TRY"
+      && input.context?.country === "TR" && input.context.direction === "receive"
+      ? null : "UPTION's published EUR/GBP transfer tariff covers Turkish accounts receiving EUR SEPA or GBP UK transfers.",
+    fee: input => ({ amount: 1, currency: input.sourceCurrency, parts: [`${input.sourceCurrency} 1.00 flat published SEPA/UK transfer fee`] }),
+    partial: true,
+    missing: ["UPTION's live conversion spread into TRY."],
+    notes: ["UPTION publishes a EUR 1 SEPA transfer fee and GBP 1 UK transfer fee with free European IBAN opening. Illustrated at Railor's reference rate."],
+  },
 ];
 
 /**
@@ -484,12 +796,25 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
   const preferWiseBank = isUsdToEur(input) || input.context?.paymentMethod === "local_bank" || indiaBankReference;
   const consumerPair = [pair, input.context?.country, input.context?.direction, input.context?.paymentMethod].join(":");
   const personal = input.context?.profile === "personal" && input.context.purpose === "personal";
-  const retailCalculators = personal ? Promise.allSettled([
-    cache(`sendwave:${consumerPair}`, 60_000, () => sendwavePublicPrice(input, fetcher, now)),
-    cache(`lemfi:${consumerPair}`, 60_000, () => lemfiPublicPrice(input, fetcher, now)),
-    careemPublicPrice(input, fetcher, now, !deps.fetcher),
-    taptapSendPublicPrice(input, fetcher, now, !deps.fetcher),
-  ]) : Promise.resolve([]);
+  const retailCalculators = Promise.allSettled([
+    ...(personal ? [
+      cache(`sendwave:${consumerPair}`, 60_000, () => sendwavePublicPrice(input, fetcher, now)),
+      cache(`lemfi:${consumerPair}`, 60_000, () => lemfiPublicPrice(input, fetcher, now)),
+      cache(`instarem:${consumerPair}`, 60_000, () => instaremPublicPrice(input, fetcher, now)),
+      cache(`ofx:${consumerPair}`, 60_000, () => ofxPublicPrice(input, fetcher, now)),
+      cache(`worldremit:${consumerPair}`, 60_000, () => worldRemitPublicPrice(input, fetcher, now)),
+      cache(`remitly-multi:${consumerPair}`, 60_000, () => remitlyPublicPrice(input, fetcher, now)),
+      cache(`western-union:${consumerPair}`, 60_000, () => westernUnionPublicPrice(input, fetcher, now)),
+      riaPublicPrice(input, fetcher, now, !deps.fetcher),
+      careemPublicPrice(input, fetcher, now, !deps.fetcher),
+      taptapSendPublicPrice(input, fetcher, now, !deps.fetcher),
+      nalaPublicPrice(input, fetcher, now, !deps.fetcher),
+      bookMyForexPublicPrice(input, fetcher, now, !deps.fetcher),
+    ] : []),
+    cache(`transfergo:${consumerPair}`, 60_000, () => transferGoPublicPrice(input, fetcher, now)),
+    cache(`rextie:${consumerPair}`, 60_000, () => rextiePublicPrice(input, fetcher, now)),
+  ]);
+  const revolutRegion = input.context?.direction === "send" ? input.context.country : "GB";
   const [connected, wisePublic, market, usdRate, platformQuotes, revolutPublic, skydoFx, mulyaFx, airwallexPublic, alAnsariPublic, usBankRows, asporaPublic, retailReferences] = await Promise.all([
     deps.connectedQuotes ? deps.connectedQuotes(input).catch(() => []) : Promise.resolve([]),
     cache(`wise:${pair}:${preferWiseBank}:${indiaBankReference}`, 15_000, () => wisePublicQuote(quoteRequest, fetcher, preferWiseBank, indiaBankReference)).catch((error: Error) => error),
@@ -500,7 +825,7 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
           .then((q) => Number(q.exchangeRate))
           .catch(() => null),
     deps.platformQuotes ? deps.platformQuotes(input).catch(() => []) : Promise.resolve([]),
-    cache(`revolut:GB:${pair}`, 60_000, () => revolutPublicReference(input, fetcher, now)).catch(() => null),
+    cache(`revolut:${revolutRegion}:${pair}`, 60_000, () => revolutPublicReference(input, fetcher, now)).catch(() => null),
     cache(`skydo-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => skydoPublicFx(input, fetcher, now)).catch(() => null),
     cache(`mulya-fx:${input.sourceCurrency}:${input.destinationCurrency}:${input.destinationCountry ?? ""}`, 20_000, () => mulyaPublicFx(input, fetcher, now)).catch(() => null),
     hasAirwallexPublicReference(input) ? cache(`airwallex-public-fx:${pair}`, 15_000, () => airwallexPublicReference(input, fetcher, now)).catch(() => null) : Promise.resolve(null),
@@ -517,8 +842,14 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
     else unavailable.push({ providerSlug: c.providerSlug, providerName: c.providerName, reason: c.error ?? "The connected account returned no quote." });
   }
   const connectedSlugs = new Set(connected.filter((c) => c.quote && (!c.quote.expiresAt || (Number.isFinite(Date.parse(c.quote.expiresAt)) && Date.parse(c.quote.expiresAt) > now.getTime()))).map((c) => c.providerSlug));
+  const seenRetail = new Set<string>();
   const liveRetail = [...usBankRows, ...(asporaPublic ? [asporaPublic] : []),
-    ...retailReferences.flatMap(reference => reference.status === "fulfilled" && reference.value ? [reference.value] : [])];
+    ...retailReferences.flatMap(reference => reference.status === "fulfilled" && reference.value ? [reference.value] : [])]
+    .filter((row) => {
+      if (seenRetail.has(row.providerSlug)) return false;
+      seenRetail.add(row.providerSlug);
+      return true;
+    });
   const liveRetailSlugs = new Set(liveRetail.map(row => row.providerSlug));
   rows.push(...liveRetail.filter(row => !connectedSlugs.has(row.providerSlug)));
   rows.push(...publicOfferRows(input, now).filter(offer => !connectedSlugs.has(offer.providerSlug) && !liveRetailSlugs.has(offer.providerSlug)));

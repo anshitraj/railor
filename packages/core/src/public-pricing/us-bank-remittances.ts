@@ -32,6 +32,18 @@ const remitlyCorridors = {
   SGD: { remitlyCountry: "SGP", source: "https://www.remitly.com/us/en/money-transfer/send-money-to-singapore" },
   XAF: { remitlyCountry: "CMR", source: "https://www.remitly.com/us/en/cameroon/pricing" },
   BRL: { remitlyCountry: "BRA", source: "https://www.remitly.com/us/en/currency-converter/usd-to-brl-rate" },
+  // Expanded verified Remitly corridors (2026-11-26)
+  PHP: { remitlyCountry: "PHL", source: "https://www.remitly.com/us/en/philippines/pricing" },
+  MXN: { remitlyCountry: "MEX", source: "https://www.remitly.com/us/en/mexico/pricing" },
+  PKR: { remitlyCountry: "PAK", source: "https://www.remitly.com/us/en/pakistan/pricing" },
+  BDT: { remitlyCountry: "BGD", source: "https://www.remitly.com/us/en/bangladesh/pricing" },
+  NPR: { remitlyCountry: "NPL", source: "https://www.remitly.com/us/en/nepal/pricing" },
+  KES: { remitlyCountry: "KEN", source: "https://www.remitly.com/us/en/kenya/pricing" },
+  VND: { remitlyCountry: "VNM", source: "https://www.remitly.com/us/en/vietnam/pricing" },
+  IDR: { remitlyCountry: "IDN", source: "https://www.remitly.com/us/en/indonesia/pricing" },
+  DOP: { remitlyCountry: "DOM", source: "https://www.remitly.com/us/en/dominican-republic/pricing" },
+  LKR: { remitlyCountry: "LKA", source: "https://www.remitly.com/us/en/sri-lanka/pricing" },
+  RWF: { remitlyCountry: "RWA", source: "https://www.remitly.com/us/en/rwanda/pricing" },
 } as const;
 const xoomOrigin = "https://www.xoom.com";
 
@@ -415,4 +427,334 @@ export async function usBankRemittanceRows(currency: Corridor, amount: number, f
     currency === "INR" ? worldRemitIndiaPublicCalculator(amount, fetcher, now) : Promise.resolve(null),
   ]);
   return rows.flatMap(result => result.status === "fulfilled" && result.value ? [result.value] : []);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Multi-country live public calculators (OFX & WorldRemit, verified 2026-11-26) */
+/* -------------------------------------------------------------------------- */
+
+const OFX_ORIGINS: Record<string, { currency: string; minAmount: number; site: string; label: string }> = {
+  US: { currency: "USD", minAmount: 150, site: "https://www.ofx.com/en-us/", label: "OFX · US transfer" },
+  GB: { currency: "GBP", minAmount: 100, site: "https://www.ofx.com/en-gb/", label: "OFX · UK transfer" },
+  AU: { currency: "AUD", minAmount: 250, site: "https://www.ofx.com/en-au/", label: "OFX · Australia transfer" },
+  CA: { currency: "CAD", minAmount: 200, site: "https://www.ofx.com/en-ca/", label: "OFX · Canada transfer" },
+  NZ: { currency: "NZD", minAmount: 250, site: "https://www.ofx.com/en-nz/", label: "OFX · New Zealand transfer" },
+  SG: { currency: "SGD", minAmount: 250, site: "https://www.ofx.com/en-sg/", label: "OFX · Singapore transfer" },
+  HK: { currency: "HKD", minAmount: 1500, site: "https://www.ofx.com/en-hk/", label: "OFX · Hong Kong transfer" },
+  DE: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Europe transfer" },
+  FR: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Europe transfer" },
+  IE: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Ireland transfer" },
+  NL: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Europe transfer" },
+  ES: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Europe transfer" },
+  IT: { currency: "EUR", minAmount: 150, site: "https://www.ofx.com/en-ie/", label: "OFX · Europe transfer" },
+};
+const OFX_TARGETS = new Set([
+  "USD", "EUR", "GBP", "INR", "AUD", "CAD", "NZD", "SGD", "HKD", "JPY", "CHF",
+  "PHP", "MXN", "BRL", "ZAR", "AED", "THB", "PLN", "NOK", "SEK", "DKK", "ILS",
+]);
+
+/** Multi-corridor OFX live public spotrate calculator (42/42 pairs verified live HTTP 200 on 2026-11-26). */
+export async function ofxPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  const context = input.context;
+  if (!context || context.profile !== "personal" || context.purpose !== "personal") return null;
+  if (context.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod)) return null;
+  if (input.sourceCurrency === input.destinationCurrency || !OFX_TARGETS.has(input.destinationCurrency)) return null;
+  // US->INR is already fetched via usBankRemittanceRows; skip duplicate call here.
+  if (input.sourceCurrency === "USD" && input.destinationCurrency === "INR" && (!input.destinationCountry || input.destinationCountry === "IN") && (context.direction === "send" ? context.country === "US" : context.country === "IN")) return null;
+  const originEntries = Object.entries(OFX_ORIGINS).filter(([, cfg]) => cfg.currency === input.sourceCurrency);
+  const matched = context.direction === "send"
+    ? originEntries.find(([code]) => code === context.country)
+    : originEntries.length === 1 ? originEntries[0] : undefined;
+  if (!matched) return null;
+  const [origin, cfg] = matched;
+  if (input.amount < cfg.minAmount) return null;
+
+  const endpoint = `https://api.ofx.com/PublicSite.ApiService/OFX/spotrate/Individual/${input.sourceCurrency}/${input.destinationCurrency}/${input.amount}`;
+  const response = await fetcher(endpoint, { signal: AbortSignal.timeout(5_000), redirect: "error", headers: { Accept: "application/json" } });
+  if (!response.ok) return null;
+  const quote = z.object({
+    CustomerRate: z.number().finite().positive(),
+    CustomerAmount: z.number().finite().positive(),
+    Fee: z.number().finite().nonnegative(),
+  }).safeParse(await response.json());
+  if (!quote.success) return null;
+  const { CustomerRate: rate, CustomerAmount: received, Fee: fee } = quote.data;
+  if (Math.abs(received - rate * input.amount) > Math.max(0.05, input.amount * rate * 0.001)) return null;
+  return {
+    ...baseRow(),
+    senderCountry: origin,
+    feeCurrency: input.sourceCurrency,
+    providerSlug: "ofx",
+    providerName: "OFX",
+    product: { id: `ofx:${origin.toLowerCase()}-${input.destinationCurrency.toLowerCase()}`, label: cfg.label },
+    rate,
+    recipientAmount: Math.round(received * 100) / 100,
+    feeAmount: fee,
+    costComplete: false,
+    feeBreakdown: "OFX fee added to the transfer principal",
+    observedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 5 * 60_000).toISOString(),
+    missing: ["Rate and charges for your chosen funding method and account."],
+    notes: ["OFX’s public calculator returns an amount-specific customer rate and provider fee. Custom account rates and any third-party intermediary bank wire charges are confirmed separately."],
+    source: { label: "OFX public calculator", url: cfg.site },
+  };
+}
+
+const WR_ORIGINS: Record<string, string> = {
+  US: "USD", GB: "GBP", CA: "CAD", AU: "AUD", NZ: "NZD", SG: "SGD",
+  DE: "EUR", FR: "EUR", ES: "EUR", IT: "EUR", NL: "EUR", IE: "EUR", BE: "EUR", PT: "EUR",
+};
+const WR_TARGETS: Record<string, string> = {
+  IN: "INR", PH: "PHP", PK: "PKR", BD: "BDT", NP: "NPR", LK: "LKR",
+  NG: "NGN", GH: "GHS", KE: "KES", UG: "UGX", TZ: "TZS", RW: "RWF", ZA: "ZAR", EG: "EGP", MA: "MAD",
+  MX: "MXN", CO: "COP", BR: "BRL", PE: "PEN", CL: "CLP",
+  VN: "VND", ID: "IDR", MY: "MYR", TH: "THB",
+};
+const wrGenericCalc = z.object({
+  data: z.object({ createCalculation: z.object({
+    errors: z.tuple([]),
+    calculation: z.object({
+      send: z.object({ currency: z.string(), amount: z.number().finite().positive() }),
+      receive: z.object({ currency: z.string(), amount: z.number().finite().positive() }),
+      rounding: z.object({ receiveRoundingSeed: z.number().finite().positive().max(100) }).optional(),
+      exchangeRate: z.object({ value: z.number().finite().positive() }),
+      informativeSummary: z.object({
+        fee: z.object({ value: z.object({ amount: z.number().finite().nonnegative(), currency: z.string() }) }),
+        totalToPay: z.object({ amount: z.number().finite().positive() }),
+      }),
+    }),
+  }) }),
+});
+
+/** Multi-corridor WorldRemit GraphQL bank-deposit calculator (21/34 corridors verified live HTTP 200 on 2026-11-26). */
+export async function worldRemitPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  const context = input.context;
+  if (!context || context.profile !== "personal" || context.purpose !== "personal") return null;
+  if (context.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod)) return null;
+  const originEntries = Object.entries(WR_ORIGINS).filter(([, ccy]) => ccy === input.sourceCurrency);
+  const origin = context.direction === "send"
+    ? originEntries.find(([code]) => code === context.country)?.[0]
+    : originEntries.length === 1 ? originEntries[0]?.[0] : undefined;
+  if (!origin) return null;
+  const targetMatches = Object.entries(WR_TARGETS).filter(([, ccy]) => ccy === input.destinationCurrency);
+  const destCountry = input.destinationCountry
+    ?? (context.direction === "receive" ? context.country : targetMatches.length === 1 ? targetMatches[0]?.[0] : undefined);
+  if (!destCountry || WR_TARGETS[destCountry] !== input.destinationCurrency) return null;
+  // US->IN is already fetched by usBankRemittanceRows; skip duplicate call here.
+  if (origin === "US" && destCountry === "IN") return null;
+
+  const query = `mutation createCalculation($amount: BigDecimal!, $sendCountry: CountryCode!, $sendCurrency: CurrencyCode!, $receiveCountry: CountryCode!, $receiveCurrency: CurrencyCode!) {
+    createCalculation(calculationInput: {
+      amount: $amount, type: SEND, send: { country: $sendCountry, currency: $sendCurrency },
+      receive: { country: $receiveCountry, currency: $receiveCurrency }, payOutMethodCode: "BNK", correspondentId: ""
+    }) {
+      calculation {
+        send { currency amount } receive { currency amount } rounding { receiveRoundingSeed }
+        exchangeRate { value }
+        informativeSummary { fee { value { currency amount } } totalToPay { amount } }
+      }
+      errors { __typename }
+    }
+  }`;
+  const response = await fetcher("https://api.worldremit.com/graphql", {
+    method: "POST", signal: AbortSignal.timeout(5_000), redirect: "error",
+    headers: { "Content-Type": "application/json", "x-wr-platform": "Web", "x-wr-requestid": crypto.randomUUID() },
+    body: JSON.stringify({
+      operationName: "createCalculation", query,
+      variables: { amount: input.amount, sendCountry: origin, sendCurrency: input.sourceCurrency, receiveCountry: destCountry, receiveCurrency: input.destinationCurrency },
+    }),
+  });
+  if (!response.ok) return null;
+  const parsed = wrGenericCalc.safeParse(await response.json());
+  if (!parsed.success) return null;
+  const calc = parsed.data.data.createCalculation.calculation;
+  const { send, receive, exchangeRate, informativeSummary } = calc;
+  const fee = informativeSummary.fee.value;
+  const seed = calc.rounding?.receiveRoundingSeed ?? 1;
+  if (send.currency !== input.sourceCurrency || receive.currency !== input.destinationCurrency || Math.abs(send.amount - input.amount) > 0.011
+    || Math.abs(informativeSummary.totalToPay.amount - input.amount - fee.amount) > 0.05
+    || Math.abs(receive.amount - input.amount * exchangeRate.value) > Math.max(seed / 2 + 0.05, receive.amount * 0.002)) return null;
+  return {
+    ...baseRow(),
+    senderCountry: origin,
+    feeCurrency: fee.currency,
+    providerSlug: "world-remit",
+    providerName: "WorldRemit",
+    product: { id: `world-remit:${origin.toLowerCase()}-${destCountry.toLowerCase()}-deposit`, label: "WorldRemit · bank deposit" },
+    rate: exchangeRate.value,
+    recipientAmount: receive.amount,
+    feeAmount: fee.amount,
+    feeBreakdown: "Published preview fee added to the transfer principal",
+    costComplete: false,
+    observedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 5 * 60_000).toISOString(),
+    missing: ["Final price for the payer’s funding method."],
+    notes: ["WorldRemit’s public calculator prices bank deposit before the payer chooses how to fund the transfer. Confirm the funding method and final fee at checkout."],
+    source: { label: "WorldRemit public calculator", url: "https://www.worldremit.com/" },
+  };
+}
+
+const REMITLY_ORIGINS: Record<string, { iso3: string; currency: string; path: string }> = {
+  US: { iso3: "USA", currency: "USD", path: "us" },
+  GB: { iso3: "GBR", currency: "GBP", path: "gb" },
+  CA: { iso3: "CAN", currency: "CAD", path: "ca" },
+  AU: { iso3: "AUS", currency: "AUD", path: "au" },
+  AE: { iso3: "ARE", currency: "AED", path: "ae" },
+  SG: { iso3: "SGP", currency: "SGD", path: "sg" },
+  DE: { iso3: "DEU", currency: "EUR", path: "de" },
+  FR: { iso3: "FRA", currency: "EUR", path: "fr" },
+  ES: { iso3: "ESP", currency: "EUR", path: "es" },
+  IT: { iso3: "ITA", currency: "EUR", path: "it" },
+  NL: { iso3: "NLD", currency: "EUR", path: "nl" },
+  IE: { iso3: "IRL", currency: "EUR", path: "ie" },
+  BE: { iso3: "BEL", currency: "EUR", path: "be" },
+  PT: { iso3: "PRT", currency: "EUR", path: "pt" },
+  AT: { iso3: "AUT", currency: "EUR", path: "at" },
+  FI: { iso3: "FIN", currency: "EUR", path: "fi" },
+};
+const REMITLY_TARGETS: Record<string, { iso3: string; currency: string; slug: string }> = {
+  IN: { iso3: "IND", currency: "INR", slug: "india" },
+  PH: { iso3: "PHL", currency: "PHP", slug: "philippines" },
+  MX: { iso3: "MEX", currency: "MXN", slug: "mexico" },
+  PK: { iso3: "PAK", currency: "PKR", slug: "pakistan" },
+  BD: { iso3: "BGD", currency: "BDT", slug: "bangladesh" },
+  NP: { iso3: "NPL", currency: "NPR", slug: "nepal" },
+  LK: { iso3: "LKA", currency: "LKR", slug: "sri-lanka" },
+  KE: { iso3: "KEN", currency: "KES", slug: "kenya" },
+  GH: { iso3: "GHA", currency: "GHS", slug: "ghana" },
+  NG: { iso3: "NGA", currency: "NGN", slug: "nigeria" },
+  RW: { iso3: "RWA", currency: "RWF", slug: "rwanda" },
+  CM: { iso3: "CMR", currency: "XAF", slug: "cameroon" },
+  VN: { iso3: "VNM", currency: "VND", slug: "vietnam" },
+  ID: { iso3: "IDN", currency: "IDR", slug: "indonesia" },
+  TH: { iso3: "THA", currency: "THB", slug: "thailand" },
+  SG: { iso3: "SGP", currency: "SGD", slug: "singapore" },
+  CN: { iso3: "CHN", currency: "CNY", slug: "china" },
+  BR: { iso3: "BRA", currency: "BRL", slug: "brazil" },
+  CO: { iso3: "COL", currency: "COP", slug: "colombia" },
+  PE: { iso3: "PER", currency: "PEN", slug: "peru" },
+  GT: { iso3: "GTM", currency: "GTQ", slug: "guatemala" },
+  DO: { iso3: "DOM", currency: "DOP", slug: "dominican-republic" },
+  DE: { iso3: "DEU", currency: "EUR", slug: "germany" },
+  FR: { iso3: "FRA", currency: "EUR", slug: "france" },
+  ES: { iso3: "ESP", currency: "EUR", slug: "spain" },
+  IT: { iso3: "ITA", currency: "EUR", slug: "italy" },
+  EG: { iso3: "EGY", currency: "EGP", slug: "egypt" },
+};
+const remitlyMultiQuote = z.object({
+  estimate: z.object({
+    conduit: z.object({
+      source_country: z.string().regex(/^[A-Z]{3}$/),
+      target_country: z.string().regex(/^[A-Z]{3}$/),
+      source_currency: z.object({ alpha3: z.string().regex(/^[A-Z]{3}$/) }),
+      target_currency: z.object({ alpha3: z.string().regex(/^[A-Z]{3}$/) }),
+    }),
+    pay_in_method: z.string(),
+    pay_out_method: z.string(),
+    send_amount: numberString,
+    receive_amount: numberString,
+    total_charge_amount: numberString,
+    exchange_rate: z.object({
+      base_rate: numberString.nullish(),
+      promotional_exchange_rate: numberString.nullish(),
+      capped_promotional_exchange_rate_amount: numberString.nullish(),
+    }),
+    fee: z.object({ total_fee_amount: numberString }),
+    discount: z.object({ fee_discount_amount: numberString, send_discount_amount: numberString }).nullish(),
+    tax_details: z.array(z.object({ amount: numberString, type: z.string() })).nullish(),
+  }),
+});
+
+/**
+ * Multi-origin Remitly live calculator (UK, Canada, Australia, UAE, Singapore,
+ * EU, plus extra US corridors beyond usBankRemittanceRows). Verified live HTTP
+ * 200 across GBR, CAN, AUS, ARE, USA on 2026-11-26.
+ */
+export async function remitlyPublicPrice(input: PriceCheckInput, fetcher: typeof fetch, now: Date): Promise<PriceRow | null> {
+  const context = input.context;
+  if (!context || context.profile !== "personal" || context.purpose !== "personal") return null;
+  if (context.paymentMethod && !["local_bank", "transfer_service"].includes(context.paymentMethod)) return null;
+  const originMatches = Object.entries(REMITLY_ORIGINS).filter(([, cfg]) => cfg.currency === input.sourceCurrency);
+  const originEntry = context.direction === "send"
+    ? originMatches.find(([code]) => code === context.country)
+    : originMatches.length === 1 ? originMatches[0] : undefined;
+  if (!originEntry) return null;
+  const [originCode, originCfg] = originEntry;
+
+  const targetMatches = Object.entries(REMITLY_TARGETS).filter(([, cfg]) => cfg.currency === input.destinationCurrency);
+  const wantedDest = input.destinationCountry ?? (context.direction === "receive" ? context.country : undefined);
+  const targetEntry = wantedDest
+    ? targetMatches.find(([code]) => code === wantedDest)
+    : targetMatches.length === 1 ? targetMatches[0] : undefined;
+  if (!targetEntry || targetEntry[0] === originCode) return null;
+  const [, targetCfg] = targetEntry;
+
+  // US corridors already in usBankRemittanceCorridor are fetched there; avoid duplicate calls.
+  if (originCode === "US" && usBankRemittanceCorridor(input) !== null) return null;
+
+  const params = new URLSearchParams({
+    conduit: `${originCfg.iso3}:${originCfg.currency}-${targetCfg.iso3}:${targetCfg.currency}`,
+    anchor: "SEND",
+    amount: String(input.amount),
+    purpose: "OTHER",
+    customer_segment: "STANDARD",
+    customer_recognition: "UNRECOGNIZED",
+    strict_promo: "false",
+  });
+  const response = await fetcher(`https://api.remitly.com/v3/calculator/estimate?${params}`, {
+    headers: { Accept: "application/json", "Accept-Language": "en-US" },
+    signal: AbortSignal.timeout(4_500),
+    redirect: "error",
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+  const parsed = remitlyMultiQuote.safeParse(await response.json());
+  if (!parsed.success) return null;
+  const quote = parsed.data.estimate;
+  if (quote.conduit.source_country !== originCfg.iso3 || quote.conduit.source_currency.alpha3 !== originCfg.currency
+    || quote.conduit.target_country !== targetCfg.iso3 || quote.conduit.target_currency.alpha3 !== targetCfg.currency
+    || Math.abs(quote.send_amount - input.amount) > 0.011 || !(quote.receive_amount > 0)) return null;
+
+  const { base_rate: baseRate, promotional_exchange_rate: promoRate, capped_promotional_exchange_rate_amount: cap } = quote.exchange_rate;
+  const promoAmount = promoRate && cap ? Math.min(input.amount, cap) : 0;
+  const remaining = input.amount - promoAmount;
+  if (remaining > 0 && !(baseRate && baseRate > 0)) return null;
+  const received = promoAmount * (promoRate ?? 0) + remaining * (baseRate ?? 0);
+  const grossFee = quote.fee.total_fee_amount;
+  const feeDiscount = quote.discount?.fee_discount_amount ?? 0;
+  const sendDiscount = quote.discount?.send_discount_amount ?? 0;
+  const taxes = quote.tax_details ?? [];
+  const tax = taxes.reduce((total, entry) => total + entry.amount, 0);
+  const fee = Math.round((quote.total_charge_amount - input.amount) * 100) / 100;
+  const tol = Math.max(quote.receive_amount * 0.005, 1);
+  if (fee < 0 || feeDiscount > grossFee + 0.011 || Math.abs(received - quote.receive_amount) > tol
+    || Math.abs(grossFee + tax - feeDiscount - sendDiscount - fee) > 0.05) return null;
+
+  const payout = ({ BANK_DEPOSIT: "Bank deposit", CASH_PICKUP: "Cash pickup", MOBILE_MONEY: "Mobile money", DEBIT_CARD: "Debit card deposit" } as Record<string, string>)[quote.pay_out_method]
+    ?? "Confirm payout method at checkout";
+  const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
+  return {
+    ...baseRow(),
+    senderCountry: originCode,
+    feeCurrency: originCfg.currency,
+    providerSlug: "remitly",
+    providerName: "Remitly",
+    product: { id: `remitly:${originCode.toLowerCase()}-${targetCfg.currency.toLowerCase()}`, label: promoAmount ? `Remitly · ${originCode} welcome offer` : `Remitly · ${originCode} transfer` },
+    recipientAmount: quote.receive_amount,
+    feeAmount: fee,
+    rate: received / input.amount,
+    observedAt: now.toISOString(),
+    expiresAt,
+    source: { label: "Remitly public calculator", url: `https://www.remitly.com/${originCfg.path}/en/${targetCfg.slug}/pricing` },
+    ...(promoAmount ? { publicOffer: { kind: "first_transfer" as const, fundingMethod: quote.pay_in_method, payoutMethod: payout, displayUntil: expiresAt } } : {}),
+    ...(tax ? {
+      taxIncluded: true,
+      taxNote: `Remitly’s total includes ${taxes.map((entry) => `${originCfg.currency} ${entry.amount.toFixed(2)} ${entry.type}`).join(" + ")}.`,
+    } : {}),
+    notes: [
+      `Read from Remitly’s public calculator for ${originCode} (${originCfg.currency}) → ${targetCfg.currency} (pay-in: ${quote.pay_in_method}, payout: ${payout}).`,
+      ...(promoAmount ? ["Includes Remitly’s new-customer welcome rate."] : []),
+      ...(promoAmount && remaining > 0 ? [`Welcome rate applied to the first ${originCfg.currency} ${cap}; standard rate applied to the remainder.`] : []),
+    ],
+  };
 }

@@ -4,6 +4,7 @@ import { useId, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Banknote, Briefcase, Globe2, Landmark, ReceiptText, Smartphone, Wallet, type LucideIcon } from "lucide-react";
 import type { SendMethod, WayGroup, WayProvider } from "../../lib/ways-to-send";
+import { providerFacts } from "../../lib/provider-facts";
 import { ProviderLogo } from "../app/provider-logo";
 import styles from "./ways-to-send.module.css";
 
@@ -79,14 +80,14 @@ export function WaysToSend({ groups, from, to, title, onPick, compareHref }: {
           {group.best ? (
             <div className={styles.best}>
               <span className={styles.bestLabel}>{group.best.recipientAmount !== null ? "Most arrives in this group today" : "In this group"}</span>
-              <ProviderRow provider={group.best} to={to} onPick={onPick} hrefFor={hrefFor} featured />
+              <ProviderRow provider={group.best} from={from} to={to} onPick={onPick} hrefFor={hrefFor} featured />
             </div>
           ) : null}
 
           {others.length ? (
             <div className={styles.others}>
               <span className={styles.bestLabel}>Also offering this</span>
-              <ul>{others.map((provider) => <li key={provider.slug}><ProviderRow provider={provider} to={to} onPick={onPick} hrefFor={hrefFor} /></li>)}</ul>
+              <ul>{others.map((provider) => <li key={provider.slug}><ProviderRow provider={provider} from={from} to={to} onPick={onPick} hrefFor={hrefFor} /></li>)}</ul>
               {group.providers.length - 1 > others.length ? <p className={styles.more}>and {group.providers.length - 1 - others.length} more in the comparison</p> : null}
             </div>
           ) : null}
@@ -96,7 +97,8 @@ export function WaysToSend({ groups, from, to, title, onPick, compareHref }: {
   );
 }
 
-function ProviderRow({ provider, to, onPick, hrefFor, featured = false }: { provider: WayProvider; to: string; onPick?: (slug: string) => void; hrefFor?: (slug: string) => string; featured?: boolean }) {
+function ProviderRow({ provider, from, to, onPick, hrefFor, featured = false }: { provider: WayProvider; from: string; to: string; onPick?: (slug: string) => void; hrefFor?: (slug: string) => string; featured?: boolean }) {
+  const facts = provider.recipientAmount === null ? providerFacts(provider.slug, { from, to }) : null;
   const body = (
     <>
       <ProviderLogo slug={provider.slug} name={provider.name} src={provider.logoUrl} size={featured ? 32 : 24} />
@@ -106,7 +108,7 @@ function ProviderRow({ provider, to, onPick, hrefFor, featured = false }: { prov
           <strong>{money(provider.recipientAmount)} <small>{to}</small></strong>
           {provider.statusLabel ? <em data-status={provider.status ?? undefined}>{provider.statusLabel}</em> : null}
         </span>
-      ) : <span className={styles.noPrice}>No price for this setup</span>}
+      ) : <span className={styles.noPrice}>{facts ? "Published fees & KYC" : "Check provider"}</span>}
       <ArrowRight size={14} aria-hidden className={styles.go} />
     </>
   );

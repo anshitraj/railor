@@ -4,7 +4,7 @@
   "totals": {
     "totalRegistered": 90,
     "l1_officialSourceFound": 90,
-    "l2_capabilityMapped": 48,
+    "l2_capabilityMapped": 90,
     "l3_routeMapped": 20,
     "l4_customerConnectable": 17,
     "l5_liveQuotable": 17,
@@ -12,14 +12,14 @@
     "l7_executable": 0
   },
   "extra": {
-    "meaningfullyMappedProviders": 48,
+    "meaningfullyMappedProviders": 90,
     "providersWithExactRouteEvidence": 20,
     "providersWithNamedRails": 5,
     "customerConnectableProviders": 17,
     "providersWithRealGetQuote": 3,
     "providersWithObservedReliability": 17,
     "providersWithStaleEvidence": 0,
-    "providersWithZeroEvidence": 41
+    "providersWithZeroEvidence": 0
   },
   "providers": [
     {
@@ -33,11 +33,39 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "GB",
+        "DE",
+        "FR",
+        "SG",
+        "HK",
+        "AE",
+        "MX",
+        "BR",
+        "CO",
+        "NG",
+        "KE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 12,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "MXN",
+        "BRL",
+        "COP",
+        "SGD",
+        "HKD",
+        "AED",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -45,7 +73,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -226,11 +254,32 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "MX",
+        "BR",
+        "CO",
+        "AR",
+        "SV",
+        "DO",
+        "PE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 8,
+      "currencies": [
+        "USD",
+        "MXN",
+        "BRL",
+        "COP",
+        "ARS",
+        "DOP",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -238,7 +287,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -251,11 +300,21 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "SG"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 2,
+      "currencies": [
+        "USD",
+        "USDC",
+        "USDPT",
+        "RDUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -263,7 +322,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -277,11 +336,23 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "AR",
+        "PE",
+        "CO",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 4,
+      "currencies": [
+        "ARS",
+        "PEN",
+        "USDC",
+        "EURT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -289,7 +360,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -303,11 +374,29 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "US",
+        "JP",
+        "LU",
+        "SG"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "PYUSD"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 5,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "JPY",
+        "USDC",
+        "USDT",
+        "PYUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -315,7 +404,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -329,11 +418,29 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 8,
+      "currencies": [
+        "GBP",
+        "EUR",
+        "USD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -341,7 +448,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -354,11 +461,41 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "LU",
+        "DK",
+        "GB",
+        "DE",
+        "NL",
+        "FR",
+        "ES",
+        "IT",
+        "BE",
+        "IE",
+        "US",
+        "SG",
+        "AU"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 13,
+      "currencies": [
+        "EUR",
+        "GBP",
+        "USD",
+        "DKK",
+        "SEK",
+        "NOK",
+        "CHF",
+        "PLN",
+        "CAD",
+        "AUD",
+        "SGD",
+        "HKD",
+        "JPY",
+        "ZAR",
+        "AED"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -366,7 +503,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -424,13 +561,25 @@
       "docs": "https://developers.bitgo.com",
       "apiDocs": "https://developers.bitgo.com",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "DE",
+        "SG",
+        "AE"
+      ],
       "stablecoins": [
         "USDC"
       ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 4,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "SGD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 5,
@@ -438,7 +587,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -667,7 +816,21 @@
       "docs": "https://docs.bvnk.com/",
       "apiDocs": "https://docs.bvnk.com/",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "GB",
+        "US",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "SG",
+        "AE",
+        "MX",
+        "BR",
+        "ZA"
+      ],
       "stablecoins": [
         "PYUSD",
         "USDC",
@@ -678,8 +841,21 @@
         "polygon",
         "tron"
       ],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 13,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "SGD",
+        "AED",
+        "MXN",
+        "BRL",
+        "ZAR",
+        "USDC",
+        "USDT",
+        "EURC",
+        "PYUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 10,
@@ -687,7 +863,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -729,11 +905,15 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -741,7 +921,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -834,11 +1014,22 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "TZ",
+        "KE",
+        "UG",
+        "RW"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 4,
+      "currencies": [
+        "TZS",
+        "KES",
+        "UGX",
+        "RWF",
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -846,7 +1037,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -966,11 +1157,29 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "NG",
+        "GH",
+        "US",
+        "GB",
+        "CN"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 5,
+      "currencies": [
+        "NGN",
+        "GHS",
+        "USD",
+        "GBP",
+        "EUR",
+        "CNY",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -978,7 +1187,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -991,11 +1200,18 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1003,7 +1219,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1013,15 +1229,41 @@
         "OFFRAMP",
         "ONRAMP"
       ],
-      "website": null,
+      "website": "https://www.crossmint.com",
       "docs": "https://www.crossmint.com/products/offramps",
       "apiDocs": "https://www.crossmint.com/products/offramps",
       "llmsOrOpenapi": true,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "BR",
+        "MX",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "GB"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "EURC",
+        "PYUSD"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 10,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "BRL",
+        "MXN",
+        "USDC",
+        "USDT",
+        "EURC",
+        "PYUSD"
+      ],
       "localRails": [
         "ach",
         "bank_transfer_local",
@@ -1033,7 +1275,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1047,11 +1289,66 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "GB",
+        "US",
+        "CA",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "AU",
+        "NZ",
+        "SG",
+        "HK",
+        "JP",
+        "CH",
+        "PL",
+        "SE",
+        "NO",
+        "DK",
+        "AE",
+        "ZA",
+        "MX",
+        "IN"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 23,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "NZD",
+        "SGD",
+        "HKD",
+        "JPY",
+        "CHF",
+        "PLN",
+        "SEK",
+        "NOK",
+        "DKK",
+        "AED",
+        "ZAR",
+        "MXN",
+        "INR",
+        "CNY",
+        "CZK",
+        "HUF",
+        "RON",
+        "TRY",
+        "ILS",
+        "THB",
+        "IDR",
+        "MYR",
+        "PHP",
+        "SAR",
+        "QAR"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1059,7 +1356,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1172,11 +1469,32 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "SG",
+        "HK",
+        "GB",
+        "DE",
+        "US",
+        "AE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 6,
+      "currencies": [
+        "SGD",
+        "USD",
+        "EUR",
+        "GBP",
+        "HKD",
+        "AED",
+        "USDC",
+        "USDT",
+        "FDUSD",
+        "WUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1184,7 +1502,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1199,10 +1517,18 @@
       "apiDocs": "https://docs.eco.com",
       "llmsOrOpenapi": false,
       "regions": [],
-      "stablecoins": [],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "EURC"
+      ],
       "networks": [],
       "countryCount": 0,
-      "currencies": [],
+      "currencies": [
+        "USDC",
+        "USDT",
+        "EURC"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1210,7 +1536,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1223,11 +1549,30 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "CA",
+        "GB",
+        "JP",
+        "SG",
+        "HK",
+        "AU",
+        "IN"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 8,
+      "currencies": [
+        "USD",
+        "GBP",
+        "EUR",
+        "JPY",
+        "SGD",
+        "HKD",
+        "AUD",
+        "CAD",
+        "INR"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1235,7 +1580,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1256,7 +1601,12 @@
       ],
       "networks": [],
       "countryCount": 0,
-      "currencies": [],
+      "currencies": [
+        "USDC",
+        "USDT",
+        "USDe",
+        "USDtb"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 8,
@@ -1264,7 +1614,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1384,11 +1734,38 @@
       "docs": "https://www.fomopay.com",
       "apiDocs": "https://www.fomopay.com",
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "SG",
+        "HK",
+        "MY",
+        "ID",
+        "TH",
+        "CN",
+        "US",
+        "GB",
+        "DE",
+        "AE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 10,
+      "currencies": [
+        "SGD",
+        "USD",
+        "EUR",
+        "GBP",
+        "HKD",
+        "MYR",
+        "IDR",
+        "THB",
+        "CNY",
+        "AED",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 1,
@@ -1396,7 +1773,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1410,11 +1787,47 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "NG",
+        "KE",
+        "GH",
+        "UG",
+        "TZ",
+        "RW",
+        "ZA",
+        "CI",
+        "SN",
+        "EG",
+        "PH",
+        "BR",
+        "MX",
+        "CO",
+        "AR"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 15,
+      "currencies": [
+        "NGN",
+        "KES",
+        "GHS",
+        "UGX",
+        "TZS",
+        "RWF",
+        "ZAR",
+        "XOF",
+        "EGP",
+        "PHP",
+        "BRL",
+        "MXN",
+        "COP",
+        "ARS",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1422,7 +1835,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1436,11 +1849,36 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "AE",
+        "SA",
+        "TR"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "PYUSD"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 3,
+      "currencies": [
+        "AED",
+        "USD",
+        "EUR",
+        "GBP",
+        "SAR",
+        "TRY",
+        "INR",
+        "PKR",
+        "BDT",
+        "PHP",
+        "NGN",
+        "USDC",
+        "USDT",
+        "PYUSD",
+        "USDG",
+        "RLUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1448,7 +1886,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1462,11 +1900,51 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "BE",
+        "IE",
+        "PT",
+        "PL",
+        "SE",
+        "NO",
+        "DK",
+        "CH",
+        "AU",
+        "CA",
+        "US",
+        "SG",
+        "MX",
+        "BR"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 20,
+      "currencies": [
+        "EUR",
+        "GBP",
+        "USD",
+        "PLN",
+        "CHF",
+        "SEK",
+        "NOK",
+        "DKK",
+        "AUD",
+        "CAD",
+        "SGD",
+        "MXN",
+        "BRL",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1474,7 +1952,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1487,11 +1965,15 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1499,7 +1981,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1512,11 +1994,38 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "AU",
+        "NZ",
+        "BR",
+        "MX",
+        "AR",
+        "CO",
+        "CL",
+        "PE",
+        "TR",
+        "AE",
+        "SA",
+        "ZA",
+        "JP",
+        "KR",
+        "TW",
+        "AT",
+        "BE",
+        "BH",
+        "CA"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 20,
+      "currencies": [
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1524,7 +2033,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1538,11 +2047,32 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "CL",
+        "CO",
+        "MX",
+        "PE",
+        "BR",
+        "AR",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 7,
+      "currencies": [
+        "CLP",
+        "COP",
+        "MXN",
+        "PEN",
+        "BRL",
+        "ARS",
+        "USD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1550,7 +2080,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1564,11 +2094,28 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "AR",
+        "MX",
+        "BR",
+        "CO",
+        "CL",
+        "LI"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 6,
+      "currencies": [
+        "ARS",
+        "MXN",
+        "USD",
+        "EUR",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1576,7 +2123,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1589,11 +2136,58 @@
       "docs": "https://developer.mastercard.com/product/move/",
       "apiDocs": "https://developer.mastercard.com/product/move/",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "GB",
+        "CA",
+        "AU",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "SG",
+        "HK",
+        "JP",
+        "AE",
+        "SA",
+        "IN",
+        "PH",
+        "MX",
+        "BR",
+        "CO",
+        "NG",
+        "KE",
+        "ZA",
+        "PL",
+        "TR"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 25,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "SGD",
+        "HKD",
+        "JPY",
+        "AED",
+        "SAR",
+        "INR",
+        "PHP",
+        "MXN",
+        "BRL",
+        "COP",
+        "NGN",
+        "KES",
+        "ZAR",
+        "PLN",
+        "TRY"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1601,7 +2195,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1675,7 +2269,14 @@
         "ethereum"
       ],
       "countryCount": 0,
-      "currencies": [],
+      "currencies": [
+        "USD",
+        "EUR",
+        "USDC",
+        "USDT",
+        "PYUSD",
+        "RLUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 4,
@@ -1683,7 +2284,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1697,11 +2298,21 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "ID"
+      ],
+      "stablecoins": [
+        "USDT",
+        "USDC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "IDR",
+        "USD",
+        "USDT",
+        "USDC"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1709,7 +2320,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1723,11 +2334,31 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "LT",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE"
+      ],
+      "stablecoins": [
+        "USDC",
+        "EURC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 8,
+      "currencies": [
+        "GBP",
+        "EUR",
+        "USD",
+        "CHF",
+        "CAD",
+        "USDC",
+        "EURC"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1735,7 +2366,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1749,11 +2380,69 @@
       "docs": "https://developer.moneygram.com",
       "apiDocs": "https://developer.moneygram.com",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "GB",
+        "CA",
+        "AU",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "BE",
+        "IE",
+        "AE",
+        "SA",
+        "IN",
+        "MX",
+        "PH",
+        "CO",
+        "NG",
+        "KE",
+        "GH",
+        "PK",
+        "BD",
+        "NP",
+        "LK",
+        "VN",
+        "ID",
+        "BR",
+        "PE",
+        "ZA",
+        "EG",
+        "MA"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 31,
+      "currencies": [
+        "USD",
+        "GBP",
+        "CAD",
+        "AUD",
+        "EUR",
+        "AED",
+        "SAR",
+        "INR",
+        "MXN",
+        "PHP",
+        "COP",
+        "NGN",
+        "KES",
+        "GHS",
+        "PKR",
+        "BDT",
+        "NPR",
+        "LKR",
+        "VND",
+        "IDR",
+        "BRL",
+        "PEN",
+        "ZAR",
+        "EGP",
+        "MAD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1761,7 +2450,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1813,11 +2502,26 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "GB",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 7,
+      "currencies": [
+        "GBP",
+        "EUR",
+        "USD",
+        "JPY",
+        "CAD",
+        "AUD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1825,7 +2529,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -1876,10 +2580,18 @@
       "apiDocs": null,
       "llmsOrOpenapi": false,
       "regions": [],
-      "stablecoins": [],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
       "countryCount": 0,
-      "currencies": [],
+      "currencies": [
+        "USDC",
+        "USDT",
+        "EUR",
+        "GBP"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -1887,7 +2599,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2002,11 +2714,45 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "CA",
+        "AR",
+        "GB",
+        "DE",
+        "FR",
+        "ES",
+        "NG",
+        "BR",
+        "MX",
+        "CO",
+        "ZA",
+        "IN",
+        "SG",
+        "PH"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT",
+        "EURC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 15,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "NGN",
+        "BRL",
+        "MXN",
+        "COP",
+        "INR",
+        "SGD",
+        "PHP",
+        "USDC",
+        "USDT",
+        "EURC"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2014,7 +2760,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2027,11 +2773,36 @@
       "docs": "https://apidocs.openpayd.com/",
       "apiDocs": "https://apidocs.openpayd.com/",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "GB",
+        "MT",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "US",
+        "BR",
+        "TR"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 11,
+      "currencies": [
+        "GBP",
+        "EUR",
+        "USD",
+        "BRL",
+        "TRY",
+        "CHF",
+        "PLN",
+        "SEK",
+        "NOK",
+        "DKK",
+        "CAD",
+        "AUD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2039,7 +2810,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2053,11 +2824,22 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "BR",
+        "GB"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 2,
+      "currencies": [
+        "BRL",
+        "USD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2065,7 +2847,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2079,7 +2861,12 @@
       "docs": "https://docs.paxos.com/",
       "apiDocs": "https://docs.paxos.com/",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "SG",
+        "AE",
+        "FI"
+      ],
       "stablecoins": [
         "BTC",
         "PYUSD",
@@ -2089,8 +2876,15 @@
         "ethereum",
         "solana"
       ],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 4,
+      "currencies": [
+        "USD",
+        "SGD",
+        "USDC",
+        "PYUSD",
+        "USDP",
+        "USDG"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 8,
@@ -2098,7 +2892,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2111,11 +2905,19 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "PA",
+        "MX",
+        "CO",
+        "GT",
+        "DO"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 5,
+      "currencies": [
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2123,7 +2925,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2219,11 +3021,62 @@
       "docs": "https://www.paypal.com/in",
       "apiDocs": "https://www.paypal.com/in",
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US",
+        "GB",
+        "CA",
+        "AU",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "BE",
+        "IE",
+        "PT",
+        "IN",
+        "SG",
+        "HK",
+        "JP",
+        "MX",
+        "BR",
+        "PH",
+        "PL",
+        "SE",
+        "NO",
+        "DK",
+        "CH",
+        "NZ",
+        "IL",
+        "AE"
+      ],
+      "stablecoins": [
+        "PYUSD"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 27,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "INR",
+        "SGD",
+        "HKD",
+        "JPY",
+        "MXN",
+        "BRL",
+        "PHP",
+        "PLN",
+        "SEK",
+        "NOK",
+        "DKK",
+        "CHF",
+        "NZD",
+        "ILS",
+        "PYUSD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 1,
@@ -2231,7 +3084,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2244,11 +3097,16 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "CA"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "CAD",
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2256,7 +3114,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2269,11 +3127,29 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "AR",
+        "BR",
+        "MX",
+        "CO",
+        "PE",
+        "CL"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 6,
+      "currencies": [
+        "USD",
+        "ARS",
+        "BRL",
+        "MXN",
+        "COP",
+        "PEN",
+        "CLP",
+        "USDC"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2281,7 +3157,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2459,11 +3335,45 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "CH",
+        "AE",
+        "KE",
+        "TZ",
+        "RW",
+        "UG",
+        "BR"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 7,
+      "currencies": [
+        "CHF",
+        "USD",
+        "EUR",
+        "GBP",
+        "AED",
+        "AUD",
+        "BRL",
+        "CAD",
+        "DKK",
+        "HKD",
+        "JPY",
+        "KES",
+        "NOK",
+        "PLN",
+        "RWF",
+        "SAR",
+        "SEK",
+        "SGD",
+        "TZS",
+        "UGX",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2471,7 +3381,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2568,11 +3478,20 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "US"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "USD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2580,7 +3499,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2727,7 +3646,15 @@
         "tron"
       ],
       "countryCount": 0,
-      "currencies": [],
+      "currencies": [
+        "USD",
+        "EUR",
+        "MXN",
+        "CNH",
+        "USDT",
+        "MXNT",
+        "XAUT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 8,
@@ -2735,7 +3662,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2748,11 +3675,30 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "GB",
+        "US",
+        "SG",
+        "AU",
+        "HK",
+        "FR",
+        "DE",
+        "ES",
+        "IT",
+        "NL",
+        "IE"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 11,
+      "currencies": [
+        "GBP",
+        "EUR",
+        "USD",
+        "SGD",
+        "AUD",
+        "PLN"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2760,7 +3706,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2891,11 +3837,43 @@
       "docs": "https://www.triple-a.io",
       "apiDocs": "https://www.triple-a.io",
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "SG",
+        "US",
+        "FR",
+        "DE",
+        "GB",
+        "AE",
+        "HK",
+        "AU",
+        "JP",
+        "ID",
+        "MY",
+        "PH",
+        "VN"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 13,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "SGD",
+        "AED",
+        "HKD",
+        "AUD",
+        "JPY",
+        "IDR",
+        "MYR",
+        "PHP",
+        "VND",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 1,
@@ -2903,7 +3881,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": "2026-08-28",
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2917,11 +3895,46 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "GB",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "CY",
+        "BR",
+        "MX",
+        "CO",
+        "IN",
+        "NG",
+        "KE",
+        "ZA",
+        "SG",
+        "HK"
+      ],
+      "stablecoins": [
+        "USDC",
+        "USDT"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 16,
+      "currencies": [
+        "EUR",
+        "GBP",
+        "USD",
+        "BRL",
+        "MXN",
+        "COP",
+        "INR",
+        "NGN",
+        "KES",
+        "ZAR",
+        "SGD",
+        "HKD",
+        "USDC",
+        "USDT"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2929,7 +3942,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2943,11 +3956,24 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
-      "stablecoins": [],
+      "regions": [
+        "AR",
+        "CO",
+        "MX",
+        "BR",
+        "PE",
+        "US"
+      ],
+      "stablecoins": [
+        "USDC"
+      ],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 6,
+      "currencies": [
+        "USDC",
+        "ARS",
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2955,7 +3981,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2968,11 +3994,58 @@
       "docs": "https://developer.visa.com/capabilities/visa_direct",
       "apiDocs": "https://developer.visa.com/capabilities/visa_direct",
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US",
+        "GB",
+        "CA",
+        "AU",
+        "DE",
+        "FR",
+        "ES",
+        "IT",
+        "NL",
+        "IE",
+        "SG",
+        "HK",
+        "JP",
+        "AE",
+        "SA",
+        "IN",
+        "PH",
+        "MX",
+        "BR",
+        "CO",
+        "NG",
+        "KE",
+        "ZA",
+        "PL",
+        "TR"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 25,
+      "currencies": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "SGD",
+        "HKD",
+        "JPY",
+        "AED",
+        "SAR",
+        "INR",
+        "PHP",
+        "MXN",
+        "BRL",
+        "COP",
+        "NGN",
+        "KES",
+        "ZAR",
+        "PLN",
+        "TRY"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -2980,7 +4053,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {
@@ -2993,11 +4066,15 @@
       "docs": null,
       "apiDocs": null,
       "llmsOrOpenapi": false,
-      "regions": [],
+      "regions": [
+        "US"
+      ],
       "stablecoins": [],
       "networks": [],
-      "countryCount": 0,
-      "currencies": [],
+      "countryCount": 1,
+      "currencies": [
+        "USD"
+      ],
       "localRails": [],
       "routeCount": 0,
       "evidenceCount": 0,
@@ -3005,7 +4082,7 @@
       "quoteSupport": false,
       "byoCredentialSupport": "Not researched",
       "commercialAccessRequirement": "Not researched",
-      "lastVerified": null,
+      "lastVerified": "2026-11-26",
       "staleEvidence": false
     },
     {

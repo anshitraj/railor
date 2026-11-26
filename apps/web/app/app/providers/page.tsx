@@ -5,6 +5,7 @@ import discovery from "../../../../../packages/core/src/public-pricing/corridor-
 import pricingReview from "../../../../../packages/core/src/public-pricing/provider-pricing-review.json";
 import { ProviderDirectory, type DirectoryProvider } from "../../../components/app/provider-directory";
 import { discoveredTransferDirectory } from "../../../lib/transfer-provider-discovery";
+import { enrichDirectoryProvider } from "../../../lib/provider-directory-coverage";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Providers" };
@@ -12,7 +13,7 @@ export const metadata = { title: "Providers" };
 export default async function ProvidersPage() {
   // Real companies only, like search and decisions: fictional demo providers stay out of the directory.
   const providers = (await loadProviderSummaries()).filter((p) => !p.isDemo);
-  const directory: DirectoryProvider[] = providers.map(p => ({ ...p,
+  const directory: DirectoryProvider[] = providers.map(p => enrichDirectoryProvider({ ...p,
     lastVerifiedAt: p.lastVerifiedAt?.toISOString() ?? null,
     profileAvailable: true,
     sourceUrl: INDIA_RECEIVING_PRODUCTS.find(product => product.slug === p.slug)?.url ?? pricingReview.providers.find(entry => entry.slug === p.slug)?.sourceUrl ?? undefined,
@@ -24,14 +25,14 @@ export default async function ProvidersPage() {
   const research = new Map([...audit.providers, ...discovery.providers].map(provider => [provider.slug, provider]));
   for (const provider of research.values()) if (!directory.some(entry => entry.slug === provider.slug)) {
     const evidence = discoveries.get(provider.slug);
-    directory.push({ slug: provider.slug, name: provider.name, category: "Public-source research",
+    directory.push(enrichDirectoryProvider({ slug: provider.slug, name: provider.name, category: "Public-source research",
       description: evidence?.pricingNote ?? "Explore the official source for current products, account eligibility and pricing.",
       products: [], assets: [], networks: [], countryCount: 0, currencyCount: 0, customerTypes: [],
       hasApi: false, hasSandbox: false, hasWebhooks: false, headquartersCountry: null, lastVerifiedAt: null,
       profileAvailable: false, sourceUrl: pricingReview.providers.find(entry => entry.slug === provider.slug)?.sourceUrl ?? evidence?.sources[0] ?? provider.website ?? undefined,
       sourceLabel: newListings.has(provider.slug) ? "Provider source" : undefined,
       pricingSummary: pricingReview.providers.find(entry => entry.slug === provider.slug)?.summary ?? evidence?.pricingNote,
-    });
+    }));
   }
 
   const existingSlugs = new Set(directory.map(provider => provider.slug));

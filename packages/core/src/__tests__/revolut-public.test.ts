@@ -70,4 +70,13 @@ describe("Revolut public FX reference", () => {
     expect(result.rows.some((row) => row.providerSlug === "revolut")).toBe(false);
     expect(result.unavailable.find((row) => row.providerSlug === "revolut")).toBeDefined();
   });
+
+  it("queries the sender's country when Revolut operates in US, EU, AU, SG or CH", async () => {
+    const fetcher = vi.fn(async () => response(fixture()));
+    const row = await revolutPublicReference({ ...input, context: { profile: "personal", country: "US", direction: "send", purpose: "personal" } }, fetcher, now);
+    const [url] = fetcher.mock.calls[0]! as unknown as [string];
+    expect(new URL(url).searchParams.get("country")).toBe("US");
+    expect(row.senderCountry).toBe("US");
+    expect(row.providerName).toContain("US Standard");
+  });
 });

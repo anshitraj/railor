@@ -1,10 +1,11 @@
 import catalog from "../../../packages/core/src/public-pricing/transfer-provider-discovery.json";
 import type { DirectoryProvider } from "../components/app/provider-directory";
+import { enrichDirectoryProvider } from "./provider-directory-coverage";
 
 export const transferProviderDiscovery = catalog;
 
 export function discoveredTransferDirectory(): DirectoryProvider[] {
-  return catalog.providers.map(provider => ({
+  return catalog.providers.map(provider => enrichDirectoryProvider({
     slug: provider.slug,
     name: provider.name,
     category: provider.category,

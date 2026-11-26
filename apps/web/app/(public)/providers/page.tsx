@@ -5,6 +5,7 @@ import { SurveyProviderDirectory } from "../../../components/app/survey-provider
 import { FeaturedProviders } from "../../../components/marketing/featured-providers";
 import { requireSignedIn } from "../../../lib/sign-in-gate";
 import { discoveredTransferDirectory } from "../../../lib/transfer-provider-discovery";
+import { enrichDirectoryProvider } from "../../../lib/provider-directory-coverage";
 
 export const metadata = { title: "Providers" };
 export const dynamic = "force-dynamic";
@@ -60,7 +61,7 @@ export default async function PublicProvidersPage({ searchParams }: { searchPara
       ) : discovery ? <ProviderDirectory basePath="/providers" providers={discoveredTransferDirectory()} /> : (
         <ProviderDirectory
           basePath="/providers"
-          providers={providers.map((p) => ({
+          providers={providers.map((p) => enrichDirectoryProvider({
             slug: p.slug,
             name: p.name,
             category: p.category,

@@ -2,7 +2,7 @@ import universe from "../../../RAILOR_PROVIDER_UNIVERSE.json";
 import sourceAudit from "../../../packages/core/src/public-pricing/provider-source-audit.json";
 import pricingReview from "../../../packages/core/src/public-pricing/provider-pricing-review.json";
 import type { MarketCoverage, PriceCheckInput } from "@railor/core";
-import { assessCustomerProfile, INDIA_RECEIVING_PRODUCTS } from "@railor/core";
+import { assessCustomerProfile, INDIA_RECEIVING_PRODUCTS, kycFor, unconfirmedAssessment, withKycFacts } from "@railor/core";
 import { discoveredCoverage, DISCOVERED_PROVIDERS } from "./corridor-discovery";
 import { transferProviderDiscovery } from "./transfer-provider-discovery";
 
@@ -116,8 +116,10 @@ export function providerMarketCoverage(input: PriceCheckInput): MarketCoverage {
   const reviewed = (candidate: MarketCoverage["providers"][number]) => {
     const profile = input.context && candidate.currencyMatch !== "unverified" && destination === "INR"
       ? assessCustomerProfile(candidate.providerSlug, input.context, { ...input, sourceCurrency: source, destinationCurrency: destination, amountUsd: source === "USD" ? input.amount : null, referenceRate: null })
-      : undefined;
-    const provider = profile?.payment ? { ...candidate, profileAssessment: profile } : candidate;
+      : input.context && kycFor(candidate.providerSlug, input.context)
+        ? withKycFacts(unconfirmedAssessment(), candidate.providerSlug, input.context)
+        : undefined;
+    const provider = profile?.payment || profile?.kyc ? { ...candidate, profileAssessment: profile } : candidate;
     const review = reviewBySlug.get(provider.providerSlug);
     if (!review || review.status !== "readable") return provider;
     const finding = review.pricingReview;

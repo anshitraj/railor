@@ -32,12 +32,54 @@ export const SEND_METHODS: MethodInfo[] = [
 /** How each provider moves money. A provider can be more than one kind (Remitly is an app with cash pickup). */
 const PROVIDER_METHODS: Record<string, SendMethod[]> = {
   remitly: ["app", "cash"], xoom: ["app", "cash"], "world-remit": ["app", "cash"], worldremit: ["app", "cash"], "taptap-send": ["app"], aspora: ["app"],
-  sendwave: ["app"], "atlantic-money": ["online"], wise: ["online", "multi"], instarem: ["online"], revolut: ["multi", "app"], paypal: ["online"],
-  dashx: ["app"], "western-union": ["cash", "app"], moneygram: ["cash", "app"], ria: ["cash", "app"], "al-ansari-exchange": ["cash", "app"], "lulu-exchange": ["cash", "app"],
-  ofx: ["broker"], xe: ["broker", "online"], "currencies-direct": ["broker"], torfx: ["broker"],
+  sendwave: ["app"], lemfi: ["app"], nala: ["app"], afriex: ["app"], "mama-money": ["app"], "felix-pago": ["app"], "careem-pay": ["app"], botim: ["app"],
+  "eand-money": ["app"], "stc-bank": ["app", "cash"], "ooredoo-money": ["app", "cash"], "beyon-money": ["app"], walletii: ["app"], flip: ["app"],
+  topremit: ["app"], "sunway-money": ["app"], pandaremit: ["app"], sentbe: ["app"], wirebarley: ["app"], deemoney: ["app"], bcremit: ["app", "cash"],
+  profee: ["app"], transfergo: ["app", "online"], orbitremit: ["online", "app"], remitbee: ["online", "app"], paysend: ["app"],
+  "atlantic-money": ["online"], wise: ["online", "multi"], instarem: ["online"], revolut: ["multi", "app"], paypal: ["online"],
+  dashx: ["app", "get_paid"], "western-union": ["cash", "app"], moneygram: ["cash", "app"], ria: ["cash", "app"],
+  "al-ansari-exchange": ["cash", "app"], "lulu-exchange": ["cash", "app"], "al-mulla-exchange": ["cash", "app"], "al-muzaini": ["cash", "app"],
+  ofx: ["broker"], xe: ["broker", "online"], "currencies-direct": ["broker"], torfx: ["broker"], "b-sharpe": ["broker", "online"],
+  currencyfair: ["online", "broker"], clearshift: ["broker", "online"], "covercy-pay": ["broker", "online"], futureforex: ["broker"],
+  "knightsbridge-fx": ["broker"], "flash-payments": ["online", "broker"], bookmyforex: ["online", "broker"], hopremit: ["online"],
+  wio: ["bank", "multi"], alpian: ["bank", "multi"], shyft: ["multi", "app"], global66: ["multi", "app"], arq: ["multi", "app"],
+  "sling-money": ["multi", "app"], eversend: ["multi", "app"], uption: ["multi", "app"], "vita-wallet": ["multi", "app"], belo: ["multi", "app"],
+  "coins-ph": ["multi", "app"], bitso: ["multi"], straitsx: ["multi"], "remessa-online": ["online", "get_paid"],
   airwallex: ["multi", "get_paid"], payoneer: ["get_paid", "multi"], skydo: ["get_paid"], payzoll: ["get_paid"], xflow: ["get_paid"], razorpay: ["get_paid"],
   payglocal: ["get_paid"], briskpe: ["get_paid"], infinity: ["get_paid"], winvesta: ["get_paid"], salt: ["get_paid"], mulya: ["get_paid"], refrens: ["get_paid"],
-  karbon: ["get_paid"], cashfree: ["get_paid"], pingpong: ["get_paid"],
+  karbon: ["get_paid"], cashfree: ["get_paid"], pingpong: ["get_paid"], eximpe: ["get_paid"], "toucan-payments": ["get_paid"], hiwipay: ["get_paid", "online"],
+  copperx: ["get_paid"], transfi: ["get_paid"], "elevate-pay": ["get_paid", "multi"], nsave: ["get_paid", "multi"], "priyo-pay": ["get_paid"],
+  cenoa: ["get_paid", "multi"], ruul: ["get_paid"], hubpay: ["multi", "get_paid"], sokin: ["multi", "get_paid"], verto: ["multi", "get_paid"],
+  currenxie: ["multi", "get_paid"], statrys: ["multi", "get_paid"], worldfirst: ["multi", "get_paid"], tazapay: ["get_paid"], aspire: ["multi", "get_paid"],
+  venn: ["multi", "get_paid"], loop: ["multi", "get_paid"], raenest: ["get_paid", "multi"], grey: ["get_paid", "multi"], cleva: ["get_paid", "multi"],
+  higlobe: ["get_paid"], grabrfi: ["get_paid", "multi"], husky: ["get_paid"], techfx: ["get_paid"], takenos: ["get_paid", "multi"], wallbit: ["get_paid", "multi"],
+  flutterwave: ["get_paid", "app"], "yellow-card": ["get_paid"], blindpay: ["get_paid"], "mural-pay": ["get_paid"], dlocal: ["get_paid"],
+  "hdfc-bank": ["bank"], "icici-bank": ["bank", "online"], "state-bank-of-india": ["bank"], "idfc-first-bank": ["bank"], "canara-bank": ["bank"],
+  transak: ["online"], moonpay: ["online"], "ramp-network": ["online"], banxa: ["online"], mercuryo: ["online"], "alchemy-pay": ["online"], guardarian: ["online"],
+  stripe: ["get_paid"], coinbase: ["multi", "online"], bridge: ["get_paid"], nium: ["get_paid"], thunes: ["get_paid"], rapyd: ["get_paid"],
+  bvnk: ["get_paid", "multi"], conduit: ["get_paid"], currencycloud: ["get_paid"], "checkout-com": ["get_paid"], paxos: ["multi"],
+  "mastercard-move": ["online"], "visa-direct": ["online"], ripple: ["get_paid"], dtcpay: ["multi", "get_paid"], "fomo-pay": ["get_paid"],
+  "triple-a": ["get_paid"], clickpesa: ["get_paid"], fonbnk: ["app", "online"], koywe: ["get_paid", "online"], onafriq: ["get_paid"],
+  openpayd: ["get_paid", "multi"], "banking-circle": ["bank", "get_paid"], unlimit: ["get_paid"], "zero-hash": ["get_paid"], "1money": ["get_paid"],
+  sphere: ["get_paid", "multi"], brale: ["get_paid"],
+  moneycorp: ["broker"], transfermate: ["broker", "get_paid"], "equals-money": ["broker", "multi"], caxton: ["broker", "multi"],
+  fairfx: ["multi", "online"], dahabshiil: ["cash", "app"], pangea: ["app", "cash"], "boss-money": ["app", "cash"],
+  talkremit: ["app", "cash"], "kabayan-remit": ["app", "cash"], "opal-transfer": ["online", "app"], passto: ["app"],
+  paga: ["app"], bancoli: ["multi", "get_paid"], multipass: ["multi", "get_paid"], "ifx-payments": ["broker", "multi"],
+  lumon: ["broker"], "aussie-forex": ["broker", "online"], "sterling-fx": ["broker", "cash"], "key-currency": ["broker"],
+  "smart-currency-exchange": ["broker"], "regency-fx": ["broker"],
+  easebuzz: ["get_paid"], pay10: ["get_paid"], "onramp-money": ["online"], onmeta: ["online"], abound: ["app"],
+  remit2any: ["online"], rupeeflo: ["app", "online"], payhere: ["get_paid"], barq: ["app"], urpay: ["app"], tiqmo: ["app"],
+  "mobily-pay": ["app", "cash"], d360: ["bank", "app"], "bfc-pay": ["app", "cash"], thawani: ["app"], neema: ["app", "cash"],
+  okoora: ["multi", "get_paid"], "chipper-cash": ["app"], mukuru: ["cash", "app"], accrue: ["app", "multi"], valr: ["multi"],
+  fincra: ["get_paid"], leatherback: ["multi", "app"], nomad: ["multi", "app"], meru: ["multi", "app"], littio: ["multi", "app"],
+  "el-dorado": ["app", "multi"], utoppia: ["multi", "get_paid"], airtm: ["multi", "app"], astropay: ["multi", "app"],
+  prex: ["multi", "app"], rextie: ["online", "broker"], moneymatch: ["online", "app"], merchantrade: ["app", "multi"],
+  transfez: ["app", "online"], wallex: ["get_paid", "online"], transwap: ["online", "get_paid"], youtrip: ["multi", "app"],
+  xtransfer: ["get_paid", "multi"], "lianlian-global": ["get_paid"], hanpass: ["app"], moin: ["app", "online"],
+  "sbi-remit": ["app", "cash"], "smiles-remit": ["app", "cash"], "kyodai-remittance": ["app", "cash"], "pouch-ph": ["app"],
+  yuh: ["bank", "multi"], "neon-ch": ["bank", "app"], qonto: ["bank", "multi"], finom: ["bank", "multi"], "zen-com": ["multi", "app"],
+  walutomat: ["online"], "fin-do": ["app"], mercury: ["bank", "multi"], relay: ["bank", "multi"],
 };
 const BANK_NAME = /\b(bank|banco|banque|chase|wells fargo|citi(bank)?|hsbc|barclays|lloyds|natwest|santander|bnp|deutsche|icici|hdfc|axis|kotak|sbi|scotiabank|bmo|cibc|emirates nbd)\b/i;
 
@@ -106,6 +148,8 @@ export function waysToSend(input: { rows: PriceRow[]; candidates?: MarketCoverag
     for (const method of methodsFor(row.providerSlug, name)) add(method, provider);
   }
   for (const candidate of input.candidates ?? []) {
+    if (candidate.routeMatch === false) continue;
+    if (candidate.routeMatch !== true && candidate.currencyMatch === "destination") continue;
     const provider: WayProvider = { slug: providerIdentity(candidate.providerSlug), name: candidate.providerName, recipientAmount: null, status: null, statusLabel: null };
     for (const method of methodsFor(candidate.providerSlug, candidate.providerName)) add(method, provider);
   }

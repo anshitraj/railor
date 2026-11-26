@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { loadProviderBySlug } from "@railor/core";
+import { kycFor, loadProviderBySlug } from "@railor/core";
 import { CHANGE_KIND_LABEL } from "@railor/types";
 import { Card, EvidencePopover, Freshness, SectionLabel, VerdictPill } from "@railor/ui";
 import { ProviderWordmark } from "../../../../components/app/provider-wordmark";
+import { directoryCoverageFor } from "../../../../lib/provider-directory-coverage";
+import { providerFacts } from "../../../../lib/provider-facts";
 
 import { hideDemoProvider } from "../../../../lib/demo-providers";
 import { requireSignedIn } from "../../../../lib/sign-in-gate";
@@ -34,6 +36,10 @@ export default async function PublicProviderProfile({
   const data = await loadProviderBySlug(slug);
   if (!data || hideDemoProvider(data.provider.isDemo)) notFound();
   const { provider, products, facets, requirements, fees, limits, changes } = data;
+  const mappedCoverage = directoryCoverageFor(provider.slug);
+  const publishedFacts = providerFacts(provider.slug, { from: "USD", to: "EUR" });
+  const publishedKyc = kycFor(provider.slug, { profile: "business", country: "US", direction: "send" })
+    ?? kycFor(provider.slug, { profile: "personal", country: "US", direction: "send" });
 
   const entity = new Map<string, string>();
   for (const f of facets) {
@@ -72,19 +78,25 @@ export default async function PublicProviderProfile({
           <Card className="flex flex-col gap-3 p-5">
             <SectionLabel>Products</SectionLabel>
             <div className="grid gap-2 sm:grid-cols-2">
-              {products.map((p) => (
+              {products.length ? products.map((p) => (
                 <div key={p.id} className="rounded-xl border border-[var(--color-line)] p-3">
                   <p className="text-[14px] font-medium">
                     {PRODUCT_LABELS[p.product] ?? p.product}
                   </p>
                   <p className="text-[12.5px] text-[var(--color-muted)]">{p.description}</p>
                 </div>
+              )) : (mappedCoverage?.products ?? []).map((prod) => (
+                <div key={prod} className="rounded-xl border border-[var(--color-line)] p-3">
+                  <p className="text-[14px] font-medium">{PRODUCT_LABELS[prod] ?? prod}</p>
+                  {mappedCoverage?.summary ? <p className="text-[12.5px] text-[var(--color-muted)]">{mappedCoverage.summary}</p> : null}
+                </div>
               ))}
             </div>
           </Card>
 
           <Card className="flex flex-col gap-3 p-5">
-            <SectionLabel>Corridors</SectionLabel>
+            <SectionLabel>Corridors & coverage</SectionLabel>
+            {corridors.length ? (
             <ul className="flex flex-col gap-2">
               {corridors.slice(0, 12).map((f) => (
                 <li
@@ -129,6 +141,19 @@ export default async function PublicProviderProfile({
                 </li>
               ))}
             </ul>
+            ) : mappedCoverage ? (
+              <div className="space-y-2 text-[13px] text-[var(--color-ink-soft)]">
+                {mappedCoverage.scopeLabel ? <p className="font-medium">{mappedCoverage.scopeLabel}</p> : null}
+                {mappedCoverage.countries.length ? (
+                  <p><span className="font-medium text-[var(--color-ink)]">Countries ({mappedCoverage.countries.length}): </span>{mappedCoverage.countries.join(", ")}</p>
+                ) : null}
+                {mappedCoverage.currencies.length ? (
+                  <p><span className="font-medium text-[var(--color-ink)]">Currencies & assets ({mappedCoverage.currencies.length}): </span>{mappedCoverage.currencies.join(", ")}</p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-[13px] text-[var(--color-muted)]">No corridors mapped yet.</p>
+            )}
           </Card>
         </div>
 
@@ -155,14 +180,31 @@ export default async function PublicProviderProfile({
 
           <Card className="flex flex-col gap-2 p-5">
             <SectionLabel>Onboarding requirements</SectionLabel>
-            <ul className="flex flex-col gap-1 text-[13px] text-[var(--color-ink-soft)]">
-              {requirements.map((r) => (
-                <li key={`${r.key}-${r.entityCountry ?? "any"}`}>
-                  • {r.label}
-                  {r.entityCountry ? ` (${r.entityCountry} entities)` : ""}
-                </li>
-              ))}
-            </ul>
+            {requirements.length ? (
+              <ul className="flex flex-col gap-1 text-[13px] text-[var(--color-ink-soft)]">
+                {requirements.map((r) => (
+                  <li key={`${r.key}-${r.entityCountry ?? "any"}`}>
+                    • {r.label}
+                    {r.entityCountry ? ` (${r.entityCountry} entities)` : ""}
+                  </li>
+                ))}
+              </ul>
+            ) : publishedKyc ? (
+              <div className="space-y-1.5 text-[13px] text-[var(--color-ink-soft)]">
+                {publishedKyc.approvalTime ? (
+                  <p><span className="font-medium text-[var(--color-ink)]">Approval time: </span>{publishedKyc.approvalTime.label}</p>
+                ) : null}
+                {publishedKyc.documents.length ? (
+                  <ul className="flex flex-col gap-1">
+                    {publishedKyc.documents.map((doc) => <li key={doc}>• {doc}</li>)}
+                  </ul>
+                ) : publishedKyc.documentsNote ? (
+                  <p>{publishedKyc.documentsNote}</p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-[13px] text-[var(--color-muted)]">Check the provider’s official onboarding portal for current KYC/KYB requirements.</p>
+            )}
           </Card>
 
           <Card className="flex flex-col gap-2 p-5">
@@ -175,6 +217,12 @@ export default async function PublicProviderProfile({
                 {limits.map((l) => (
                   <li key={l.id}>• {l.summary}</li>
                 ))}
+              </ul>
+            ) : publishedFacts?.fees || publishedFacts?.limits || publishedFacts?.delivery ? (
+              <ul className="flex flex-col gap-1 text-[13px] text-[var(--color-ink-soft)]">
+                {(publishedFacts.fees?.lines ?? []).map((line) => <li key={line}>• {line}</li>)}
+                {(publishedFacts.limits?.lines ?? []).map((line) => <li key={line}>• {line}</li>)}
+                {publishedFacts.delivery ? <li>• Delivery: {publishedFacts.delivery.detail}</li> : null}
               </ul>
             ) : (
               <p className="text-[13px] text-[var(--color-muted)]">

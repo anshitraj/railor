@@ -12,7 +12,7 @@ import { ProviderWordmark } from "./provider-wordmark";
 export interface DirectoryProvider {
   slug: string; name: string; category: string; description: string;
   products: string[]; assets: string[]; networks: string[];
-  countryCount: number; currencyCount: number; customerTypes: string[];
+  countryCount: number; currencyCount: number; scopeLabel?: string; customerTypes: string[];
   hasApi: boolean; hasSandbox: boolean; hasWebhooks: boolean;
   headquartersCountry: string | null; lastVerifiedAt: string | null;
   profileAvailable?: boolean; sourceUrl?: string; sourceLabel?: string; pricingSummary?: string;
@@ -123,7 +123,7 @@ function ProviderRow({ provider: p, href, open, onToggle }: { provider: Director
   return <li>
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 transition-colors hover:bg-[var(--color-paper)] sm:px-5 lg:grid-cols-[minmax(0,1fr)_150px_130px_115px]">
       <div className="flex min-w-0 items-center gap-3"><div className="min-w-0"><Link href={href} className="block truncate text-sm font-semibold tracking-tight hover:text-[var(--color-orange-deep)]"><ProviderWordmark slug={p.slug} name={p.name} /></Link><p className="mt-1 truncate text-xs text-[var(--color-muted)]">{p.category}</p></div></div>
-      <div className="hidden text-xs lg:block">{p.countryCount ? <span className="flex items-center gap-1.5"><Globe2 size={13} className="text-[var(--color-faint)]" />{p.countryCount} {p.countryCount === 1 ? "country" : "countries"}</span> : <span className="text-[var(--color-faint)]">Not yet mapped</span>}{p.currencyCount > 0 && <span className="mt-1 block pl-5 text-[12.5px] text-[var(--color-muted)]">{p.currencyCount} currencies</span>}</div>
+      <div className="hidden text-xs lg:block">{p.countryCount ? <span className="flex items-center gap-1.5"><Globe2 size={13} className="text-[var(--color-faint)]" />{p.countryCount} {p.countryCount === 1 ? "country" : "countries"}</span> : p.scopeLabel ? <span className="flex items-center gap-1.5"><Globe2 size={13} className="text-[var(--color-faint)]" />{p.scopeLabel}</span> : <span className="text-[var(--color-faint)]">Not yet mapped</span>}{p.currencyCount > 0 && <span className="mt-1 block pl-5 text-[12.5px] text-[var(--color-muted)]">{p.currencyCount} {p.currencyCount === 1 ? "currency" : "currencies"}</span>}</div>
       <div className="hidden text-xs text-[var(--color-muted)] lg:block">{p.hasApi ? <span className="inline-flex items-center gap-1.5 text-[var(--color-ink)]"><Code2 size={14} />API available</span> : "See profile"}{p.hasSandbox && <span className="mt-1 block text-[12.5px]">Sandbox available</span>}</div>
       <div className="flex items-center justify-end gap-1"><Link href={href} aria-label={`View ${p.name}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-medium hover:bg-[var(--color-canvas)]">View<ArrowRight size={13} /></Link><button type="button" aria-label={`${open ? "Hide" : "Show"} ${p.name} details`} aria-expanded={open} aria-controls={`directory-${p.slug}`} onClick={onToggle} className="grid size-11 place-items-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-canvas)]"><ChevronDown size={15} className={cn("transition-transform", open && "rotate-180")} /></button></div>
     </div>

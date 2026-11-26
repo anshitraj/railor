@@ -340,6 +340,176 @@ async function paxosTestConnection(credentials: Record<string, string>): Promise
   }
 }
 
+async function transakTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
+  const apiKey = credentials.apiKey?.trim();
+  if (!apiKey) return { ok: false, detail: "Partner API key is required." };
+  const base =
+    credentials.environment?.trim().toLowerCase() === "production"
+      ? "https://api-gateway.transak.com"
+      : "https://api-gateway-stg.transak.com";
+  try {
+    const response = await fetch(
+      `${base}/api/v1/pricing/public/quotes?fiatCurrency=USD&cryptoCurrency=USDC&isBuyOrSell=BUY&network=polygon&paymentMethod=credit_debit_card&fiatAmount=100`,
+      { headers: { "x-api-key": apiKey, accept: "application/json" }, signal: AbortSignal.timeout(10_000) },
+    );
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, detail: `Transak rejected the API key (HTTP ${response.status}).` };
+    }
+    if (!response.ok) return { ok: false, detail: `Unexpected response from Transak (HTTP ${response.status}).` };
+    return { ok: true, detail: "Connected." };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : "Network error reaching Transak." };
+  }
+}
+
+async function transakGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
+  const apiKey = credentials.apiKey?.trim();
+  if (!apiKey) throw new Error("Transak partner API key is required.");
+  const cryptoCodes = new Set(["USDC", "USDT", "ETH", "BTC", "SOL", "EURC", "DAI", "PYUSD"]);
+  const src = request.sourceAsset.toUpperCase();
+  const dst = request.destinationCurrency.toUpperCase();
+  const isSell = cryptoCodes.has(src) && !cryptoCodes.has(dst);
+  const isBuy = !cryptoCodes.has(src) && cryptoCodes.has(dst);
+  if (!isBuy && !isSell) throw new Error("Transak quotes fiat↔crypto on/off-ramp pairs only.");
+  const base =
+    credentials.environment?.trim().toLowerCase() === "production"
+      ? "https://api-gateway.transak.com"
+      : "https://api-gateway-stg.transak.com";
+  const params = new URLSearchParams({
+    fiatCurrency: isBuy ? src : dst,
+    cryptoCurrency: isBuy ? dst : src,
+    isBuyOrSell: isBuy ? "BUY" : "SELL",
+    network: (request.sourceNetwork ?? "polygon").toLowerCase(),
+    paymentMethod: request.paymentMethodType ?? "credit_debit_card",
+    ...(isBuy ? { fiatAmount: String(request.amount) } : { cryptoAmount: String(request.amount) }),
+  });
+  const response = await fetch(`${base}/api/v1/pricing/public/quotes?${params}`, {
+    headers: { "x-api-key": apiKey, accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Transak quote request failed (HTTP ${response.status}).`);
+  const body = (await response.json()) as {
+    response?: {
+      quoteId?: string;
+      conversionPrice?: number;
+      cryptoAmount?: number;
+      fiatAmount?: number;
+      totalFee?: number;
+      fiatCurrency?: string;
+    };
+  };
+  const q = body.response;
+  const recipientAmount = isBuy ? q?.cryptoAmount : q?.fiatAmount;
+  if (!q || !Number.isFinite(recipientAmount) || (recipientAmount ?? 0) <= 0) {
+    throw new Error("Transak returned no numeric quote for this pair.");
+  }
+  const rate = q.conversionPrice && Number.isFinite(q.conversionPrice) && q.conversionPrice > 0
+    ? (isBuy ? q.conversionPrice : 1 / q.conversionPrice)
+    : recipientAmount! / request.amount;
+  const now = new Date().toISOString();
+  return {
+    providerSlug: "transak",
+    providerQuoteId: q.quoteId,
+    sourceAsset: request.sourceAsset,
+    sourceNetwork: request.sourceNetwork,
+    destinationCurrency: request.destinationCurrency,
+    destinationCountry: request.destinationCountry,
+    amount: request.amount,
+    recipientAmount,
+    feeAmount: typeof q.totalFee === "number" && Number.isFinite(q.totalFee) ? q.totalFee : undefined,
+    feeCurrency: q.fiatCurrency ?? (isBuy ? src : dst),
+    exchangeRate: String(rate),
+    costPartial: typeof q.totalFee !== "number",
+    quoteType: "live",
+    accountContext: "customer_connected",
+    verificationType: "provider_reported",
+    observedAt: now,
+    quotedAt: now,
+  };
+}
+
+async function flutterwaveTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
+  const secretKey = credentials.secretKey?.trim();
+  if (!secretKey) return { ok: false, detail: "Secret key is required." };
+  try {
+    const response = await fetch("https://api.flutterwave.com/v3/transfers/rates?amount=100&destination_currency=NGN&source_currency=USD", {
+      headers: { Authorization: `Bearer ${secretKey}`, accept: "application/json" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, detail: `Flutterwave rejected the key (HTTP ${response.status}).` };
+    }
+    if (!response.ok) return { ok: false, detail: `Unexpected response from Flutterwave (HTTP ${response.status}).` };
+    return { ok: true, detail: "Connected." };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : "Network error reaching Flutterwave." };
+  }
+}
+
+async function flutterwaveGetQuote(credentials: Record<string, string>, request: QuoteRequest): Promise<UnifiedQuote> {
+  const secretKey = credentials.secretKey?.trim();
+  if (!secretKey) throw new Error("Flutterwave secret key is required.");
+  const params = new URLSearchParams({
+    amount: String(request.amount),
+    source_currency: request.sourceAsset.toUpperCase(),
+    destination_currency: request.destinationCurrency.toUpperCase(),
+  });
+  const response = await fetch(`https://api.flutterwave.com/v3/transfers/rates?${params}`, {
+    headers: { Authorization: `Bearer ${secretKey}`, accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Flutterwave rates request failed (HTTP ${response.status}).`);
+  const body = (await response.json()) as {
+    status?: string;
+    data?: {
+      rate?: number;
+      source?: { currency?: string; amount?: number };
+      destination?: { currency?: string; amount?: number };
+    };
+  };
+  const rate = Number(body.data?.rate);
+  const recipientAmount = Number(body.data?.destination?.amount ?? (Number.isFinite(rate) ? request.amount * rate : NaN));
+  if (!Number.isFinite(rate) || rate <= 0 || !Number.isFinite(recipientAmount) || recipientAmount <= 0) {
+    throw new Error("Flutterwave returned no transfer rate for this pair.");
+  }
+  const now = new Date().toISOString();
+  return {
+    providerSlug: "flutterwave",
+    sourceAsset: request.sourceAsset,
+    sourceNetwork: request.sourceNetwork,
+    destinationCurrency: request.destinationCurrency,
+    destinationCountry: request.destinationCountry,
+    amount: request.amount,
+    recipientAmount,
+    exchangeRate: String(rate),
+    costPartial: true,
+    costNote: "Flutterwave transfer-rate quote; local rail payout fees are billed separately by country.",
+    quoteType: "indicative",
+    accountContext: "customer_connected",
+    verificationType: "provider_reported",
+    observedAt: now,
+    quotedAt: now,
+  };
+}
+
+async function rampNetworkTestConnection(credentials: Record<string, string>): Promise<ConnectionTestResult> {
+  const hostApiKey = credentials.hostApiKey?.trim();
+  if (!hostApiKey) return { ok: false, detail: "Host API key is required." };
+  try {
+    const response = await fetch(`https://api.rampnetwork.com/api/host-api/v3/assets?hostApiKey=${encodeURIComponent(hostApiKey)}&currencyCode=USD`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, detail: `Ramp Network rejected the hostApiKey (HTTP ${response.status}).` };
+    }
+    if (!response.ok) return { ok: false, detail: `Unexpected response from Ramp Network (HTTP ${response.status}).` };
+    return { ok: true, detail: "Connected." };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : "Network error reaching Ramp Network." };
+  }
+}
+
 export const ADAPTERS: Record<string, ProviderAdapter> = {
   circle: {
     slug: "circle",
@@ -398,6 +568,23 @@ export const ADAPTERS: Record<string, ProviderAdapter> = {
   airwallex: airwallexProviderAdapter,
   xflow: xflowProviderAdapter,
   dlocal: dlocalProviderAdapter,
+  transak: {
+    slug: "transak",
+    credentialFields: [{ key: "apiKey", label: "Partner API key", secret: true }],
+    testConnection: transakTestConnection,
+    getQuote: transakGetQuote,
+  },
+  flutterwave: {
+    slug: "flutterwave",
+    credentialFields: [{ key: "secretKey", label: "Secret key", secret: true, placeholder: "FLWSECK_TEST-… or FLWSECK-…" }],
+    testConnection: flutterwaveTestConnection,
+    getQuote: flutterwaveGetQuote,
+  },
+  "ramp-network": {
+    slug: "ramp-network",
+    credentialFields: [{ key: "hostApiKey", label: "Host API key", placeholder: "From ramp.network/developer" }],
+    testConnection: rampNetworkTestConnection,
+  },
 };
 
 export function getAdapter(slug: string): ProviderAdapter | null {

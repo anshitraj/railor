@@ -625,6 +625,1399 @@
       "discovery": [
         "https://www.reddit.com/r/backtoindia/comments/1tm41hk/10000_to_india_take2_actual_rupees_from_xoom_wu/"
       ]
+    },
+    {
+      "slug": "eximpe",
+      "name": "EximPe",
+      "website": "https://eximpe.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["freelancer", "sole_proprietor", "business"] },
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["freelancer", "sole_proprietor", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["freelancer", "sole_proprietor", "business"] }
+      ],
+      "pricingNote": "RBI PA-CB authorised Indian export/import collector. Published pricing starts around 0.75% + USD 0.50 with automated e-FIRA; RBI PA-CB cap is ₹25 lakh per transaction. Confirm GST and corridor quote on your account.",
+      "sources": ["https://eximpe.com"],
+      "discovery": ["https://rbi.org.in/Scripts/PublicationsView.aspx?id=12043"]
+    },
+    {
+      "slug": "toucan-payments",
+      "name": "Toucan Payments (CrossStream)",
+      "website": "https://toucanpay.in",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "CrossStream export collections publish flat USD 24 up to USD 3,000, USD 25 for USD 3,000–12,000, and 0.25% above USD 12,000 with automated e-FIRA. Confirm GST treatment and AD-I partner settlement rate before use.",
+      "sources": ["https://toucanpay.in"],
+      "discovery": ["https://toucanpay.in"]
+    },
+    {
+      "slug": "hiwipay",
+      "name": "HiWiPay",
+      "website": "https://hiwipay.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["freelancer", "sole_proprietor", "business"] },
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal"] },
+        { "from": "INR", "to": "GBP", "origin": "IN", "destination": "GB", "profiles": ["personal"] },
+        { "from": "INR", "to": "CAD", "origin": "IN", "destination": "CA", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Offers HiWiPay EXIM export collections (automated FIRA/e-BRC) and outward LRS student remittances from India. Exact fees and FX are quoted in the app; statutory LRS TCS applies on outward transfers.",
+      "sources": ["https://hiwipay.com"],
+      "discovery": ["https://hiwipay.com"]
+    },
+    {
+      "slug": "hopremit",
+      "name": "HOPRemit by moneyHOP",
+      "website": "https://moneyhop.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal"] },
+        { "from": "INR", "to": "GBP", "origin": "IN", "destination": "GB", "profiles": ["personal"] },
+        { "from": "INR", "to": "EUR", "origin": "IN", "destination": "DE", "profiles": ["personal"] },
+        { "from": "INR", "to": "CAD", "origin": "IN", "destination": "CA", "profiles": ["personal"] },
+        { "from": "INR", "to": "AUD", "origin": "IN", "destination": "AU", "profiles": ["personal"] }
+      ],
+      "pricingNote": "RBI AD-II outward LRS remittance specialist from India (~0.25% FX markup + upfront flat fee around ₹1,200). RBI USD 250,000/FY cap and statutory LRS TCS apply.",
+      "sources": ["https://moneyhop.co"],
+      "discovery": ["https://moneyhop.co"]
+    },
+    {
+      "slug": "bookmyforex",
+      "name": "BookMyForex",
+      "website": "https://www.bookmyforex.com/money-transfer/",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal"] },
+        { "from": "INR", "to": "GBP", "origin": "IN", "destination": "GB", "profiles": ["personal"] },
+        { "from": "INR", "to": "EUR", "origin": "IN", "destination": "DE", "profiles": ["personal"] },
+        { "from": "INR", "to": "CAD", "origin": "IN", "destination": "CA", "profiles": ["personal"] },
+        { "from": "INR", "to": "AUD", "origin": "IN", "destination": "AU", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Outward LRS wire transfers from India at live interbank rates (~₹320 + GST bank fee + ₹1,000–₹1,500 Nostro charge). Statutory FX GST and LRS TCS above ₹10 lakh/FY apply.",
+      "sources": ["https://www.bookmyforex.com/money-transfer/"],
+      "discovery": ["https://www.bookmyforex.com/money-transfer/"]
+    },
+    {
+      "slug": "elevate-pay",
+      "name": "Elevate Pay",
+      "website": "https://www.elevatepay.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "PKR", "origin": "US", "destination": "PK", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "BDT", "origin": "US", "destination": "BD", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "EGP", "origin": "US", "destination": "EG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "PHP", "origin": "US", "destination": "PH", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "USD virtual receiving accounts for freelancers and businesses in PK, BD, EG and PH. Free incoming US ACH and ~$1.50 SEPA/PHP withdrawal fee; check live FX rate in-app.",
+      "sources": ["https://www.elevatepay.co"],
+      "discovery": ["https://www.elevatepay.co"]
+    },
+    {
+      "slug": "nsave",
+      "name": "nSave",
+      "website": "https://www.nsave.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "PKR", "origin": "US", "destination": "PK", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "BDT", "origin": "US", "destination": "BD", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "EGP", "origin": "US", "destination": "EG", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "MAD", "origin": "FR", "destination": "MA", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "TRY", "origin": "US", "destination": "TR", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "Named USD/EUR/GBP accounts for residents of PK, BD, EG, MA, TR and GCC (excludes India and the US). Local ACH/SEPA/FPS deposits are free on personal accounts; confirm local payout FX in-app.",
+      "sources": ["https://www.nsave.com"],
+      "discovery": ["https://www.nsave.com"]
+    },
+    {
+      "slug": "priyo-pay",
+      "name": "Priyo Pay",
+      "website": "https://pay.priyo.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "BDT", "origin": "US", "destination": "BD", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "USD receiving accounts for Bangladesh freelancers (passport required for KYC). Free incoming US ACH, USD 15 wire, 1.00% (min USD 0.99) conversion to BDT.",
+      "sources": ["https://pay.priyo.com"],
+      "discovery": ["https://pay.priyo.com"]
+    },
+    {
+      "slug": "hubpay",
+      "name": "Hubpay",
+      "website": "https://hubpay.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "AED", "to": "USD", "origin": "AE", "destination": "US", "profiles": ["business"] },
+        { "from": "AED", "to": "EUR", "origin": "AE", "destination": "DE", "profiles": ["business"] },
+        { "from": "AED", "to": "GBP", "origin": "AE", "destination": "GB", "profiles": ["business"] }
+      ],
+      "pricingNote": "ADGM-regulated UAE SME cross-border platform (Starter plan ~AED 99/mo, flat transfers ~AED 26–50 + 5% VAT). Account-quoted institutional FX applies.",
+      "sources": ["https://hubpay.io"],
+      "discovery": ["https://hubpay.io"]
+    },
+    {
+      "slug": "stc-bank",
+      "name": "STC Bank (formerly STC Pay)",
+      "website": "https://stcbank.com.sa",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "SAR", "to": "PKR", "origin": "SA", "destination": "PK", "profiles": ["personal"] },
+        { "from": "SAR", "to": "INR", "origin": "SA", "destination": "IN", "profiles": ["personal"] },
+        { "from": "SAR", "to": "PHP", "origin": "SA", "destination": "PH", "profiles": ["personal"] },
+        { "from": "SAR", "to": "BDT", "origin": "SA", "destination": "BD", "profiles": ["personal"] },
+        { "from": "SAR", "to": "EGP", "origin": "SA", "destination": "EG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "SAMA-licensed Saudi digital bank (Western Union rail). Pakistan free at SAR 375+, SAR 15 + 15% VAT to IN/BD/PH/EG/NP/LK/ID/VN; check live FX rate in-app.",
+      "sources": ["https://stcbank.com.sa"],
+      "discovery": ["https://stcbank.com.sa"]
+    },
+    {
+      "slug": "ooredoo-money",
+      "name": "Ooredoo Money",
+      "website": "https://www.ooredoo.qa",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "QAR", "to": "INR", "origin": "QA", "destination": "IN", "profiles": ["personal"] },
+        { "from": "QAR", "to": "PKR", "origin": "QA", "destination": "PK", "profiles": ["personal"] },
+        { "from": "QAR", "to": "PHP", "origin": "QA", "destination": "PH", "profiles": ["personal"] },
+        { "from": "QAR", "to": "BDT", "origin": "QA", "destination": "BD", "profiles": ["personal"] },
+        { "from": "QAR", "to": "NPR", "origin": "QA", "destination": "NP", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Qatar mobile-money remittance aggregator (fees from QAR 20; Full Wallet limit QAR 25,000/day & QAR 100,000/month). Partner FX and fee shown in-app.",
+      "sources": ["https://www.ooredoo.qa"],
+      "discovery": ["https://www.ooredoo.qa"]
+    },
+    {
+      "slug": "beyon-money",
+      "name": "Beyon Money",
+      "website": "https://www.beyonmoney.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "BHD", "to": "INR", "origin": "BH", "destination": "IN", "profiles": ["personal"] },
+        { "from": "BHD", "to": "PKR", "origin": "BH", "destination": "PK", "profiles": ["personal"] },
+        { "from": "BHD", "to": "PHP", "origin": "BH", "destination": "PH", "profiles": ["personal"] },
+        { "from": "BHD", "to": "BDT", "origin": "BH", "destination": "BD", "profiles": ["personal"] },
+        { "from": "BHD", "to": "EGP", "origin": "BH", "destination": "EG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "CBB-regulated Bahrain remittance app (acquired by Barq). Limits: BHD 2,000/day, BHD 5,000/month, 10 transfers/month. Simulate fee and FX rate in-app.",
+      "sources": ["https://www.beyonmoney.com"],
+      "discovery": ["https://www.beyonmoney.com"]
+    },
+    {
+      "slug": "al-mulla-exchange",
+      "name": "Al Mulla Exchange",
+      "website": "https://www.almullaexchange.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "KWD", "to": "INR", "origin": "KW", "destination": "IN", "profiles": ["personal"] },
+        { "from": "KWD", "to": "PKR", "origin": "KW", "destination": "PK", "profiles": ["personal"] },
+        { "from": "KWD", "to": "PHP", "origin": "KW", "destination": "PH", "profiles": ["personal"] },
+        { "from": "KWD", "to": "EGP", "origin": "KW", "destination": "EG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Kuwait exchange house (~KD 1.250 standard bank transfer to India; KD 1,000 cap on first transfer to a newly added beneficiary). Check live quote in app/portal.",
+      "sources": ["https://www.almullaexchange.com"],
+      "discovery": ["https://www.almullaexchange.com"]
+    },
+    {
+      "slug": "al-muzaini",
+      "name": "Al Muzaini Exchange",
+      "website": "https://www.muzaini.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "KWD", "to": "INR", "origin": "KW", "destination": "IN", "profiles": ["personal"] },
+        { "from": "KWD", "to": "PKR", "origin": "KW", "destination": "PK", "profiles": ["personal"] },
+        { "from": "KWD", "to": "PHP", "origin": "KW", "destination": "PH", "profiles": ["personal"] },
+        { "from": "KWD", "to": "EGP", "origin": "KW", "destination": "EG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Kuwait exchange house covering 200+ destinations via bank deposit, MoneyGram, Western Union and Visa Direct (KWD 3,000 CBK cash cap). Check app/branch rate.",
+      "sources": ["https://www.muzaini.com"],
+      "discovery": ["https://www.muzaini.com"]
+    },
+    {
+      "slug": "walletii",
+      "name": "walletii by Ooredoo",
+      "website": "https://www.walletii.om",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "OMR", "to": "PKR", "origin": "OM", "destination": "PK", "profiles": ["personal"] },
+        { "from": "OMR", "to": "INR", "origin": "OM", "destination": "IN", "profiles": ["personal"] },
+        { "from": "OMR", "to": "BDT", "origin": "OM", "destination": "BD", "profiles": ["personal"] },
+        { "from": "OMR", "to": "PHP", "origin": "OM", "destination": "PH", "profiles": ["personal"] },
+        { "from": "OMR", "to": "EGP", "origin": "OM", "destination": "EG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "CBO-licensed Oman wallet: Pakistan free at OMR 78+, Group 2 OMR 1 + VAT, Group 3 (IN/BD/PH/LK/NP) OMR 2 + VAT; OMR 1,000/day & OMR 15,000/month limits.",
+      "sources": ["https://www.walletii.om"],
+      "discovery": ["https://www.walletii.om"]
+    },
+    {
+      "slug": "cenoa",
+      "name": "Cenoa",
+      "website": "https://www.cenoa.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "TRY", "origin": "US", "destination": "TR", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "PKR", "origin": "US", "destination": "PK", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "EGP", "origin": "US", "destination": "EG", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "Digital USD accounts for freelancers in TR, PK, EG and NG (~0.5%–1% blended receiving/conversion fee; balances backed by USDC via Lead Bank/Bridge). Confirm live withdrawal rate in-app.",
+      "sources": ["https://www.cenoa.com"],
+      "discovery": ["https://www.cenoa.com"]
+    },
+    {
+      "slug": "uption",
+      "name": "UPTION",
+      "website": "https://www.uption.com.tr",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "TRY", "to": "EUR", "origin": "TR", "destination": "DE", "profiles": ["personal"] },
+        { "from": "TRY", "to": "GBP", "origin": "TR", "destination": "GB", "profiles": ["personal"] },
+        { "from": "TRY", "to": "USD", "origin": "TR", "destination": "US", "profiles": ["personal"] }
+      ],
+      "pricingNote": "CBRT-regulated Turkish global wallet with free European SEPA IBAN (EUR 1 SEPA transfer, GBP 1 UK transfer). Confirm live TRY FX conversion rate in-app.",
+      "sources": ["https://www.uption.com.tr"],
+      "discovery": ["https://www.uption.com.tr"]
+    },
+    {
+      "slug": "ruul",
+      "name": "Ruul",
+      "website": "https://ruul.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "TRY", "origin": "US", "destination": "TR", "profiles": ["freelancer"] },
+        { "from": "EUR", "to": "TRY", "origin": "DE", "destination": "TR", "profiles": ["freelancer"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["freelancer"] }
+      ],
+      "pricingNote": "Contractor-of-record invoicing and payout service for digital freelancers (5% flat commission; +1.5% USDC optional). Check live currency payout quote.",
+      "sources": ["https://ruul.io"],
+      "discovery": ["https://ruul.io"]
+    },
+    {
+      "slug": "clearshift",
+      "name": "Clearshift",
+      "website": "https://www.clearshiftinc.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ILS", "to": "USD", "origin": "IL", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "USD", "to": "ILS", "origin": "US", "destination": "IL", "profiles": ["personal", "business"] },
+        { "from": "ILS", "to": "EUR", "origin": "IL", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "ILS", "to": "GBP", "origin": "IL", "destination": "GB", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Benchmark Bank of Israel/BFIX or ECB FX rate with 0% hidden FX markup; personal fee is 0.59% (min ₪180, VAT included). Personal accounts are restricted to same-owner transfers.",
+      "sources": ["https://www.clearshiftinc.com"],
+      "discovery": ["https://www.clearshiftinc.com"]
+    },
+    {
+      "slug": "covercy-pay",
+      "name": "Covercy Pay",
+      "website": "https://www.covercypay.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ILS", "to": "GBP", "origin": "IL", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "ILS", "to": "USD", "origin": "IL", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "ILS", "to": "EUR", "origin": "IL", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "ILS", "origin": "GB", "destination": "IL", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Israel CMA & UK FCA regulated transfers: flat £5 / €9 / $15 / ₪39 + 0.4%–1.0% FX markup (minimums £1,200 / €1,400 / $1,500 / ₪5,500).",
+      "sources": ["https://www.covercypay.com"],
+      "discovery": ["https://www.covercypay.com"]
+    },
+    {
+      "slug": "raenest",
+      "name": "Raenest (formerly Geegpay)",
+      "website": "https://raenest.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "KES", "origin": "US", "destination": "KE", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "GHS", "origin": "US", "destination": "GH", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "ZAR", "origin": "US", "destination": "ZA", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "UGX", "origin": "US", "destination": "UG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "TZS", "origin": "US", "destination": "TZ", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "RWF", "origin": "US", "destination": "RW", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "GBP", "to": "NGN", "origin": "GB", "destination": "NG", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "Multi-currency USD/GBP/EUR virtual accounts for African freelancers and businesses (USD ACH $2/$4, Wire $12, USDT/USDC $1; ~0.7% conversion capped at $2.70). Check live FX in-app.",
+      "sources": ["https://raenest.com", "https://help.raenest.com"],
+      "discovery": ["https://raenest.com"]
+    },
+    {
+      "slug": "grey",
+      "name": "Grey",
+      "website": "https://grey.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "KES", "origin": "US", "destination": "KE", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "GHS", "origin": "US", "destination": "GH", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "UGX", "origin": "US", "destination": "UG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "TZS", "origin": "US", "destination": "TZ", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "ZAR", "origin": "US", "destination": "ZA", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "GBP", "to": "NGN", "origin": "GB", "destination": "NG", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "Named USD/GBP/EUR receiving accounts: personal ACH/SEPA/FPS 0.8% (min 2, max 10); Grey Business ACH $2 flat with $100k/day limit. Check live conversion rate in-app.",
+      "sources": ["https://grey.co", "https://support.grey.co"],
+      "discovery": ["https://grey.co"]
+    },
+    {
+      "slug": "cleva",
+      "name": "Cleva",
+      "website": "https://www.getcleva.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "GHS", "origin": "US", "destination": "GH", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "UGX", "origin": "US", "destination": "UG", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "USD receiving accounts for NG/GH/UG (Kenya is explicitly excluded). 0.8% ACH capped at $5 ($0 Upwork), 0% conversion markup advertised, $3,000/tx outbound cap.",
+      "sources": ["https://www.getcleva.com/pricing", "https://help.getcleva.com/"],
+      "discovery": ["https://www.getcleva.com"]
+    },
+    {
+      "slug": "afriex",
+      "name": "Afriex",
+      "website": "https://www.afriex.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal"] },
+        { "from": "USD", "to": "GHS", "origin": "US", "destination": "GH", "profiles": ["personal"] },
+        { "from": "USD", "to": "KES", "origin": "US", "destination": "KE", "profiles": ["personal"] },
+        { "from": "USD", "to": "UGX", "origin": "US", "destination": "UG", "profiles": ["personal"] },
+        { "from": "USD", "to": "ETB", "origin": "US", "destination": "ET", "profiles": ["personal"] },
+        { "from": "USD", "to": "XOF", "origin": "US", "destination": "CI", "profiles": ["personal"] },
+        { "from": "USD", "to": "RWF", "origin": "US", "destination": "RW", "profiles": ["personal"] },
+        { "from": "USD", "to": "ZAR", "origin": "US", "destination": "ZA", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Low/zero-fee transfers ($1 on UK/EU and select debit funding) covering Africa including Ethiopia and Ivory Coast. Check live FX rate and ~$3,000/day standard limit in-app.",
+      "sources": ["https://www.afriex.com"],
+      "discovery": ["https://www.afriex.com"]
+    },
+    {
+      "slug": "eversend",
+      "name": "Eversend",
+      "website": "https://eversend.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "UGX", "origin": "US", "destination": "UG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "KES", "origin": "US", "destination": "KE", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "RWF", "origin": "US", "destination": "RW", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "TZS", "origin": "US", "destination": "TZ", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "EUR", "to": "XOF", "origin": "FR", "destination": "SN", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "XOF", "origin": "FR", "destination": "CI", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "16-currency Africa wallet and virtual accounts (FX from 0.9%, $50k/month virtual account cap). Confirm corridor payout fee and live rate in-app.",
+      "sources": ["https://eversend.co/pricing", "https://support.eversend.co"],
+      "discovery": ["https://eversend.co"]
+    },
+    {
+      "slug": "shyft",
+      "name": "Shyft (by Standard Bank)",
+      "website": "https://www.shyft.co.za",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ZAR", "to": "USD", "origin": "ZA", "destination": "US", "profiles": ["personal", "freelancer"] },
+        { "from": "ZAR", "to": "GBP", "origin": "ZA", "destination": "GB", "profiles": ["personal", "freelancer"] },
+        { "from": "ZAR", "to": "EUR", "origin": "ZA", "destination": "DE", "profiles": ["personal", "freelancer"] },
+        { "from": "ZAR", "to": "AUD", "origin": "ZA", "destination": "AU", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "Open to clients of any South African bank: $14 USD / £10 GBP / €12 EUR / AU$18 outward SWIFT + ~0.5%–0.6% FX spread; $75k/tx cap, R1M SDA / R10M FIA annual caps.",
+      "sources": ["https://www.shyft.co.za/fees"],
+      "discovery": ["https://www.shyft.co.za/fees"]
+    },
+    {
+      "slug": "futureforex",
+      "name": "Future Forex",
+      "website": "https://futureforex.co.za",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ZAR", "to": "USD", "origin": "ZA", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "ZAR", "to": "GBP", "origin": "ZA", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "ZAR", "to": "EUR", "origin": "ZA", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "USD", "to": "ZAR", "origin": "US", "destination": "ZA", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "South African specialist for larger FX transfers (~R100,000 minimum) with free SARS AIT clearance handling and volume-tiered FX spread.",
+      "sources": ["https://futureforex.co.za/faqs"],
+      "discovery": ["https://futureforex.co.za"]
+    },
+    {
+      "slug": "mama-money",
+      "name": "Mama Money",
+      "website": "https://www.mamamoney.co.za",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ZAR", "to": "NGN", "origin": "ZA", "destination": "NG", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "KES", "origin": "ZA", "destination": "KE", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "GHS", "origin": "ZA", "destination": "GH", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "UGX", "origin": "ZA", "destination": "UG", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "TZS", "origin": "ZA", "destination": "TZ", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "RWF", "origin": "ZA", "destination": "RW", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "ETB", "origin": "ZA", "destination": "ET", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "XOF", "origin": "ZA", "destination": "SN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "South Africa outbound remittance specialist (fees ≤5%; standard R25k/day & month, upgraded SA ID R50k/day & R100k/month). Check live rate in-app.",
+      "sources": ["https://www.mamamoney.co.za/faq", "https://www.mamamoney.co.za/blog-posts/mama-money-limits-how-much-you-can-send"],
+      "discovery": ["https://www.mamamoney.co.za"]
+    },
+    {
+      "slug": "higlobe",
+      "name": "Higlobe",
+      "website": "https://www.higlobe.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "MXN", "origin": "US", "destination": "MX", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "ARS", "origin": "US", "destination": "AR", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "COP", "origin": "US", "destination": "CO", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "PHP", "origin": "US", "destination": "PH", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "Zero-fee incoming US ACH and local bank withdrawal with published FX spread of 0.00% MX (SPEI) and AR, 0.20% BR (Pix), 0.60% PH. Single withdrawal cap $25,000 ($15,000 PH).",
+      "sources": ["https://www.higlobe.com/pricing", "https://www.higlobe.com/faq"],
+      "discovery": ["https://www.higlobe.com/pricing"]
+    },
+    {
+      "slug": "grabrfi",
+      "name": "GrabrFi",
+      "website": "https://www.grabrfi.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "ARS", "origin": "US", "destination": "AR", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "CLP", "origin": "US", "destination": "CL", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "COP", "origin": "US", "destination": "CO", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "MXN", "origin": "US", "destination": "MX", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "PEN", "origin": "US", "destination": "PE", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "GHS", "origin": "US", "destination": "GH", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "US dollar accounts covering LatAm, NG and GH: free incoming ACH/RTP/USDC, ~$2–$5 local currency bank withdrawal ($5k/day & $20k/month cap). Check live FX in-app.",
+      "sources": ["https://helpcenter.grabrfi.com/en/support/solutions/articles/103000216668-full-schedule-of-fees"],
+      "discovery": ["https://www.grabrfi.com"]
+    },
+    {
+      "slug": "husky",
+      "name": "Husky (by Nomad)",
+      "website": "https://www.husky.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] },
+        { "from": "EUR", "to": "BRL", "origin": "DE", "destination": "BR", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] },
+        { "from": "GBP", "to": "BRL", "origin": "GB", "destination": "BR", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] }
+      ],
+      "pricingNote": "Receive-and-convert SWIFT/Wire into BRL at commercial exchange rate: flat $10 up to $1,000 or 1% above $1,000; 0% IOF for eligible PJ service exports.",
+      "sources": ["https://help.husky.io/hc/en-us/articles/360053702513-What-are-the-prices-at-Husky"],
+      "discovery": ["https://www.husky.io"]
+    },
+    {
+      "slug": "remessa-online",
+      "name": "Remessa Online",
+      "website": "https://www.remessaonline.com.br/",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] },
+        { "from": "BRL", "to": "USD", "origin": "BR", "destination": "US", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] },
+        { "from": "BRL", "to": "EUR", "origin": "BR", "destination": "DE", "profiles": ["personal", "freelancer", "sole_proprietor", "business"] }
+      ],
+      "pricingNote": "Brazilian FX platform: commercial rate + regressive spread (PF 0.70%–1.20%, PJ 0.50%–1.55%) + statutory Brazilian IOF by transfer nature.",
+      "sources": ["https://ajuda.remessaonline.com.br/hc/pt-br/articles/360019629454-Entenda-os-custos-e-taxas-da-sua-transfer%C3%AAncia-internacional-com-a-Remessa-Online"],
+      "discovery": ["https://www.remessaonline.com.br/"]
+    },
+    {
+      "slug": "techfx",
+      "name": "TechFX",
+      "website": "https://www.techfx.com.br/",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["sole_proprietor", "business"] },
+        { "from": "EUR", "to": "BRL", "origin": "DE", "destination": "BR", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "Brazilian PJ (CNPJ) export-of-services specialist: flat 0.50% over commercial exchange rate, no wire fee and 0% IOF.",
+      "sources": ["https://www.techfx.com.br/taxas-de-cambio-para-receber-do-exterior/"],
+      "discovery": ["https://www.techfx.com.br/"]
+    },
+    {
+      "slug": "takenos",
+      "name": "Takenos",
+      "website": "https://www.takenos.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "ARS", "origin": "US", "destination": "AR", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "COP", "origin": "US", "destination": "CO", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "CLP", "origin": "US", "destination": "CL", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "PEN", "origin": "US", "destination": "PE", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "LatAm freelancer USD/EUR + stablecoin wallet: $0 incoming US ACH/SEPA/crypto, 0% ARS bank withdrawal, 1% USDT withdrawal ($10,000/month default receiving cap).",
+      "sources": ["https://help.takenos.com/es/articles/8904589-cuanto-cuesta-usar-takenos"],
+      "discovery": ["https://www.takenos.com"]
+    },
+    {
+      "slug": "wallbit",
+      "name": "Wallbit",
+      "website": "https://www.wallbit.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "ARS", "origin": "US", "destination": "AR", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "COP", "origin": "US", "destination": "CO", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "MXN", "origin": "US", "destination": "MX", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "CLP", "origin": "US", "destination": "CL", "profiles": ["personal", "freelancer"] },
+        { "from": "USD", "to": "PEN", "origin": "US", "destination": "PE", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "US bank and brokerage accounts for LatAm remote workers: $0 deposits, 1% outgoing ACH/USDC withdrawals; check live local currency conversion quote in-app.",
+      "sources": ["https://www.wallbit.io/pricing"],
+      "discovery": ["https://www.wallbit.io"]
+    },
+    {
+      "slug": "vita-wallet",
+      "name": "Vita Wallet",
+      "website": "https://vitawallet.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CLP", "to": "USD", "origin": "CL", "destination": "US", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "COP", "to": "USD", "origin": "CO", "destination": "US", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "PEN", "to": "USD", "origin": "PE", "destination": "US", "profiles": ["personal", "freelancer", "business"] },
+        { "from": "ARS", "to": "USD", "origin": "AR", "destination": "US", "profiles": ["personal", "freelancer", "business"] }
+      ],
+      "pricingNote": "Regulated LatAm remittance & stablecoin wallet (0.4%–4% corridor cost integrated into quote; $5k/mo cap in CL/CO/MX/PE, $2.5k/mo in AR).",
+      "sources": ["https://vitawallet.io/blog/finanzas/conoce-mas-sobre-las-comisiones-en-vita/"],
+      "discovery": ["https://vitawallet.io"]
+    },
+    {
+      "slug": "belo",
+      "name": "Belo",
+      "website": "https://www.belo.app",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "ARS", "origin": "US", "destination": "AR", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "Argentine digital-dollar wallet with direct Payoneer→USDC integration (4% flat fee; $5k/day & $20k/month cap). Check live ARS swap rate in-app.",
+      "sources": ["https://help.belo.app/"],
+      "discovery": ["https://www.belo.app"]
+    },
+    {
+      "slug": "flip",
+      "name": "Flip Globe",
+      "website": "https://flip.id",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "IDR", "to": "USD", "origin": "ID", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "SGD", "origin": "ID", "destination": "SG", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "GBP", "origin": "ID", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "EUR", "origin": "ID", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "AUD", "origin": "ID", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "MYR", "origin": "ID", "destination": "MY", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "JPY", "origin": "ID", "destination": "JP", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Powered by Wise Platform from Indonesia: mid-market exchange rate with zero hidden FX markup and upfront fees starting from IDR 20,000 (IDR 500M/day personal limit).",
+      "sources": ["https://flip.id"],
+      "discovery": ["https://flip.id"]
+    },
+    {
+      "slug": "topremit",
+      "name": "Topremit",
+      "website": "https://topremit.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "IDR", "to": "USD", "origin": "ID", "destination": "US", "profiles": ["personal"] },
+        { "from": "IDR", "to": "SGD", "origin": "ID", "destination": "SG", "profiles": ["personal"] },
+        { "from": "IDR", "to": "AUD", "origin": "ID", "destination": "AU", "profiles": ["personal"] },
+        { "from": "IDR", "to": "MYR", "origin": "ID", "destination": "MY", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Bank Indonesia licensed remitter with flat fees starting around IDR 75,000 across 90+ countries. Check live rate in-app.",
+      "sources": ["https://topremit.com"],
+      "discovery": ["https://topremit.com"]
+    },
+    {
+      "slug": "sunway-money",
+      "name": "Sunway Money",
+      "website": "https://sunwaymoney.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "MYR", "to": "IDR", "origin": "MY", "destination": "ID", "profiles": ["personal"] },
+        { "from": "MYR", "to": "INR", "origin": "MY", "destination": "IN", "profiles": ["personal"] },
+        { "from": "MYR", "to": "PHP", "origin": "MY", "destination": "PH", "profiles": ["personal"] },
+        { "from": "MYR", "to": "SGD", "origin": "MY", "destination": "SG", "profiles": ["personal"] },
+        { "from": "MYR", "to": "AUD", "origin": "MY", "destination": "AU", "profiles": ["personal"] },
+        { "from": "MYR", "to": "GBP", "origin": "MY", "destination": "GB", "profiles": ["personal"] },
+        { "from": "MYR", "to": "USD", "origin": "MY", "destination": "US", "profiles": ["personal"] },
+        { "from": "MYR", "to": "THB", "origin": "MY", "destination": "TH", "profiles": ["personal"] }
+      ],
+      "pricingNote": "BNM-licensed Malaysian remitter charging a flat RM 8 standard fee across 60+ countries (RM 1 promos on qualifying JPY/THB bands). Check live FX in-app.",
+      "sources": ["https://sunwaymoney.com"],
+      "discovery": ["https://sunwaymoney.com"]
+    },
+    {
+      "slug": "aspire",
+      "name": "Aspire",
+      "website": "https://aspireapp.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "SGD", "to": "USD", "origin": "SG", "destination": "US", "profiles": ["business"] },
+        { "from": "SGD", "to": "EUR", "origin": "SG", "destination": "DE", "profiles": ["business"] },
+        { "from": "SGD", "to": "GBP", "origin": "SG", "destination": "GB", "profiles": ["business"] },
+        { "from": "SGD", "to": "IDR", "origin": "SG", "destination": "ID", "profiles": ["business"] },
+        { "from": "SGD", "to": "INR", "origin": "SG", "destination": "IN", "profiles": ["business"] },
+        { "from": "SGD", "to": "PHP", "origin": "SG", "destination": "PH", "profiles": ["business"] }
+      ],
+      "pricingNote": "Singapore/SEA startup business account: Basic S$0/mo (FX from ~0.46%), Premium S$15/mo (0% FX on first S$13k/mo + 5 free international transfers).",
+      "sources": ["https://aspireapp.com"],
+      "discovery": ["https://aspireapp.com"]
+    },
+    {
+      "slug": "pandaremit",
+      "name": "PandaRemit",
+      "website": "https://www.pandaremit.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "AUD", "to": "CNY", "origin": "AU", "destination": "CN", "profiles": ["personal"] },
+        { "from": "SGD", "to": "CNY", "origin": "SG", "destination": "CN", "profiles": ["personal"] },
+        { "from": "USD", "to": "CNY", "origin": "US", "destination": "CN", "profiles": ["personal"] },
+        { "from": "GBP", "to": "CNY", "origin": "GB", "destination": "CN", "profiles": ["personal"] },
+        { "from": "EUR", "to": "CNY", "origin": "DE", "destination": "CN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "CNY transfer specialist supporting Alipay, WeChat Pay and UnionPay payouts (~5.99 AUD / 9.99 SGD flat fees; first transfer often free). Confirm rate in-app.",
+      "sources": ["https://www.pandaremit.com"],
+      "discovery": ["https://www.pandaremit.com"]
+    },
+    {
+      "slug": "sentbe",
+      "name": "SentBe",
+      "website": "https://www.sentbe.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "KRW", "to": "USD", "origin": "KR", "destination": "US", "profiles": ["personal"] },
+        { "from": "KRW", "to": "PHP", "origin": "KR", "destination": "PH", "profiles": ["personal"] },
+        { "from": "KRW", "to": "VND", "origin": "KR", "destination": "VN", "profiles": ["personal"] },
+        { "from": "KRW", "to": "IDR", "origin": "KR", "destination": "ID", "profiles": ["personal"] },
+        { "from": "KRW", "to": "THB", "origin": "KR", "destination": "TH", "profiles": ["personal"] },
+        { "from": "KRW", "to": "INR", "origin": "KR", "destination": "IN", "profiles": ["personal"] },
+        { "from": "KRW", "to": "CNY", "origin": "KR", "destination": "CN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "South Korean outbound remittance app (~KRW 5,000 base fee; $5,000/tx, $50,000/yr foreign / $100,000/yr Korean national statutory limits).",
+      "sources": ["https://www.sentbe.com"],
+      "discovery": ["https://www.sentbe.com"]
+    },
+    {
+      "slug": "wirebarley",
+      "name": "WireBarley",
+      "website": "https://www.wirebarley.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "KRW", "to": "USD", "origin": "KR", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "USD", "to": "KRW", "origin": "US", "destination": "KR", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "KRW", "origin": "AU", "destination": "KR", "profiles": ["personal"] },
+        { "from": "NZD", "to": "KRW", "origin": "NZ", "destination": "KR", "profiles": ["personal"] },
+        { "from": "AUD", "to": "PHP", "origin": "AU", "destination": "PH", "profiles": ["personal"] },
+        { "from": "AUD", "to": "VND", "origin": "AU", "destination": "VN", "profiles": ["personal"] }
+      ],
+      "pricingNote": "APAC/Korea specialist across 40+ countries (US Business $0 at $5k+ / $4.99 under $5k; KR SWIFT KRW 15,000 below 5M KRW). Confirm live rate in-app.",
+      "sources": ["https://www.wirebarley.com"],
+      "discovery": ["https://www.wirebarley.com"]
+    },
+    {
+      "slug": "deemoney",
+      "name": "DeeMoney",
+      "website": "https://www.deemoney.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "THB", "to": "INR", "origin": "TH", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "PHP", "origin": "TH", "destination": "PH", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "IDR", "origin": "TH", "destination": "ID", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "MYR", "origin": "TH", "destination": "MY", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "SGD", "origin": "TH", "destination": "SG", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "USD", "origin": "TH", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "GBP", "origin": "TH", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "THB", "to": "EUR", "origin": "TH", "destination": "DE", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Bank of Thailand licensed outbound specialist: flat 125 THB + 7% VAT personal (449 THB + 7% VAT DeeBusiness). Confirm live FX rate in-app.",
+      "sources": ["https://www.deemoney.com"],
+      "discovery": ["https://www.deemoney.com"]
+    },
+    {
+      "slug": "atlantic-money",
+      "name": "Atlantic Money",
+      "website": "https://atlantic.money",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "freelancer"] },
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["personal", "freelancer"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "freelancer"] },
+        { "from": "GBP", "to": "CAD", "origin": "GB", "destination": "CA", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "USD", "origin": "DE", "destination": "US", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "GBP", "origin": "DE", "destination": "GB", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "USD", "origin": "FR", "destination": "US", "profiles": ["personal", "freelancer"] },
+        { "from": "EUR", "to": "GBP", "origin": "NL", "destination": "GB", "profiles": ["personal", "freelancer"] }
+      ],
+      "pricingNote": "Flat £3 (UK) or €3 (30 EEA countries) at 0% FX markup (live mid-market rate) up to £1M/€1M per transfer. Destination currency must settle in its native country.",
+      "sources": ["https://atlantic.money", "https://support.atlantic.money/"],
+      "discovery": ["https://atlantic.money"]
+    },
+    {
+      "slug": "alpian",
+      "name": "Alpian",
+      "website": "https://www.alpian.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CHF", "to": "EUR", "origin": "CH", "destination": "DE", "profiles": ["personal"] },
+        { "from": "CHF", "to": "USD", "origin": "CH", "destination": "US", "profiles": ["personal"] },
+        { "from": "CHF", "to": "GBP", "origin": "CH", "destination": "GB", "profiles": ["personal"] }
+      ],
+      "pricingNote": "FINMA-licensed Swiss digital bank for Swiss residents: 0.20% weekday FX (0.50% weekend) and free EUR SEPA transfers.",
+      "sources": ["https://www.alpian.com"],
+      "discovery": ["https://www.alpian.com"]
+    },
+    {
+      "slug": "venn",
+      "name": "Venn (formerly Vault)",
+      "website": "https://www.venn.ca",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CAD", "to": "USD", "origin": "CA", "destination": "US", "profiles": ["sole_proprietor", "business"] },
+        { "from": "USD", "to": "CAD", "origin": "US", "destination": "CA", "profiles": ["sole_proprietor", "business"] },
+        { "from": "CAD", "to": "GBP", "origin": "CA", "destination": "GB", "profiles": ["sole_proprietor", "business"] },
+        { "from": "CAD", "to": "EUR", "origin": "CA", "destination": "DE", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "FINTRAC-registered Canadian SMB multi-currency platform: 0.25%–0.45% FX markup, free local EFT/ACH/SEPA/FPS and $6–$10 SWIFT wires.",
+      "sources": ["https://www.venn.ca/pricing"],
+      "discovery": ["https://www.venn.ca"]
+    },
+    {
+      "slug": "loop",
+      "name": "Loop Financial",
+      "website": "https://www.bankonloop.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CAD", "to": "USD", "origin": "CA", "destination": "US", "profiles": ["sole_proprietor", "business"] },
+        { "from": "USD", "to": "CAD", "origin": "US", "destination": "CA", "profiles": ["sole_proprietor", "business"] },
+        { "from": "CAD", "to": "EUR", "origin": "CA", "destination": "DE", "profiles": ["sole_proprietor", "business"] },
+        { "from": "CAD", "to": "GBP", "origin": "CA", "destination": "GB", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "Canadian SMB multi-currency CAD/USD/EUR/GBP accounts: 0.10%–0.50% FX markup across Basic/Plus/Power plans and unlimited incoming receivables.",
+      "sources": ["https://support.bankonloop.com/collection/plans-and-pricing"],
+      "discovery": ["https://www.bankonloop.com"]
+    },
+    {
+      "slug": "knightsbridge-fx",
+      "name": "Knightsbridge FX",
+      "website": "https://www.knightsbridgefx.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CAD", "to": "USD", "origin": "CA", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "USD", "to": "CAD", "origin": "US", "destination": "CA", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Canadian currency broker for CAD↔USD lump sums: CAD 0 transfer/wire fee, CAD 2,000 minimum, up to CAD 40M/year, tight phone/online FX spread.",
+      "sources": ["https://www.knightsbridgefx.com"],
+      "discovery": ["https://www.knightsbridgefx.com"]
+    },
+    {
+      "slug": "flash-payments",
+      "name": "Flash Payments",
+      "website": "https://www.flash-payments.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "AUD", "to": "USD", "origin": "AU", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "GBP", "origin": "AU", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "EUR", "origin": "AU", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "NZD", "origin": "AU", "destination": "NZ", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "INR", "origin": "AU", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "PHP", "origin": "AU", "destination": "PH", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "AUSTRAC/AFSL-regulated Australian FX provider: AUD 0 transaction fee with transparent upfront FX margin and no preset min/max caps.",
+      "sources": ["https://www.flash-payments.com"],
+      "discovery": ["https://www.flash-payments.com"]
+    },
+    {
+      "slug": "currencies-direct",
+      "name": "Currencies Direct",
+      "website": "https://www.currenciesdirect.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "GBP", "origin": "ES", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "ZAR", "origin": "GB", "destination": "ZA", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "UK FCA-regulated FX broker: £0 transfer fee on standard personal transfers (online £10–£500k, larger by phone), revenue via FX spread.",
+      "sources": ["https://www.currenciesdirect.com"],
+      "discovery": ["https://www.currenciesdirect.com"]
+    },
+    {
+      "slug": "torfx",
+      "name": "TorFX",
+      "website": "https://www.torfx.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "FR", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "GBP", "origin": "AU", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "USD", "origin": "AU", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "ZAR", "origin": "GB", "destination": "ZA", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "FCA/ASIC-regulated currency broker: £0 upfront transfer fees on standard transfers (£100 min online, no maximum cap), priced via FX margin.",
+      "sources": ["https://www.torfx.com"],
+      "discovery": ["https://www.torfx.com"]
+    },
+    {
+      "slug": "moneycorp",
+      "name": "Moneycorp",
+      "website": "https://www.moneycorp.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "ES", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "USD", "to": "EUR", "origin": "US", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "CAD", "origin": "GB", "destination": "CA", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "UK/US/EU currency broker: £0 online transfer fee on international payments accounts (£50/$50/€50 min), priced via FX spread.",
+      "sources": ["https://www.moneycorp.com"],
+      "discovery": ["https://www.moneycorp.com"]
+    },
+    {
+      "slug": "transfermate",
+      "name": "TransferMate",
+      "website": "https://www.transfermate.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "EUR", "origin": "US", "destination": "IE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "GBP", "origin": "IE", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "USD", "origin": "AU", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "CAD", "to": "USD", "origin": "CA", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "INR", "to": "USD", "origin": "IN", "destination": "US", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Global B2B & education payment rail: $0 fee for businesses above 5,000 (~€10 for individuals), 1–5 business days via local bank accounts.",
+      "sources": ["https://www.transfermate.com"],
+      "discovery": ["https://www.transfermate.com"]
+    },
+    {
+      "slug": "equals-money",
+      "name": "Equals Money",
+      "website": "https://equalsmoney.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["business"] },
+        { "from": "EUR", "to": "USD", "origin": "DE", "destination": "US", "profiles": ["business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["business"] },
+        { "from": "GBP", "to": "CAD", "origin": "GB", "destination": "CA", "profiles": ["business"] },
+        { "from": "GBP", "to": "CHF", "origin": "GB", "destination": "CH", "profiles": ["business"] }
+      ],
+      "pricingNote": "UK B2B FX and expense platform supporting bulk payouts up to 10,000 rows, Faster Payments, SEPA and SWIFT.",
+      "sources": ["https://equalsmoney.com"],
+      "discovery": ["https://equalsmoney.com"]
+    },
+    {
+      "slug": "caxton",
+      "name": "Caxton",
+      "website": "https://www.caxton.io",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "CAD", "origin": "GB", "destination": "CA", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "CHF", "origin": "GB", "destination": "CH", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "UK multi-currency payments and FX provider: £100–£100k online transfers (larger by phone) priced via FX spread.",
+      "sources": ["https://www.caxton.io"],
+      "discovery": ["https://www.caxton.io"]
+    },
+    {
+      "slug": "currencyfair",
+      "name": "CurrencyFair",
+      "website": "https://www.currencyfair.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "EUR", "to": "GBP", "origin": "IE", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "IE", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "USD", "origin": "IE", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "AUD", "origin": "GB", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "GBP", "origin": "AU", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "SGD", "to": "EUR", "origin": "SG", "destination": "IE", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Irish-founded FX marketplace: flat €3 / £2.50 / $5 transfer-out fee plus ~0.53% average FX margin above interbank.",
+      "sources": ["https://www.currencyfair.com/pricing/"],
+      "discovery": ["https://www.currencyfair.com"]
+    },
+    {
+      "slug": "b-sharpe",
+      "name": "b-sharpe",
+      "website": "https://www.b-sharpe.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CHF", "to": "EUR", "origin": "CH", "destination": "FR", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "CHF", "origin": "FR", "destination": "CH", "profiles": ["personal", "business"] },
+        { "from": "CHF", "to": "USD", "origin": "CH", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "CHF", "to": "GBP", "origin": "CH", "destination": "GB", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Swiss cross-border FX specialist: CHF 0 transfer fee, volume-tiered FX spread starting from 0.12% with no minimum or structural cap.",
+      "sources": ["https://www.b-sharpe.com/en/compare-b-sharpe-fees/"],
+      "discovery": ["https://www.b-sharpe.com"]
+    },
+    {
+      "slug": "transfergo",
+      "name": "TransferGo",
+      "website": "https://www.transfergo.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "PLN", "origin": "GB", "destination": "PL", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "PLN", "origin": "DE", "destination": "PL", "profiles": ["personal", "business"] },
+        { "from": "GBP", "to": "RON", "origin": "GB", "destination": "RO", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "UK/EU digital remittance & B2B service: 30-min Express or next-day Standard bank delivery, fees from 0.20% plus FX margin.",
+      "sources": ["https://www.transfergo.com/en/pricing"],
+      "discovery": ["https://www.transfergo.com"]
+    },
+    {
+      "slug": "orbitremit",
+      "name": "OrbitRemit",
+      "website": "https://www.orbitremit.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "AUD", "to": "INR", "origin": "AU", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "PHP", "origin": "AU", "destination": "PH", "profiles": ["personal", "business"] },
+        { "from": "AUD", "to": "NPR", "origin": "AU", "destination": "NP", "profiles": ["personal", "business"] },
+        { "from": "NZD", "to": "INR", "origin": "NZ", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "NZD", "to": "PHP", "origin": "NZ", "destination": "PH", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "New Zealand / Australia remittance specialist: flat 0–4 AUD/NZD fee (free at 10k+), locked upfront FX rate and no weekend surcharge.",
+      "sources": ["https://support.orbitremit.com/hc/en-us/articles/360015525917-How-much-does-it-cost-to-make-a-transfer"],
+      "discovery": ["https://www.orbitremit.com"]
+    },
+    {
+      "slug": "profee",
+      "name": "Profee",
+      "website": "https://www.profee.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["personal"] },
+        { "from": "EUR", "to": "PKR", "origin": "DE", "destination": "PK", "profiles": ["personal"] },
+        { "from": "EUR", "to": "PHP", "origin": "DE", "destination": "PH", "profiles": ["personal"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["personal"] },
+        { "from": "EUR", "to": "BRL", "origin": "ES", "destination": "BR", "profiles": ["personal"] }
+      ],
+      "pricingNote": "European digital remittance app: 0% first-transfer fee, ~0.50% FX markup, tiered limits up to €100k/year.",
+      "sources": ["https://www.profee.com"],
+      "discovery": ["https://www.profee.com"]
+    },
+    {
+      "slug": "sokin",
+      "name": "Sokin",
+      "website": "https://sokin.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["business"] },
+        { "from": "GBP", "to": "EUR", "origin": "GB", "destination": "DE", "profiles": ["business"] },
+        { "from": "EUR", "to": "USD", "origin": "DE", "destination": "US", "profiles": ["business"] },
+        { "from": "USD", "to": "GBP", "origin": "US", "destination": "GB", "profiles": ["business"] }
+      ],
+      "pricingNote": "Global B2B multi-currency accounts: £0/mo, £1 UK / €1 SEPA / up to 10 SWIFT, FX from 0.30% major / 0.80% minor.",
+      "sources": ["https://sokin.com/pricing"],
+      "discovery": ["https://sokin.com"]
+    },
+    {
+      "slug": "verto",
+      "name": "Verto",
+      "website": "https://www.verto.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "NGN", "origin": "US", "destination": "NG", "profiles": ["business"] },
+        { "from": "GBP", "to": "NGN", "origin": "GB", "destination": "NG", "profiles": ["business"] },
+        { "from": "GBP", "to": "KES", "origin": "GB", "destination": "KE", "profiles": ["business"] },
+        { "from": "USD", "to": "KES", "origin": "US", "destination": "KE", "profiles": ["business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["business"] }
+      ],
+      "pricingNote": "Emerging-market B2B FX and liquidity platform: $0/mo, $0 local-rail payouts and wholesale FX with 24-hour rate lock.",
+      "sources": ["https://www.verto.co/pricing"],
+      "discovery": ["https://www.verto.co"]
+    },
+    {
+      "slug": "currenxie",
+      "name": "Currenxie",
+      "website": "https://www.currenxie.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "HKD", "origin": "US", "destination": "HK", "profiles": ["business"] },
+        { "from": "HKD", "to": "USD", "origin": "HK", "destination": "US", "profiles": ["business"] },
+        { "from": "USD", "to": "SGD", "origin": "US", "destination": "SG", "profiles": ["business"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["business"] },
+        { "from": "GBP", "to": "HKD", "origin": "GB", "destination": "HK", "profiles": ["business"] }
+      ],
+      "pricingNote": "Hong Kong Global Account for businesses: $0/mo, $3 local payouts, $8 SWIFT, FX from 0.10% (USD/HKD) to 0.50% Asian currencies.",
+      "sources": ["https://www.currenxie.com/en/pricing"],
+      "discovery": ["https://www.currenxie.com"]
+    },
+    {
+      "slug": "statrys",
+      "name": "Statrys",
+      "website": "https://statrys.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "HKD", "to": "USD", "origin": "HK", "destination": "US", "profiles": ["business"] },
+        { "from": "HKD", "to": "EUR", "origin": "HK", "destination": "DE", "profiles": ["business"] },
+        { "from": "SGD", "to": "USD", "origin": "SG", "destination": "US", "profiles": ["business"] },
+        { "from": "USD", "to": "HKD", "origin": "US", "destination": "HK", "profiles": ["business"] }
+      ],
+      "pricingNote": "HK/SG/BVI corporate multi-currency account: FX from 0.10% major / 0.15% Asian currencies, SWIFT ~85 HKD / 20 SGD.",
+      "sources": ["https://statrys.com/pricing"],
+      "discovery": ["https://statrys.com"]
+    },
+    {
+      "slug": "worldfirst",
+      "name": "WorldFirst",
+      "website": "https://www.worldfirst.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "GBP", "origin": "US", "destination": "GB", "profiles": ["business"] },
+        { "from": "GBP", "to": "USD", "origin": "GB", "destination": "US", "profiles": ["business"] },
+        { "from": "EUR", "to": "GBP", "origin": "DE", "destination": "GB", "profiles": ["business"] },
+        { "from": "USD", "to": "CNY", "origin": "US", "destination": "CN", "profiles": ["business"] },
+        { "from": "USD", "to": "AUD", "origin": "US", "destination": "AU", "profiles": ["business"] }
+      ],
+      "pricingNote": "Ant International B2B World Account: free receiving accounts, FX markup capped at 0.50% major pairs (0.30% intro promo).",
+      "sources": ["https://www.worldfirst.com/uk/pricing/"],
+      "discovery": ["https://www.worldfirst.com"]
+    },
+    {
+      "slug": "tazapay",
+      "name": "Tazapay",
+      "website": "https://tazapay.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "SGD", "origin": "US", "destination": "SG", "profiles": ["business"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["business"] },
+        { "from": "SGD", "to": "IDR", "origin": "SG", "destination": "ID", "profiles": ["business"] },
+        { "from": "USD", "to": "PHP", "origin": "US", "destination": "PH", "profiles": ["business"] }
+      ],
+      "pricingNote": "MAS-licensed cross-border B2B collection & payout rails: $2–$5 local payouts, $5–$35 SWIFT, India FIRC ~$4.",
+      "sources": ["https://support.tazapay.com/transaction-fees"],
+      "discovery": ["https://tazapay.com"]
+    },
+    {
+      "slug": "bcremit",
+      "name": "BCRemit",
+      "website": "https://www.bcremit.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "GBP", "to": "PHP", "origin": "GB", "destination": "PH", "profiles": ["personal"] },
+        { "from": "USD", "to": "PHP", "origin": "US", "destination": "PH", "profiles": ["personal"] },
+        { "from": "CAD", "to": "PHP", "origin": "CA", "destination": "PH", "profiles": ["personal"] },
+        { "from": "EUR", "to": "PHP", "origin": "IE", "destination": "PH", "profiles": ["personal"] }
+      ],
+      "pricingNote": "UK/US/CA/EU diaspora remittance specialist to the Philippines: standard bank/wallet ~£2.99/$2.99, cash pickup ~£3.99/$3.99.",
+      "sources": ["https://www.bcremit.com"],
+      "discovery": ["https://www.bcremit.com"]
+    },
+    {
+      "slug": "felix-pago",
+      "name": "Félix Pago",
+      "website": "https://www.felixpago.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "MXN", "origin": "US", "destination": "MX", "profiles": ["personal"] },
+        { "from": "USD", "to": "GTQ", "origin": "US", "destination": "GT", "profiles": ["personal"] },
+        { "from": "USD", "to": "HNL", "origin": "US", "destination": "HN", "profiles": ["personal"] },
+        { "from": "USD", "to": "COP", "origin": "US", "destination": "CO", "profiles": ["personal"] }
+      ],
+      "pricingNote": "WhatsApp-native US→LatAm remittance specialist: typically $2.99 flat bank-deposit fee ($0 first transfer promo) plus FX rate.",
+      "sources": ["https://www.felixpago.com"],
+      "discovery": ["https://www.felixpago.com"]
+    },
+    {
+      "slug": "qonto",
+      "name": "Qonto",
+      "website": "https://qonto.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "EUR", "to": "USD", "origin": "FR", "destination": "US", "profiles": ["business"] },
+        { "from": "EUR", "to": "GBP", "origin": "FR", "destination": "GB", "profiles": ["business"] },
+        { "from": "EUR", "to": "CHF", "origin": "DE", "destination": "CH", "profiles": ["business"] },
+        { "from": "EUR", "to": "CAD", "origin": "FR", "destination": "CA", "profiles": ["business"] }
+      ],
+      "pricingNote": "European business banking account with Wise-powered local-rail FX transfers from €5 min (10%–50% volume discounts >€50k).",
+      "sources": ["https://qonto.com"],
+      "discovery": ["https://qonto.com"]
+    },
+    {
+      "slug": "finom",
+      "name": "Finom",
+      "website": "https://finom.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "EUR", "to": "USD", "origin": "NL", "destination": "US", "profiles": ["business"] },
+        { "from": "EUR", "to": "GBP", "origin": "DE", "destination": "GB", "profiles": ["business"] },
+        { "from": "EUR", "to": "CHF", "origin": "DE", "destination": "CH", "profiles": ["business"] },
+        { "from": "EUR", "to": "PLN", "origin": "DE", "destination": "PL", "profiles": ["business"] }
+      ],
+      "pricingNote": "European SME account supporting local USD FedACH (up to $1M/tx) and GBP Faster Payments around €5 plus SWIFT.",
+      "sources": ["https://finom.co"],
+      "discovery": ["https://finom.co"]
+    },
+    {
+      "slug": "mercury",
+      "name": "Mercury",
+      "website": "https://mercury.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "EUR", "origin": "US", "destination": "DE", "profiles": ["business"] },
+        { "from": "USD", "to": "GBP", "origin": "US", "destination": "GB", "profiles": ["business"] },
+        { "from": "USD", "to": "CAD", "origin": "US", "destination": "CA", "profiles": ["business"] },
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["business"] }
+      ],
+      "pricingNote": "US business banking ($0/mo standard): free domestic ACH, domestic wires and USD international wires; FX fee applies to non-USD wires.",
+      "sources": ["https://mercury.com"],
+      "discovery": ["https://mercury.com"]
+    },
+    {
+      "slug": "relay",
+      "name": "Relay",
+      "website": "https://relayfi.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "EUR", "origin": "US", "destination": "DE", "profiles": ["business"] },
+        { "from": "USD", "to": "GBP", "origin": "US", "destination": "GB", "profiles": ["business"] },
+        { "from": "USD", "to": "CAD", "origin": "US", "destination": "CA", "profiles": ["business"] }
+      ],
+      "pricingNote": "US business banking ($0/mo standard) with multi-account treasury, ACH, domestic wires and international SEPA/FPS/SWIFT wires.",
+      "sources": ["https://relayfi.com"],
+      "discovery": ["https://relayfi.com"]
+    },
+    {
+      "slug": "hanpass",
+      "name": "Hanpass",
+      "website": "https://www.hanpass.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "KRW", "to": "CNY", "origin": "KR", "destination": "CN", "profiles": ["personal", "business"] },
+        { "from": "KRW", "to": "PHP", "origin": "KR", "destination": "PH", "profiles": ["personal", "business"] },
+        { "from": "KRW", "to": "VND", "origin": "KR", "destination": "VN", "profiles": ["personal", "business"] },
+        { "from": "KRW", "to": "THB", "origin": "KR", "destination": "TH", "profiles": ["personal", "business"] },
+        { "from": "KRW", "to": "USD", "origin": "KR", "destination": "US", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "South Korean licensed remittance app (~3 min average delivery): pre-funded local rails with $0 promo fees on select China corridors.",
+      "sources": ["https://www.hanpass.com"],
+      "discovery": ["https://www.hanpass.com"]
+    },
+    {
+      "slug": "sbi-remit",
+      "name": "SBI Remit",
+      "website": "https://www.remit.co.jp",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "JPY", "to": "PHP", "origin": "JP", "destination": "PH", "profiles": ["personal", "business"] },
+        { "from": "JPY", "to": "VND", "origin": "JP", "destination": "VN", "profiles": ["personal", "business"] },
+        { "from": "JPY", "to": "NPR", "origin": "JP", "destination": "NP", "profiles": ["personal", "business"] },
+        { "from": "JPY", "to": "INR", "origin": "JP", "destination": "IN", "profiles": ["personal", "business"] },
+        { "from": "JPY", "to": "IDR", "origin": "JP", "destination": "ID", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Japan licensed remittance leader: up to ¥1M/tx and ¥5M/year for individuals, delivering in 10 min to 2 business days.",
+      "sources": ["https://www.remit.co.jp"],
+      "discovery": ["https://www.remit.co.jp"]
+    },
+    {
+      "slug": "smiles-remit",
+      "name": "Smiles Mobile Remittance",
+      "website": "https://www.smileswallet.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "JPY", "to": "PHP", "origin": "JP", "destination": "PH", "profiles": ["personal"] },
+        { "from": "JPY", "to": "VND", "origin": "JP", "destination": "VN", "profiles": ["personal"] },
+        { "from": "JPY", "to": "IDR", "origin": "JP", "destination": "ID", "profiles": ["personal"] },
+        { "from": "CAD", "to": "PHP", "origin": "CA", "destination": "PH", "profiles": ["personal"] },
+        { "from": "SGD", "to": "PHP", "origin": "SG", "destination": "PH", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Japan/Canada/Singapore real-time mobile remittance app with Smiles Points fee discounts (Japan cap ¥1M/tx, ¥5M/yr).",
+      "sources": ["https://www.smileswallet.com"],
+      "discovery": ["https://www.smileswallet.com"]
+    },
+    {
+      "slug": "mukuru",
+      "name": "Mukuru",
+      "website": "https://www.mukuru.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "ZAR", "to": "MWK", "origin": "ZA", "destination": "MW", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "MZN", "origin": "ZA", "destination": "MZ", "profiles": ["personal"] },
+        { "from": "GBP", "to": "ZAR", "origin": "GB", "destination": "ZA", "profiles": ["personal"] },
+        { "from": "GBP", "to": "KES", "origin": "GB", "destination": "KE", "profiles": ["personal"] },
+        { "from": "ZAR", "to": "NGN", "origin": "ZA", "destination": "NG", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Southern Africa & UK remittance specialist: instant cash/wallet payouts (up to 1h banks), SA tiers up to R1M/year.",
+      "sources": ["https://www.mukuru.com"],
+      "discovery": ["https://www.mukuru.com"]
+    },
+    {
+      "slug": "nomad",
+      "name": "Nomad",
+      "website": "https://www.nomadglobal.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "BRL", "to": "USD", "origin": "BR", "destination": "US", "profiles": ["personal"] },
+        { "from": "USD", "to": "BRL", "origin": "US", "destination": "BR", "profiles": ["personal"] },
+        { "from": "BRL", "to": "EUR", "origin": "BR", "destination": "DE", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Brazilian personal global USD account: $0 maintenance, commercial FX + from 1% fee (+ IOF), BRL→USD up to R$200k–R$500k/tx.",
+      "sources": ["https://www.nomadglobal.com"],
+      "discovery": ["https://www.nomadglobal.com"]
+    },
+    {
+      "slug": "rextie",
+      "name": "Rextie",
+      "website": "https://www.rextie.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "PEN", "origin": "PE", "destination": "PE", "profiles": ["personal", "business"] },
+        { "from": "PEN", "to": "USD", "origin": "PE", "destination": "PE", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "SBS-registered Peru online USD↔PEN exchange: $0 fixed commission, real-time FX spread, 10–15 min same-bank delivery.",
+      "sources": ["https://www.rextie.com"],
+      "discovery": ["https://www.rextie.com"]
+    },
+    {
+      "slug": "moneymatch",
+      "name": "MoneyMatch",
+      "website": "https://moneymatch.co",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "MYR", "to": "USD", "origin": "MY", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "MYR", "to": "GBP", "origin": "MY", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "MYR", "to": "EUR", "origin": "MY", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "MYR", "to": "AUD", "origin": "MY", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "MYR", "to": "SGD", "origin": "MY", "destination": "SG", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "BNM-licensed Malaysia personal & Pulse business remittance platform: flat upfront corridor fees, 1–2 working days.",
+      "sources": ["https://moneymatch.co"],
+      "discovery": ["https://moneymatch.co"]
+    },
+    {
+      "slug": "transfez",
+      "name": "Transfez",
+      "website": "https://transfez.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "IDR", "to": "SGD", "origin": "ID", "destination": "SG", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "MYR", "origin": "ID", "destination": "MY", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "USD", "origin": "ID", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "IDR", "to": "AUD", "origin": "ID", "destination": "AU", "profiles": ["personal", "business"] },
+        { "from": "SGD", "to": "IDR", "origin": "SG", "destination": "ID", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Bank Indonesia-licensed remittance service covering 70+ countries with fixed corridor fees and same-day D+0 delivery before 4 PM GMT+7.",
+      "sources": ["https://transfez.com"],
+      "discovery": ["https://transfez.com"]
+    },
+    {
+      "slug": "wallex",
+      "name": "Wallex",
+      "website": "https://www.wallex.asia",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "SGD", "to": "IDR", "origin": "SG", "destination": "ID", "profiles": ["business"] },
+        { "from": "SGD", "to": "MYR", "origin": "SG", "destination": "MY", "profiles": ["business"] },
+        { "from": "SGD", "to": "USD", "origin": "SG", "destination": "US", "profiles": ["business"] },
+        { "from": "IDR", "to": "USD", "origin": "ID", "destination": "US", "profiles": ["business"] },
+        { "from": "HKD", "to": "USD", "origin": "HK", "destination": "US", "profiles": ["business"] }
+      ],
+      "pricingNote": "APAC B2B FX platform ($0/mo subscription): same-day local-rail delivery across 20+ currencies before cut-off.",
+      "sources": ["https://www.wallex.asia"],
+      "discovery": ["https://www.wallex.asia"]
+    },
+    {
+      "slug": "xtransfer",
+      "name": "XTransfer",
+      "website": "https://www.xtransfer.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "CNY", "origin": "US", "destination": "CN", "profiles": ["business"] },
+        { "from": "EUR", "to": "CNY", "origin": "DE", "destination": "CN", "profiles": ["business"] },
+        { "from": "GBP", "to": "CNY", "origin": "GB", "destination": "CN", "profiles": ["business"] }
+      ],
+      "pricingNote": "B2B foreign-trade collection account ($0 opening/maintenance): wholesale FX and 1-second to 24-hour X-Net/local settlement.",
+      "sources": ["https://www.xtransfer.com"],
+      "discovery": ["https://www.xtransfer.com"]
+    },
+    {
+      "slug": "yuh",
+      "name": "Yuh",
+      "website": "https://www.yuh.com",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CHF", "to": "EUR", "origin": "CH", "destination": "DE", "profiles": ["personal"] },
+        { "from": "EUR", "to": "CHF", "origin": "AT", "destination": "CH", "profiles": ["personal"] },
+        { "from": "CHF", "to": "USD", "origin": "CH", "destination": "US", "profiles": ["personal"] },
+        { "from": "CHF", "to": "GBP", "origin": "CH", "destination": "GB", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Swissquote/PostFinance personal multi-currency app (CH/AT/LI): free EUR SEPA transfers and flat 0.95% FX markup across 13 currencies.",
+      "sources": ["https://www.yuh.com"],
+      "discovery": ["https://www.yuh.com"]
+    },
+    {
+      "slug": "neon-ch",
+      "name": "neon",
+      "website": "https://www.neon-free.ch",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "CHF", "to": "EUR", "origin": "CH", "destination": "DE", "profiles": ["personal"] },
+        { "from": "CHF", "to": "USD", "origin": "CH", "destination": "US", "profiles": ["personal"] },
+        { "from": "CHF", "to": "GBP", "origin": "CH", "destination": "GB", "profiles": ["personal"] }
+      ],
+      "pricingNote": "Swiss digital bank with built-in Wise international transfers at mid-market rate (20%–40% fee discounts on global/metal plans).",
+      "sources": ["https://www.neon-free.ch"],
+      "discovery": ["https://www.neon-free.ch"]
+    },
+    {
+      "slug": "walutomat",
+      "name": "Walutomat",
+      "website": "https://www.walutomat.pl",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "PLN", "to": "EUR", "origin": "PL", "destination": "DE", "profiles": ["personal", "business"] },
+        { "from": "EUR", "to": "PLN", "origin": "DE", "destination": "PL", "profiles": ["personal", "business"] },
+        { "from": "PLN", "to": "USD", "origin": "PL", "destination": "US", "profiles": ["personal", "business"] },
+        { "from": "PLN", "to": "GBP", "origin": "PL", "destination": "GB", "profiles": ["personal", "business"] },
+        { "from": "PLN", "to": "CHF", "origin": "PL", "destination": "CH", "profiles": ["personal", "business"] }
+      ],
+      "pricingNote": "Poland social FX exchange: transparent % FX commission, up to 5 free PLN/EUR SEPA transfers/month (then 1 PLN), non-SEPA 9 PLN.",
+      "sources": ["https://www.walutomat.pl"],
+      "discovery": ["https://www.walutomat.pl"]
+    },
+    {
+      "slug": "easebuzz",
+      "name": "Easebuzz",
+      "website": "https://easebuzz.in",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "Indian PA-CB (Atlas) cross-border export collections across 30+ currencies with local T+1 INR bank settlement.",
+      "sources": ["https://easebuzz.in"],
+      "discovery": ["https://easebuzz.in"]
+    },
+    {
+      "slug": "pay10",
+      "name": "Pay10",
+      "website": "https://pay10.in",
+      "reviewedAt": "2026-11-26",
+      "routes": [
+        { "from": "USD", "to": "INR", "origin": "US", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "EUR", "to": "INR", "origin": "DE", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "GBP", "to": "INR", "origin": "GB", "destination": "IN", "profiles": ["sole_proprietor", "business"] },
+        { "from": "SGD", "to": "INR", "origin": "SG", "destination": "IN", "profiles": ["sole_proprietor", "business"] }
+      ],
+      "pricingNote": "RBI PA-CB-E export collections up to ₹25 lakh/tx: zero setup fee, indicative fees from 0.65%–0.95% + 18% GST.",
+      "sources": ["https://pay10.in"],
+      "discovery": ["https://pay10.in"]
     }
   ]
 }

@@ -64,10 +64,18 @@ export async function getPlatformQuoteCheck(request: QuoteRequest): Promise<Plat
   return value;
 }
 
-type PartnerSlug = "xflow" | "dlocal";
+type PartnerSlug = "xflow" | "dlocal" | "wise" | "transak" | "flutterwave";
+
+const PARTNER_NAMES: Record<PartnerSlug, string> = {
+  xflow: "Xflow",
+  dlocal: "dLocal",
+  wise: "Wise",
+  transak: "Transak",
+  flutterwave: "Flutterwave",
+};
 
 function partnerConfiguration(slug: PartnerSlug): Record<string, string> | null {
-  const prefix = slug === "xflow" ? "XFLOW" : "DLOCAL";
+  const prefix = slug.toUpperCase();
   // Platform-account observations are public. Enabling one requires an
   // explicit display opt-in after the provider grants that usage.
   if (process.env[`${prefix}_PLATFORM_PUBLIC_QUOTES`] !== "true") return null;
@@ -78,20 +86,41 @@ function partnerConfiguration(slug: PartnerSlug): Record<string, string> | null 
     if (!apiKey) return null;
     return { environment, apiKey, ...(process.env.XFLOW_PLATFORM_ACCOUNT_ID?.trim() ? { accountId: process.env.XFLOW_PLATFORM_ACCOUNT_ID.trim() } : {}) };
   }
+  if (slug === "wise") {
+    const apiToken = (process.env.WISE_PLATFORM_API_KEY || process.env.WISE_API_KEY)?.trim();
+    if (!apiToken) return null;
+    return { environment, apiToken, ...(process.env.WISE_PLATFORM_PROFILE_ID?.trim() ? { profileId: process.env.WISE_PLATFORM_PROFILE_ID.trim() } : {}) };
+  }
+  if (slug === "transak") {
+    const apiKey = (process.env.TRANSAK_PLATFORM_API_KEY || process.env.TRANSAK_API_KEY)?.trim();
+    return apiKey ? { environment, apiKey } : null;
+  }
+  if (slug === "flutterwave") {
+    const secretKey = (process.env.FLUTTERWAVE_PLATFORM_SECRET_KEY || process.env.FLUTTERWAVE_SECRET_KEY)?.trim();
+    return secretKey ? { environment, secretKey } : null;
+  }
   const clientId = process.env.DLOCAL_PLATFORM_CLIENT_ID?.trim();
   const clientSecret = process.env.DLOCAL_PLATFORM_CLIENT_SECRET?.trim();
   return clientId && clientSecret ? { environment, clientId, clientSecret } : null;
 }
 
+const CRYPTO_CODES = new Set(["USDC", "USDT", "ETH", "BTC", "SOL", "EURC", "DAI", "PYUSD"]);
+const FLUTTERWAVE_CURRENCIES = new Set(["USD", "GBP", "EUR", "NGN", "GHS", "KES", "UGX", "TZS", "ZAR", "XOF", "XAF", "RWF", "EGP"]);
+
 async function partnerPlatformQuoteCheck(slug: PartnerSlug, request: QuoteRequest): Promise<PlatformQuoteCheck | null> {
   const credentials = partnerConfiguration(slug);
   if (!credentials || (credentials.environment === "sandbox" && process.env.NODE_ENV === "production" && process.env.RAILOR_SHOW_SANDBOX_QUOTES !== "true")) return null;
-  if (slug === "xflow" && (request.destinationCurrency !== "INR" || (request.destinationCountry && request.destinationCountry !== "IN"))) return null;
-  if (slug === "dlocal" && (request.sourceAsset !== "USD" || !request.destinationCountry || request.destinationCurrency === "USD")) return null;
+  const src = request.sourceAsset.toUpperCase();
+  const dst = request.destinationCurrency.toUpperCase();
+  if (slug === "xflow" && (dst !== "INR" || (request.destinationCountry && request.destinationCountry !== "IN"))) return null;
+  if (slug === "dlocal" && (src !== "USD" || !request.destinationCountry || dst === "USD")) return null;
+  if (slug === "wise" && (CRYPTO_CODES.has(src) || CRYPTO_CODES.has(dst))) return null;
+  if (slug === "transak" && CRYPTO_CODES.has(src) === CRYPTO_CODES.has(dst)) return null;
+  if (slug === "flutterwave" && (!FLUTTERWAVE_CURRENCIES.has(src) || !FLUTTERWAVE_CURRENCIES.has(dst) || src === dst)) return null;
   const key = createHash("sha256").update(JSON.stringify([slug, credentials, request])).digest("hex");
   const hit = cache.get(key);
   if (hit && hit.until > Date.now()) return hit.value;
-  const base = { providerSlug: slug, providerName: slug === "xflow" ? "Xflow" : "dLocal", environment: credentials.environment as "sandbox" | "production" };
+  const base = { providerSlug: slug, providerName: PARTNER_NAMES[slug], environment: credentials.environment as "sandbox" | "production" };
   const value = (async (): Promise<PlatformQuoteCheck> => {
     try {
       if (!Number.isFinite(request.amount) || request.amount <= 0 || request.amount > 10_000_000) throw new Error("invalid_amount");
@@ -108,7 +137,8 @@ async function partnerPlatformQuoteCheck(slug: PartnerSlug, request: QuoteReques
       const sanitized: UnifiedQuote = {
         providerSlug: slug, sourceAsset: request.sourceAsset, destinationCurrency: request.destinationCurrency,
         destinationCountry: request.destinationCountry, amount: request.amount, recipientAmount: quote.recipientAmount,
-        exchangeRate: quote.exchangeRate, costPartial: true, costNote: quote.costNote,
+        feeAmount: quote.feeAmount, feeCurrency: quote.feeCurrency,
+        exchangeRate: quote.exchangeRate, costPartial: quote.costPartial ?? true, costNote: quote.costNote,
         quoteType: "indicative", accountContext: "railor_network", verificationType: "provider_reported",
         observedAt: quote.observedAt, quotedAt: quote.quotedAt, expiresAt: quote.expiresAt,
       };
@@ -130,6 +160,9 @@ export async function getPlatformQuoteChecks(request: QuoteRequest): Promise<Pla
     getPlatformQuoteCheck(request),
     partnerPlatformQuoteCheck("xflow", request),
     partnerPlatformQuoteCheck("dlocal", request),
+    partnerPlatformQuoteCheck("wise", request),
+    partnerPlatformQuoteCheck("transak", request),
+    partnerPlatformQuoteCheck("flutterwave", request),
   ])).filter((check): check is PlatformQuoteCheck => check !== null);
 }
 

@@ -39,4 +39,25 @@ describe("Airwallex's public FX reference", () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json({ ...response, ...patch }));
     await expect(airwallexPublicReference(input, fetcher, now)).resolves.toBeNull();
   });
+
+  it("supports expanded multi-currency business pairs such as GBP to INR and GBP to EUR", async () => {
+    const gbpInrFetcher = vi.fn<typeof fetch>(async () => Response.json({
+      ccyPair: "GBPINR", sellAmount: 1000, buyAmount: 121111.21, clientRate: 121.111212, awxRate: 121.111212, createdAt: now.getTime(),
+    }));
+    const gbpInr = await airwallexPublicReference({
+      sourceCurrency: "GBP", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000,
+      context: { country: "GB", profile: "business", direction: "send", purpose: "services" },
+    }, gbpInrFetcher, now);
+    expect(gbpInr).toMatchObject({ providerSlug: "airwallex", recipientAmount: 121111.21, rate: 121.111212, partial: true });
+
+    const gbpEurFetcher = vi.fn<typeof fetch>(async () => Response.json({
+      ccyPair: "EURGBP", sellAmount: 1000, buyAmount: 1194.37, clientRate: 0.837262, awxRate: 0.837262, createdAt: now.getTime(),
+    }));
+    const gbpEur = await airwallexPublicReference({
+      sourceCurrency: "GBP", destinationCurrency: "EUR", destinationCountry: "DE", amount: 1000,
+      context: { country: "GB", profile: "business", direction: "send", purpose: "services" },
+    }, gbpEurFetcher, now);
+    expect(gbpEur).toMatchObject({ providerSlug: "airwallex", recipientAmount: 1194.37, partial: true });
+    expect(gbpEur?.rate).toBeCloseTo(1.19437, 4);
+  });
 });

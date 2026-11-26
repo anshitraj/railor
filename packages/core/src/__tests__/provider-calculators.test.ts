@@ -86,6 +86,11 @@ describe("which transfers a calculator can answer", () => {
     expect(calculatorSlugsFor({ ...input, context: { ...input.context!, profile: "freelancer", purpose: "services" } })).toEqual([]);
     expect(calculatorSlugsFor({ ...input, context: { ...input.context!, paymentMethod: "card" } })).toEqual([]);
     expect(calculatorSpec({ ...input, destinationCurrency: "USD" })).toBeNull();
+    // Multi-country personal sends in native currencies are also supported
+    expect(calculatorSpec({ ...input, sourceCurrency: "GBP", context: { ...input.context!, country: "GB" } })).toMatchObject({ originCountry: "GB", sourceCurrency: "GBP", destinationCountry: "IN" });
+    expect(calculatorSpec({ ...input, sourceCurrency: "CAD", context: { ...input.context!, country: "CA" } })).toMatchObject({ originCountry: "CA", sourceCurrency: "CAD", destinationCountry: "IN" });
+    expect(calculatorSpec({ ...input, sourceCurrency: "AUD", context: { ...input.context!, country: "AU" } })).toMatchObject({ originCountry: "AU", sourceCurrency: "AUD", destinationCountry: "IN" });
+    expect(calculatorSpec({ ...input, sourceCurrency: "EUR", context: { ...input.context!, country: "DE" } })).toMatchObject({ originCountry: "DE", sourceCurrency: "EUR", destinationCountry: "IN" });
   });
 
   it("points each provider at a page on its own site, and tells the agent what to do and what never to do", () => {

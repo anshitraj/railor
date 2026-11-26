@@ -36,4 +36,24 @@ describe("Al Ansari's public UAE bank-transfer reference", () => {
     await expect(alAnsariPublicReference(input, fetcher, now)).resolves.toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+
+  it("supports expanded verified UAE corridors such as AED to PKR, PHP, USD and GBP", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (String(url).endsWith("admin-ajax.php")) {
+        const body = Object.fromEntries(init?.body as URLSearchParams);
+        if (body.currto === "27") return Response.json({ amount: "75888.00", get_rate: "75.888", status_msg: "SUCCESS" });
+        if (body.currto === "49") return Response.json({ amount: "15700.00", get_rate: "15.70", status_msg: "SUCCESS" });
+        return Response.json({ amount: "272.25", get_rate: "0.27225", status_msg: "SUCCESS" });
+      }
+      return new Response(config);
+    });
+    const pkr = await alAnsariPublicReference({ ...input, destinationCurrency: "PKR", destinationCountry: "PK" }, fetcher, now);
+    expect(pkr).toMatchObject({ providerSlug: "al-ansari-exchange", recipientAmount: 75888, rate: 75.888, partial: true });
+
+    const php = await alAnsariPublicReference({ ...input, destinationCurrency: "PHP", destinationCountry: "PH" }, fetcher, now);
+    expect(php).toMatchObject({ providerSlug: "al-ansari-exchange", recipientAmount: 15700, rate: 15.7 });
+
+    const usd = await alAnsariPublicReference({ ...input, destinationCurrency: "USD", destinationCountry: "US" }, fetcher, now);
+    expect(usd).toMatchObject({ providerSlug: "al-ansari-exchange", recipientAmount: 272.25, rate: 0.27225 });
+  });
 });

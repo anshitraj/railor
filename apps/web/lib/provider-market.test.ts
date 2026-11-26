@@ -26,7 +26,7 @@ describe("providerMarketCoverage", () => {
     expect(coverage.allProviders).toEqual(expect.arrayContaining([expect.objectContaining({ providerSlug: "razorpay" }), expect.objectContaining({ providerSlug: "dashx" }), expect.objectContaining({ providerSlug: "briskpe", currencyMatch: "unverified" })]));
     const discovered = new Set(transferProviderDiscovery.providers.map(provider => provider.slug));
     for (const provider of (coverage.allProviders ?? []).filter(provider => !discovered.has(provider.providerSlug))) {
-      expect(provider.pricingReviewedAt).toMatch(/^2026-11-(?:19|25)$/);
+      expect(provider.pricingReviewedAt).toMatch(/^2026-11-(?:19|25|26)$/);
       expect(provider.pricingStatus?.reason).toBeTruthy();
       expect(provider.discoverySources?.length).toBeGreaterThan(0);
       expect(provider).not.toHaveProperty("recipientAmount");
@@ -37,12 +37,21 @@ describe("providerMarketCoverage", () => {
     const coverage = providerMarketCoverage({ sourceCurrency: "USD", destinationCurrency: "INR", amount: 1000 });
     expect(new Set(coverage.allProviders?.map(provider => provider.providerSlug)).size).toBe(coverage.totalTracked);
     expect(coverage.allProviders).toContainEqual(expect.objectContaining({
-      providerSlug: "currencies-direct",
+      providerSlug: "a-place-in-the-sun-currency",
       currencyMatch: "unverified",
       routeMatch: false,
       pricingStatus: expect.objectContaining({ label: "Route unconfirmed" }),
     }));
-    expect(coverage.providers.some(provider => provider.providerSlug === "currencies-direct")).toBe(false);
+    expect(coverage.providers.some(provider => provider.providerSlug === "a-place-in-the-sun-currency")).toBe(false);
+    const ukEur = providerMarketCoverage({
+      sourceCurrency: "GBP", destinationCurrency: "EUR", destinationCountry: "DE", amount: 1000,
+      context: { direction: "send", country: "GB", profile: "personal", purpose: "personal" },
+    });
+    expect(ukEur.providers).toContainEqual(expect.objectContaining({
+      providerSlug: "currencies-direct",
+      routeMatch: true,
+      pricingReviewedAt: "2026-11-26",
+    }));
     const personal = providerMarketCoverage({
       sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000,
       context: { direction: "send", country: "US", profile: "personal", purpose: "personal" },
@@ -113,5 +122,19 @@ describe("providerMarketCoverage", () => {
     }
     const aed = providerMarketCoverage({ sourceCurrency: "AED", destinationCurrency: "INR", amount: 1000 });
     expect(aed.allProviders?.find(item => item.providerSlug === "al-ansari-exchange")?.pricingStatus?.label).not.toBe(labels["al-ansari-exchange"]);
+  });
+
+  it("attaches verified KYC details to unpriced and non-INR regional providers when user context is present", () => {
+    const coverage = providerMarketCoverage({
+      sourceCurrency: "USD",
+      destinationCurrency: "NGN",
+      destinationCountry: "NG",
+      amount: 1000,
+      context: { direction: "receive", country: "NG", profile: "freelancer", purpose: "services" },
+    });
+    const raenest = coverage.providers.find(item => item.providerSlug === "raenest");
+    expect(raenest?.routeMatch).toBe(true);
+    expect(raenest?.profileAssessment?.kyc?.documents.join(" ")).toContain("NIN");
+    expect(raenest?.profileAssessment?.kyc?.match).toBe("country");
   });
 });

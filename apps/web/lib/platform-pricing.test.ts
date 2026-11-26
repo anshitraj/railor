@@ -7,7 +7,7 @@ vi.mock("@railor/core", () => ({ getAdapter: () => adapter }));
 vi.mock("./rate-limit", () => ({ consumeLimit: limit }));
 const { platformQuoteProviders, getPlatformQuoteCheck, getPlatformQuoteChecks, fetchPlatformReferenceQuote } = await import("./platform-pricing");
 const request = { sourceAsset: "USD", destinationCurrency: "EUR", amount: 1000 };
-const envKeys = ["AIRWALLEX_PLATFORM_ENVIRONMENT", "AIRWALLEX_PLATFORM_CLIENT_ID", "AIRWALLEX_PLATFORM_API_KEY", "AIRWALLEX_SANDBOX_CLIENT_ID", "AIRWALLEX_SANDBOX_API_KEY", "airwallex_sandbox_client_id", "airwallex_sandbox_scoped_api", "RAILOR_SHOW_SANDBOX_QUOTES", "XFLOW_PLATFORM_PUBLIC_QUOTES", "XFLOW_PLATFORM_ENVIRONMENT", "XFLOW_PLATFORM_API_KEY", "XFLOW_PLATFORM_ACCOUNT_ID", "DLOCAL_PLATFORM_PUBLIC_QUOTES", "DLOCAL_PLATFORM_ENVIRONMENT", "DLOCAL_PLATFORM_CLIENT_ID", "DLOCAL_PLATFORM_CLIENT_SECRET"];
+const envKeys = ["AIRWALLEX_PLATFORM_ENVIRONMENT", "AIRWALLEX_PLATFORM_CLIENT_ID", "AIRWALLEX_PLATFORM_API_KEY", "AIRWALLEX_SANDBOX_CLIENT_ID", "AIRWALLEX_SANDBOX_API_KEY", "airwallex_sandbox_client_id", "airwallex_sandbox_scoped_api", "RAILOR_SHOW_SANDBOX_QUOTES", "XFLOW_PLATFORM_PUBLIC_QUOTES", "XFLOW_PLATFORM_ENVIRONMENT", "XFLOW_PLATFORM_API_KEY", "XFLOW_PLATFORM_ACCOUNT_ID", "DLOCAL_PLATFORM_PUBLIC_QUOTES", "DLOCAL_PLATFORM_ENVIRONMENT", "DLOCAL_PLATFORM_CLIENT_ID", "DLOCAL_PLATFORM_CLIENT_SECRET", "WISE_PLATFORM_PUBLIC_QUOTES", "WISE_PLATFORM_ENVIRONMENT", "WISE_PLATFORM_API_KEY", "WISE_API_KEY", "WISE_PLATFORM_PROFILE_ID", "TRANSAK_PLATFORM_PUBLIC_QUOTES", "TRANSAK_PLATFORM_ENVIRONMENT", "TRANSAK_PLATFORM_API_KEY", "TRANSAK_API_KEY", "FLUTTERWAVE_PLATFORM_PUBLIC_QUOTES", "FLUTTERWAVE_PLATFORM_ENVIRONMENT", "FLUTTERWAVE_PLATFORM_SECRET_KEY", "FLUTTERWAVE_SECRET_KEY"];
 
 describe("Railor-owned, server-only pricing", () => {
   beforeEach(() => {
@@ -91,5 +91,29 @@ describe("Railor-owned, server-only pricing", () => {
     const checks = await getPlatformQuoteChecks({ ...request, destinationCountry: "IN", destinationCurrency: "INR" });
     expect(checks).toMatchObject([{ providerSlug: "dlocal", status: "quoted", quote: { accountContext: "railor_network", recipientAmount: 8300 } }]);
     expect(JSON.stringify(checks)).not.toContain("secret");
+  });
+  it("supports Wise, Transak and Flutterwave platform quote checks when explicitly opted in", async () => {
+    vi.stubEnv("WISE_PLATFORM_PUBLIC_QUOTES", "true");
+    vi.stubEnv("WISE_PLATFORM_ENVIRONMENT", "production");
+    vi.stubEnv("WISE_API_KEY", "wise-live-secret");
+    adapter.getQuote.mockImplementation(async (_credentials, r) => ({
+      ...r, providerSlug: "wise", recipientAmount: 920, feeAmount: 4.5, feeCurrency: "USD", exchangeRate: "0.924",
+      costPartial: false, observedAt: new Date().toISOString(), quotedAt: new Date().toISOString(),
+    }));
+    const wiseChecks = await getPlatformQuoteChecks(request);
+    expect(wiseChecks).toMatchObject([{ providerSlug: "wise", status: "quoted", quote: { recipientAmount: 920, feeAmount: 4.5 } }]);
+    expect(JSON.stringify(wiseChecks)).not.toContain("wise-live-secret");
+
+    vi.stubEnv("WISE_PLATFORM_PUBLIC_QUOTES", "false");
+    vi.stubEnv("FLUTTERWAVE_PLATFORM_PUBLIC_QUOTES", "true");
+    vi.stubEnv("FLUTTERWAVE_PLATFORM_ENVIRONMENT", "production");
+    vi.stubEnv("FLUTTERWAVE_SECRET_KEY", "FLWSECK-live-secret");
+    adapter.getQuote.mockImplementation(async (_credentials, r) => ({
+      ...r, providerSlug: "flutterwave", recipientAmount: 1_550_000, exchangeRate: "1550",
+      costPartial: true, observedAt: new Date().toISOString(), quotedAt: new Date().toISOString(),
+    }));
+    const flwChecks = await getPlatformQuoteChecks({ sourceAsset: "USD", destinationCurrency: "NGN", amount: 1000 });
+    expect(flwChecks).toMatchObject([{ providerSlug: "flutterwave", status: "quoted", quote: { recipientAmount: 1_550_000 } }]);
+    expect(JSON.stringify(flwChecks)).not.toContain("FLWSECK-live-secret");
   });
 });

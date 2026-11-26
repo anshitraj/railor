@@ -1,5 +1,6 @@
 import { ArrowUpRight, Banknote, ClipboardList, Clock3, FileBadge, FileText, Gauge, Globe2, IdCard, Info, Landmark, Percent, ReceiptText, Target, Timer, TriangleAlert } from "lucide-react";
 import type { PriceRow } from "@railor/core";
+import { isPlaceholder, type ProviderFacts } from "../../lib/provider-facts";
 import styles from "./price-check.module.css";
 
 const summaries = {
@@ -32,15 +33,17 @@ function KycTime({ kyc, provider }: { kyc: NonNullable<PriceRow["profileAssessme
   );
 }
 
-export function ProviderRequirements({ assessment, feeTax, receipt, delivery, provider }: {
-  assessment: PriceRow["profileAssessment"]; feeTax?: string; receipt?: string | null; delivery?: string | null; provider?: string;
+export function ProviderRequirements({ assessment, feeTax, receipt, delivery, provider, facts }: {
+  assessment: PriceRow["profileAssessment"]; feeTax?: string; receipt?: string | null; delivery?: string | null; provider?: string; facts?: ProviderFacts | null;
 }) {
   const status = assessment?.status ?? "unconfirmed";
   const { title, icon: SummaryIcon } = summaries[status];
   const payment = assessment?.payment;
-  const receiptDetail = payment?.receipt?.detail ?? receipt;
-  const timing = payment?.delivery?.detail ?? delivery;
-  const tax = payment?.feeTax?.detail ?? feeTax;
+  const receiptDetail = payment?.receipt?.detail ?? receipt ?? (facts?.paperwork ? facts.paperwork.lines.join(" ") : undefined);
+  const timing = payment?.delivery?.detail ?? delivery ?? facts?.delivery?.detail;
+  const tax = payment?.feeTax?.detail ?? (!isPlaceholder(feeTax) ? feeTax : facts?.tax ? facts.tax.lines.join(" ") : feeTax);
+  const feeDetails = facts?.fees && isPlaceholder(assessment?.fees) ? facts.fees.lines : assessment?.fees ? [assessment.fees] : facts?.fees?.lines;
+  const limitDetails = facts?.limits && isPlaceholder(assessment?.limits) ? facts.limits.lines : assessment?.limits ? [assessment.limits] : facts?.limits?.lines;
   const kyc = assessment?.kyc;
   const topics = [
     { label: "KYC documents", icon: IdCard, tone: "green", details: assessment?.verification, emphasis: true, list: true, scope: kyc ? `${kyc.appliesTo === "sender" ? "Your sender’s check. " : ""}${kyc.scope}${kyc.match === "other_country" ? " Written for another country, so yours may differ." : ""}` : undefined, source: kyc ? { url: kyc.documentsUrl } : undefined },
@@ -49,8 +52,8 @@ export function ProviderRequirements({ assessment, feeTax, receipt, delivery, pr
     { label: "Delivery and settlement", icon: Clock3, tone: "orange", details: [timing], source: payment?.delivery },
     { label: "Tax on provider fees", icon: Percent, tone: "orange", details: [tax], source: payment?.feeTax },
     { label: "Export GST and income tax", icon: ReceiptText, tone: "green", details: [payment?.exportTax?.detail], source: payment?.exportTax },
-    { label: "Provider fees", icon: Banknote, tone: "orange", details: assessment ? [assessment.fees] : undefined },
-    { label: "Transfer limits", icon: Gauge, tone: "neutral", details: assessment ? [assessment.limits] : undefined },
+    { label: "Provider fees", icon: Banknote, tone: "orange", details: feeDetails },
+    { label: "Transfer limits", icon: Gauge, tone: "neutral", details: limitDetails },
     { label: "Payout account", icon: Landmark, tone: "green", details: assessment?.settlement },
     { label: "Supported routes", icon: Globe2, tone: "neutral", details: assessment ? [assessment.corridors] : undefined },
     { label: "Payment purpose", icon: Target, tone: "neutral", details: assessment ? [assessment.purpose] : undefined },

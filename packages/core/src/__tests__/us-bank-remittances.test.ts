@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { comparePrices, type PriceCheckInput } from "../pricing.js";
-import { usBankRemittanceRows } from "../public-pricing/us-bank-remittances.js";
+import { ofxPublicPrice, remitlyPublicPrice, usBankRemittanceRows, worldRemitPublicPrice } from "../public-pricing/us-bank-remittances.js";
 
 const now = new Date("2026-11-19T20:00:00Z");
 const input: PriceCheckInput = {
@@ -130,6 +130,7 @@ describe("US bank-funded remittances", () => {
 
   it("accepts Xoom's documented payout shape with local rounding and preserves the funding fee", async () => {
     const fetcher = vi.fn<typeof fetch>(async (url, options) => {
+      if (String(url).includes("remitly.com")) return new Response(null, { status: 404 });
       if (String(url).includes("/vietnam/send-money")) return new Response(null, { headers: { "set-cookie": "CSRF=guest-session; Secure; Path=/" } });
       expect(JSON.parse(String(options?.body)).variables).toMatchObject({ destinationCountry: "VN", destinationCurrency: "VND", amount: "1000" });
       return Response.json({
@@ -143,11 +144,13 @@ describe("US bank-funded remittances", () => {
     });
     const rows = await usBankRemittanceRows("VND", 1000, fetcher, now);
     expect(rows).toEqual([expect.objectContaining({ providerSlug: "xoom", recipientAmount: 24955300, feeAmount: 2.99, partial: true })]);
-    expect(fetcher.mock.calls).toHaveLength(2);
+    expect(fetcher.mock.calls.filter(([u]) => String(u).includes("xoom.com"))).toHaveLength(2);
   });
 
   it("omits an amount-specific Xoom payout the provider marks unavailable", async () => {
-    const fetcher = vi.fn<typeof fetch>(async (url) => String(url).includes("/kenya/send-money")
+    const fetcher = vi.fn<typeof fetch>(async (url) => String(url).includes("remitly.com")
+      ? new Response(null, { status: 404 })
+      : String(url).includes("/kenya/send-money")
       ? new Response(null, { headers: { "set-cookie": "CSRF=guest-session; Secure; Path=/" } })
       : Response.json({
         sourceCurrency: "USD", destinationCurrency: "KES", destinationCountry: "KE",
@@ -158,5 +161,52 @@ describe("US bank-funded remittances", () => {
         }] },
       }));
     expect(await usBankRemittanceRows("KES", 1000, fetcher, now)).toEqual([]);
+  });
+
+  it("reads OFX and WorldRemit public calculators across multi-country non-US corridors", async () => {
+    const ofxFetcher: typeof fetch = async (url) => String(url) === "https://api.ofx.com/PublicSite.ApiService/OFX/spotrate/Individual/GBP/INR/1000"
+      ? Response.json({ CustomerRate: 112.4, CustomerAmount: 112400, Fee: 0, DeliveryCountry: "India" })
+      : new Response(null, { status: 404 });
+    const gbIn: PriceCheckInput = {
+      sourceCurrency: "GBP", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000,
+      context: { profile: "personal", purpose: "personal", direction: "send", country: "GB", paymentMethod: "local_bank" },
+    };
+    expect(await ofxPublicPrice(gbIn, ofxFetcher, now)).toMatchObject({ providerSlug: "ofx", recipientAmount: 112400, feeAmount: 0, partial: true });
+
+    const wrFetcher: typeof fetch = async (url, options) => {
+      expect(String(url)).toBe("https://api.worldremit.com/graphql");
+      expect(JSON.parse(String(options?.body)).variables).toEqual({
+        amount: 500, sendCountry: "GB", sendCurrency: "GBP", receiveCountry: "NG", receiveCurrency: "NGN",
+      });
+      return Response.json({ data: { createCalculation: { errors: [], calculation: {
+        id: null, send: { currency: "GBP", amount: 500 }, receive: { currency: "NGN", amount: 985000 },
+        rounding: { receiveRoundingSeed: 1 }, exchangeRate: { value: 1970, crossedOutValue: null },
+        informativeSummary: { fee: { value: { amount: 2.99, currency: "GBP" } }, discount: null, appliedPromotions: null, totalToPay: { amount: 502.99 } },
+      } } } });
+    };
+    const gbNg: PriceCheckInput = {
+      sourceCurrency: "GBP", destinationCurrency: "NGN", destinationCountry: "NG", amount: 500,
+      context: { profile: "personal", purpose: "personal", direction: "send", country: "GB", paymentMethod: "transfer_service" },
+    };
+    expect(await worldRemitPublicPrice(gbNg, wrFetcher, now)).toMatchObject({ providerSlug: "world-remit", recipientAmount: 985000, feeAmount: 2.99, partial: true });
+
+    const remitlyFetcher: typeof fetch = async (url) => {
+      expect(String(url)).toContain("conduit=GBR%3AGBP-IND%3AINR");
+      return Response.json({
+        estimate: {
+          conduit: {
+            source_country: "GBR", target_country: "IND",
+            source_currency: { alpha3: "GBP" }, target_currency: { alpha3: "INR" },
+          },
+          pay_in_method: "DEBIT", pay_out_method: "BANK_DEPOSIT",
+          send_amount: "1000.00", receive_amount: "120500.00", total_charge_amount: "1000.00",
+          exchange_rate: { base_rate: "120.50", promotional_exchange_rate: null, capped_promotional_exchange_rate_amount: null },
+          fee: { total_fee_amount: "0.00" }, discount: null, tax_details: null,
+        },
+      });
+    };
+    expect(await remitlyPublicPrice(gbIn, remitlyFetcher, now)).toMatchObject({
+      providerSlug: "remitly", recipientAmount: 120500, feeAmount: 0, feeCurrency: "GBP", rate: 120.5, partial: true,
+    });
   });
 });

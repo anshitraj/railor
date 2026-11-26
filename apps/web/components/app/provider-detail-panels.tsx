@@ -164,15 +164,16 @@ export function FeesAndLimits({ row, assessment, feeTax, method, from, to, amoun
 }
 
 /** Timing, where the money lands and the paperwork around it. */
-export function DeliveryAndPaperwork({ row, assessment, delivery, receipt }: { row: PriceRow; assessment: Assessment; delivery?: string | null; receipt?: string | null }) {
+export function DeliveryAndPaperwork({ row, assessment, delivery, receipt, from, to }: { row: PriceRow; assessment: Assessment; delivery?: string | null; receipt?: string | null; from?: string; to?: string }) {
   const payment = assessment?.payment;
+  const facts = row.providerSlug ? providerFacts(row.providerSlug, { from: from ?? "", to: to ?? "" }) : null;
   const topics: Topic[] = [
-    { label: "Delivery and settlement", icon: Clock3, tone: "orange", emphasis: true, details: [delivery] },
+    { label: "Delivery and settlement", icon: Clock3, tone: "orange", emphasis: true, details: [delivery ?? facts?.delivery?.detail] },
     { label: "Payout account", icon: Landmark, tone: "green", details: assessment?.settlement },
     { label: "Supported routes", icon: Globe2, tone: "neutral", details: [assessment?.corridors] },
     { label: "Payment purpose", icon: Target, tone: "neutral", details: [assessment?.purpose] },
     { label: "Invoice and payment documents", icon: FileText, tone: "neutral", list: true, details: assessment?.documents },
-    { label: "Remittance proof", icon: FileBadge, tone: "green", details: [payment?.receipt?.detail ?? receipt] },
+    { label: "Remittance proof", icon: FileBadge, tone: "green", details: [payment?.receipt?.detail ?? receipt ?? (facts?.paperwork ? facts.paperwork.lines.join(" ") : null)] },
     { label: "Export GST and income tax", icon: ReceiptText, tone: "green", details: [payment?.exportTax?.detail] },
     { label: "Notes from the source", icon: Info, tone: "neutral", list: true, details: row.notes },
   ];

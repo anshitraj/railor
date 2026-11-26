@@ -190,11 +190,11 @@ export function PriceProviderBrowser(props: Props) {
       </div>
       <motion.div id="price-panel-3" role="tabpanel" aria-labelledby="price-tab-3" hidden={tab !== "Historical data"} initial={false} animate={{ opacity: tab === "Historical data" ? 1 : 0 }} transition={{ duration: reduce ? 0 : .18 }} className={styles.contextPanel}>{tab === "Historical data" ? props.history : null}</motion.div>
     </section>
-    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected ? priceRowKey(selected) : "none"} offer={selected ? offerFor(selected.providerSlug) : undefined} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
+    {props.selectedCandidate ? <UnpricedProvider key={props.selectedCandidate.providerSlug} provider={props.selectedCandidate} from={from} to={to} onGetQuote={props.onGetQuote} bookmark={props.bookmark} /> : <SelectedProvider key={selected ? priceRowKey(selected) : "none"} offer={selected ? offerFor(selected.providerSlug) : undefined} row={selected} best={best} reference={props.reference ?? null} from={from} to={to} amount={amount} checked={props.checked} webEvidence={props.webEvidence} connection={props.connection} action={props.action} bookmark={props.bookmark} />}
   </>;
 }
 
-function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: MarketCoverageProvider; onGetQuote?: Props["onGetQuote"]; bookmark?: ReactNode }) {
+function UnpricedProvider({ provider, from, to, onGetQuote, bookmark }: { provider: MarketCoverageProvider; from: string; to: string; onGetQuote?: Props["onGetQuote"]; bookmark?: ReactNode }) {
   const [pending, setPending] = useState(false);
   const [tried, setTried] = useState(false);
   const [detail, setDetail] = useState<Awaited<ReturnType<NonNullable<Props["onGetQuote"]>>>>(null);
@@ -222,18 +222,21 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
     }
   }
 
+  const facts = providerFacts(provider.providerSlug, { from, to });
   const fees = provider.feeEvidence?.slice(0, 3) ?? [];
-  const sources = provider.discoverySources?.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
+  const factSources = facts ? [...(facts.fees?.sources ?? []), ...(facts.limits?.sources ?? []), ...(facts.tax?.sources ?? []), ...(facts.delivery?.sources ?? [])] : [];
+  const allSources = Array.from(new Map([...(provider.discoverySources ?? []), ...factSources].map(s => [s.url, s])).values());
+  const sources = allSources.filter(source => !fees.some(fee => fee.sourceUrl === source.url));
   return <aside id="price-selected-provider" tabIndex={-1} className={styles.selectedPanel} aria-label="Selected provider">
     <div className={styles.quoteHero}>
-      <ProviderIdentity slug={provider.providerSlug} name={provider.providerName} subtitle={provider.category} status="Quote unavailable" />
+      <ProviderIdentity slug={provider.providerSlug} name={provider.providerName} subtitle={provider.category} status={facts?.delivery?.label ?? "Quote required"} />
     </div>
     {bookmark && <div className={styles.researchBookmark}>{bookmark}</div>}
     <div className={styles.pricingResearch}>
-      <span>No payout quote for this setup</span>
+      <span>No live payout quote for this setup</span>
       <h3>{provider.pricingStatus?.label ?? "Provider pricing"}</h3>
       <p>{provider.pricingStatus?.reason ?? "Ask the provider for your route and account price."}</p>
-      {provider.pricingReviewedAt && <small>Reviewed <time dateTime={provider.pricingReviewedAt}>{provider.pricingReviewedAt}</time></small>}
+      {(provider.pricingReviewedAt ?? facts?.reviewedAt) && <small>Reviewed <time dateTime={provider.pricingReviewedAt ?? facts?.reviewedAt}>{provider.pricingReviewedAt ?? facts?.reviewedAt}</time></small>}
     </div>
     {onGetQuote ? <div className={styles.providerQuoteRequest}>
       <button type="button" className={styles.providerAction} onClick={() => void getQuote()} disabled={pending} aria-busy={pending}>
@@ -248,11 +251,19 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
     {provider.websiteUrl
       ? <a className={styles.providerAction} href={provider.websiteUrl} target="_blank" rel="noreferrer noopener">Visit {provider.providerName}<ArrowUpRight size={14} /></a>
       : <p className={styles.noAction}>{provider.providerName} doesn’t publish a price for this route. Ask the provider for a quote.</p>}
+    {facts?.fees && <div className={styles.publishedFee}><h3>Published fees</h3>{facts.fees.lines.map((line, i) => <p key={i}>{line}</p>)}</div>}
+    {facts?.limits && <div className={styles.publishedFee}><h3>Published transfer limits</h3>{facts.limits.lines.map((line, i) => <p key={i}>{line}</p>)}</div>}
+    {facts?.delivery && <div className={styles.publishedFee}><h3>Delivery &amp; settlement · {facts.delivery.label}</h3><p>{facts.delivery.detail}</p></div>}
+    {facts?.tax && <div className={styles.publishedFee}><h3>Tax &amp; charges</h3>{facts.tax.lines.map((line, i) => <p key={i}>{line}</p>)}</div>}
     {fees.map((fee, index) => <div className={styles.publishedFee} key={index}><h3>{index === 0 && provider.feeHighlight ? provider.feeHighlight : fee.product}</h3><p>{fee.summary}</p>{fee.sourceUrl && <a href={fee.sourceUrl} className={styles.sourceLink} target="_blank" rel="noreferrer noopener">Fee source <ArrowUpRight size={11} aria-hidden /></a>}</div>)}
+    {provider.profileAssessment?.kyc && <div className={styles.publishedFee}>
+      <h3>Identity verification (KYC)</h3>
+      <KycGuide assessment={provider.profileAssessment} provider={provider.providerName} />
+    </div>}
     {sources?.map(source => <a key={source.url} className={styles.sourceLink} href={source.url} target="_blank" rel="noreferrer noopener">{source.label}<ArrowUpRight size={12} /></a>)}
-    {provider.profileAssessment && <details className={styles.unpricedRequirements}>
+    {provider.profileAssessment && !provider.profileAssessment.kyc && <details className={styles.unpricedRequirements}>
       <summary>Requirements and remittance proof</summary>
-      <ProviderRequirements assessment={provider.profileAssessment} provider={provider.providerName} />
+      <ProviderRequirements assessment={provider.profileAssessment} provider={provider.providerName} facts={facts} />
     </details>}
     <Link href="/docs/pricing#provider-coverage" className={styles.sourceLink}>Coverage and pricing methodology<ArrowRight size={12} /></Link>
   </aside>;
@@ -302,14 +313,15 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
 
   const assessment = row.profileAssessment;
   const payment = assessment?.payment;
+  const facts = providerFacts(row.providerSlug, { from, to });
   const feeTax = payment?.feeTax?.detail ?? row.taxNote ?? (row.taxIncluded === true
     ? "Included in the published provider fee."
     : row.taxIncluded === false
       ? "Added to the base fee and included in the displayed estimate."
       : row.taxIncluded === null ? "Not stated in the sources checked." : "No verified tax treatment for this payment method.");
-  const receipt = payment?.receipt?.detail ?? row.receipt;
-  const delivery = row.basis === "exact" && row.delivery !== payment?.delivery?.label ? row.delivery : payment?.delivery?.detail ?? row.delivery;
-  const deliveryLabel = row.delivery ?? payment?.delivery?.label;
+  const receipt = payment?.receipt?.detail ?? row.receipt ?? (facts?.paperwork ? facts.paperwork.lines.join(" ") : undefined);
+  const delivery = row.basis === "exact" && row.delivery !== payment?.delivery?.label ? row.delivery : payment?.delivery?.detail ?? row.delivery ?? facts?.delivery?.detail;
+  const deliveryLabel = row.delivery ?? payment?.delivery?.label ?? facts?.delivery?.label;
   const cost = benchmarkCost(row, amount, reference?.rate, to);
   const difference = benchmarkPayoutDifference(row.recipientAmount, amount, reference?.rate, to);
   const percent = difference.kind === "cost" ? `${(Math.abs(difference.bps) / 100).toFixed(2)}%` : null;
@@ -317,13 +329,13 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
   const sourceLabel = pricingSourceLabel(row);
   const sourceTime = priceSourceTime(row.observedAt, row.basis);
   const providerName = row.providerName.split(" · ")[0]!;
-  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} provider={providerName} />;
+  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} provider={providerName} facts={facts} />;
   // Every source for this provider is listed once, here: the tabs carry no links of their own.
   const kyc = assessment?.kyc;
   const providerSources = Array.from(new Map([
     ...(assessment?.sources ?? []),
     ...(kyc ? [{ label: `${providerName} · KYC documents`, url: kyc.documentsUrl }, ...(kyc.approvalTime ? [{ label: `${providerName} · KYC approval time`, url: kyc.approvalTime.url }] : [])] : []),
-    ...(() => { const facts = providerFacts(row.providerSlug, { from, to }); return facts ? [...(facts.fees?.sources ?? []), ...(facts.limits?.sources ?? []), ...(facts.tax?.sources ?? [])] : []; })(),
+    ...(facts ? [...(facts.fees?.sources ?? []), ...(facts.limits?.sources ?? []), ...(facts.tax?.sources ?? []), ...(facts.delivery?.sources ?? []), ...(facts.paperwork?.sources ?? [])] : []),
   ].map(source => [source.url, source])).values());
   const sourceDetails = (
     <div className={styles.quoteSources}>
@@ -458,7 +470,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
         )}
         {tab === "KYC" && <KycGuide assessment={assessment} provider={providerName} />}
         {tab === "Fees & limits" && <FeesAndLimits row={row} assessment={assessment} feeTax={feeTax} method={fundingMethod(row)} from={from} to={to} amount={amount} reference={reference?.rate ?? null} provider={providerName} />}
-        {tab === "Delivery & paperwork" && <DeliveryAndPaperwork row={row} assessment={assessment} delivery={delivery} receipt={receipt} />}
+        {tab === "Delivery & paperwork" && <DeliveryAndPaperwork row={row} assessment={assessment} delivery={delivery} receipt={receipt} from={from} to={to} />}
       </div>
     </aside>
   );
