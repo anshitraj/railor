@@ -55,4 +55,4 @@ export function providerFacts(slug: string, route: { from: string; to: string })
 }
 
 /** The provider's own words are never replaced by Railor's placeholder: these are the placeholders. */
-export const isPlaceholder = (text: string | null | undefined): boolean => !text || /unconfirmed|not verified|no verified|not supplied|confirm (at|with)/i.test(text);
+export const isPlaceholder = (text: string | null | undefined): boolean => !text || /unconfirmed|not verified|no verified|not supplied|confirm (at|with)|must be confirmed|no unlimited/i.test(text);

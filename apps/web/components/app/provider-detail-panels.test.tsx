@@ -60,6 +60,12 @@ describe("the fees and delivery tabs", () => {
     expect(shown).not.toMatch(/not verified|unconfirmed|no verified/i);
   });
 
+  it("treats a provider’s own \"must be confirmed\" filler as not published", () => {
+    const shown = fees({ assessment: { ...base, limits: "Provider-specific account, monthly-volume and transaction limits must be confirmed; no unlimited-transfer assumption." } });
+    expect(shown).toContain("Acme doesn’t publish a limit for this route that Railor can read");
+    expect(shown).not.toContain("must be confirmed");
+  });
+
   it("adds what a provider itself publishes, with limits for the currencies on the route", () => {
     const shown = fees({ row: row({ providerSlug: "wise", feeAmount: 9.87, feeCurrency: "USD" } as Partial<PriceRow>), provider: "Wise" });
     expect(shown).toContain("percentage of the amount you send, plus a fixed fee");
