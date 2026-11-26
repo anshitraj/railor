@@ -12,6 +12,8 @@ import { midMarketSend, netPayGap, PAYROLL_MAX_ROWS, payrollFigure, sendToLand, 
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Each payout calls several providers; a sheet of 50 needs longer than the default.
+export const maxDuration = 60;
 
 const Body = z.object({
   sourceCurrency: z.string().regex(/^[A-Z]{3}$/),
@@ -72,7 +74,10 @@ export async function POST(request: Request) {
     const { row, status } = figure;
     const best = { provider: row.providerName, product: row.product?.label ?? null, recipientAmount: row.recipientAmount, dataStatus: pricingSourceLabel(row), costMinor: null as number | null, bps: null as number | null, feeIncluded: row.costComplete !== false };
     if (status === "estimate") {
-      // No complete price: the top figure as an estimate, with what's unconfirmed — never as the best price.
+      // No comparable price: the top figure as an estimate, with what's unconfirmed — never ranked as the best price.
+      // Where its fee is included the cost against mid-market is still real arithmetic, so it is shown (as an estimate).
+      const cost = best.feeIncluded ? benchmarkCost(row, sendAmount, result.reference?.rate, payout.currency) : null;
+      if (cost?.kind === "cost") { best.costMinor = cost.costMinor; best.bps = cost.bps; }
       return {
         quote: {
           status: "estimate",

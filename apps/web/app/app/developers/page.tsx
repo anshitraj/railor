@@ -8,10 +8,7 @@ import {
   getUsageDailySeries,
 } from "@railor/core";
 import { getSession } from "../../../lib/auth";
-import { getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
-import type { CorridorQuery } from "@railor/types";
-import { developerExampleQuery } from "../../../lib/developer-setup";
 import { appOrigin } from "../../../lib/security";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +23,7 @@ export default async function DevelopersPage() {
   const canManage = session.role === "owner" || session.role === "admin";
   const { entitlement, used, since } = await getWorkspaceApiUsage(org.id);
   const keyLimit = (key: { monthlyRequestCap: number | null }) => Math.min(key.monthlyRequestCap ?? entitlement.limits.apiRequests, entitlement.limits.apiRequests);
-  const [keys, usage, dailySeries, corridors] = await Promise.all([
+  const [keys, usage, dailySeries] = await Promise.all([
     db
       .select()
       .from(apiKeys)
@@ -34,7 +31,6 @@ export default async function DevelopersPage() {
       .orderBy(desc(apiKeys.createdAt)),
     getUsageByEndpoint(org.id),
     getUsageDailySeries(org.id, 30),
-    getSavedCorridors(org.id),
   ]);
 
   // Every active key gets its own usage count — a test-only org (the
@@ -58,13 +54,10 @@ export default async function DevelopersPage() {
       }
     : null;
 
-  const exampleQuery = developerExampleQuery(org, (corridors[0]?.query ?? {}) as Partial<CorridorQuery>);
-
   return (
     <div className="flex flex-col gap-5">
     <DeveloperPortal
       baseUrl={appOrigin()}
-      exampleQuery={exampleQuery}
       canManage={canManage}
       keys={keys.map((k) => ({
         id: k.id,

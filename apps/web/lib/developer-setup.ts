@@ -19,6 +19,14 @@ export function developerExampleQuery(workspace: { building?: string | null; ent
     .map(([key, value]) => [key === "sourceAsset" ? "asset" : key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`), value]));
 }
 
+/** The first API request: the same comparison the agent prompt asks for (1,000 USD to INR, personal, from the US). */
+export const PRICE_EXAMPLE = {
+  source_currency: "USD",
+  destination_currency: "INR",
+  amount: 1000,
+  context: { profile: "personal", country: "US", direction: "send", purpose: "personal", paymentMethod: "local_bank" },
+} as const;
+
 export const SETUP_CLIENTS = ["Claude", "Claude Code", "Codex", "Cursor", "VS Code", "Any MCP client"] as const;
 export type SetupClient = typeof SETUP_CLIENTS[number];
 export const AGENT_SETUP_PATH = "/app/developers/setup";

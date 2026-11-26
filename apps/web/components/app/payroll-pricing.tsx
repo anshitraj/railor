@@ -62,7 +62,8 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
         landed += 1; land += quote.netPay.land.amount; landSent += quote.netPay.sent;
         if (quote.netPay.land.basis === "estimate" || quote.status === "estimate") landEstimate = true;
       }
-      if (quote?.status !== "priced" || !quote.best || !quote.reference?.rate) continue;
+      const usable = quote?.status === "priced" || (quote?.status === "estimate" && quote.best?.feeIncluded);
+      if (!usable || !quote?.best || !quote.reference?.rate) continue;
       complete += 1; sent += quote.netPay?.sent ?? row.amount;
       if (quote.best.costMinor !== null) cost += quote.best.costMinor / 100 / quote.reference.rate;
       if (quote.spreadInSource) spread += quote.spreadInSource;
@@ -189,7 +190,7 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
           {receive ? <p className={styles.estimateNote}><strong>Estimated send amounts.</strong> Railor prices by what you send, so each send amount is the net pay at the mid-market rate, priced and then checked against the net pay. Where Wise is best, “send to land it” is Wise’s own quote for the exact amount; otherwise it’s scaled from the best option’s price.</p> : null}
 
           {missing ? <p className={styles.warn}>Railor couldn’t find {missing} column. Name the columns “{receive ? "Net pay" : "Amount to send"}” and “Currency”.</p> : null}
-          {totals && !totals.priced && totals.estimates ? <p className={styles.warn}>{totals.estimates} {totals.estimates === 1 ? "payout has" : "payouts have"} an estimate only: a cost or your company’s eligibility isn’t confirmed for these routes yet, so nothing is ranked as best. Connect your provider account for exact prices.</p> : null}
+          {totals && totals.estimates ? <p className={styles.estimateNote}><strong>{totals.estimates} of {rows.length} {totals.estimates === 1 ? "price is an estimate" : "prices are estimates"}.</strong> {totals.estimates === 1 ? "It is" : "They are"} the provider’s own public price for a standard transfer, fee included. Whether your company’s account gets the same price isn’t confirmed, so nothing is ranked as the best option yet. Connect your provider account for exact prices.</p> : null}
           {totals && !totals.priced && !totals.estimates && !totals.landed ? <p className={styles.warn}>None of these payouts could be priced from {sourceCurrency}. {sourceCurrency === "INR" ? "Outbound INR prices depend on your own account; try paying from USD or EUR." : "Check the currencies, or try again shortly."}</p> : null}
           {receive && totals?.landed ? (
             <div className={styles.tiles}>
@@ -201,7 +202,7 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
             <div className={styles.tiles}>
               <div className={styles.tile} data-tone="good"><span>Priced</span><strong>{totals.priced}<small> of {rows.length} payouts{totals.estimates ? ` · ${totals.estimates} estimates` : ""}</small></strong></div>
               <div className={styles.tile}><span>Best options cost</span><strong>≈ {amount(Math.round(totals.cost), sourceCurrency, 0)}<small>{totals.bps !== null ? ` · ${totals.bps} bps` : ""}</small></strong></div>
-              <div className={styles.tile} data-tone={totals.spread > 0 ? "bad" : undefined}><span>Priciest options would lose</span><strong>≈ {amount(Math.round(totals.spread), sourceCurrency, 0)}<small> more</small></strong></div>
+              {totals.spread > 0 ? <div className={styles.tile} data-tone={totals.spread > 0 ? "bad" : undefined}><span>Priciest options would lose</span><strong>≈ {amount(Math.round(totals.spread), sourceCurrency, 0)}<small> more</small></strong></div> : null}
             </div>
           ) : null}
           <div className={styles.tableWrap}>
@@ -234,7 +235,7 @@ export function PayrollPricing({ defaultCurrency, payslips }: { defaultCurrency:
                         </td>
                       ) : (
                         <>
-                          <td className={styles.num}>{quote?.best?.costMinor != null ? <>{amount(quote.best.costMinor / 100, row.currency)}<small>{quote.best.bps} bps</small></> : "—"}</td>
+                          <td className={styles.num}>{quote?.best?.costMinor != null ? <>{estimate ? "≈ " : ""}{amount(quote.best.costMinor / 100, row.currency)}<small>{quote.best.bps} bps</small></> : "—"}</td>
                           <td className={styles.num} data-short={quote?.spread ? true : undefined}>{quote?.spread ? amount(quote.spread, row.currency) : "—"}</td>
                         </>
                       )}

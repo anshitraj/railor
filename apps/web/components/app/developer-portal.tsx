@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, Check, Copy, Eye, EyeOff, KeyRound, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { CodeSample } from "@railor/ui";
 import { createKey, regenerateKey, revokeKey } from "../../app/app/developers/actions";
-import { AGENT_SETUP_PATH } from "../../lib/developer-setup";
+import { AGENT_SETUP_PATH, PRICE_EXAMPLE } from "../../lib/developer-setup";
 import { toast } from "../toast";
 import styles from "./developer-portal.module.css";
 import { McpClientGallery } from "./mcp-client-gallery";
@@ -23,8 +23,8 @@ const why = (error: unknown, fallback: string) => (error === "insufficient_role"
  * a first request that works as pasted, AI-tool setup, usage, and every key
  * the workspace has. Every action confirms with a toast or explains why not.
  */
-export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exampleQuery, canManage = false }: {
-  keys: KeyRow[]; usage: UsageRow[]; dailySeries: DailyUsagePoint[]; quota: QuotaInfo | null; baseUrl: string; exampleQuery: Record<string, unknown>; canManage?: boolean;
+export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, canManage = false }: {
+  keys: KeyRow[]; usage: UsageRow[]; dailySeries: DailyUsagePoint[]; quota: QuotaInfo | null; baseUrl: string; canManage?: boolean;
 }) {
   const router = useRouter();
   const [fresh, setFresh] = useState<KeyRow | null>(null);
@@ -155,9 +155,21 @@ export function DeveloperPortal({ keys, usage, dailySeries, quota, baseUrl, exam
           <h3>Your first request</h3>
           <p>{revealed && secret ? "Copy and run this example with your key." : "Replace the placeholder with your API key, or reveal your key above to fill it in."}</p>
           <CodeSample apiKey={revealed ? secret : undefined} variants={[
-            { language: "curl", label: "cURL", code: `curl "${baseUrl}/v1/corridors/search" \\\n  -H "Authorization: Bearer RAILOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(exampleQuery)}'` },
-            { language: "ts", label: "TypeScript", code: `const response = await fetch("${baseUrl}/v1/corridors/search", {\n  method: "POST",\n  headers: { Authorization: "Bearer RAILOR_API_KEY", "Content-Type": "application/json" },\n  body: JSON.stringify(${JSON.stringify(exampleQuery, null, 2)}),\n});\nconsole.log(await response.json());` },
-            { language: "python", label: "Python", code: `import requests\n\nresponse = requests.post(\n    "${baseUrl}/v1/corridors/search",\n    headers={"Authorization": "Bearer RAILOR_API_KEY"},\n    json=${JSON.stringify(exampleQuery)},\n)\nprint(response.json())` },
+            { language: "curl", label: "cURL", code: `curl "${baseUrl}/v1/prices" \\\n  -H "Authorization: Bearer RAILOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(PRICE_EXAMPLE)}'` },
+            { language: "ts", label: "TypeScript", code: `const response = await fetch("${baseUrl}/v1/prices", {
+  method: "POST",
+  headers: { Authorization: "Bearer RAILOR_API_KEY", "Content-Type": "application/json" },
+  body: JSON.stringify(${JSON.stringify(PRICE_EXAMPLE, null, 2)}),
+});
+console.log(await response.json());` },
+            { language: "python", label: "Python", code: `import requests
+
+response = requests.post(
+    "${baseUrl}/v1/prices",
+    headers={"Authorization": "Bearer RAILOR_API_KEY"},
+    json=${JSON.stringify(PRICE_EXAMPLE)},
+)
+print(response.json())` },
           ]} />
         </div>
       </section>
