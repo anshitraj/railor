@@ -62,5 +62,6 @@ export function kycDocumentRows(documents: readonly string[], note?: string | nu
   const lines = [...documents, ...(note ? note.split(/(?<=[.!?])\s+(?=[A-Z])/) : [])]
     .map((line) => line.trim())
     .filter(Boolean);
-  return lines.map((text) => ({ types: documentTypes(text), text, need: SOMETIMES.test(text) ? "sometimes" : "required" }));
+  // A provider note often repeats a listed document word for word; show it once.
+  return [...new Set(lines)].map((text) => ({ types: documentTypes(text), text, need: SOMETIMES.test(text) ? "sometimes" : "required" }));
 }

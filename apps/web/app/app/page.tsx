@@ -4,21 +4,36 @@ import { redirect } from "next/navigation";
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { getDefaultActivePolicy, listPolicies } from "@railor/core";
 import { apiKeys, getDb } from "@railor/database";
-import { ArrowRight, Bookmark, Bot, Check, ChevronRight, FileText, ListChecks, Radar, Route } from "lucide-react";
+import { Bookmark, ChartColumn, ChartPie, ChevronRight, Radar } from "lucide-react";
 import { getSession } from "../../lib/auth";
 import { getOrgAlerts } from "../../lib/org";
 import { listSavedPairsWithAlerts } from "../../lib/rate-alerts";
-import { SavedPairsList } from "../../components/app/saved-pairs-list";
 import { loadPricePage } from "../../lib/pricing";
 import { onboardingPriceProfile } from "../../lib/onboarding";
+import { loadDashboard } from "../../lib/dashboard";
+import { greeting, summaryLine } from "../../lib/dashboard-metrics";
+import { shellWalletBalance } from "../../lib/wallet";
+import { getWorkspaceApiUsage } from "../../lib/entitlements";
+import { planName } from "../../lib/plans";
+import { isCompanyWorkspace } from "../../lib/workspace-profile";
+import { SavedPairsList } from "../../components/app/saved-pairs-list";
 import { ActivityCards } from "../../components/app/activity-cards";
 import { QuickQuote, QuickQuoteSkeleton } from "../../components/price/quick-quote";
-import styles from "../../components/app/home.module.css";
+import { ActivityChart } from "../../components/app/dashboard/activity-chart";
+import { ShareDonut } from "../../components/app/dashboard/share-donut";
+import { KpiStrip, NeedsYou, RateWidget, RateWidgetSkeleton, RecentPayments, Timeline, Tools, providerLabel, type NeedItem } from "../../components/app/dashboard/widgets";
+import styles from "../../components/app/dashboard/dashboard.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Home" };
 
-/** The workspace calculator streams in separately so Home never waits on a provider. */
+/** Where the workspace is registered decides the clock its greeting reads; anywhere else reads UTC. */
+const TIME_ZONE: Record<string, string> = {
+  IN: "Asia/Kolkata", US: "America/New_York", GB: "Europe/London", AE: "Asia/Dubai", SG: "Asia/Singapore",
+  AU: "Australia/Sydney", CA: "America/Toronto", DE: "Europe/Berlin", FR: "Europe/Paris", NL: "Europe/Amsterdam",
+};
+
+/** The calculator streams in separately so the dashboard never waits on a provider. */
 async function HomeQuote({ organizationId, entityCountry, building }: { organizationId: string; entityCountry: string | null; building: string | null }) {
   const page = await loadPricePage({}, organizationId, entityCountry, onboardingPriceProfile(building));
   return (
@@ -39,103 +54,118 @@ export default async function HomePage() {
   if (!session?.organization) redirect("/login");
   const org = session.organization;
   const db = await getDb();
-  const [savedPairs, alerts, activePolicy, policies, usedKeys, anyKeys] = await Promise.all([
+  const now = new Date();
+  const [savedPairs, alerts, activePolicy, policies, usedKeys, anyKeys, data, walletCents, usage] = await Promise.all([
     listSavedPairsWithAlerts(org.id, session.user.id).catch(() => []), getOrgAlerts(org.id, 3), getDefaultActivePolicy(org.id), listPolicies(org.id),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt), isNotNull(apiKeys.lastUsedAt))).limit(1),
     db.select({ id: apiKeys.id }).from(apiKeys).where(and(eq(apiKeys.organizationId, org.id), isNull(apiKeys.revokedAt))).limit(1),
+    loadDashboard(org.id, now),
+    shellWalletBalance(org.id, session.user.id).catch(() => null),
+    getWorkspaceApiUsage(org.id),
   ]);
   const name = (session.user.name ?? session.user.email.split("@")[0] ?? "there").split(" ")[0];
   const business = onboardingPriceProfile(org.building) === "business";
+  const company = isCompanyWorkspace(org.building);
   const savedPolicy = activePolicy?.policy ?? policies.find((policy) => policy.status === "draft" || policy.status === "active") ?? null;
+  const timeZone = TIME_ZONE[org.entityCountry ?? ""] ?? "UTC";
 
   // A real checklist: each step is done only when the workspace shows it.
   const steps = [
     { done: true, title: "Create your dashboard", href: "/app/settings", action: "Settings" },
-    { done: Boolean(org.onboardingCompletedAt), title: "Tell us how you use Railor", href: "/welcome", action: "Answer 3 questions" },
-    { done: savedPairs.length > 0, title: "Save a pair you use", href: "/app/prices", action: "Open Transfer" },
-    ...(business ? [{ done: Boolean(activePolicy), title: "Set your company rules", href: savedPolicy ? `/app/policies/${savedPolicy.id}` : "/app/policies", action: savedPolicy ? "Finish rules" : "Set rules" }] : []),
-    { done: usedKeys.length > 0, title: anyKeys.length ? "Make your first API request" : "Get your API key", href: "/app/developers", action: anyKeys.length ? "Try the API" : "Get a key" },
+    { done: Boolean(org.onboardingCompletedAt), title: "Tell us how you use Railor", href: "/welcome", action: "Answer" },
+    { done: savedPairs.length > 0, title: "Save a pair you use", href: "/app/prices", action: "Save one" },
+    ...(business ? [{ done: Boolean(activePolicy), title: "Set your company rules", href: savedPolicy ? `/app/policies/${savedPolicy.id}` : "/app/policies", action: savedPolicy ? "Finish" : "Set rules" }] : []),
+    { done: usedKeys.length > 0, title: anyKeys.length ? "Make your first API request" : "Get your API key", href: "/app/developers", action: anyKeys.length ? "Try it" : "Get a key" },
   ];
   const doneCount = steps.filter((step) => step.done).length;
-  const completion = Math.round((doneCount / steps.length) * 100);
-  const next = steps.find((step) => !step.done);
+
+  const needs: NeedItem[] = [
+    ...(data.pendingApprovals ? [{ id: "approvals", title: `Approve ${data.pendingApprovals} ${data.pendingApprovals === 1 ? "payment" : "payments"}`, detail: "Waiting for a reviewer", href: "/app/approvals", action: "Review", tone: "warn" as const }] : []),
+    ...data.stuckPayments.map((payment) => ({
+      id: `payment-${payment.id}`, title: `${payment.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${payment.from} → ${payment.to}`,
+      detail: `${payment.status.replace(/_/g, " ")}${providerLabel(payment.provider) ? ` · ${providerLabel(payment.provider)}` : ""}`, href: `/app/payments/${payment.id}`, action: "Open", tone: "warn" as const,
+    })),
+    ...(walletCents !== null && walletCents < 500 ? [{ id: "wallet", title: "Wallet is running low", detail: `$${(walletCents / 100).toFixed(2)} left for API calls`, href: "/app/wallet", action: "Add funds", tone: "warn" as const }] : []),
+    ...steps.filter((step) => !step.done).map((step) => ({ id: `step-${step.title}`, title: step.title, detail: "Setup", href: step.href, action: step.action, tone: "info" as const })),
+  ].slice(0, 5);
+
+  const topRoute = data.topRoute ?? (savedPairs[0] ? { from: savedPairs[0].from, to: savedPairs[0].to } : { from: "USD", to: "INR" });
+  const dateLine = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone }).format(now);
 
   return (
     <div className={styles.home}>
-      <header className={styles.welcome}>
+      <header className={styles.head}>
         <div>
-          <h1>Welcome back, {name}</h1>
-          <p>Compare a transfer, open what you saved, or set up your tools.</p>
+          <p className={styles.eyebrow}>{dateLine}</p>
+          <h1>{greeting(now, timeZone)}, {name}</h1>
+          <p className={styles.summary}>{summaryLine({ needs: needs.length, checks: data.checks.value, topRoute: data.routes.find((share) => share.key !== "other")?.label ?? null, payments: data.payments.value })}</p>
+        </div>
+        <div className={styles.headActions}>
+          <Link href="/app/agent" className={styles.button}>Ask the agent</Link>
+          <Link href="/app/prices" className={`${styles.button} ${styles.buttonDark}`}>Compare a transfer</Link>
         </div>
       </header>
 
-      <section className={styles.top} aria-label="Start here">
-        <div className={styles.quote}>
+      <KpiStrip data={data} walletCents={walletCents} api={{ used: usage.used, limit: usage.entitlement.limits.apiRequests, plan: planName(usage.entitlement.plan) }} />
+
+      <div className={styles.grid}>
+        <div className={styles.span7} style={{ minWidth: 0 }}>
           <Suspense fallback={<QuickQuoteSkeleton variant="app" />}>
             <HomeQuote organizationId={org.id} entityCountry={org.entityCountry ?? null} building={org.building ?? null} />
           </Suspense>
         </div>
 
-        <div className={styles.rightCol}>
-        <aside className={styles.setup} aria-label="Get set up">
-          <div className={styles.setupHead}>
-            <div>
-              <h2>{doneCount === steps.length ? "You’re all set" : "Get set up"}</h2>
-              <p>{doneCount} of {steps.length} done</p>
-            </div>
-            <span className={styles.ring} aria-hidden>
-              <svg viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" />
-                <circle className={styles.ringValue} cx="24" cy="24" r="20" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - completion} />
-              </svg>
-              <span>{completion}%</span>
-            </span>
-          </div>
-          <ol className={styles.steps}>
-            {steps.map((step) => (
-              <li key={step.title} data-done={step.done || undefined} data-next={step === next || undefined}>
-                <span className={styles.stepMark} aria-hidden>{step.done ? <Check size={13} strokeWidth={3} /> : null}</span>
-                <span className={styles.stepTitle}>{step.title}<span className="sr-only">{step.done ? " (done)" : " (to do)"}</span></span>
-                {!step.done ? <Link href={step.href} className={`${styles.stepAction} press`}>{step.action}<ArrowRight size={13} aria-hidden /></Link> : null}
-              </li>
-            ))}
-          </ol>
-        </aside>
-        <section className={styles.savedPanel} aria-labelledby="home-saved">
-          <header><h2 id="home-saved"><Bookmark size={16} aria-hidden />Saved</h2><Link href="/app/saved">View all<ChevronRight size={15} aria-hidden /></Link></header>
-          <SavedPairsList initial={savedPairs.slice(0, 3)} compact />
-        </section>
+        <div className={`${styles.span5} ${styles.stack}`}>
+          <NeedsYou items={needs} setup={{ done: doneCount, total: steps.length }} />
+          <Suspense fallback={<RateWidgetSkeleton />}>
+            <RateWidget from={topRoute.from} to={topRoute.to} />
+          </Suspense>
+          <section className={styles.card} aria-labelledby="home-saved">
+            <header className={styles.cardHead}>
+              <h2 id="home-saved"><Bookmark size={16} aria-hidden />Saved routes</h2>
+              <Link href="/app/saved">View all<ChevronRight size={15} aria-hidden /></Link>
+            </header>
+            <SavedPairsList initial={savedPairs.slice(0, 3)} compact />
+          </section>
         </div>
-      </section>
 
-      <nav aria-label="Shortcuts" className={styles.shortcuts}>
-        {[
-          { href: "/app/search", title: "Find a route", body: "Who can serve your countries and currencies", Icon: Route },
-          { href: "/app/freelancer", title: "Get paid", body: "Invoices and receiving options", Icon: FileText },
-          { href: "/app/policies", title: "Company rules", body: "Limits, providers and approvals", Icon: ListChecks },
-          { href: "/app/agent", title: "Ask the agent", body: "Describe it in plain English", Icon: Bot },
-        ].map(({ href, title, body, Icon }) => (
-          <Link key={href} href={href} className={`${styles.shortcut} press`}>
-            <span className={styles.shortcutIcon}><Icon size={19} aria-hidden /></span>
-            <span><strong>{title}</strong><small>{body}</small></span>
-            <ChevronRight size={16} aria-hidden className={styles.shortcutArrow} />
-          </Link>
-        ))}
-      </nav>
+        <section className={`${styles.card} ${styles.span8} ${styles.stretch}`} aria-labelledby="activity-title">
+          <header className={styles.cardHead}>
+            <h2 id="activity-title"><ChartColumn size={16} aria-hidden />Your activity</h2>
+            <span className={styles.sub}>Totals for the last {data.days} days</span>
+          </header>
+          <ActivityChart points={data.daily} />
+        </section>
 
-      <section className={`${styles.lists} ${styles.listsSingle}`} aria-label="Your dashboard">
-        <div className={styles.panel}>
-          <header><h2><Radar size={17} aria-hidden />Latest changes</h2><Link href="/app/changes">View all<ChevronRight size={15} aria-hidden /></Link></header>
+        <section className={`${styles.card} ${styles.span4} ${styles.stretch}`} aria-labelledby="share-title">
+          <header className={styles.cardHead}>
+            <h2 id="share-title"><ChartPie size={16} aria-hidden />Where it goes</h2>
+          </header>
+          <ShareDonut views={[
+            { id: "routes", label: "Routes", unit: "price checks", shares: data.routes, empty: "Compare a transfer and the routes you check most are split out here." },
+            { id: "providers", label: "Providers", unit: "visits and payments", shares: data.providers, empty: "Open a provider from a comparison, or pay through one, to see where your money goes." },
+            { id: "currencies", label: "Payouts", unit: "payments", shares: data.currencies, empty: "Payments you make are split by the currency they arrive in." },
+          ]} />
+        </section>
+
+        <div className={`${styles.span6} ${styles.stretch}`} style={{ display: "grid", minWidth: 0 }}><RecentPayments payments={data.recentPayments} /></div>
+        <div className={`${styles.span6} ${styles.stretch}`} style={{ display: "grid", minWidth: 0 }}><Timeline items={data.timeline} /></div>
+
+        <section className={`${styles.card} ${styles.span5}`} aria-labelledby="changes-title">
+          <header className={styles.cardHead}>
+            <h2 id="changes-title"><Radar size={16} aria-hidden />Provider changes</h2>
+            <Link href="/app/changes">View all<ChevronRight size={15} aria-hidden /></Link>
+          </header>
           {alerts.length ? <ActivityCards items={alerts.map(({ alert, change, providerName, providerSlug }) => ({ id: alert.id, providerName, providerSlug, summary: change.summary, detectedAt: change.detectedAt }))} /> : (
             <div className={styles.empty}>
-              <Radar size={24} aria-hidden />
-              <h3>You’re all caught up</h3>
+              <strong>You’re all caught up</strong>
               <p>Watch a route or provider and changes to fees, limits or coverage land here.</p>
-              <Link href="/app/monitoring" className={`${styles.emptyAction} press`}>Set up monitoring<ArrowRight size={15} aria-hidden /></Link>
+              <Link href="/app/monitoring" className={styles.action}>Set up monitoring</Link>
             </div>
           )}
-        </div>
-      </section>
+        </section>
+        <div className={styles.span7} style={{ minWidth: 0 }}><Tools company={company} /></div>
+      </div>
     </div>
   );
 }
