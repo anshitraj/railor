@@ -204,21 +204,10 @@
 .audiences { display: grid; gap: 16px; }
 .profileControls { display: none; }
 .audience { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-line); border-radius: 28px; background: var(--color-surface); }
-.audienceArt { position: relative; overflow: hidden; height: 210px; background: linear-gradient(180deg, #fbefd9, #f6e3c3); }
-.audience:nth-child(2) .audienceArt { background: linear-gradient(180deg, #f6e6dc, #efd3c1); }
-.audience:nth-child(3) .audienceArt { background: linear-gradient(180deg, #e9ebe3, #d9ded0); }
-.audienceCoins { position: absolute; inset: 0; }
-.audienceCoins :global(.coin) { position: absolute; }
-@media (prefers-reduced-motion: no-preference) {
-  .audienceArt[data-playing] .audienceCoins :global(.coin) { animation: coinSettle .64s var(--ease-out) both; }
-  .audienceArt[data-playing] .audienceCoins :global(.coin):nth-child(2) { animation-delay: .11s; }
-  .audienceArt[data-playing] .audienceCoins :global(.coin):nth-child(3) { animation-delay: .2s; }
-}
-@keyframes coinSettle {
-  0% { opacity: .2; transform: translateY(34px) scale(.72) rotate(-16deg); }
-  72% { opacity: 1; transform: translateY(-3px) scale(1.025) rotate(2deg); }
-  100% { transform: none; }
-}
+.audienceArt { position: relative; overflow: hidden; height: 210px; background: var(--color-canvas); }
+.audiencePhoto { object-fit: cover; transition: transform .6s var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .audience:hover .audiencePhoto { transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .audiencePhoto { transition: none; } }
 .audienceBody { display: flex; flex: 1; flex-direction: column; padding: 24px; }
 .audienceBody h3 { color: var(--color-ink); font-size: 23px; font-weight: 650; letter-spacing: -.02em; }
 .audienceBody > p { margin-top: 6px; color: var(--color-muted); font-size: 15px; }
@@ -354,7 +343,6 @@
   .profileControls button:focus-visible, .routeChips:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
   .audience { border-radius: 22px; }
   .audienceArt { height: 132px; }
-  .audienceCoins :global(.coin) { scale: .79; }
   .audienceBody { padding: 17px 16px 14px; }
   .audienceBody .textLink { min-height: 44px; }
   .stepControls { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }

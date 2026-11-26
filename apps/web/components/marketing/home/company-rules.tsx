@@ -63,7 +63,7 @@ export function CompanyRulesSection() {
               </ol>
               <div className={styles.result} data-anim>
                 <UsersRound size={16} />
-                <span><strong>Waiting for approval</strong>Sent to a workspace admin for review</span>
+                <span><strong>Waiting for approval</strong>Sent to an admin for review</span>
               </div>
             </div>
             <span className={`sticker ${styles.sticker}`} data-tone="green" data-anim style={{ "--tilt": "5deg" } as React.CSSProperties}>✓ 4 of 5 rules passed</span>

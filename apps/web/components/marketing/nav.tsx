@@ -306,7 +306,7 @@ function NavSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
               <button key={example} type="button" className="press" onClick={() => go(example)}>{example}</button>
             ))}
           </div>
-          <p id={`${titleId}-note`} className={styles.searchNote}>Search results open in your free Railor workspace after you sign in.</p>
+          <p id={`${titleId}-note`} className={styles.searchNote}>Search results open in your free Railor account after you sign in.</p>
         </div>
       </div>
     </div>

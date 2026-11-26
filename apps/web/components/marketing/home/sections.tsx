@@ -1,8 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { RouteSticker, SealSticker, TicketSticker } from "../die-cut-stickers";
 import { ArrowRight, Bot, Check, Code2, Package } from "lucide-react";
 import { DeveloperDemo } from "./developer-demo";
-import { LoopOnView } from "./loop-on-view";
 import { MobileCardSlider } from "./mobile-card-slider";
 import { TrustBases } from "./trust-basis";
 import styles from "./home.module.css";
@@ -14,7 +14,7 @@ const AUDIENCES = [
     points: ["See exactly what your family receives", "Apps and banks compared side by side", "Know when the money will arrive"],
     cta: "Compare personal transfers",
     href: "/prices?from=USD&to=INR&amount=1000&market=1&profile=personal&country=IN&direction=receive&purpose=personal",
-    coins: [{ symbol: "$", metal: "gold", size: 92, left: "16%", top: "26%", tilt: -12 }, { symbol: "₹", metal: "silver", size: 74, left: "52%", top: "40%", tilt: 10 }, { symbol: "£", metal: "bronze", size: 54, left: "70%", top: "14%", tilt: -6 }],
+    photo: "/images/audiences/personal.jpg", alt: "A couple checking a money transfer together on a phone",
   },
   {
     title: "Freelancers",
@@ -22,15 +22,15 @@ const AUDIENCES = [
     points: ["Services that accept your client’s currency", "Fees you can check before you invoice", "Invoices and receipts in one place"],
     cta: "Compare ways to get paid",
     href: "/prices?from=USD&to=INR&amount=1000&market=1&profile=freelancer&country=IN&direction=receive&purpose=services",
-    coins: [{ symbol: "€", metal: "silver", size: 88, left: "20%", top: "30%", tilt: 8 }, { symbol: "$", metal: "gold", size: 70, left: "55%", top: "18%", tilt: -10 }, { symbol: "₹", metal: "bronze", size: 58, left: "64%", top: "54%", tilt: 14 }],
+    photo: "/images/audiences/freelancer.jpg", alt: "A freelancer working on a laptop at a home desk",
   },
   {
     title: "Businesses",
     line: "Paying suppliers and collecting from customers.",
     points: ["Providers that serve your type of company", "Company rules for routes and limits", "Alerts when fees or coverage change"],
-    cta: "Set up a business workspace",
+    cta: "Create a business account",
     href: "/login?intent=start",
-    coins: [{ symbol: "¥", metal: "bronze", size: 64, left: "14%", top: "18%", tilt: -14 }, { symbol: "$", metal: "gold", size: 96, left: "40%", top: "32%", tilt: 6 }, { symbol: "€", metal: "silver", size: 62, left: "72%", top: "22%", tilt: -8 }],
+    photo: "/images/audiences/business.jpg", alt: "A team in an office working through a payment on a laptop",
   },
 ] as const;
 
@@ -48,13 +48,9 @@ export function AudiencesSection() {
         <MobileCardSlider mode="profiles" label="Transfer profiles" labels={AUDIENCES.map(audience => audience.title)}>
           {AUDIENCES.map((audience) => (
             <li key={audience.title} className={styles.audience}>
-              <LoopOnView className={styles.audienceArt}>
-                <div className={styles.audienceCoins} aria-hidden="true">
-                  {audience.coins.map((coin) => (
-                    <span key={coin.symbol} className="coin" data-metal={coin.metal} style={{ "--size": `${coin.size}px`, left: coin.left, top: coin.top, rotate: `${coin.tilt}deg` } as React.CSSProperties}>{coin.symbol}</span>
-                  ))}
-                </div>
-              </LoopOnView>
+              <div className={styles.audienceArt}>
+                <Image src={audience.photo} alt={audience.alt} fill sizes="(max-width: 720px) 92vw, (max-width: 1200px) 33vw, 380px" className={styles.audiencePhoto} />
+              </div>
               <div className={styles.audienceBody}>
                 <h3>{audience.title}</h3>
                 <p>{audience.line}</p>
@@ -120,13 +116,13 @@ export function TrustSection() {
 }
 
 const FAQS: Array<{ q: string; a: React.ReactNode }> = [
-  { q: "Is Railor free?", a: <>Yes. Prices are free to see with a free Railor account — no card needed. Your workspace also includes up to 3 saved routes, a monitored route and 500 API requests a month.</> },
+  { q: "Is Railor free?", a: <>Yes. Prices are free to see with a free Railor account — no card needed. Your free account also includes up to 3 saved routes, a monitored route and 500 API requests a month.</> },
   { q: "Does Railor send the money?", a: <>No. Railor never holds your money — you send with the provider you choose, and Railor shows you which option is best and why.</> },
   { q: "Where do the prices come from?", a: <>Live public quotes from providers, their published fee schedules, and dated consumer estimates from comparison feeds. Each price is labelled with its source. <Link href="/docs/pricing#sources">Read how prices work</Link>.</> },
   { q: "How fresh are the prices?", a: <>The calculator refreshes every 30 seconds while you have it open, and every price shows when it was checked.</> },
   { q: "Why don’t I see a provider I know?", a: <>Some services only serve businesses, freelancers or certain countries. Railor hides prices your profile can’t use and tells you how many were hidden and why.</> },
-  { q: "Can I use Railor from my own app or AI tool?", a: <>Yes. Create a free workspace to get a test API key. There are TypeScript and Python SDKs and an MCP server for AI tools. <Link href="/docs">See the docs</Link>.</> },
-  { q: "What happens to my data?", a: <>Signing up needs only your email. Workspace data stays in your workspace and is never sold. <Link href="/legal/privacy">Privacy policy</Link>.</> },
+  { q: "Can I use Railor from my own app or AI tool?", a: <>Yes. Create a free account to get a test API key. There are TypeScript and Python SDKs and an MCP server for AI tools. <Link href="/docs">See the docs</Link>.</> },
+  { q: "What happens to my data?", a: <>Signing up needs only your email. What you save stays private to your account and is never sold. <Link href="/legal/privacy">Privacy policy</Link>.</> },
 ];
 
 export function FaqSection() {
