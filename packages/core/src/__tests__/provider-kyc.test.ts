@@ -79,7 +79,7 @@ describe("kycFor", () => {
 
   it("reports a provider that publishes no turnaround as null, never a guess", () => {
     expect(kycFor("western-union", person)).toMatchObject({ approvalTime: null });
-    expect(kycFor("razorpay", { profile: "business", country: "IN", direction: "receive", purpose: "services" })).toMatchObject({ approvalTime: null });
+    expect(kycFor("razorpay", { profile: "business", country: "IN", direction: "receive" })).toMatchObject({ approvalTime: null });
   });
 
   it("returns nothing for providers Railor has no published facts for, and for the wrong profile", () => {
