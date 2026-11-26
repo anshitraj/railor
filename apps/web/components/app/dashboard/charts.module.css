@@ -1,0 +1,50 @@
+/* Chart palette: the validated categorical order (blue, orange, aqua, yellow, magenta) and a neutral for "Other". */
+.viz {
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100; --series-5: #e87ba4; --series-other: #6b6860;
+  --grid: rgb(21 19 16 / .08); --axis: #8a8178;
+  position: relative; min-width: 0;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 10px; }
+.legendItem { display: inline-flex; align-items: center; gap: 7px; color: var(--color-ink-soft, #3d3832); font-size: 12.5px; font-weight: 600; }
+.legendItem b { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.swatch { width: 10px; height: 10px; flex: none; border-radius: 3px; }
+
+.plot { position: relative; }
+.plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tick { fill: var(--axis); font-size: 11px; font-variant-numeric: tabular-nums; }
+.hit { fill: transparent; cursor: default; }
+.hoverBand { fill: rgb(21 19 16 / .045); }
+
+.tooltip { position: absolute; top: 0; z-index: 2; min-width: 150px; padding: 9px 11px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); box-shadow: 0 10px 26px -12px rgb(21 19 16 / .35); pointer-events: none; transform: translateX(-50%); }
+.tooltip strong { display: block; margin-bottom: 5px; color: var(--color-ink); font-size: 12.5px; font-weight: 700; }
+.tooltipRow { display: flex; align-items: center; justify-content: space-between; gap: 14px; color: var(--color-muted); font-size: 12px; }
+.tooltipRow span { display: inline-flex; align-items: center; gap: 6px; }
+.tooltipRow b { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.emptyPlot { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; padding: 16px; text-align: center; }
+.emptyPlot strong { color: var(--color-ink); font-size: 14px; font-weight: 650; }
+.emptyPlot span { max-width: 340px; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+
+/* Donut */
+.switch { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--color-canvas); }
+.switch button { height: 28px; padding: 0 11px; border-radius: 999px; color: var(--color-muted); font-size: 12.5px; font-weight: 650; }
+.switch button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgb(21 19 16 / .12); }
+.donutHost { container-type: inline-size; }
+.donutWrap { display: grid; gap: 14px; align-items: center; justify-items: center; }
+@container (min-width: 430px) { .donutWrap { grid-template-columns: 168px minmax(0, 1fr); justify-items: stretch; } }
+.donut { position: relative; width: 168px; height: 168px; }
+.donut svg { width: 100%; height: 100%; rotate: -90deg; }
+.donut circle[data-seg] { transition: stroke-width .15s ease, opacity .15s ease; }
+.donutCenter { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
+.donutCenter b { color: var(--color-ink); font-size: 26px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.donutCenter span { color: var(--color-muted); font-size: 12px; }
+.shares { display: grid; gap: 2px; width: 100%; }
+.share { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; align-items: center; gap: 9px; min-height: 32px; padding: 0 8px; border-radius: 10px; font-size: 13px; }
+.share[data-active="true"] { background: var(--color-canvas); }
+.share span { overflow: hidden; color: var(--color-ink); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.share b { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.share em { min-width: 40px; color: var(--color-muted); font-style: normal; font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Sparkline */
+.spark { position: relative; margin-top: 8px; }
+.spark svg { display: block; width: 100%; height: 64px; overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .donut circle[data-seg] { transition: none; } }
