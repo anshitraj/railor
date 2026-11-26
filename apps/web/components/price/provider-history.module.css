@@ -71,6 +71,9 @@
 .cheapest, .estimate { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-style: normal; font-weight: 650; }
 .cheapest { background: var(--color-ok-bg); color: var(--color-ok); }
 .estimate { background: var(--color-canvas); color: var(--color-muted); }
+.delta { display: none; }
+.who { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 3px 8px; }
+.table tbody th > img, .table tbody th > span:first-child { flex: none; }
 .empty { color: var(--color-muted); text-align: center !important; }
 .more { display: block; width: 100%; min-height: 44px; border-top: 1px solid var(--color-line); color: var(--color-orange-deep); font-size: 13px; font-weight: 650; }
 
@@ -89,7 +92,17 @@
 @media (prefers-reduced-motion: no-preference) { .graph { animation: draw .4s var(--ease-out) both; } }
 @keyframes draw { from { opacity: .3; } }
 
-.tabsWrap { display: grid; gap: 16px; min-width: 0; }
+.tabsWrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
+.tabsWrap > * { min-width: 0; }
 .tabs { display: inline-flex; width: fit-content; gap: 2px; padding: 3px; border-radius: 12px; background: var(--color-canvas); }
 .tabs button { min-height: 36px; padding: 0 14px; border-radius: 9px; color: var(--color-ink-soft); font-size: 13px; font-weight: 650; }
 .tabs button[aria-selected="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(21 19 16 / .12); }
+/* In the side-by-side layout the table gets about 500px: four columns fit, the gap to mid-market moves under the amount. */
+@container providers (max-width: 640px) {
+  .table table { min-width: 0; }
+  .table th, .table td { padding: 12px 10px; }
+  .table thead th:nth-child(5), .table tbody td:nth-child(5) { display: none; }
+  .table tbody th { gap: 10px; white-space: normal; }
+  .delta { display: block; margin-top: 2px; color: var(--color-muted); font-size: 11.5px; font-weight: 600; }
+  .delta[data-sign="up"] { color: var(--color-ok); }
+}

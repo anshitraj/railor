@@ -1,7 +1,8 @@
 "use client";
 
-import NumberFlow from "@number-flow/react";
+import NumberFlow, { type Format } from "@number-flow/react";
 import { useState, type ComponentPropsWithoutRef } from "react";
+import type { BenchmarkCost } from "../../lib/price-cost";
 import styles from "./animated-amount.module.css";
 
 const amountFormat = { maximumFractionDigits: 20 };
@@ -53,4 +54,47 @@ export function AmountInput({ value, className, ...props }: AmountInputProps) {
       <NumberFlow value={amount} locales="en-US" format={amountFormat} animated={!editing} transformTiming={timing} />
     </span>}
   </span>;
+}
+
+/** Any figure in a quote rolls to its new value the same way the payout does. Screen readers get the plain text. */
+const TWO = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+const plain = (value: number, format: Format, prefix = "", suffix = "") => `${prefix}${new Intl.NumberFormat("en-US", format).format(value)}${suffix}`;
+
+export function RollingNumber({ value, format = TWO, prefix, suffix }: { value: number; format?: Format; prefix?: string; suffix?: string }) {
+  return <>
+    <span className="sr-only">{plain(value, format, prefix, suffix)}</span>
+    <span aria-hidden><NumberFlow value={value} locales="en-US" format={format} prefix={prefix} suffix={suffix} transformTiming={timing} /></span>
+  </>;
+}
+
+/** "9.00 EUR · 0.99%": the cost against mid-market, both parts rolling. */
+export function RollingCost({ cost, unit = "percent" }: { cost: BenchmarkCost; unit?: "bps" | "percent" }) {
+  const symbol = cost.currency === "INR" ? "₹" : "";
+  const value = Math.abs(cost.costMinor) / 100;
+  const digits = value >= 100 ? 0 : 2;
+  return <>
+    <RollingNumber value={value} format={{ minimumFractionDigits: digits, maximumFractionDigits: digits }} prefix={symbol || undefined} suffix={symbol ? undefined : ` ${cost.currency}`} />
+    {cost.costMinor < 0 ? " better" : ""} · {unit === "percent"
+      ? <RollingNumber value={cost.bps / 10_000} format={{ style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+      : <RollingNumber value={cost.bps} format={{ maximumFractionDigits: 0 }} suffix=" bps" />}
+  </>;
+}
+
+/** "€8.99 below mid-market". */
+export function RollingPayoutDifference({ difference }: { difference: BenchmarkCost }) {
+  if (!difference.costMinor) return <>At mid-market</>;
+  return <>
+    <RollingNumber value={Math.abs(difference.costMinor) / 100} format={{ style: "currency", currency: difference.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+    {difference.costMinor < 0 ? " above" : " below"} mid-market
+  </>;
+}
+
+/** "+0.99%" / "−0.12%" from basis points. */
+export function RollingPercent({ bps }: { bps: number }) {
+  return <RollingNumber value={Math.abs(bps) / 100} format={TWO} prefix={bps < 0 ? "−" : bps > 0 ? "+" : undefined} suffix="%" />;
+}
+
+/** An exchange rate at six significant digits, as the rest of the page prints it. */
+export function RollingRate({ value }: { value: number }) {
+  return <RollingNumber value={value} format={{ maximumSignificantDigits: 6 }} />;
 }

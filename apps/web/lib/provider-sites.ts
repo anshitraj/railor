@@ -5,6 +5,7 @@
  */
 const SITES: Record<string, string> = {
   wise: "https://wise.com",
+  xe: "https://www.xe.com",
   remitly: "https://www.remitly.com",
   xoom: "https://www.xoom.com",
   revolut: "https://www.revolut.com",
@@ -70,6 +71,10 @@ export function providerLink(slug: string, transfer: { from: string; to: string;
   if (key === "wise" && /^[A-Z]{3}$/.test(from) && /^[A-Z]{3}$/.test(to)) {
     const page = `https://wise.com/gb/currency-converter/${from.toLowerCase()}-to-${to.toLowerCase()}-rate`;
     return amount ? { href: `${page}?amount=${amount}`, carries: "amount" } : { href: page, carries: "corridor" };
+  }
+  // Xe's converter reads Amount, From and To from the address (checked against the live page: "1,000 USD to EUR").
+  if (key === "xe" && amount && /^[A-Z]{3}$/.test(from) && /^[A-Z]{3}$/.test(to)) {
+    return { href: `https://www.xe.com/currencyconverter/convert/?Amount=${amount}&From=${from}&To=${to}`, carries: "amount" };
   }
   if (from === "USD" && to === "INR") {
     if (key === "remitly") return { href: "https://www.remitly.com/us/en/money-transfer/send-money-to-india", carries: "corridor" };

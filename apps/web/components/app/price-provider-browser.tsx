@@ -9,16 +9,17 @@ import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, Fi
 import type { MarketCoverageProvider, PricePromotions, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
+import { DeliveryAndPaperwork, FeesAndLimits, KycGuide } from "./provider-detail-panels";
 import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
-import { RollingPrice } from "../price/animated-amount";
+import { RollingCost, RollingNumber, RollingPayoutDifference, RollingPercent, RollingPrice, RollingRate } from "../price/animated-amount";
 import { priceCollectedLabel, priceRowKey, priceStatus, pricingSourceLabel, providerIdentity } from "../../lib/price-display";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
 import styles from "./price-check.module.css";
 
 function money(value: number | null) { return value === null || !Number.isFinite(value) ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-const DETAIL_TABS = ["Overview", "Requirements", "Sources", "Notes"] as const;
+const DETAIL_TABS = ["Overview", "KYC", "Fees & limits", "Delivery & paperwork"] as const;
 type DetailTab = (typeof DETAIL_TABS)[number];
 export type ProviderQuoteAdvice = { message: string; evidence?: Array<{ url: string; title: string; text: string }>; researchPending?: boolean };
 function tabKeys(event: KeyboardEvent<HTMLDivElement>) {
@@ -153,11 +154,11 @@ export function PriceProviderBrowser(props: Props) {
                   </span>
                 </span>
                 <span className={styles.rowFee}>
-                  <strong>{quote?.feeAmount != null ? `${money(quote.feeAmount)} ${quote.feeCurrency ?? ""}` : candidate?.feeHighlight ?? "Check fee"}</strong>
-                  {quote?.rate != null && <span className={styles.quoteRowRate}>1 {from} = {quote.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}</span>}
+                  <strong>{quote?.feeAmount != null ? <><RollingNumber value={quote.feeAmount} /> {quote.feeCurrency ?? ""}</> : candidate?.feeHighlight ?? "Check fee"}</strong>
+                  {quote?.rate != null && <span className={styles.quoteRowRate}>1 {from} = <RollingRate value={quote.rate} /> {to}</span>}
                   {difference?.kind === "cost" && <span className={styles.quoteRowDifference} data-favorable={difference.costMinor < 0 || undefined}>
-                    <b title={cost?.kind === "gap" ? "Payout difference. Total cost still needs confirmation." : "Cost compared with mid-market"}>{signedPercent(difference.bps)}</b>
-                    <span>{formatPayoutDifference(difference)}</span>
+                    <b title={cost?.kind === "gap" ? "Payout difference. Total cost still needs confirmation." : "Cost compared with mid-market"}><RollingPercent bps={difference.bps} /></b>
+                    <span><RollingPayoutDifference difference={difference} /></span>
                   </span>}
                 </span>
                 <span className={styles.rowAmount}>
@@ -194,15 +195,21 @@ export function PriceProviderBrowser(props: Props) {
 
 function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: MarketCoverageProvider; onGetQuote?: Props["onGetQuote"]; bookmark?: ReactNode }) {
   const [pending, setPending] = useState(false);
+  const [tried, setTried] = useState(false);
   const [detail, setDetail] = useState<Awaited<ReturnType<NonNullable<Props["onGetQuote"]>>>>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
+  // Opening a provider with no price starts the check: one click from the list, no second button to find.
+  // The server caps the rate and caches each provider's web check, so this stays bounded.
+  useEffect(() => { void getQuote(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function getQuote() {
     if (!onGetQuote || pending) return;
     const request = new AbortController();
     controller.current = request;
     setPending(true);
+    setTried(true);
     setDetail(null);
     try {
       const detail = await onGetQuote(provider.providerSlug, request.signal);
@@ -229,7 +236,7 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
     </div>
     {onGetQuote ? <div className={styles.providerQuoteRequest}>
       <button type="button" className={styles.providerAction} onClick={() => void getQuote()} disabled={pending} aria-busy={pending}>
-        {pending ? "Checking the provider…" : "Get quote"}{pending ? <Clock3 size={14} aria-hidden /> : <ArrowRight size={14} aria-hidden />}
+        {pending ? "Checking the provider…" : tried ? "Check again" : "Get quote"}{pending ? <Clock3 size={14} aria-hidden /> : <ArrowRight size={14} aria-hidden />}
       </button>
       <p role="status">{detail?.message ?? (pending ? "Checking the provider’s prices for this route. Allow about 30 seconds." : "Checks the provider for this route. Allow about 30 seconds.")}</p>
       {detail?.evidence?.map(item => <div key={`${item.url}:${item.text}`} className={styles.publishedFee}>
@@ -308,7 +315,14 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
   const receiveLabel = row.partial || row.basis === "market_estimate" ? "Reference amount" : row.basis === "exact" ? "Recipient gets" : "Estimated payout";
   const sourceLabel = pricingSourceLabel(row);
   const sourceTime = priceSourceTime(row.observedAt, row.basis);
-  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} provider={row.providerName.split(" · ")[0]} />;
+  const providerName = row.providerName.split(" · ")[0]!;
+  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} provider={providerName} />;
+  // Every source for this provider is listed once, here: the tabs carry no links of their own.
+  const kyc = assessment?.kyc;
+  const providerSources = Array.from(new Map([
+    ...(assessment?.sources ?? []),
+    ...(kyc ? [{ label: `${providerName} · KYC documents`, url: kyc.documentsUrl }, ...(kyc.approvalTime ? [{ label: `${providerName} · KYC approval time`, url: kyc.approvalTime.url }] : [])] : []),
+  ].map(source => [source.url, source])).values());
   const sourceDetails = (
     <div className={styles.quoteSources}>
       <QuoteFacts items={[
@@ -324,6 +338,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
         ["Delivery timing", payment.delivery], ["Remittance proof", payment.receipt],
         ["Tax on provider fees", payment.feeTax], ["Export GST and LUT", payment.exportTax],
       ] as const).map(([label, fact]) => fact && <a className={styles.sourceLink} key={label} href={fact.url} target="_blank" rel="noreferrer noopener">{label}<ArrowUpRight size={12} aria-hidden /></a>)}
+      {providerSources.map(source => <a key={source.url} className={styles.sourceLink} href={source.url} target="_blank" rel="noreferrer noopener">{source.label}<ArrowUpRight size={12} aria-hidden /></a>)}
       {webEvidence}
     </div>
   );
@@ -341,7 +356,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
           </div>
           <div>
             <dt>{cost.kind === "cost" ? "Total cost" : "Payout vs mid-market"} <Info size={12} aria-hidden /></dt>
-            <dd>{cost.kind === "cost" ? formatBenchmarkCost(cost, "percent") : difference.kind === "cost" ? formatPayoutDifference(difference) : "Unavailable"}</dd>
+            <dd>{cost.kind === "cost" ? <RollingCost cost={cost} unit="percent" /> : difference.kind === "cost" ? <RollingPayoutDifference difference={difference} /> : "Unavailable"}</dd>
           </div>
           <div>
             <dt>Delivery time</dt>
@@ -371,30 +386,30 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
       {row.publicComparison && <p className={styles.detailIntro}>Public price observed for {row.publicComparison.sourceCountry ?? "an unspecified sender country"} → {row.publicComparison.destinationCountry ?? to}. Funding method and first-transfer offers may change your price.</p>}
       {connection}
       <div className={styles.detailTabs} role="tablist" aria-label="Selected provider information" onKeyDown={tabKeys}>
-        {DETAIL_TABS.map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${label}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}
+        {DETAIL_TABS.map((label) => <button key={label} type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`provider-tab-${DETAIL_TABS.indexOf(label)}`} aria-controls="provider-detail-content" aria-selected={tab === label} onClick={() => setTab(label)}>{label}</button>)}
       </div>
-      <div key={tab} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${tab}`} className={styles.detailContent}>
+      <div key={tab} id="provider-detail-content" role="tabpanel" aria-labelledby={`provider-tab-${DETAIL_TABS.indexOf(tab)}`} className={styles.detailContent}>
         {tab === "Overview" && (
           <>
             <div className={styles.overviewGrid}>
               <section>
                 <h3><span data-tone="accent"><Wallet size={16} aria-hidden /></span>Fee calculation</h3>
                 <QuoteFacts items={[
-                  ["You send", `${money(amount)} ${from}`],
-                  ["Known provider fee", row.feeAmount === null ? (row.feeBreakdown ? "See Notes" : "Confirm at checkout") : `${money(row.feeAmount)} ${row.feeCurrency ?? ""}`],
-                  ["Exchange rate used", row.rate === null ? "Not supplied" : `1 ${from} = ${row.rate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} ${to}`],
-                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : `${money(row.recipientAmount)} ${to}`],
+                  ["You send", <><RollingNumber value={amount} /> {from}</>],
+                  ["Known provider fee", row.feeAmount === null ? (row.feeBreakdown ? "See Notes" : "Confirm at checkout") : <><RollingNumber value={row.feeAmount} /> {row.feeCurrency ?? ""}</>],
+                  ["Exchange rate used", row.rate === null ? "Not supplied" : <>1 {from} = <RollingRate value={row.rate} /> {to}</>],
+                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : <><RollingNumber value={row.recipientAmount} /> {to}</>],
                 ]} />
               </section>
               <section>
                 <h3><span><Banknote size={16} aria-hidden /></span>Benchmark vs. mid-market</h3>
                 <QuoteFacts items={[
-                  ["Mid-market amount", difference.kind === "cost" ? `${money(difference.baselineMinor / 100)} ${to}` : "Unavailable"],
-                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : `${money(row.recipientAmount)} ${to}`],
-                  [difference.kind === "cost" && difference.costMinor < 0 ? "Above mid-market" : "Difference", difference.kind === "cost" ? `${money(Math.abs(difference.costMinor) / 100)} ${to} (${Math.abs(difference.bps)} bps)` : "Unavailable"],
+                  ["Mid-market amount", difference.kind === "cost" ? <><RollingNumber value={difference.baselineMinor / 100} /> {to}</> : "Unavailable"],
+                  [receiveLabel, row.recipientAmount === null ? "Unavailable" : <><RollingNumber value={row.recipientAmount} /> {to}</>],
+                  [difference.kind === "cost" && difference.costMinor < 0 ? "Above mid-market" : "Difference", difference.kind === "cost" ? <><RollingNumber value={Math.abs(difference.costMinor) / 100} /> {to} (<RollingNumber value={Math.abs(difference.bps)} format={{ maximumFractionDigits: 0 }} suffix=" bps" />)</> : "Unavailable"],
                 ]} />
                 {difference.kind === "cost" && <div className={styles.benchmarkScale} data-better={difference.costMinor < 0 || undefined} title="Bar shows the size of the difference on a 0% to 10% scale">
-                  <span aria-hidden><i style={{ width: `${Math.min(100, Math.abs(difference.bps) / 10)}%` }} /></span><strong>{percent}</strong>
+                  <span aria-hidden><i style={{ width: `${Math.min(100, Math.abs(difference.bps) / 10)}%` }} /></span><strong>{difference.kind === "cost" ? <RollingNumber value={Math.abs(difference.bps) / 10_000} format={{ style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 }} /> : percent}</strong>
                 </div>}
                 {cost.kind === "gap" && <p className={styles.gapNote}><Info size={14} aria-hidden />{cost.reason}</p>}
                 {offer ? <div className={styles.offerBox}>
@@ -439,16 +454,9 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
             </div>
           </>
         )}
-        {tab === "Requirements" && requirements}
-        {tab === "Sources" && sourceDetails}
-        {tab === "Notes" && <>
-          {row.side === "payer" && <p className={styles.detailIntro}>The sender pays through this service. The recipient only needs a bank account.</p>}
-          {row.feeBreakdown && <QuoteFacts items={[["Fee breakdown", row.feeBreakdown]]} />}
-          {row.missing?.length ? <ul className={styles.quoteNotes}>{row.missing.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}
-          {row.shortfall ? <p className={styles.detailIntro}>{money(Math.abs(row.shortfall))} {to} {row.shortfall > 0 ? "less" : "more"} than the best documented payout.</p> : null}
-          {row.notes.map((note, index) => <p className={styles.detailIntro} key={index}>{note}</p>)}
-          {!row.notes.length && !row.feeBreakdown && !row.missing?.length && !row.shortfall && row.side !== "payer" && <p className={styles.detailIntro}>No additional provider notes were supplied.</p>}
-        </>}
+        {tab === "KYC" && <KycGuide assessment={assessment} provider={providerName} />}
+        {tab === "Fees & limits" && <FeesAndLimits row={row} assessment={assessment} feeTax={feeTax} method={fundingMethod(row)} to={to} />}
+        {tab === "Delivery & paperwork" && <DeliveryAndPaperwork row={row} assessment={assessment} delivery={delivery} receipt={receipt} />}
       </div>
     </aside>
   );

@@ -253,7 +253,7 @@ function DayTable({ day, from, to }: { day: ProviderHistoryDay; from: string; to
         </thead>
         <tbody>
           <tr data-row="mid">
-            <th scope="row"><span className={styles.midIcon} aria-hidden="true">···</span>Mid-market rate</th>
+            <th scope="row"><span className={styles.midIcon} aria-hidden="true">···</span><span className={styles.who}><span>Mid-market rate</span></span></th>
             <td>{day.midMarketRate === null ? "—" : day.midMarketRate.toFixed(4)}</td>
             <td>—</td>
             <td><strong>{day.midMarket === null ? "—" : `${money(day.midMarket)} ${to}`}</strong></td>
@@ -265,13 +265,15 @@ function DayTable({ day, from, to }: { day: ProviderHistoryDay; from: string; to
               <tr key={quote.providerSlug} data-best={quote.recipientAmount === best || undefined}>
                 <th scope="row">
                   <ProviderLogo slug={quote.providerSlug} name={quote.providerName} size={28} />
-                  <span>{quote.providerName}</span>
-                  {quote.recipientAmount === best ? <em className={styles.cheapest}>Cheapest</em> : null}
-                  {quote.basis === "market_estimate" ? <em className={styles.estimate} title="A comparison feed’s estimate, not the provider’s own quote">Estimate</em> : null}
+                  <span className={styles.who}>
+                    <span>{quote.providerName}</span>
+                    {quote.recipientAmount === best ? <em className={styles.cheapest}>Cheapest</em> : null}
+                    {quote.basis === "market_estimate" ? <em className={styles.estimate} title="A comparison feed’s estimate, not the provider’s own quote">Estimate</em> : null}
+                  </span>
                 </th>
                 <td>{quote.rate === null ? "—" : quote.rate.toFixed(4)}</td>
                 <td>{quote.fee === null ? "—" : quote.fee === 0 ? "Free" : `${money(quote.fee)} ${quote.feeCurrency ?? from}`}</td>
-                <td><strong>{money(quote.recipientAmount)} {to}</strong></td>
+                <td><strong>{money(quote.recipientAmount)} {to}</strong>{difference !== null && Math.abs(difference) >= 0.005 ? <small className={styles.delta} data-sign={difference > 0 ? "up" : "down"}>{difference > 0 ? "+" : "−"}{money(Math.abs(difference))} vs mid-market</small> : null}</td>
                 <td data-sign={difference === null ? undefined : difference > 0.004 ? "up" : difference < -0.004 ? "down" : "same"}>{difference === null ? "—" : Math.abs(difference) < 0.005 ? "Same" : `${difference > 0 ? "+" : "−"}${money(Math.abs(difference))}`}</td>
               </tr>
             );

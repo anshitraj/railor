@@ -1,4 +1,5 @@
 import { getSession } from "../../../lib/auth";
+import { getEntitlement } from "../../../lib/entitlements";
 import { loadPricePage } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
 import { PriceCheckHeader, PriceHelpLinks, PriceModeTabs } from "../../../components/app/price-panels";
@@ -27,7 +28,10 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
       </div>
     );
   }
-  const page = await loadPricePage(params, null, session?.organization?.entityCountry, session ? "business" : "personal");
+  const [page, entitlement] = await Promise.all([
+    loadPricePage(params, null, session?.organization?.entityCountry, session ? "business" : "personal"),
+    session?.organization ? getEntitlement(session.organization.id).catch(() => null) : null,
+  ]);
 
   return (
     <div className={styles.page}>
@@ -45,6 +49,8 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
         executable={page.executable}
         connected={[]}
         entityCountry={session?.organization?.entityCountry ?? null}
+        accountEmail={session?.user.email ?? null}
+        alertPlan={entitlement?.plan}
       />
       <PriceHelpLinks />
     </div>

@@ -22,7 +22,6 @@ function KycTime({ kyc, provider }: { kyc: NonNullable<PriceRow["profileAssessme
         <>
           <dd><strong className={styles.kycTime}>{time.label}</strong></dd>
           <dd>{kyc.appliesTo === "sender" ? "Your sender’s check with this provider, not yours. " : ""}{time.detail}</dd>
-          <dd><a className={styles.requirementSource} href={time.url} target="_blank" rel="noreferrer noopener" aria-label="Source for KYC approval time">Source <ArrowUpRight size={11} aria-hidden /></a></dd>
         </>
       ) : kyc ? (
         <dd>{name} doesn’t publish how long approval takes for this account. Ask them before you rely on a start date.</dd>
@@ -82,7 +81,6 @@ export function ProviderRequirements({ assessment, feeTax, receipt, delivery, pr
             {list
               ? <dd><ul className={styles.kycList}>{details?.filter(Boolean).map((detail, index) => <li key={index}>{detail}</li>)}</ul></dd>
               : details?.filter(Boolean).map((detail, index) => <dd key={index}>{detail}</dd>)}
-            {source && <dd><a className={styles.requirementSource} href={source.url} target="_blank" rel="noreferrer noopener" aria-label={`Source for ${label}`}>Source <ArrowUpRight size={11} aria-hidden /></a></dd>}
           </div>
         ))}
       </dl>

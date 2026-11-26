@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "../../../lib/auth";
+import { getEntitlement } from "../../../lib/entitlements";
 import { loadPricePage, productionConnectedSlugs } from "../../../lib/pricing";
 import { FxTicker } from "../../../components/app/fx-ticker";
 import { PriceCheckHeader, PriceHelpLinks, PriceModeTabs } from "../../../components/app/price-panels";
@@ -30,7 +31,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
       </div>
     );
   }
-  const [page, connected, savedPairs] = await Promise.all([loadPricePage(params, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id), listSavedPairsWithAlerts(org.id, session.user.id).catch(() => [])]);
+  const [page, connected, savedPairs, entitlement] = await Promise.all([loadPricePage(params, org.id, org.entityCountry, onboardingPriceProfile(org.building)), productionConnectedSlugs(org.id), listSavedPairsWithAlerts(org.id, session.user.id).catch(() => []), getEntitlement(org.id).catch(() => null)]);
   const initialProvider = savedProviderSlug(params.provider);
 
   return (
@@ -48,6 +49,8 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           initialError={page.error}
           executable={page.executable}
           savedPairs={savedPairs}
+          accountEmail={session.user.email}
+          alertPlan={entitlement?.plan}
           initialProvider={initialProvider}
           connected={connected}
           entityCountry={org.entityCountry ?? null}

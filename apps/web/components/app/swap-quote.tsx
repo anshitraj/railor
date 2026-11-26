@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { contextForPair } from "../../lib/price-destination";
-import { ProviderHandoff } from "./provider-handoff";
 
-const PAY_BY: Record<string, string> = { local_bank: "local bank transfer", wire: "international wire", card: "card", transfer_service: "transfer app" };
 import { PairActions, SavedPairsStrip, TransferBookmarkButton } from "../price/pair-actions";
+import { RateAlertCard } from "../price/rate-alert-card";
+import type { Plan } from "../../lib/plans";
 import { savedProviderSlug } from "../../lib/saved-transfer";
 import type { SavedPair } from "../../lib/saved-pairs";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,7 +22,7 @@ import { connectionProviderSlug, priceSourceTime } from "../../lib/connection-na
 import { PriceProviderBrowser, type ProviderQuoteAdvice } from "./price-provider-browser";
 import { PriceDisclosure } from "./price-disclosure";
 import { providerLink, providerSite } from "../../lib/provider-sites";
-import { AmountInput, QuoteAmount } from "../price/animated-amount";
+import { AmountInput, QuoteAmount, RollingCost, RollingNumber, RollingRate } from "../price/animated-amount";
 import { CurrencyPicker } from "../price/currency-picker";
 import { CardPricingComingSoon, PayMethodSelect } from "../price/pay-method-select";
 import { contextParams, priceResponseMatches } from "../../lib/price-response";
@@ -138,9 +138,13 @@ export interface SwapQuoteProps {
   initialProvider?: string;
   /** The workspace's registered country, which decides whether a pair is received or sent. */
   entityCountry?: string | null;
+  /** The signed-in account's email: rate alerts are sent here. */
+  accountEmail?: string | null;
+  /** The workspace's plan, for the alert card. */
+  alertPlan?: Plan;
 }
 
-export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider, guest = false, entityCountry = null }: SwapQuoteProps) {
+export function SwapQuote({ mode, basePath, currencies, initial, initialResult, initialError, executable, connected, savedPairs, initialProvider, guest = false, entityCountry = null, accountEmail = null, alertPlan = "free" }: SwapQuoteProps) {
   const [saved, setSaved] = useState<SavedPair[]>(savedPairs ?? []);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -296,8 +300,6 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
   // The provider's own page for this transfer: Wise with the amount filled in, others on the route where checked.
   const link = chosenSlug && valid ? providerLink(chosenSlug, transfer) : null;
   const site = link?.href ?? (chosenSlug ? providerSite(chosenSlug) : null);
-  const funding = selected?.publicOffer?.fundingMethod ?? selected?.fundingLabel ?? (context.direction === "receive" && context.paymentMethod ? PAY_BY[context.paymentMethod] ?? null : null);
-  const handoff = link && chosenName ? { provider: chosenName, from, to, amount, funding, recipientAmount: selected?.recipientAmount ?? null, observedAt: selected?.observedAt || null, carries: link.carries } : null;
   const sourceUrl = selected?.source?.url && /^https:\/\//.test(selected.source.url) ? selected.source.url : null;
   const cta: { label: string; href?: string; external?: boolean; disabled?: boolean; secondary?: { label: string; href: string; external?: boolean } } = !valid
     ? { label: from === to ? "Pick two different currencies" : "Enter an amount", disabled: true }
@@ -397,7 +399,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <QuickPicks options={currencies} exclude={[from, to]} onPick={(c) => setPair(c, to)} />
                 <CurrencyPicker label="Send currency" value={from} options={currencies} onChange={(c) => (c === to ? swap() : setPair(c, to))} />
               </div>
-              <p className="mt-2 text-[12px] text-[var(--color-muted)]">{midValue !== null ? `≈ ${money(midValue)} ${to} at the mid-market rate` : " "}</p>
+              <p className="mt-2 text-[12px] text-[var(--color-muted)]">{midValue !== null ? <>≈ <RollingNumber value={midValue} /> {to} at the mid-market rate</> : " "}</p>
             </div>
 
             <button
@@ -437,7 +439,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
                 <span>
                   {selectedCost?.kind === "cost" ? (
                     <>
-                      Cost <span className={cn("font-semibold", selectedCost.bps <= 50 ? "text-[var(--color-ok)]" : selectedCost.bps <= 150 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}>{formatBenchmarkCost(selectedCost, "percent")}</span> vs mid-market
+                      Cost <span className={cn("font-semibold", selectedCost.bps <= 50 ? "text-[var(--color-ok)]" : selectedCost.bps <= 150 ? "text-[var(--color-ink-soft)]" : "text-[var(--color-bad)]")}><RollingCost cost={selectedCost} unit="percent" /></span> vs mid-market
                     </>
                   ) : selected?.partial ? (
                     selected.publicOffer ? "First transfer · US bank funded" : selected.missing?.[0] ? `Missing: ${selected.missing[0]}` : "Partial estimate · a cost is unknown"
@@ -453,7 +455,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
           {rate !== null ? (
             <button type="button" onClick={() => setInverted((v) => !v)} className="inline-flex w-fit items-center gap-1.5 px-1 text-[12px] text-[var(--color-muted)] transition hover:text-[var(--color-ink)]" title="Flip the rate">
               <Info size={13} />
-              {inverted ? `1 ${to} ≈ ${rateText(1 / rate)} ${from}` : `1 ${from} ≈ ${rateText(rate)} ${to}`}
+              {inverted ? <>1 {to} ≈ <RollingRate value={1 / rate} /> {from}</> : <>1 {from} ≈ <RollingRate value={rate} /> {to}</>}
               <ArrowLeftRight size={12} />
             </button>
           ) : null}
@@ -473,7 +475,6 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <LockKeyhole size={14} className="mr-2 inline" />{cta.label}
             </button>
           )}
-          {handoff && "href" in cta && cta.href ? <ProviderHandoff setup={handoff} /> : null}
           {"secondary" in cta && cta.secondary ? (
             <Link
               href={cta.secondary.href}
@@ -517,7 +518,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
             </details>
           ) : null}</div> : <p className={styles.contextEmpty}>No consumer estimates were returned. The calculator’s Market estimates toggle controls whether they are requested.</p>}
         promotions={result?.promotions}
-        history={<PriceHistoryTabs from={from} to={to} amount={amount} profile={context.profile} />}
+        history={<PriceHistoryTabs from={from} to={to} amount={amount} profile={context.profile} footer={<RateAlertCard transfer={{ ...transfer, profile: context.profile }} email={guest ? null : accountEmail} plan={alertPlan} saved={saved} onSaved={setSaved} />} />}
         coverage={null}
         webEvidence={selected?.webChecks?.length ? <div className="price-surface mt-4 p-3"><WebCheckDetails checks={selected.webChecks} /></div> : null}
       />
