@@ -227,3 +227,7 @@
 @media (max-width: 380px) {
   .quote[data-variant="hero"] .segmentLabel svg { display: none; }
 }
+
+/* Hero: a hand-written nudge under the button, GetOn's "go on, it's a real demo". */
+.scribble { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; color: var(--color-ink-soft); font-family: "Caveat", "Segoe Print", "Bradley Hand", "Marker Felt", cursive; font-size: 19px; line-height: 1; transform: rotate(-2deg); }
+.scribble svg { color: var(--color-ink); }

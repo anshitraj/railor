@@ -18,7 +18,6 @@ import { MobileCompareBar } from "../components/marketing/home/mobile-compare-ba
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
-import { NumbersSection } from "../components/marketing/home/numbers";
 import { siteStats } from "../lib/site-stats";
 import { GuidesSection } from "../components/marketing/guides/home-guides";
 import { loadGuideDestinations } from "../lib/guides/load";
@@ -56,8 +55,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <main id="main" className={homeStyles.motionPage} data-curtain>
         <SmoothScroll />
         <HomeScrollMotion />
-        <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
-        <NumbersSection stats={stats} />
+        <HomeHero stats={stats} providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <OnePlaceSection />
         <CollageSection />
         <HowItWorks />

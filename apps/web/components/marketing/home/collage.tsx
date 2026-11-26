@@ -1,13 +1,13 @@
-import Link from "next/link";
 import styles from "./collage.module.css";
 
+/** Illustrated tiles drawn by lib/media/generate-collage.py in the landing page's own palette. */
 const PHOTOS = [
-  { src: "/images/collage/freelancer.jpg", depth: 1 },
-  { src: "/images/collage/airport-call.jpg", depth: 3 },
-  { src: "/images/collage/couple-phone.jpg", depth: 2 },
-  { src: "/images/collage/boarding-pass.jpg", depth: 1 },
-  { src: "/images/collage/team.jpg", depth: 3 },
-  { src: "/images/collage/window-phone.jpg", depth: 2 },
+  { src: "/images/collage/tile-arrived.jpg", depth: 1 },
+  { src: "/images/collage/tile-compare.jpg", depth: 3 },
+  { src: "/images/collage/tile-coins.jpg", depth: 2 },
+  { src: "/images/collage/tile-rate.jpg", depth: 1 },
+  { src: "/images/collage/tile-route.jpg", depth: 3 },
+  { src: "/images/collage/tile-paid.jpg", depth: 2 },
 ];
 
 /**
@@ -25,16 +25,9 @@ export function CollageSection() {
       <div className={styles.strip} aria-hidden>
         <div className={styles.track}>
           {[...PHOTOS, ...PHOTOS].map((photo, index) => (
-            // eslint-disable-next-line @next/next/no-img-element -- stock photos (Pexels licence, see public/images/collage/SOURCES.md)
+            // eslint-disable-next-line @next/next/no-img-element -- illustrated tiles drawn for Railor
             <img key={index} className={styles.photo} data-depth={photo.depth} data-copy={index >= PHOTOS.length || undefined} src={photo.src} alt="" width={480} height={600} loading="lazy" decoding="async" />
           ))}
-        </div>
-      </div>
-      <div className={styles.foot}>
-        <p>Families sending home, freelancers paid from abroad, students, travellers and companies paying across borders. Railor shows each of them what arrives before they send.</p>
-        <div className={styles.actions}>
-          <Link href="/#calculator" className={`${styles.primary} press`}>Compare a transfer</Link>
-          <Link href="/guides" className={`${styles.secondary} press`}>Read the guides</Link>
         </div>
       </div>
     </section>

@@ -383,10 +383,17 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
           {options.length > (hero ? 1 : 3) ? `Compare all ${options.length} options` : "See the full comparison"}
           <ArrowRight size={17} aria-hidden />
         </Link>
-        <p className={styles.footnote}>
-          {midRate ? <>Mid-market: 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}. </> : null}
-          Every price shows its source. Confirm the final amount with the provider.
-        </p>
+        {hero ? (
+          <p className={styles.scribble} aria-hidden>
+            <svg viewBox="0 0 90 40" width="64" height="28"><path d="M86 28 C 62 34, 34 30, 10 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /><path d="M10 12 l 12 1 M10 12 l 3 11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+            go on, it’s a real price check
+          </p>
+        ) : (
+          <p className={styles.footnote}>
+            {midRate ? <>Mid-market: 1 {from} = {midRate.toLocaleString("en-US", { maximumSignificantDigits: 6 })} {to}. </> : null}
+            Every price shows its source. Confirm the final amount with the provider.
+          </p>
+        )}
         </>}
       </div>
     </div>
