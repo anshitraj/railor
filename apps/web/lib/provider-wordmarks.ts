@@ -1,3 +1,5 @@
+import generated from "./provider-wordmark-manifest.json";
+
 export const marqueeProviders = [
   { slug: "wise", file: "wise.svg", name: "Wise", width: 88, height: 20 },
   { slug: "remitly", file: "remitly.svg", name: "Remitly", width: 135, height: 32 },
@@ -20,7 +22,10 @@ const additionalWordmarks = [
   { slug: "aspora", file: "aspora.webp", name: "Aspora", width: 439, height: 92 },
 ];
 
-const providerWordmarks = new Map([...marqueeProviders, ...additionalWordmarks].map((logo) => [logo.slug, logo]));
+/** Logos downloaded from each provider’s own site (see public/brand/provider-wordmarks/SOURCES.md); the hand-picked ones above win. */
+const downloadedWordmarks = Object.entries(generated as Record<string, { file: string; name: string; width: number; height: number }>).map(([slug, logo]) => ({ slug, ...logo }));
+
+const providerWordmarks = new Map([...downloadedWordmarks, ...marqueeProviders, ...additionalWordmarks].map((logo) => [logo.slug, logo]));
 
 export function providerWordmark(slug: string) {
   return providerWordmarks.get(slug.replace(/^market:/, "").toLowerCase());

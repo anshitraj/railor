@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 198.777 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="logo lemfi" clip-path="url(#clip0_0_59)">
+<path id="Vector" d="M74.3357 0H39.903C37.7648 0 36.0312 1.73353 36.0312 3.87174V40.1255C36.0312 42.2637 37.7648 43.9973 39.903 43.9973H78.2075V29.2048H61.3616V27.3373H78.2075V3.87174C78.2075 1.73353 76.4739 0 74.3357 0ZM65.5423 16.6271H48.6964V14.7624H65.5423V16.6271Z" fill="var(--fill-0, black)"/>
+<path id="Vector_2" d="M19.0251 0H0V40.1255C0 42.2637 1.73353 43.9973 3.87174 43.9973H34.1593V27.3373H19.0251V0Z" fill="var(--fill-0, black)"/>
+<path id="Vector_3" d="M142.789 43.9973H161.814V33.7847H177.881V18.4974H161.814V16.6271H177.881V0H142.789V43.9973Z" fill="var(--fill-0, black)"/>
+<path id="Vector_4" d="M198.775 0H179.75V16.6326H198.775V0Z" fill="var(--fill-0, black)"/>
+<path id="Vector_5" d="M198.775 18.4961H179.75V43.996H198.775V18.4961Z" fill="var(--fill-0, black)"/>
+<path id="Vector_6" d="M137.028 0H105.173C102.931 0 100.971 1.5558 100.971 3.89088H99.1032C99.1032 1.5558 97.5474 0 95.2124 0H80.0781V44H99.1032V16.6326H100.971V43.9973H120.029V16.6326H121.896V43.9973H140.921V3.89088C140.921 1.5558 139.365 0 137.03 0H137.028Z" fill="var(--fill-0, black)"/>
+</g>
+<defs>
+<clipPath id="clip0_0_59">
+<rect width="198.777" height="44" fill="white"/>
+</clipPath>
+</defs>
+</svg>

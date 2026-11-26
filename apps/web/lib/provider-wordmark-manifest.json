@@ -1,0 +1,488 @@
+{
+ "abn-amro-bank": {
+  "file": "abn-amro-bank.svg",
+  "name": "ABN AMRO Bank",
+  "width": 162,
+  "height": 40
+ },
+ "alfred": {
+  "file": "alfred.svg",
+  "name": "Alfred",
+  "width": 115,
+  "height": 32
+ },
+ "anchorage": {
+  "file": "anchorage.webp",
+  "name": "Anchorage Digital",
+  "width": 178,
+  "height": 40
+ },
+ "anz": {
+  "file": "anz.svg",
+  "name": "ANZ",
+  "width": 420,
+  "height": 140
+ },
+ "arq": {
+  "file": "arq.webp",
+  "name": "ARQ (formerly DolarApp)",
+  "width": 424,
+  "height": 144
+ },
+ "atlantic-money": {
+  "file": "atlantic-money.webp",
+  "name": "Atlantic Money",
+  "width": 480,
+  "height": 60
+ },
+ "b2c2": {
+  "file": "b2c2.svg",
+  "name": "B2C2",
+  "width": 180,
+  "height": 40
+ },
+ "banking-circle": {
+  "file": "banking-circle.svg",
+  "name": "Banking Circle",
+  "width": 328,
+  "height": 154
+ },
+ "barclays": {
+  "file": "barclays.svg",
+  "name": "Barclays",
+  "width": 1024,
+  "height": 178
+ },
+ "bitso": {
+  "file": "bitso.svg",
+  "name": "Bitso",
+  "width": 109,
+  "height": 30
+ },
+ "bnp-paribas": {
+  "file": "bnp-paribas.svg",
+  "name": "BNP Paribas",
+  "width": 322,
+  "height": 113
+ },
+ "canara-bank": {
+  "file": "canara-bank.svg",
+  "name": "Canara Bank",
+  "width": 328,
+  "height": 65
+ },
+ "careem-pay": {
+  "file": "careem-pay.webp",
+  "name": "Careem Pay",
+  "width": 480,
+  "height": 98
+ },
+ "cashfree": {
+  "file": "cashfree.svg",
+  "name": "Cashfree Payments",
+  "width": 148,
+  "height": 25
+ },
+ "cleartax": {
+  "file": "cleartax.svg",
+  "name": "Cleartax",
+  "width": 133,
+  "height": 42
+ },
+ "clickpesa": {
+  "file": "clickpesa.webp",
+  "name": "ClickPesa",
+  "width": 480,
+  "height": 180
+ },
+ "commerzbank": {
+  "file": "commerzbank.svg",
+  "name": "Commerzbank",
+  "width": 744,
+  "height": 74
+ },
+ "commonwealth-bank-of-australia": {
+  "file": "commonwealth-bank-of-australia.svg",
+  "name": "Commonwealth Bank of Australia",
+  "width": 400,
+  "height": 278
+ },
+ "conduit": {
+  "file": "conduit.svg",
+  "name": "Conduit",
+  "width": 147,
+  "height": 29
+ },
+ "deutsche-bank": {
+  "file": "deutsche-bank.svg",
+  "name": "Deutsche Bank",
+  "width": 150,
+  "height": 150
+ },
+ "dlocal": {
+  "file": "dlocal.svg",
+  "name": "dLocal",
+  "width": 135,
+  "height": 32
+ },
+ "dtcpay": {
+  "file": "dtcpay.webp",
+  "name": "dtcpay",
+  "width": 426,
+  "height": 100
+ },
+ "eand-money": {
+  "file": "eand-money.svg",
+  "name": "e& money",
+  "width": 52,
+  "height": 40
+ },
+ "eco": {
+  "file": "eco.svg",
+  "name": "Eco",
+  "width": 67,
+  "height": 22
+ },
+ "flitpay": {
+  "file": "flitpay.svg",
+  "name": "Flitpay",
+  "width": 546,
+  "height": 163
+ },
+ "fomo-pay": {
+  "file": "fomo-pay.webp",
+  "name": "FOMO Pay",
+  "width": 480,
+  "height": 92
+ },
+ "halifax": {
+  "file": "halifax.svg",
+  "name": "Halifax",
+  "width": 788,
+  "height": 127
+ },
+ "hdfc-bank": {
+  "file": "hdfc-bank.svg",
+  "name": "HDFC Bank",
+  "width": 178,
+  "height": 35
+ },
+ "highnote": {
+  "file": "highnote.svg",
+  "name": "Highnote",
+  "width": 153,
+  "height": 40
+ },
+ "hsbc": {
+  "file": "hsbc.svg",
+  "name": "HSBC",
+  "width": 112,
+  "height": 31
+ },
+ "hsbc-australia": {
+  "file": "hsbc.svg",
+  "name": "HSBC Australia",
+  "width": 112,
+  "height": 31
+ },
+ "hsbc-sg": {
+  "file": "hsbc.svg",
+  "name": "HSBC Singapore",
+  "width": 112,
+  "height": 31
+ },
+ "idfc-first-bank": {
+  "file": "idfc-first-bank.webp",
+  "name": "IDFC FIRST Bank",
+  "width": 171,
+  "height": 61
+ },
+ "immersve": {
+  "file": "immersve.webp",
+  "name": "Immersve",
+  "width": 274,
+  "height": 64
+ },
+ "koinbx": {
+  "file": "koinbx.svg",
+  "name": "Koinbx",
+  "width": 135,
+  "height": 46
+ },
+ "koinx": {
+  "file": "koinx.webp",
+  "name": "Koinx",
+  "width": 480,
+  "height": 121
+ },
+ "koywe": {
+  "file": "koywe.svg",
+  "name": "Koywe",
+  "width": 130,
+  "height": 40
+ },
+ "lacaixa": {
+  "file": "lacaixa.svg",
+  "name": "LaCaixa",
+  "width": 193,
+  "height": 40
+ },
+ "lemfi": {
+  "file": "lemfi.svg",
+  "name": "LemFi",
+  "width": 199,
+  "height": 44
+ },
+ "lirium": {
+  "file": "lirium.webp",
+  "name": "Lirium",
+  "width": 480,
+  "height": 113
+ },
+ "lloyds": {
+  "file": "lloyds.webp",
+  "name": "Lloyds",
+  "width": 413,
+  "height": 165
+ },
+ "lulu-exchange": {
+  "file": "lulu-exchange.webp",
+  "name": "LuLu Exchange",
+  "width": 179,
+  "height": 57
+ },
+ "mercury": {
+  "file": "mercury.webp",
+  "name": "Mercury",
+  "width": 276,
+  "height": 64
+ },
+ "mesh": {
+  "file": "mesh.webp",
+  "name": "Mesh",
+  "width": 480,
+  "height": 139
+ },
+ "monavate": {
+  "file": "monavate.svg",
+  "name": "Monavate",
+  "width": 356,
+  "height": 57
+ },
+ "monese": {
+  "file": "monese.svg",
+  "name": "Monese",
+  "width": 500,
+  "height": 327
+ },
+ "mulya": {
+  "file": "mulya.webp",
+  "name": "Mulya",
+  "width": 480,
+  "height": 171
+ },
+ "n-exchange": {
+  "file": "n-exchange.svg",
+  "name": "n.exchange",
+  "width": 174,
+  "height": 29
+ },
+ "nium": {
+  "file": "nium.svg",
+  "name": "Nium",
+  "width": 288,
+  "height": 89
+ },
+ "onafriq": {
+  "file": "onafriq.webp",
+  "name": "Onafriq",
+  "width": 480,
+  "height": 138
+ },
+ "opendue": {
+  "file": "opendue.webp",
+  "name": "Due",
+  "width": 214,
+  "height": 96
+ },
+ "paxos": {
+  "file": "paxos.webp",
+  "name": "Paxos",
+  "width": 480,
+  "height": 136
+ },
+ "payoneer": {
+  "file": "payoneer.svg",
+  "name": "Payoneer",
+  "width": 632,
+  "height": 123
+ },
+ "pingpong": {
+  "file": "pingpong.webp",
+  "name": "PingPong",
+  "width": 196,
+  "height": 60
+ },
+ "rabobank": {
+  "file": "rabobank.svg",
+  "name": "Rabobank",
+  "width": 2500,
+  "height": 453
+ },
+ "rapyd": {
+  "file": "rapyd.webp",
+  "name": "Rapyd",
+  "width": 480,
+  "height": 148
+ },
+ "ria": {
+  "file": "ria.svg",
+  "name": "Ria Money Transfer",
+  "width": 145,
+  "height": 67
+ },
+ "ripple": {
+  "file": "ripple.webp",
+  "name": "Ripple",
+  "width": 480,
+  "height": 120
+ },
+ "sabadell": {
+  "file": "sabadell.svg",
+  "name": "Sabadell",
+  "width": 217,
+  "height": 37
+ },
+ "salt": {
+  "file": "salt.svg",
+  "name": "Salt",
+  "width": 64,
+  "height": 22
+ },
+ "scrypt": {
+  "file": "scrypt.webp",
+  "name": "SCRYPT",
+  "width": 480,
+  "height": 131
+ },
+ "sendwave": {
+  "file": "sendwave.svg",
+  "name": "Sendwave",
+  "width": 181,
+  "height": 25
+ },
+ "skrill": {
+  "file": "skrill.svg",
+  "name": "Skrill",
+  "width": 500,
+  "height": 112
+ },
+ "sphere": {
+  "file": "sphere.svg",
+  "name": "Sphere",
+  "width": 4929,
+  "height": 926
+ },
+ "stripe": {
+  "file": "stripe.svg",
+  "name": "Stripe",
+  "width": 360,
+  "height": 150
+ },
+ "suncrypto": {
+  "file": "suncrypto.webp",
+  "name": "Suncrypto",
+  "width": 480,
+  "height": 115
+ },
+ "tether": {
+  "file": "tether.svg",
+  "name": "Tether",
+  "width": 467,
+  "height": 149
+ },
+ "thunes": {
+  "file": "thunes.webp",
+  "name": "Thunes",
+  "width": 480,
+  "height": 107
+ },
+ "titan": {
+  "file": "titan.svg",
+  "name": "Titan",
+  "width": 112,
+  "height": 28
+ },
+ "transak": {
+  "file": "transak.svg",
+  "name": "Transak",
+  "width": 983,
+  "height": 256
+ },
+ "triple-a": {
+  "file": "triple-a.svg",
+  "name": "Triple-A",
+  "width": 80,
+  "height": 19
+ },
+ "uniswap": {
+  "file": "uniswap.svg",
+  "name": "Uniswap",
+  "width": 961,
+  "height": 240
+ },
+ "visa-direct": {
+  "file": "visa-direct.webp",
+  "name": "Visa Direct",
+  "width": 208,
+  "height": 68
+ },
+ "wazirx": {
+  "file": "wazirx.svg",
+  "name": "Wazirx",
+  "width": 416,
+  "height": 93
+ },
+ "wells-fargo": {
+  "file": "wells-fargo.svg",
+  "name": "Wells Fargo",
+  "width": 300,
+  "height": 300
+ },
+ "western-union": {
+  "file": "western-union.svg",
+  "name": "Western Union",
+  "width": 225,
+  "height": 50
+ },
+ "westpac": {
+  "file": "westpac.svg",
+  "name": "Westpac",
+  "width": 1024,
+  "height": 203
+ },
+ "wio": {
+  "file": "wio.svg",
+  "name": "Wio Bank",
+  "width": 64,
+  "height": 26
+ },
+ "xe": {
+  "file": "xe.webp",
+  "name": "Xe",
+  "width": 480,
+  "height": 384
+ },
+ "xerof": {
+  "file": "xerof.webp",
+  "name": "Xerof",
+  "width": 480,
+  "height": 102
+ },
+ "zero-hash": {
+  "file": "zero-hash.svg",
+  "name": "Zero Hash",
+  "width": 760,
+  "height": 166
+ }
+}

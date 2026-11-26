@@ -37,7 +37,7 @@ export function ConnectorCatalog({ providers }: { providers: Provider[] }) {
           <ul role="list" className={styles.rows}>
             {results.slice(0, visible).map((provider) => (
               <li key={provider.slug}>
-                <div className={styles.provider}><strong><ProviderWordmark slug={provider.slug} name={provider.name} /></strong><p>{provider.description || provider.category}</p></div>
+                <div className={styles.provider}><strong><ProviderWordmark slug={provider.slug} name={provider.name} size="large" /></strong><p>{provider.description || provider.category}</p></div>
                 <button type="button" disabled className={styles.soon} aria-label={`${provider.name} · Coming soon`}><Clock3 size={14} aria-hidden /> Coming soon</button>
               </li>
             ))}
