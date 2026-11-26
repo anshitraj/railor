@@ -6,6 +6,7 @@ import { Card, EvidencePopover, Freshness, SectionLabel, VerdictPill } from "@ra
 import { ProviderWordmark } from "../../../../components/app/provider-wordmark";
 
 import { hideDemoProvider } from "../../../../lib/demo-providers";
+import { requireSignedIn } from "../../../../lib/sign-in-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function PublicProviderProfile({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  await requireSignedIn(`/providers/${encodeURIComponent(slug)}`);
   const data = await loadProviderBySlug(slug);
   if (!data || hideDemoProvider(data.provider.isDemo)) notFound();
   const { provider, products, facets, requirements, fees, limits, changes } = data;

@@ -3,6 +3,7 @@ import { loadProviderSummaries, remittanceProviderDirectory, remittanceSurvey } 
 import { ProviderDirectory } from "../../../components/app/provider-directory";
 import { SurveyProviderDirectory } from "../../../components/app/survey-provider-directory";
 import { FeaturedProviders } from "../../../components/marketing/featured-providers";
+import { requireSignedIn } from "../../../lib/sign-in-gate";
 import { discoveredTransferDirectory } from "../../../lib/transfer-provider-discovery";
 
 export const metadata = { title: "Providers" };
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function PublicProvidersPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view } = await searchParams;
+  // The provider directory is for signed-in people: it is the first thing a scraper would read.
+  await requireSignedIn(view === "infrastructure" || view === "directory" ? `/providers?view=${view}` : "/providers");
   const infrastructure = view === "infrastructure";
   const discovery = view === "directory";
   // Different sources: a dated consumer fee survey and Railor's verified
