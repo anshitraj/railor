@@ -224,6 +224,10 @@
 .requirementTopic dt { color: var(--color-ink); font-size: 13px; font-weight: 700; line-height: 1.35; text-wrap: balance; }
 .requirementTopic dd { margin-top: 2px; color: var(--color-ink-soft); font-size: 13px; line-height: 1.45; text-wrap: pretty; }
 .requirementTopic dd + dd { margin-top: 5px; }
+.kycTime { color: var(--color-ink); font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.kycScope { color: var(--color-muted); font-size: 12px; }
+.kycList { display: grid; gap: 5px; padding-inline-start: 18px; list-style: disc; }
+.kycList li::marker { color: var(--color-orange-deep); }
 .requirementSource { display: inline-flex; min-height: 24px; gap: 4px; align-items: center; color: var(--color-orange-deep); font-weight: 650; text-underline-offset: 3px; text-decoration: underline; }
 .requirementSource:focus-visible, .unpricedRequirements summary:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
 .unpricedRequirements { margin-top: 14px; }

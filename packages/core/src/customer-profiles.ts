@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { indiaReceivingAssessment } from "./public-pricing/receiving-products.js";
 import { withReceivingEvidence, type ReceivingPaymentFacts } from "./public-pricing/receiving-evidence.js";
+import { withKycFacts, type ProviderKyc } from "./public-pricing/provider-kyc.js";
 
 /** Account holder, not the overseas payer. Freelance income is commercial. */
 export const CustomerContext = z.object({
@@ -32,6 +33,8 @@ export interface ProviderProfileAssessment {
   sources: Array<{ label: string; url: string }>;
   reviewedAt: string | null;
   payment?: ReceivingPaymentFacts;
+  /** What the provider publishes about identity checks: documents and how long approval takes. */
+  kyc?: ProviderKyc;
 }
 const WISE_VERIFY = "https://wise.com/help/articles/6Kpm9pXlJW79OGAktSnHos/how-to-verify-your-indian-business-to-receive-payments";
 const WISE_RECEIVE = "https://wise.com/help/articles/71lNXW0Ls3gEFhUH8PtodV/receiving-payments-for-indian-businesses";
@@ -83,13 +86,19 @@ export function senderCountryAssessment(row: { providerName: string; senderCount
   };
 }
 
-/** Published product rules, never an assertion that the customer passed KYC. */
-export function assessCustomerProfile(slug: string, context: CustomerContext, request: {
+interface AssessmentRequest {
   sourceCurrency: string; destinationCurrency: string; amount: number;
   amountUsd: number | null; referenceRate: number | null;
   /** The row's product id, for providers whose rows describe different products (a sender's service vs a receiving account). */
   product?: string;
-}): ProviderProfileAssessment {
+}
+
+/** Published product rules, never an assertion that the customer passed KYC. */
+export function assessCustomerProfile(slug: string, context: CustomerContext, request: AssessmentRequest): ProviderProfileAssessment {
+  return withKycFacts(assessProductRules(slug, context, request), slug, context);
+}
+
+function assessProductRules(slug: string, context: CustomerContext, request: AssessmentRequest): ProviderProfileAssessment {
   const unknown = unconfirmedAssessment();
   const provider = slug.replace(/^market:/, "");
   const intoIndia = context.country === "IN" && context.direction === "receive" && request.destinationCurrency === "INR";

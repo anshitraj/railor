@@ -13,6 +13,7 @@ import { asporaBankQuote, asporaQuoteCurrency, usBankRemittanceCorridor, usBankR
 import { publicOfferRows } from "./public-pricing/offers.js";
 import { careemPublicPrice, lemfiPublicPrice, sendwavePublicPrice, taptapSendPublicPrice } from "./public-pricing/retail-calculators.js";
 import { payerFacts, PAYER_FACTS_CHECKED } from "./public-pricing/payer-facts.js";
+import { withKycFacts } from "./public-pricing/provider-kyc.js";
 import { CustomerContext, assessCustomerProfile, senderCountryAssessment, unconfirmedAssessment, type PaymentMethod, type ProviderProfileAssessment } from "./customer-profiles.js";
 import { applyWebChecks, priceCheckClaims, type RowWebCheck, type WebCheckClaim, type WebCheckResult, type WebCheckSummary } from "./web-check.js";
 
@@ -688,6 +689,8 @@ export async function comparePrices(rawInput: PriceCheckInput, deps: PriceCheckD
         }
         : senderCountryAssessment(row, input.context)
           ?? assessCustomerProfile(row.providerSlug, input.context, { ...input, amountUsd, referenceRate: reference?.rate ?? null, product: row.product?.id });
+      // Every row's requirements also carry what the provider publishes about its identity checks.
+      row.profileAssessment = withKycFacts(row.profileAssessment, row.providerSlug, input.context);
       if (!row.profileAssessment.priceApplicable) row.partial = true;
       // Receiving-account evidence does not describe the sender's public Wise quote.
       if (row.side === "payer" && row.profileAssessment.payment) {

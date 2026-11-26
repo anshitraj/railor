@@ -244,7 +244,7 @@ function UnpricedProvider({ provider, onGetQuote, bookmark }: { provider: Market
     {sources?.map(source => <a key={source.url} className={styles.sourceLink} href={source.url} target="_blank" rel="noreferrer noopener">{source.label}<ArrowUpRight size={12} /></a>)}
     {provider.profileAssessment && <details className={styles.unpricedRequirements}>
       <summary>Requirements and remittance proof</summary>
-      <ProviderRequirements assessment={provider.profileAssessment} />
+      <ProviderRequirements assessment={provider.profileAssessment} provider={provider.providerName} />
     </details>}
     <Link href="/docs/pricing#provider-coverage" className={styles.sourceLink}>Coverage and pricing methodology<ArrowRight size={12} /></Link>
   </aside>;
@@ -308,7 +308,7 @@ function SelectedProvider({ row, offer, best, reference, from, to, amount, check
   const receiveLabel = row.partial || row.basis === "market_estimate" ? "Reference amount" : row.basis === "exact" ? "Recipient gets" : "Estimated payout";
   const sourceLabel = pricingSourceLabel(row);
   const sourceTime = priceSourceTime(row.observedAt, row.basis);
-  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} />;
+  const requirements = <ProviderRequirements assessment={assessment} feeTax={feeTax} receipt={receipt} delivery={delivery} provider={row.providerName.split(" · ")[0]} />;
   const sourceDetails = (
     <div className={styles.quoteSources}>
       <QuoteFacts items={[
