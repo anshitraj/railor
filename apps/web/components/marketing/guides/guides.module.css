@@ -27,9 +27,6 @@
 .moreLink:hover svg { transform: translateX(3px); }
 
 /* Home page strip */
-.homeFoot { display: grid; gap: 28px; margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--color-line); }
-.homeFoot h3 { margin-bottom: 10px; color: var(--color-ink); font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
-.homeLinks { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 
 /* Guides hub */
 .hub { display: grid; gap: 56px; }
@@ -132,7 +129,6 @@
   .layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; }
   .aside { position: sticky; top: 96px; align-self: start; }
   .toc { display: block; }
-  .homeFoot { grid-template-columns: 1.4fr 1fr; gap: 56px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card, .cardMeta svg, .moreLink svg, .faq summary svg { transition: none; }

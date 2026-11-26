@@ -25,6 +25,9 @@
 .activePoint { width: 9px; height: 9px; border: 2px solid var(--color-surface); box-shadow: 0 0 0 1px var(--color-orange-deep); }
 .vertical, .horizontal { position: absolute; inset-block: 0; border-left: 1px dashed var(--color-muted); pointer-events: none; }
 .horizontal { inset: auto 0 auto; border: 0; border-top: 1px dashed var(--color-muted); }
+.tip { position: absolute; z-index: 3; display: grid; gap: 2px; padding: 9px 12px 10px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); box-shadow: 0 12px 30px -12px rgb(21 19 16 / .4), 0 2px 6px rgb(21 19 16 / .08); font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+.tip time { color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.tip strong { color: var(--color-ink); font-size: 13px; font-weight: 700; }
 .priceAxis { position: relative; display: grid; grid-template-columns: minmax(44px, max-content); border-left: 1px solid var(--color-line); }
 .priceAxis span, .priceAxis strong { position: relative; grid-area: 1 / 1; align-self: start; padding-inline: 6px; color: var(--color-muted); font-size: 10.5px; line-height: 16px; text-align: right; transform: translateY(-50%); font-variant-numeric: tabular-nums; }
 .priceAxis strong { border-radius: 0 4px 4px 0; background: var(--color-ink); color: var(--color-surface); font-weight: 650; }

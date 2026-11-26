@@ -60,7 +60,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <DevelopersSection />
         <TrustSection />
         <FaqSection />
-        <GuidesSection destinations={destinations.popular} signedIn={Boolean(session)} />
+        <GuidesSection />
         <FinalCta />
         <MobileCompareBar providerCount={remittanceProviderCatalog().length} />
       </main>

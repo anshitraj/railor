@@ -199,6 +199,7 @@ function Plot({ data }: { data: ProviderHistory }) {
             ? <i key={`${kind}-${index}`} className={styles.dot} data-series={kind} style={{ left: `${x(index)}%`, top: `${y(value)}%` }} /> : null))}
           <i className={styles.cursor} style={{ left: `${x(selected)}%` }} />
           {(["mid", "bank", "best"] as const).map((kind) => series[kind][selected] == null ? null : <i key={kind} className={styles.marker} data-series={kind} style={{ left: `${x(selected)}%`, top: `${y(series[kind][selected]!)}%` }} />)}
+          {hover !== null || pinned !== null ? <Tip day={day} to={to} series={series} index={selected} x={x(selected)} y={y} /> : null}
         </div>
         <ul className={styles.endLabels} aria-hidden="true">{endLabels.map((item) => <li key={item.kind} data-series={item.kind} style={{ top: `${item.top}%` }}>{item.label}</li>)}</ul>
         <div className={styles.xAxis} aria-hidden="true">{dateTicks.map((index) => <span key={index}>{dateLabel(days[index]!.date)}</span>)}</div>
@@ -209,6 +210,34 @@ function Plot({ data }: { data: ProviderHistory }) {
         <p>{recorded ? `${recorded} of ${days.length} days recorded` : "No provider prices recorded in this period yet"} · from Railor’s own checks of public prices, fees included. Days Railor didn’t check are left empty, never filled in. Mid-market from <a href={data.reference.sourceUrl} target="_blank" rel="noreferrer noopener">{data.reference.source}</a>.</p>
       </footer>
     </>
+  );
+}
+
+/**
+ * The price beside the pointer: the day, and what each line paid that day. It
+ * sits above the highest point (below it when that is near the top) and leans
+ * away from the plot's edges, so it never covers the cursor or leaves the chart.
+ */
+function Tip({ day, to, series, index, x, y }: { day: ProviderHistoryDay; to: string; series: Series; index: number; x: number; y: (value: number) => number }) {
+  type TipRow = { kind: "best" | "mid" | "bank"; label: string; value: number };
+  const rows: TipRow[] = [];
+  const add = (kind: TipRow["kind"], label: string, value: number | null | undefined) => { if (value !== null && value !== undefined) rows.push({ kind, label, value }); };
+  add("best", series.bestName[index] ?? "Cheapest", series.best[index]);
+  add("mid", "Mid-market", series.mid[index]);
+  add("bank", series.bankName[index] ?? (series.bankIsBank[index] ? "Bank" : "Lowest option"), series.bank[index]);
+  const heights = rows.map((row) => y(row.value));
+  const top = heights.length ? Math.min(...heights) : null;
+  const bottom = heights.length ? Math.max(...heights) : null;
+  const above = top === null || top > 40;
+  const side = x > 62 ? "calc(-100% - 14px)" : x < 38 ? "14px" : "-50%";
+  const style = { left: `${x}%`, top: `${above ? (top ?? 8) : bottom}%`, transform: `translate(${side}, ${above ? (top === null ? "0" : "calc(-100% - 16px)") : "16px"})` };
+  return (
+    <div className={styles.tip} style={style} aria-hidden="true">
+      <time dateTime={day.date}>{dateLabel(day.date, true)}</time>
+      {rows.length ? rows.map(({ kind, label, value }) => (
+        <div key={kind} data-series={kind}><span><i />{label}</span><strong>{money(value)} {to}</strong></div>
+      )) : <span className={styles.tipEmpty}>Not recorded this day</span>}
+    </div>
   );
 }
 

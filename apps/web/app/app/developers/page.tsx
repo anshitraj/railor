@@ -10,8 +10,6 @@ import {
 import { getSession } from "../../../lib/auth";
 import { getSavedCorridors } from "../../../lib/org";
 import { DeveloperPortal } from "../../../components/app/developer-portal";
-import { WebhookEndpoints } from "../../../components/app/webhook-endpoints";
-import { listWebhookDeliveries, listWebhookEndpoints } from "@railor/core";
 import type { CorridorQuery } from "@railor/types";
 import { developerExampleQuery } from "../../../lib/developer-setup";
 import { appOrigin } from "../../../lib/security";
@@ -62,8 +60,6 @@ export default async function DevelopersPage() {
 
   const exampleQuery = developerExampleQuery(org, (corridors[0]?.query ?? {}) as Partial<CorridorQuery>);
 
-  const [endpoints, deliveries] = await Promise.all([listWebhookEndpoints(org.id), listWebhookDeliveries(org.id, 30)]);
-
   return (
     <div className="flex flex-col gap-5">
     <DeveloperPortal
@@ -86,11 +82,6 @@ export default async function DevelopersPage() {
       dailySeries={dailySeries}
       quota={quota}
     />
-    <details className="mx-auto w-full max-w-[980px] rounded-[24px] border border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-5"><summary className="cursor-pointer text-[15px] font-semibold">Webhooks & delivery history</summary><div className="mt-5"><WebhookEndpoints
-      canManage={session.role === "owner" || session.role === "admin"}
-      endpoints={endpoints.map((e) => ({ id: e.id, url: e.url, description: e.description, mode: e.mode, events: e.events, enabled: e.enabled, secretHint: e.secretHint }))}
-      deliveries={deliveries.map(({ delivery, url }) => ({ id: delivery.id, eventType: delivery.eventType, status: delivery.status, attempts: delivery.attempts, lastStatusCode: delivery.lastStatusCode, lastError: delivery.lastError, createdAt: delivery.createdAt.toISOString(), url }))}
-    /></div></details>
     </div>
   );
 }

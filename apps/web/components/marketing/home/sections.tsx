@@ -4,6 +4,7 @@ import { ArrowRight, Bot, Check, Code2, Package } from "lucide-react";
 import { DeveloperDemo } from "./developer-demo";
 import { LoopOnView } from "./loop-on-view";
 import { MobileCardSlider } from "./mobile-card-slider";
+import { TrustBases } from "./trust-basis";
 import styles from "./home.module.css";
 
 const AUDIENCES = [
@@ -98,13 +99,6 @@ export function DevelopersSection() {
   );
 }
 
-const BASES = [
-  { label: "Your account", tone: "green", title: "A quote from your own account", body: "When you connect a provider, Railor shows the exact price it gives you." },
-  { label: "Public quote", tone: "sky", title: "A live public quote", body: "Taken from the provider’s own public pricing a few seconds ago." },
-  { label: "Published fees", tone: "gold", title: "The provider’s fee schedule", body: "Their published fees applied at today’s mid-market rate." },
-  { label: "Estimate", tone: "ink", title: "A dated estimate", body: "Consumer prices collected from comparison feeds, with the date shown." },
-] as const;
-
 export function TrustSection() {
   return (
     <section className={styles.section} aria-labelledby="trust-title">
@@ -118,17 +112,7 @@ export function TrustSection() {
               <Link href="/company/trust" className={styles.textLink}>How Railor checks prices<ArrowRight size={16} aria-hidden /></Link>
             </div>
           </div>
-          <ul className={styles.basisGrid} data-rail>
-            {BASES.map((basis, index) => (
-              <li key={basis.label} className={styles.basis}>
-                <span className="sticker" data-tone={basis.tone} style={{ "--tilt": `${index % 2 ? 3 : -3}deg` } as React.CSSProperties}>{basis.label}</span>
-                <div>
-                  <h3>{basis.title}</h3>
-                  <p>{basis.body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <TrustBases />
         </div>
       </div>
     </section>

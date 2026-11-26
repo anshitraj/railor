@@ -36,6 +36,17 @@
 .marker[data-series="mid"] { background: var(--mid); }
 .marker { width: 10px; height: 10px; box-shadow: 0 0 0 2px var(--color-surface); }
 .cursor { position: absolute; inset-block: 0; width: 0; border-left: 1px solid var(--color-line-strong); pointer-events: none; }
+/* The price beside the pointer. */
+.tip { position: absolute; z-index: 3; display: grid; min-width: 188px; gap: 5px; padding: 9px 12px 10px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); box-shadow: 0 12px 30px -12px rgb(21 19 16 / .4), 0 2px 6px rgb(21 19 16 / .08); color: var(--color-ink); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+.tip time { color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.tip div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.tip div > span { display: inline-flex; align-items: center; gap: 6px; max-width: 150px; overflow: hidden; color: var(--color-ink-soft); text-overflow: ellipsis; }
+.tip i { display: inline-block; flex: none; width: 10px; height: 0; border-top: 2px solid; }
+.tip [data-series="best"] i { border-color: var(--best); }
+.tip [data-series="bank"] i { border-color: var(--bank); }
+.tip [data-series="mid"] i { border-top-style: dotted; border-color: var(--mid); }
+.tip strong { font-weight: 700; }
+.tipEmpty { color: var(--color-muted); }
 .endLabels { position: relative; }
 .endLabels li { position: absolute; left: 0; padding-left: 8px; border-left: 2px solid; font-size: 11.5px; font-weight: 650; line-height: 1.25; transform: translateY(-50%); white-space: nowrap; }
 .endLabels [data-series="best"] { border-color: var(--best); color: var(--best); }

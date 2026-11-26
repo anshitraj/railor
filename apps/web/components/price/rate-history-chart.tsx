@@ -125,6 +125,17 @@ function HistoryPlot({ data, amount, id }: { data: RateHistory; amount: number; 
         {segments.filter(segment => segment.length === 1).map(([point]) => <i key={point!.index} className={styles.point} style={{ left: point!.x + "%", top: point!.y + "%" }} />)}
         <i className={styles.vertical} style={{ left: guideLeft }} />
         {guideTop && <><i className={styles.horizontal} style={{ top: guideTop }} /><i className={styles.activePoint} style={{ left: guideLeft, top: guideTop }} /></>}
+        {(hover !== null || pinned !== null) && selected.rate !== null && yAt !== null && (() => {
+          const xPct = x(selectedIndex);
+          const above = yAt > 34;
+          const side = xPct > 62 ? "calc(-100% - 14px)" : xPct < 38 ? "14px" : "-50%";
+          return (
+            <div className={styles.tip} aria-hidden="true" style={{ left: guideLeft, top: yAt + "%", transform: `translate(${side}, ${above ? "calc(-100% - 16px)" : "16px"})` }}>
+              <time dateTime={selected.date}>{dateLabel(selected.date, true)}</time>
+              <strong>1 {from} = {rateLabel(selected.rate)} {to}</strong>
+            </div>
+          );
+        })()}
       </div>
       <div className={styles.priceAxis} aria-hidden="true">
         {ticks.map(tick => <span key={tick} style={{ top: y(tick) + "%" }}>{format(tick, tickDigits)}</span>)}
