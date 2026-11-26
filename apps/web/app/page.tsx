@@ -11,6 +11,7 @@ import { AudiencesSection, DevelopersSection, FaqSection, FinalCta, TrustSection
 import { WhyRailor } from "../components/marketing/home/why-railor";
 import { OnePlaceSection } from "../components/marketing/home/one-place";
 import { MathsSection } from "../components/marketing/home/maths-section";
+import { CollageSection } from "../components/marketing/home/collage";
 import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
 import { SmoothScroll } from "../components/marketing/motion/smooth-scroll";
 import { MobileCompareBar } from "../components/marketing/home/mobile-compare-bar";
@@ -58,6 +59,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
         <NumbersSection stats={stats} />
         <OnePlaceSection />
+        <CollageSection />
         <HowItWorks />
         <WhyRailor signedIn={Boolean(session)} />
         <MathsSection benchmarks={remittanceCostBenchmarks()} />

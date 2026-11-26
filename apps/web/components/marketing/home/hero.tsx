@@ -36,7 +36,16 @@ export function HomeHero({ calculator, providerCount }: { calculator: React.Reac
           </div>
           <p className={styles.proof}>Rechecked every 30 seconds<span aria-hidden>·</span>A source on every price<span aria-hidden>·</span>No sign-up</p>
         </div>
-        <div className={styles.calc} id="calculator">{calculator}</div>
+        <div className={styles.calcWrap}>
+          <div className={styles.calc} id="calculator">
+            <span className={styles.island} aria-hidden />
+            {calculator}
+          </div>
+          <p className={styles.scribble} aria-hidden>
+            <svg viewBox="0 0 90 40" width="78" height="34"><path d="M86 28 C 62 34, 34 30, 10 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /><path d="M10 12 l 12 1 M10 12 l 3 11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+            go on, it’s a real price check
+          </p>
+        </div>
       </div>
       <div className={styles.marquee}><ProviderMarquee /></div>
     </section>

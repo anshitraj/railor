@@ -41,24 +41,33 @@ export function OnePlaceSection() {
           <p className={styles.eyebrow}>Compare</p>
           <h3 id="op-compare">Every provider.<br />One list.</h3>
           <p className={styles.lead}>Banks, apps and payment platforms side by side, ranked by what actually arrives.</p>
-          <div className={styles.stage}>
-            <span className={`${styles.orbit} ${styles.orbitA}`}><Flag code="US" size={46} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitB}`}><Flag code="IN" size={52} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitC}`}><Flag code="GB" size={40} round /></span>
-            <span className={`${styles.orbit} ${styles.orbitD}`}><Flag code="MX" size={44} round /></span>
+          <div className={`${styles.stage} ${styles.compareStage}`}>
+            <span className={styles.ring} aria-hidden />
+            <span className={`${styles.orbit} ${styles.orbitA}`}><Flag code="US" size={50} round /></span>
+            <span className={`${styles.orbit} ${styles.orbitB}`}><Flag code="IN" size={56} round /></span>
+            <span className={`${styles.orbit} ${styles.orbitC}`}><Flag code="GB" size={44} round /></span>
+            <span className={`${styles.orbit} ${styles.orbitD}`}><Flag code="AE" size={46} round /></span>
             <div className={styles.phone} aria-hidden>
-              <span className={styles.island} />
-              <p className={styles.phoneLabel}>You send</p>
-              <p className={styles.phoneAmount}>1,000 <small>USD</small></p>
-              <ul className={styles.phoneRows}>
-                {PHONE_ROWS.map(([slug, name, tag]) => (
-                  <li key={slug}>
-                    <ProviderLogo slug={slug} name={name} size={26} />
-                    <span>{name}</span>
-                    {tag ? <em>{tag}</em> : <i />}
-                  </li>
-                ))}
-              </ul>
+              <div className={styles.screen}>
+                <div className={styles.status}><span>9:41</span><span className={styles.island} /><span className={styles.signal}><i /><i /><i /><i /></span></div>
+                <div className={styles.appTop}><span className={styles.avatar}>R</span><span className={styles.bell} /></div>
+                <p className={styles.phoneLabel}>You send</p>
+                <p className={styles.phoneAmount}>1,000<small>.00 USD</small></p>
+                <div className={styles.actions}>
+                  <span><b data-dark>⇄</b>Compare</span>
+                  <span><b>➤</b>Send</span>
+                  <span><b>◔</b>Alert</span>
+                </div>
+                <ul className={styles.stack}>
+                  {PHONE_ROWS.map(([slug, name, tag]) => (
+                    <li key={slug}>
+                      <ProviderLogo slug={slug} name={name} size={22} />
+                      <span>{name}</span>
+                      {tag ? <em>{tag}</em> : <i />}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </article>

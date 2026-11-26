@@ -21,22 +21,49 @@
 .arrows button:disabled { opacity: .35; }
 @media (min-width: 900px) { .arrows { display: flex; } }
 
-/* Card 1: a phone with the comparison, flags orbiting it. */
-.phone { position: relative; width: 250px; height: 330px; margin-bottom: -40px; padding: 44px 16px 0; border: 9px solid #1c1916; border-bottom: 0; border-radius: 42px 42px 0 0; background: linear-gradient(180deg, #fff 0%, #fbf6ee 100%); text-align: left; box-shadow: 0 30px 60px -30px rgb(21 19 16 / .5); }
-.island { position: absolute; top: 10px; left: 50%; width: 78px; height: 22px; border-radius: 999px; background: #1c1916; translate: -50% 0; }
-.phoneLabel { color: var(--color-muted); font-size: 11.5px; font-weight: 600; }
-.phoneAmount { color: var(--color-ink); font-size: 30px; font-weight: 700; letter-spacing: -.04em; }
-.phoneAmount small { color: var(--color-muted); font-size: 13px; letter-spacing: 0; }
-.phoneRows { display: grid; gap: 7px; margin-top: 14px; }
-.phoneRows li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 14px; background: #fff; color: var(--color-ink); font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgb(21 19 16 / .06); }
-.phoneRows li:first-child { box-shadow: 0 0 0 1.5px var(--color-orange); }
-.phoneRows em { padding: 2px 8px; border-radius: 999px; background: #fde4d9; color: var(--color-orange-deep); font-size: 11px; font-style: normal; font-weight: 700; }
-.phoneRows i { width: 54px; height: 9px; border-radius: 5px; background: var(--color-sand); }
-.orbit { position: absolute; z-index: 1; border-radius: 50%; box-shadow: 0 0 0 4px #fff, 0 14px 26px -12px rgb(21 19 16 / .45); }
-.orbitA { left: 8%; top: 22%; }
-.orbitB { right: 7%; top: 12%; }
-.orbitC { left: 14%; bottom: 18%; }
-.orbitD { right: 11%; bottom: 26%; }
+/* Card 1: a real-looking phone with the comparison, glossy flags resting on a dotted orbit, a soft sky behind. */
+.compareStage { overflow: hidden; margin-inline: -26px; width: calc(100% + 52px); background: radial-gradient(120% 70% at 50% 100%, #dbe9fb 0%, rgb(219 233 251 / 0) 70%), radial-gradient(60% 50% at 85% 60%, #fde4d6 0%, transparent 70%); }
+.ring { position: absolute; left: 50%; bottom: -150px; width: 460px; height: 460px; border: 1.5px dashed rgb(21 19 16 / .16); border-radius: 50%; translate: -50% 0; }
+.phone { position: relative; z-index: 1; width: 262px; height: 360px; margin-bottom: -48px; padding: 7px 7px 0; border-radius: 48px 48px 0 0; background: linear-gradient(145deg, #d9dde3, #8a9099 18%, #3b3f45 40%, #2a2d31 60%, #9aa1aa 92%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35), 0 40px 70px -30px rgb(21 19 16 / .6); }
+.phone::before, .phone::after { content: ""; position: absolute; left: -3px; width: 3px; border-radius: 2px 0 0 2px; background: #6b7078; }
+.phone::before { top: 92px; height: 28px; }
+.phone::after { top: 132px; height: 46px; }
+.screen { height: 100%; overflow: hidden; padding: 10px 16px 0; border-radius: 42px 42px 0 0; background: linear-gradient(180deg, #d7e6fa 0%, #eef3fb 36%, #fdf8f1 100%); text-align: left; }
+.status { display: flex; align-items: center; justify-content: space-between; height: 26px; color: #111; font-size: 12px; font-weight: 700; }
+.island { width: 84px; height: 24px; border-radius: 999px; background: #0c0c0d; }
+.signal { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
+.signal i { width: 3px; border-radius: 1px; background: #111; }
+.signal i:nth-child(1) { height: 4px; } .signal i:nth-child(2) { height: 6px; } .signal i:nth-child(3) { height: 8px; } .signal i:nth-child(4) { height: 11px; }
+.appTop { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #fff; color: var(--color-brand, #5a0124); font-size: 12px; font-weight: 800; box-shadow: 0 2px 6px rgb(21 19 16 / .12); }
+.bell { width: 28px; height: 28px; border-radius: 50%; background: #fff radial-gradient(circle at 70% 30%, #2e9e5b 0 4px, transparent 5px); box-shadow: 0 2px 6px rgb(21 19 16 / .12); }
+.phoneLabel { margin-top: 10px; color: #6b6f76; font-size: 11.5px; font-weight: 600; text-align: center; }
+.phoneAmount { color: #111; font-size: 36px; font-weight: 700; letter-spacing: -.04em; text-align: center; line-height: 1.1; }
+.phoneAmount small { color: #8b9097; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.actions { display: flex; justify-content: center; gap: 18px; margin-top: 12px; }
+.actions span { display: grid; justify-items: center; gap: 4px; color: #333; font-size: 10.5px; font-weight: 600; }
+.actions b { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: #fff; color: #111; font-size: 15px; box-shadow: 0 6px 14px -8px rgb(21 19 16 / .45); }
+.actions b[data-dark] { background: #111; color: #fff; }
+.stack { display: grid; gap: 0; margin-top: 14px; }
+.stack li { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-top: -6px; padding: 10px 12px; border-radius: 16px; color: #111; font-size: 12px; font-weight: 650; box-shadow: 0 -6px 14px -10px rgb(21 19 16 / .35); }
+.stack li:nth-child(1) { margin-top: 0; background: #fff4ec; }
+.stack li:nth-child(2) { background: #eef6ee; }
+.stack li:nth-child(3) { background: #eef2fb; }
+.stack li:nth-child(4) { background: #fbf2f6; }
+.stack em { padding: 2px 8px; border-radius: 999px; background: var(--color-orange); color: #fff; font-size: 10.5px; font-style: normal; font-weight: 700; }
+.stack i { width: 46px; height: 8px; border-radius: 4px; background: rgb(21 19 16 / .1); }
+/* Flags as glass beads: a highlight on top, a soft shadow under. */
+.orbit { position: absolute; z-index: 2; border-radius: 50%; box-shadow: 0 14px 22px -10px rgb(21 19 16 / .45); }
+.orbit::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 26%, rgb(255 255 255 / .75) 0 10%, rgb(255 255 255 / 0) 42%), radial-gradient(circle at 70% 85%, rgb(0 0 0 / .18), transparent 55%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .5); }
+.orbitA { left: 9%; top: 40%; }
+.orbitB { right: 8%; top: 22%; }
+.orbitC { left: 16%; bottom: 8%; }
+.orbitD { right: 13%; bottom: 14%; }
+@media (prefers-reduced-motion: no-preference) {
+  .orbit { animation: bead 6s ease-in-out infinite; }
+  .orbitB { animation-delay: -1.5s; } .orbitC { animation-delay: -3s; } .orbitD { animation-delay: -4.5s; }
+}
+@keyframes bead { 50% { translate: 0 -8px; } }
 
 /* Card 2: the dotted globe with two ribbons of destination flags rolling under it. */
 .globeStage { place-items: center; overflow: hidden; }
@@ -77,7 +104,7 @@
 
 @media (max-width: 719px) {
   .card { height: 540px; padding: 26px 20px 0; }
-  .phone { width: 224px; }
+  .phone { width: 236px; }
   .globe { width: 360px; margin-bottom: -120px; }
 }
 @media (prefers-reduced-motion: reduce) {

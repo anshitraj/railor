@@ -1,0 +1,43 @@
+/* "Built for lives that cross borders": words around a drifting row of photos. */
+.section { display: grid; grid-template-areas: "top" "strip" "bottom" "foot"; overflow: hidden; padding: 112px 0 104px; }
+.title { display: contents; }
+.top, .bottom { width: min(1240px, calc(100% - 32px)); margin-inline: auto; color: var(--color-ink); font-size: clamp(40px, 6vw, 84px); font-weight: 650; letter-spacing: -.05em; line-height: 1; }
+.top { grid-area: top; display: flex; align-items: center; gap: .2em; }
+.bottom { grid-area: bottom; display: flex; align-items: center; justify-content: flex-end; gap: .2em; }
+.coin { --size: .9em; display: inline-grid; font-size: .4em !important; vertical-align: middle; }
+.strip { grid-area: strip; position: relative; padding: 70px 0 90px; pointer-events: none; }
+.track { display: flex; width: max-content; gap: 18px; padding-inline: 4vw; }
+.photo { width: clamp(150px, 16vw, 230px); height: auto; aspect-ratio: 4 / 5; border-radius: 18px; object-fit: cover; box-shadow: 0 24px 40px -28px rgb(21 19 16 / .55); }
+.photo[data-depth="1"] { translate: 0 30px; }
+.photo[data-depth="2"] { translate: 0 -10px; }
+.photo[data-depth="3"] { translate: 0 60px; }
+.photo[data-copy] { display: none; }
+.foot { grid-area: foot; display: grid; justify-items: center; gap: 18px; width: min(560px, calc(100% - 32px)); margin: 48px auto 0; text-align: center; }
+.foot p { color: var(--color-muted); font-size: 16px; line-height: 1.6; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.primary, .secondary { display: inline-flex; height: 48px; align-items: center; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 650; }
+.primary { background: var(--color-ink); color: #fff; }
+.secondary { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 0 0 1px rgb(21 19 16 / .1); }
+
+/* Wide screens: each photo drifts at its own speed as the section scrolls past. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .photo { animation: drift linear both; animation-timeline: view(); animation-range: cover; }
+    .photo[data-depth="1"] { --drift: 40px; }
+    .photo[data-depth="2"] { --drift: -70px; }
+    .photo[data-depth="3"] { --drift: 110px; }
+  }
+}
+@keyframes drift { from { transform: translateY(var(--drift, 0)); } to { transform: translateY(calc(var(--drift, 0) * -1)); } }
+
+/* Phones: the words stack, and the photos roll by in a loop under them. */
+@media (max-width: 899px) {
+  .bottom { justify-content: flex-start; }
+  .strip { padding: 26px 0; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .photo[data-copy] { display: block; }
+  .photo { width: 150px; }
+}
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+  .track { animation: roll 40s linear infinite; }
+}
+@keyframes roll { to { transform: translateX(-50%); } }
