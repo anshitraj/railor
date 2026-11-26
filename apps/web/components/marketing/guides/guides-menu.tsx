@@ -10,7 +10,7 @@ import styles from "../nav.module.css";
 
 type PaneId = "countries" | GuideTopic;
 
-const TOPIC_ICON: Record<GuideTopic, LucideIcon> = { start: Star, ways: CreditCard, bank: Landmark, rates: TrendingUp };
+const TOPIC_ICON: Record<GuideTopic, LucideIcon> = { start: Star, ways: CreditCard, bank: Landmark, rates: TrendingUp, india: Globe };
 
 /** How many countries the menu lists before sending people to the full list. */
 const MENU_COUNTRIES = 20;

@@ -7,6 +7,8 @@
  * Text may carry **bold** and internal links written as [text](/path).
  */
 
+import { INDIA_CONTENT } from "./content-india";
+
 export type Block =
   | { type: "p"; text: string }
   | { type: "list"; items: string[]; ordered?: boolean }
@@ -25,7 +27,7 @@ export interface GuideContent {
   faq: Array<{ q: string; a: string }>;
 }
 
-export const GUIDE_CONTENT: Record<string, GuideContent> = {
+const BASE_CONTENT: Record<string, GuideContent> = {
   "how-to-send-money-abroad": {
     intro:
       "Sending money abroad takes about ten minutes once you know what to decide. The cost hides in two places, the fee and the exchange rate, and the rest of the choices are about speed and safety. Here they are in the order you make them.",
@@ -337,3 +339,5 @@ export const GUIDE_CONTENT: Record<string, GuideContent> = {
     ],
   },
 };
+
+export const GUIDE_CONTENT: Record<string, GuideContent> = { ...BASE_CONTENT, ...INDIA_CONTENT };

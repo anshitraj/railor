@@ -1,4 +1,5 @@
 import { loadPricePage } from "../../../lib/pricing";
+import { SENDER_COUNTRY } from "../../../lib/guides/comparison";
 import { convertHref } from "../../../lib/guides/destinations";
 import { waysToSend } from "../../../lib/ways-to-send";
 import { WaysToSend } from "../../price/ways-to-send";
@@ -9,7 +10,6 @@ import styles from "./guides.module.css";
  * as the comparison (personal sender, 1,000 of the sending currency), with
  * each provider linking to its price in the full comparison.
  */
-const SENDER_COUNTRY: Record<string, string> = { USD: "US", GBP: "GB", EUR: "DE", CAD: "CA", AUD: "AU", AED: "AE", SGD: "SG" };
 
 export async function WaysToSendSection({ route, signedIn }: { route: { from: string; to: string; country: string; label: string }; signedIn: boolean }) {
   const page = await loadPricePage(

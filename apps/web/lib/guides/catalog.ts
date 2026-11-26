@@ -4,7 +4,7 @@
  * never ships a whole article to the browser.
  */
 
-export type GuideTopic = "start" | "ways" | "bank" | "rates";
+export type GuideTopic = "start" | "ways" | "bank" | "rates" | "india";
 
 export interface GuideTopicInfo {
   id: GuideTopic;
@@ -17,6 +17,7 @@ export const GUIDE_TOPICS: readonly GuideTopicInfo[] = [
   { id: "ways", label: "Ways to send money", blurb: "Bank transfer, debit card or credit card: what changes for you." },
   { id: "bank", label: "Bank details", blurb: "The numbers you need from the person receiving the money." },
   { id: "rates", label: "Best rates", blurb: "Live comparisons for the routes people search for most." },
+  { id: "india", label: "India guides", blurb: "Send money from India, receive it, and follow the rules that apply." },
 ];
 
 export interface GuideMeta {
@@ -34,6 +35,8 @@ export interface GuideMeta {
   banner?: string;
   /** The route the guide's "Compare this route" button opens in Convert currencies. */
   route: { from: string; to: string; country: string; label: string };
+  /** Routes shown as live comparison cards in the article. Defaults to the guide's own route. */
+  compare?: ReadonlyArray<{ from: string; to: string; country: string }>;
   /** A guide that shows today's ranking from Railor's own price check. */
   live?: boolean;
 }
@@ -105,6 +108,172 @@ export const GUIDES: readonly GuideMeta[] = [
     banner: "/images/guides/usd-to-inr.svg",
     route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
     live: true,
+  },
+  {
+    slug: "send-money-from-india-to-usa",
+    title: "How to send money from India to the USA: LRS rules, documents and cost",
+    summary: "The limit, the paperwork, what to ask the person in the US for, and how to compare what arrives.",
+    topic: "india",
+    minutes: 12,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "US"] },
+    banner: "/images/guides/send-money-from-india-to-usa.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+    compare: [{ from: "INR", to: "USD", country: "US" }],
+  },
+  {
+    slug: "best-money-transfer-app-in-india",
+    title: "Best money transfer app in India: what to check before you pick one",
+    summary: "Eight checks that tell you which app suits your route, and how to compare them fairly.",
+    topic: "india",
+    minutes: 9,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "US"] },
+    banner: "/images/guides/best-money-transfer-app-in-india.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+    compare: [{ from: "INR", to: "USD", country: "US" }, { from: "INR", to: "GBP", country: "GB" }],
+  },
+  {
+    slug: "cheapest-way-to-send-money-abroad-from-india",
+    title: "Cheapest way to send money abroad from India",
+    summary: "The four parts of the cost and how to find the lowest one for your amount.",
+    topic: "india",
+    minutes: 9,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "£"], flags: ["IN", "GB"] },
+    banner: "/images/guides/cheapest-way-to-send-money-abroad-from-india.jpg",
+    route: { from: "INR", to: "GBP", country: "GB", label: "INR to GBP" },
+    compare: [{ from: "INR", to: "USD", country: "US" }, { from: "INR", to: "GBP", country: "GB" }, { from: "INR", to: "AED", country: "AE" }],
+  },
+  {
+    slug: "lrs-limit-and-tcs-explained",
+    title: "LRS limit and TCS on foreign remittances, explained",
+    summary: "What resident individuals can send abroad each year, what tax at source means, and where to check the current numbers.",
+    topic: "india",
+    minutes: 8,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "US"] },
+    banner: "/images/guides/lrs-limit-and-tcs-explained.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+    compare: [{ from: "INR", to: "USD", country: "US" }],
+  },
+  {
+    slug: "receive-money-from-abroad-in-india",
+    title: "How to receive money from abroad in India",
+    summary: "For freelancers, small businesses and families: ways to get paid, the paperwork, and how to compare the rupees you receive.",
+    topic: "india",
+    minutes: 9,
+    updated: "2026-11-26",
+    art: { symbols: ["$", "₹"], flags: ["US", "IN"] },
+    banner: "/images/guides/receive-money-from-abroad-in-india.jpg",
+    route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
+    compare: [{ from: "USD", to: "INR", country: "IN" }, { from: "GBP", to: "INR", country: "IN" }, { from: "EUR", to: "INR", country: "IN" }],
+  },
+  {
+    slug: "send-money-from-india-to-uk",
+    title: "How to send money from India to the UK",
+    summary: "Sort code and account number, the rules, and what to compare to get the most pounds across.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "£"], flags: ["IN", "GB"] },
+    banner: "/images/guides/send-money-from-india-to-uk.jpg",
+    route: { from: "INR", to: "GBP", country: "GB", label: "INR to GBP" },
+    compare: [{ from: "INR", to: "GBP", country: "GB" }],
+  },
+  {
+    slug: "send-money-from-india-to-canada",
+    title: "How to send money from India to Canada",
+    summary: "Transit, institution and account numbers, the rules, and how to compare what arrives in Canadian dollars.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "CA"] },
+    banner: "/images/guides/send-money-from-india-to-canada.jpg",
+    route: { from: "INR", to: "CAD", country: "CA", label: "INR to CAD" },
+    compare: [{ from: "INR", to: "CAD", country: "CA" }],
+  },
+  {
+    slug: "send-money-from-india-to-australia",
+    title: "How to send money from India to Australia",
+    summary: "BSB and account number, the rules, and how to compare what arrives in Australian dollars.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "AU"] },
+    banner: "/images/guides/send-money-from-india-to-australia.jpg",
+    route: { from: "INR", to: "AUD", country: "AU", label: "INR to AUD" },
+    compare: [{ from: "INR", to: "AUD", country: "AU" }],
+  },
+  {
+    slug: "send-money-from-india-to-uae",
+    title: "How to send money from India to the UAE",
+    summary: "IBAN details, the rules, and how to compare how many dirhams arrive.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "د"], flags: ["IN", "AE"] },
+    banner: "/images/guides/send-money-from-india-to-uae.jpg",
+    route: { from: "INR", to: "AED", country: "AE", label: "INR to AED" },
+    compare: [{ from: "INR", to: "AED", country: "AE" }],
+  },
+  {
+    slug: "send-money-from-india-to-singapore",
+    title: "How to send money from India to Singapore",
+    summary: "Bank code and account number, the rules, and how to compare what arrives in Singapore dollars.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "SG"] },
+    banner: "/images/guides/send-money-from-india-to-singapore.jpg",
+    route: { from: "INR", to: "SGD", country: "SG", label: "INR to SGD" },
+    compare: [{ from: "INR", to: "SGD", country: "SG" }],
+  },
+  {
+    slug: "send-money-abroad-for-study-from-india",
+    title: "How to send money abroad for study from India",
+    summary: "Tuition and living costs, the documents banks ask for, tax collected at source, and how to compare.",
+    topic: "india",
+    minutes: 10,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "US"] },
+    banner: "/images/guides/send-money-abroad-for-study-from-india.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+    compare: [{ from: "INR", to: "USD", country: "US" }, { from: "INR", to: "GBP", country: "GB" }, { from: "INR", to: "CAD", country: "CA" }],
+  },
+  {
+    slug: "swift-charges-our-sha-ben-explained",
+    title: "SWIFT charges explained: OUR, SHA and BEN",
+    summary: "Why the amount that arrives is sometimes smaller, and how to choose who pays the bank charges.",
+    topic: "bank",
+    minutes: 6,
+    updated: "2026-11-26",
+    art: { symbols: ["$", "€"], flags: ["US", "DE"] },
+    banner: "/images/guides/swift-charges-our-sha-ben-explained.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+  },
+  {
+    slug: "is-this-money-transfer-service-safe-in-india",
+    title: "Is this money transfer service safe? How to check in India",
+    summary: "Who is authorised to handle foreign remittances, how to check a service and the warning signs of a scam.",
+    topic: "india",
+    minutes: 7,
+    updated: "2026-11-26",
+    art: { symbols: ["₹", "$"], flags: ["IN", "US"] },
+    banner: "/images/guides/is-this-money-transfer-service-safe-in-india.jpg",
+    route: { from: "INR", to: "USD", country: "US", label: "INR to USD" },
+  },
+  {
+    slug: "send-money-to-india-nre-nro-accounts",
+    title: "Sending money to India: NRE, NRO and resident accounts",
+    summary: "The account types, what to ask the person receiving in India, and how to compare the rupees that arrive.",
+    topic: "india",
+    minutes: 8,
+    updated: "2026-11-26",
+    art: { symbols: ["$", "₹"], flags: ["US", "IN"] },
+    banner: "/images/guides/send-money-to-india-nre-nro-accounts.jpg",
+    route: { from: "USD", to: "INR", country: "IN", label: "USD to INR" },
+    compare: [{ from: "USD", to: "INR", country: "IN" }, { from: "GBP", to: "INR", country: "IN" }],
   },
 ];
 

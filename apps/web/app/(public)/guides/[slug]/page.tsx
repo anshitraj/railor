@@ -12,6 +12,8 @@ import { guideJsonLd, jsonLdScript } from "../../../../lib/guides/schema";
 import { ArticleFaq, ArticleSections } from "../../../../components/marketing/guides/article-body";
 import { GuideCard } from "../../../../components/marketing/guides/guide-card";
 import { WaysToSendSection, WaysToSendSkeleton } from "../../../../components/marketing/guides/ways-section";
+import { ComparisonSkeleton, RouteComparison } from "../../../../components/marketing/guides/route-comparison";
+import { GuideSearch } from "../../../../components/marketing/guides/guide-search";
 import { LiveRanking, RankingSkeleton, rankAmount } from "../../../../components/marketing/guides/live-ranking";
 import styles from "../../../../components/marketing/guides/guides.module.css";
 
@@ -54,8 +56,10 @@ export default async function GuidePage({ params, searchParams }: Props) {
         </nav>
         <h1>{guide.title}</h1>
         <p className={styles.articleMeta}>
+          <span className={styles.byline}>By Railor</span>
           <span>{guide.live ? "Live ranking" : `${guide.minutes} min read`}</span>
           <span>Facts checked {updated}</span>
+          <span className={styles.byline}><Link href="/docs/pricing">How Railor compares prices</Link></span>
         </p>
       </header>
       {guide.banner ? (
@@ -70,12 +74,20 @@ export default async function GuidePage({ params, searchParams }: Props) {
           <ArticleSections
             content={content}
             signedIn={signedIn}
-            beforeSections={guide.live ? (
-              <Suspense key={amount} fallback={<RankingSkeleton />}>
-                <LiveRanking amount={amount} signedIn={signedIn} />
-              </Suspense>
-            ) : null}
+            beforeSections={<>
+              <GuideSearch route={guide.route} signedIn={signedIn} />
+              {guide.live ? (
+                <Suspense key={amount} fallback={<RankingSkeleton />}>
+                  <LiveRanking amount={amount} signedIn={signedIn} />
+                </Suspense>
+              ) : null}
+            </>}
           />
+          {guide.live ? null : (
+            <Suspense key={query.amount ?? "default"} fallback={<ComparisonSkeleton />}>
+              <RouteComparison routes={guide.compare ?? [guide.route]} signedIn={signedIn} amountParam={query.amount} />
+            </Suspense>
+          )}
           <Suspense fallback={<WaysToSendSkeleton />}>
             <WaysToSendSection route={guide.route} signedIn={signedIn} />
           </Suspense>
@@ -100,6 +112,7 @@ export default async function GuidePage({ params, searchParams }: Props) {
           <nav className={styles.toc} aria-label="In this guide">
             <p>In this guide</p>
             {content.sections.map((section) => <a key={section.id} href={`#${section.id}`}>{section.heading}</a>)}
+            {guide.live ? null : <a href="#compare-providers">Compare providers</a>}
             <a href="#ways-to-send">Ways to send {guide.route.label}</a>
           </nav>
         </aside>
