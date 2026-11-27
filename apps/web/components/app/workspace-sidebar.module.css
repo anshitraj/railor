@@ -33,7 +33,7 @@
 .control { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 10px; color: var(--nav-muted); }
 .control:hover { background: #ffffff10; color: var(--nav-ink); }
 .collapse { display: none; }
-.nav { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #ffffff36 transparent; padding: 15px 2px; }
+.nav { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #ffffff36 transparent; padding: 15px 2px; }
 .group + .group { margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--nav-border); }
 .group ul { display: grid; gap: 2px; }
 .groupTitle { padding: 0 9px 6px; color: var(--nav-muted); font-size: 10px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
@@ -42,9 +42,10 @@
   display: flex;
   isolation: isolate;
   width: 100%;
+  min-width: 0;
   min-height: 45px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 5px 8px;
   border-radius: 11px;
   color: var(--nav-ink);
@@ -61,6 +62,7 @@
 .activePlate::before { position: absolute; top: 10px; bottom: 10px; left: -1px; width: 2px; border-radius: 2px; background: var(--nav-accent); content: ""; }
 .linkLabel { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .currentArrow { color: var(--nav-accent); }
+.stageBadge { flex: none; }
 .stageBadge > span { border-color: #ffb79038; background: #ffb79013; color: var(--nav-accent); }
 .footer { display: grid; gap: 4px; padding: 8px 2px 0; border-top: 1px solid var(--nav-border); }
 .plan { display: grid; gap: 7px; margin-bottom: 4px; padding: 10px; border: 1px solid var(--nav-border); border-radius: 11px; background: #170e0a45; }
@@ -82,7 +84,7 @@
 
 @media (hover: hover) and (pointer: fine) { .brand:hover .mark { transform: rotate(0); } }
 @media (min-width: 768px) {
-  .sidebar, .sidebar[data-open="true"] { position: sticky; inset: var(--nav-inset) auto auto 0; z-index: 0; width: 238px; height: calc(100dvh - 2 * var(--nav-inset)); align-self: start; margin: var(--nav-inset) 0 var(--nav-inset) var(--nav-inset); visibility: visible; transform: none; }
+  .sidebar, .sidebar[data-open="true"] { position: sticky; inset: var(--nav-inset) auto auto 0; z-index: 0; width: 238px; height: calc(100dvh - 2 * var(--nav-inset)); align-self: start; margin: var(--nav-inset) 0 var(--nav-inset) var(--nav-inset); visibility: visible; pointer-events: auto; overflow-x: hidden; transform: none; }
   .sidebar[data-compact="true"] { width: 72px; padding-inline: 9px; }
   .sidebar[data-compact="true"] .brandRow { flex-direction: column; padding-inline: 0; }
   .sidebar[data-compact="true"] .link { justify-content: center; padding-inline: 0; }
