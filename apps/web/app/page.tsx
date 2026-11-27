@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { remittanceProviderCatalog } from "@railor/core";
+import { remittanceCostBenchmarks, remittanceProviderCatalog } from "@railor/core";
 import { ensureMigrated } from "@railor/database";
 import { MarketingNav } from "../components/marketing/nav";
 import { MarketingFooter } from "../components/marketing/footer";
@@ -9,12 +9,15 @@ import { ProvidersSection } from "../components/marketing/home/providers";
 import { RouteMapSection } from "../components/marketing/home/route-map";
 import { AudiencesSection, DevelopersSection, FaqSection, FinalCta, TrustSection } from "../components/marketing/home/sections";
 import { WhyRailor } from "../components/marketing/home/why-railor";
+import { OnePlaceSection } from "../components/marketing/home/one-place";
+import { MathsSection } from "../components/marketing/home/maths-section";
+import { CollageSection } from "../components/marketing/home/collage";
 import { HomeScrollMotion } from "../components/marketing/home/scroll-motion";
+import { SmoothScroll } from "../components/marketing/motion/smooth-scroll";
 import { MobileCompareBar } from "../components/marketing/home/mobile-compare-bar";
 import homeStyles from "../components/marketing/home/home.module.css";
 import { CompanyRulesSection } from "../components/marketing/home/company-rules";
 import { TestimonialsSection } from "../components/marketing/home/testimonials";
-import { NumbersSection } from "../components/marketing/home/numbers";
 import { siteStats } from "../lib/site-stats";
 import { GuidesSection } from "../components/marketing/guides/home-guides";
 import { loadGuideDestinations } from "../lib/guides/load";
@@ -49,12 +52,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   return (
     <>
       <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
-      <main id="main" className={homeStyles.motionPage}>
+      <main id="main" className={homeStyles.motionPage} data-curtain>
+        <SmoothScroll />
         <HomeScrollMotion />
-        <HomeHero providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
-        <NumbersSection stats={stats} />
+        <HomeHero stats={stats} providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
+        <OnePlaceSection />
+        <CollageSection />
         <HowItWorks />
         <WhyRailor signedIn={Boolean(session)} />
+        <MathsSection benchmarks={remittanceCostBenchmarks()} />
         <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
         <RouteMapSection />
         <CompanyRulesSection />

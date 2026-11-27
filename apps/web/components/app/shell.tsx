@@ -454,8 +454,8 @@ export function AppShell({
         {MOBILE_NAV.map(item => {
           const active = area === item.label;
           return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={mobileStyles.item}>
+            {active && <motion.span layoutId="mobile-current-icon" aria-hidden className={mobileStyles.pill} transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 460, damping: 36 }} />}
             <span className={mobileStyles.icon}>
-              {active && <motion.span layoutId="mobile-current-icon" aria-hidden className={mobileStyles.pill} transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 460, damping: 36 }} />}
               <item.icon size={20} strokeWidth={active ? 2.2 : 1.8} aria-hidden />
             </span>
             <span>{item.label}</span>
