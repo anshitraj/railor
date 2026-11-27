@@ -120,6 +120,19 @@ export const COUNTRY_CENTROIDS: Record<string, LatLng> = {
   GT: { lat: 15.8, lng: -90.2 },
   DO: { lat: 18.7, lng: -70.2 },
   JM: { lat: 18.1, lng: -77.3 },
+  HN: { lat: 14.8, lng: -86.5 },
+  SV: { lat: 13.8, lng: -88.9 },
+  TN: { lat: 34.0, lng: 9.5 },
+  LB: { lat: 33.9, lng: 35.9 },
+  DZ: { lat: 28.0, lng: 2.6 },
+  KZ: { lat: 48.0, lng: 66.9 },
+  UZ: { lat: 41.3, lng: 64.6 },
+  AM: { lat: 40.1, lng: 45.0 },
+  AZ: { lat: 40.4, lng: 47.6 },
+  RS: { lat: 44.0, lng: 21.0 },
+  AL: { lat: 41.1, lng: 20.1 },
+  ZW: { lat: -19.0, lng: 29.2 },
+  MU: { lat: -20.2, lng: 57.5 },
 };
 
 /** Map viewBox the projection targets. Matches the world outline's own box. */

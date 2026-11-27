@@ -3,6 +3,7 @@ import { KNOWN_PROVIDER_SITES, resolveProviderLogo, resolveRemoteLogo, type Reso
 import { getDb, providers } from "@railor/database";
 import audit from "../../../../../../packages/core/src/public-pricing/provider-source-audit.json";
 import discovery from "../../../../../../packages/core/src/public-pricing/corridor-discovery.json";
+import { providerSite } from "../../../../lib/provider-sites";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,8 @@ async function siteFor(slug: string): Promise<string | null> {
   if (Object.hasOwn(KNOWN_PROVIDER_SITES, slug)) return KNOWN_PROVIDER_SITES[slug]!;
   const researchSite = researchSites.get(slug);
   if (researchSite) return researchSite;
+  const knownSite = providerSite(slug);
+  if (knownSite) return knownSite;
   const db = await getDb();
   const [row] = await db.select({ websiteUrl: providers.websiteUrl, isDemo: providers.isDemo }).from(providers).where(eq(providers.slug, slug)).limit(1);
   // Demo providers are fictional; their "websites" are not real brands.

@@ -21,7 +21,12 @@ export const RESEARCHABLE_COUNTRIES = [
   "QA", "KW", "BH", "OM", "IL", "EG", "JP", "KR", "CN", "TW",
   "VN", "TH", "MY", "PK", "BD", "LK", "NZ", "GH", "MA", "TZ",
   "UG", "CI", "SN", "ET", "AR", "CO", "CL", "PE",
-  "NP", "KH", "RW", "DO", "JM",
+  "AT", "FI", "CZ", "RO", "HU", "GR", "EE", "LT", "LV", "BG",
+  "HR", "SK", "SI", "LU", "CY", "MT", "IS", "UA", "GE", "RS", "AL",
+  "NP", "KH", "KZ", "UZ", "AM", "AZ",
+  "JO", "TN", "LB", "DZ",
+  "RW", "CM", "ZM", "BW", "MW", "CD", "ZW", "MU", "MZ",
+  "DO", "JM", "GT", "HN", "SV", "EC", "CR", "PA", "UY", "BO", "PY",
 ] as const;
 export type ResearchableCountry = (typeof RESEARCHABLE_COUNTRIES)[number];
 

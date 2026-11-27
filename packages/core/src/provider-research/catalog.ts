@@ -95,6 +95,12 @@ const CURRENCY_NAMES: Record<string, string> = {
   BGN: "Bulgarian Lev", UAH: "Ukrainian Hryvnia", GEL: "Georgian Lari", NPR: "Nepalese Rupee",
   CRC: "Costa Rican Colon", ZMW: "Zambian Kwacha", RWF: "Rwandan Franc", ETB: "Ethiopian Birr",
   XCD: "East Caribbean Dollar", DOP: "Dominican Peso", GTQ: "Guatemalan Quetzal",
+  JMD: "Jamaican Dollar", KHR: "Cambodian Riel", ISK: "Icelandic Króna",
+  BWP: "Botswana Pula", MWK: "Malawian Kwacha", CDF: "Congolese Franc",
+  JOD: "Jordanian Dinar", TND: "Tunisian Dinar", LBP: "Lebanese Pound", DZD: "Algerian Dinar",
+  KZT: "Kazakhstani Tenge", UZS: "Uzbekistani Som", AMD: "Armenian Dram", AZN: "Azerbaijani Manat",
+  HNL: "Honduran Lempira", BOB: "Bolivian Boliviano", PYG: "Paraguayan Guaraní", PAB: "Panamanian Balboa",
+  RSD: "Serbian Dinar", ALL: "Albanian Lek", MUR: "Mauritian Rupee", MZN: "Mozambican Metical",
 };
 
 export interface CatalogReport {

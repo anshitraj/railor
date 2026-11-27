@@ -978,7 +978,10 @@ export async function rextiePublicPrice(input: PriceCheckInput, fetcher: typeof 
 /* Walutomat (verified live HTTP 200 Poland/EU 46-pair FX brief 2026-11-27)   */
 /* -------------------------------------------------------------------------- */
 
-const WALUTOMAT_COUNTRIES = new Set(["PL", "DE", "FR", "ES", "IT", "NL", "BE", "IE", "PT", "AT", "FI", "SE", "DK", "NO"]);
+const WALUTOMAT_COUNTRIES = new Set([
+  "PL", "DE", "FR", "ES", "IT", "NL", "BE", "IE", "PT", "AT", "FI", "SE", "DK", "NO",
+  "CZ", "HU", "RO", "BG", "HR", "SK", "SI", "LT", "LV", "EE", "LU", "GR", "CY", "MT", "CH", "GB",
+]);
 const walutomatBriefShape = z.array(z.object({
   pair: z.string().regex(/^[A-Z]{3}_[A-Z]{3}$/),
   bestOffers: z.object({
@@ -1051,14 +1054,15 @@ const BITSO_BOOKS: Record<string, string> = {
   ARS: "usd_ars",
   COP: "usd_cop",
 };
-const bitsoTickerShape = z.object({
+const bitsoSingleTickerShape = z.object({
+  book: z.string(),
+  bid: tgNumber,
+  ask: tgNumber,
+  created_at: z.string(),
+});
+const bitsoTickerEnvelopeShape = z.object({
   success: z.literal(true),
-  payload: z.array(z.object({
-    book: z.string(),
-    bid: tgNumber,
-    ask: tgNumber,
-    created_at: z.string(),
-  })),
+  payload: z.array(z.unknown()),
 });
 
 async function loadBitsoTickers(fetcher: typeof fetch) {
@@ -1066,8 +1070,14 @@ async function loadBitsoTickers(fetcher: typeof fetch) {
     redirect: "error", signal: AbortSignal.timeout(4_500), headers: { Accept: "application/json" }, cache: "no-store",
   });
   if (!res.ok) return null;
-  const parsed = bitsoTickerShape.safeParse(await res.json());
-  return parsed.success ? parsed.data.payload : null;
+  const envelope = bitsoTickerEnvelopeShape.safeParse(await res.json());
+  if (!envelope.success) return null;
+  const parsed: Array<z.infer<typeof bitsoSingleTickerShape>> = [];
+  for (const item of envelope.data.payload) {
+    const row = bitsoSingleTickerShape.safeParse(item);
+    if (row.success) parsed.push(row.data);
+  }
+  return parsed.length ? parsed : null;
 }
 
 /**
