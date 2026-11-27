@@ -631,6 +631,13 @@ export async function westernUnionPublicPrice(input: PriceCheckInput, fetcher: t
     const best = bankFirst[0]!;
     const isBankPayout = group.service === "500" || group.fund_out === "500";
     const payoutName = group.service_name || (isBankPayout ? "Direct to Bank" : "Money transfer");
+    const wuFundingLabel = WU_BANK_FUND_IN.has(best.fund_in)
+      ? "Bank transfer"
+      : best.fund_in === "DC"
+        ? "Debit card"
+        : best.fund_in === "CC"
+          ? "Credit card"
+          : undefined;
     const expiresAt = new Date(now.getTime() + quoteLifetime).toISOString();
     return {
       ...publicPrice(now),
@@ -643,6 +650,7 @@ export async function westernUnionPublicPrice(input: PriceCheckInput, fetcher: t
       feeAmount: Math.round(best.gross_fee * 100) / 100,
       feeCurrency: input.sourceCurrency,
       rate: best.fx_rate,
+      ...(wuFundingLabel ? { fundingLabel: wuFundingLabel } : {}),
       paymentMethods: WU_BANK_FUND_IN.has(best.fund_in) ? ["local_bank", "transfer_service"] : ["transfer_service"],
       delivery: group.service === "000" ? "Minutes (cash pickup)" : group.speed_days ? `${group.speed_days}–3 business days` : null,
       source: { label: "Western Union price catalog", url: `https://www.westernunion.com/${origin.toLowerCase()}/en/web/send-money/start` },

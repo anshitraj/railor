@@ -5,7 +5,7 @@ import { WaysToSend } from "../price/ways-to-send";
 import { waysToSend } from "../../lib/ways-to-send";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, FileBadge, FileSearch, Gift, Info, Landmark, Layers3, LockKeyhole, Megaphone, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, ArrowUpRight, Banknote, ChevronDown, Clock3, CreditCard, FileBadge, FileSearch, Gift, Globe2, Info, Landmark, Layers3, LockKeyhole, Megaphone, Search, ShieldCheck, Wallet, X, Zap } from "lucide-react";
 import type { MarketCoverageProvider, PricePromotions, PriceRow } from "@railor/core";
 import { ProviderLogo } from "./provider-logo";
 import { ProviderRequirements } from "./provider-requirements";
@@ -125,48 +125,80 @@ export function PriceProviderBrowser(props: Props) {
       <div className={styles.browserTabs} role="tablist" aria-label="Pricing view" onKeyDown={tabKeys}>{["Providers", "Ways to send", "Market view", "Historical data"].map((label, index) => <button type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`price-tab-${index}`} aria-controls={`price-panel-${index}`} aria-selected={tab === label} key={label} onClick={() => setTab(label)}>{index === 0 ? "Prices" : label}{index === 0 && <span>{rows.filter(row => row.recipientAmount != null).length}</span>}</button>)}</div>
       <div id="price-panel-0" role="tabpanel" aria-labelledby="price-tab-0" hidden={tab !== "Providers"}>
         <div className={styles.tableTools}><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search providers" placeholder="Search providers" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => setQuery("")}><X size={13} /></button>}</label><label className={styles.sort}>Sort by<select aria-label="Sort providers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">Recommended</option><option value="receive">Highest recipient amount</option><option value="cost">Lowest total cost</option><option value="name">Provider name</option></select></label></div>
-        <div className={styles.tableHeader} aria-hidden><span>Provider</span><span>Fee &amp; rate</span><span>Recipient gets</span></div>
         <ol id="price-provider-list" ref={listRef} className={styles.providerRows} tabIndex={filtered.length > 5 ? 0 : undefined} aria-label="Provider prices" aria-busy={props.loading}>
           {filtered.map(({ providerSlug, providerName, quote, candidate }) => {
             const promoted = quote?.recipientAmount != null && activePromotions.has(providerIdentity(providerSlug));
             const current = quote ? quote === selected : providerSlug === props.selectedCandidate?.providerSlug;
-            const method = quote ? fundingMethod(quote) : null;
-            const MethodIcon = method && /card/i.test(method) ? CreditCard : Landmark;
+            const badges = quote ? fundingBadges(quote) : [];
+            const subtitle = quote ? productSubtitle(quote) : candidate?.category ?? null;
             const difference = quote ? benchmarkPayoutDifference(quote.recipientAmount, amount, props.reference?.rate, to) : null;
             const cost = quote ? benchmarkCost(quote, amount, props.reference?.rate, to) : null;
             const status = quote ? priceStatus(quote) : null;
             const source = quote ? pricingSourceLabel(quote) : candidate?.pricingStatus?.label ?? "Check provider";
             const key = quote ? priceRowKey(quote) : providerSlug;
+            const offer = offerFor(providerSlug);
+            const showMetrics = Boolean(quote || candidate?.feeHighlight);
             return <li key={key}>
               <button type="button" className={styles.providerRow} data-promoted={promoted || undefined} aria-pressed={current}
                 aria-label={`Select ${providerName}${promoted ? ", promoted" : ""}`} onClick={() => choose(providerSlug, quote ? key : undefined)}>
                 {current && <motion.span layoutId="price-provider-selection" className={styles.selection} transition={{ duration: reduce ? 0 : .18 }} />}
-                <span className={styles.providerName}>
-                  <ProviderLogo slug={providerSlug} name={providerName} src={quote?.logoUrl} size={29} />
-                  <span>
-                    <strong>{providerName}</strong>
-                    {method && <span className={styles.fundingBadge}><MethodIcon size={12} aria-hidden /><span>Pay via {method}</span></span>}
-                    {quote?.product?.label && !method && <em className={styles.productLabel}>{quote.product.label}</em>}
-                    <span className={styles.quoteRowBadges}>
-                      {promoted && <span className={styles.promotedBadge} title="Paid placement"><Megaphone size={11} aria-hidden />Promoted</span>}
-                      {(() => { const offer = offerFor(providerSlug); return offer ? <span className={styles.offerChip} title={offer.terms}><Gift size={11} aria-hidden />{offer.headline}</span> : null; })()}
-                      {quote && quote === best && <span className={styles.comparableBadge}>Best comparable</span>}
+                <span className={styles.cardTop}>
+                  <span className={styles.cardIdentity}>
+                    <ProviderLogo slug={providerSlug} name={providerName} src={quote?.logoUrl} size={36} />
+                    <span className={styles.cardIdentityText}>
+                      <strong>{providerName}</strong>
+                      {subtitle && <em className={styles.productLabel}>{subtitle}</em>}
+                      <span className={styles.quoteRowBadges}>
+                        {badges.map((badge) => {
+                          const Icon = fundingIcon(badge.kind);
+                          return <span key={badge.label} className={styles.fundingBadge} data-kind={badge.kind}><Icon size={12} aria-hidden /><span>{badge.label}</span></span>;
+                        })}
+                        {quote && quote === best && <span className={styles.comparableBadge}>Best comparable</span>}
+                        {promoted && <span className={styles.promotedBadge} title="Paid placement"><Megaphone size={11} aria-hidden />Promoted</span>}
+                        {offer && <span className={styles.offerChip} title={offer.terms}><Gift size={11} aria-hidden />{offer.headline}</span>}
+                      </span>
                     </span>
                   </span>
+                  <span className={styles.cardPayout}>
+                    <strong className={styles.cardAmount} data-move={quote ? flashes[key] : undefined}>{quote?.recipientAmount != null ? <><RollingPrice key={to} value={quote.recipientAmount} /><small> {to}</small></> : "No payout quote"}</strong>
+                    {difference?.kind === "cost" && <span className={styles.quoteRowDifference} data-favorable={difference.costMinor < 0 || undefined}>
+                      <b title={cost?.kind === "gap" ? "Payout difference. Total cost still needs confirmation." : "Cost compared with mid-market"}><RollingPercent bps={difference.bps} /></b>
+                      <span aria-hidden>·</span>
+                      <span><RollingPayoutDifference difference={difference} /></span>
+                    </span>}
+                  </span>
                 </span>
-                <span className={styles.rowFee}>
-                  <strong>{quote?.feeAmount != null ? <><RollingNumber value={quote.feeAmount} /> {quote.feeCurrency ?? ""}</> : candidate?.feeHighlight ?? "Check fee"}</strong>
-                  {quote?.rate != null && <span className={styles.quoteRowRate}>1 {from} = <RollingRate value={quote.rate} /> {to}</span>}
-                  {difference?.kind === "cost" && <span className={styles.quoteRowDifference} data-favorable={difference.costMinor < 0 || undefined}>
-                    <b title={cost?.kind === "gap" ? "Payout difference. Total cost still needs confirmation." : "Cost compared with mid-market"}><RollingPercent bps={difference.bps} /></b>
-                    <span><RollingPayoutDifference difference={difference} /></span>
-                  </span>}
-                </span>
-                <span className={styles.rowAmount}>
-                  <strong data-move={quote ? flashes[key] : undefined}>{quote?.recipientAmount != null ? <><RollingPrice key={to} value={quote.recipientAmount} /><small> {to}</small></> : "No payout quote"}</strong>
-                  {quote?.delivery && <span className={styles.rowSource}><Clock3 size={12} aria-hidden />{quote.delivery}</span>}
-                  <span className={styles.rowSource}><i data-basis={quote?.basis ?? "unavailable"} aria-hidden />{source}</span>
-                  {quote ? <span className={styles.rowSource}>{priceCollectedLabel(quote)}</span> : null}
+                {showMetrics && (
+                  <span className={styles.cardMetrics}>
+                    <span className={styles.cardMetric}>
+                      <span className={styles.metricLabel}>Fee</span>
+                      <strong>{quote?.feeAmount != null ? <><RollingNumber value={quote.feeAmount} /> {quote.feeCurrency ?? ""}</> : candidate?.feeHighlight ?? "Check fee"}</strong>
+                    </span>
+                    {quote?.rate != null && (
+                      <>
+                        <span className={styles.metricDivider} aria-hidden />
+                        <span className={styles.cardMetric}>
+                          <span className={styles.metricLabel}>Rate</span>
+                          <strong>1 {from} = <RollingRate value={quote.rate} /> {to}</strong>
+                        </span>
+                      </>
+                    )}
+                    {quote?.delivery && (
+                      <>
+                        <span className={styles.metricDivider} aria-hidden />
+                        <span className={styles.cardMetric}>
+                          <span className={styles.metricLabel}><Clock3 size={11.5} aria-hidden />Arrives</span>
+                          <strong>{quote.delivery}</strong>
+                        </span>
+                      </>
+                    )}
+                  </span>
+                )}
+                <span className={styles.cardFooter}>
+                  <span className={styles.cardMeta}>
+                    <span className={styles.rowSource}><i data-basis={quote?.basis ?? "unavailable"} aria-hidden />{source}</span>
+                    {quote && <><span className={styles.metaDot} aria-hidden>·</span><span className={styles.rowCollected}>{priceCollectedLabel(quote)}</span></>}
+                  </span>
                   {status ? <span className={styles.statusChip} data-status={status.kind} title={status.reason}>{status.label}</span> : <span className={styles.statusChip} data-status="confirm">Confirm at provider</span>}
                 </span>
               </button>
@@ -270,6 +302,58 @@ function UnpricedProvider({ provider, from, to, onGetQuote, bookmark }: { provid
 }
 
 const METHOD_NAME: Record<string, string> = { local_bank: "Bank transfer", wire: "International wire", card: "Card", transfer_service: "Transfer app" };
+
+type FundingKind = "bank" | "balance" | "card" | "wire" | "app" | "cash" | "unknown";
+type FundingBadgeInfo = { label: string; kind: FundingKind };
+
+function classifyFunding(label: string): FundingKind {
+  if (/card|debit|credit/i.test(label)) return "card";
+  if (/balance|wallet/i.test(label)) return "balance";
+  if (/wire|swift/i.test(label)) return "wire";
+  if (/cash/i.test(label)) return "cash";
+  if (/transfer app|app/i.test(label)) return "app";
+  return "bank";
+}
+
+function fundingIcon(kind: FundingKind) {
+  if (kind === "card") return CreditCard;
+  if (kind === "balance") return Wallet;
+  if (kind === "wire") return Globe2;
+  if (kind === "cash") return Banknote;
+  if (kind === "app") return ArrowLeftRight;
+  if (kind === "unknown") return Info;
+  return Landmark;
+}
+
+function fundingBadges(quote: PriceRow): FundingBadgeInfo[] {
+  if (quote.publicOffer?.fundingMethod) {
+    const label = quote.publicOffer.fundingMethod;
+    return [{ label: `Pay via ${label}`, kind: classifyFunding(label) }];
+  }
+  if (quote.fundingLabel) {
+    return [{ label: `Pay via ${quote.fundingLabel}`, kind: classifyFunding(quote.fundingLabel) }];
+  }
+  const methods = quote.paymentMethods?.filter(method => method !== "transfer_service") ?? [];
+  const specific = methods.length ? methods : quote.paymentMethods ?? [];
+  if (!specific.length) {
+    return [{ label: "Funding: Confirm at provider", kind: "unknown" }];
+  }
+  return specific.map((method, index) => {
+    const name = METHOD_NAME[method] ?? method;
+    return { label: index === 0 ? `Pay via ${name}` : `or ${name}`, kind: classifyFunding(name) };
+  });
+}
+
+function productSubtitle(quote: PriceRow): string | null {
+  const raw = quote.product?.label?.trim();
+  if (!raw || /^(send|client sends) with /i.test(raw)) return null;
+  const baseName = quote.providerName.split(" · ")[0]?.trim() ?? quote.providerName;
+  const stripped = raw.toLowerCase().startsWith(`${baseName.toLowerCase()} · `)
+    ? raw.slice(baseName.length + 3).trim()
+    : raw;
+  if (!stripped || stripped.toLowerCase() === quote.providerName.toLowerCase()) return null;
+  return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+}
 
 function fundingMethod(quote: PriceRow) {
   if (quote.publicOffer?.fundingMethod) return quote.publicOffer.fundingMethod;

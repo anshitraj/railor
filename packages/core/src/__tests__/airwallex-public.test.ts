@@ -22,7 +22,7 @@ describe("Airwallex's public FX reference", () => {
     const fetcher = vi.fn<typeof fetch>(async (url) => String(url).includes("airwallex.com/api/fx/") ? Response.json(response) : new Response(null, { status: 503 }));
     const result = await comparePrices(input, { fetcher, now });
     const row = result.rows.find(item => item.providerSlug === "airwallex");
-    expect(row).toMatchObject({ basis: "live_public", partial: true, costComplete: false, feeAmount: null, recipientAmount: 93421.86, shortfall: null, totalCostPct: null });
+    expect(row).toMatchObject({ basis: "live_public", fundingLabel: "Bank transfer", partial: true, costComplete: false, feeAmount: null, recipientAmount: 93421.86, shortfall: null, totalCostPct: null });
     expect(fetcher.mock.calls.find(([url]) => String(url).includes("airwallex"))?.[0]).toContain("sellAmount=1000&sellCcy=USD&buyCcy=INR&feePercent=0");
   });
 

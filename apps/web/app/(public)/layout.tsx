@@ -15,7 +15,7 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <>
       <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
-      <main id="main" className="mx-auto w-[min(1180px,calc(100%-2rem))] py-12">
+      <main id="main" className="mx-auto w-[min(1280px,calc(100%-2rem))] py-12">
         {children}
       </main>
       <MarketingFooter

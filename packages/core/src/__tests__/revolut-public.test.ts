@@ -21,7 +21,7 @@ describe("Revolut public FX reference", () => {
     expect(new URL(url).searchParams.get("country")).toBe("GB");
     expect(new URL(url).searchParams.get("amount")).toBe("10000");
     expect(init.headers).toEqual({ "Accept-Language": "en", Accept: "application/json" });
-    expect(row).toMatchObject({ providerSlug: "revolut", basis: "live_public", partial: true, recipientAmount: 961855, feeAmount: 0 });
+    expect(row).toMatchObject({ providerSlug: "revolut", basis: "live_public", fundingLabel: "Revolut balance", partial: true, recipientAmount: 961855, feeAmount: 0 });
     expect(row.providerName).toContain("UK Standard");
     expect(row.observedAt).toBe(now.toISOString());
     expect(row.notes.join(" ")).toContain("India-registered");

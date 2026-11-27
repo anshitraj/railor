@@ -84,6 +84,7 @@ export async function airwallexPublicReference(input: PriceCheckInput, fetcher: 
     providerName: "Airwallex",
     product: { id: isUs ? "airwallex:us-public-fx" : `airwallex:${senderCountry.toLowerCase()}-public-fx`, label: isUs ? "US business · FX reference" : "Business · FX reference" },
     basis: "live_public",
+    fundingLabel: "Bank transfer",
     recipientAmount: fx.buyAmount,
     feeCurrency: null,
     feeAmount: null,

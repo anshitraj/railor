@@ -108,6 +108,7 @@ export async function alAnsariPublicReference(input: PriceCheckInput, fetcher: t
     providerName: "Al Ansari Exchange",
     product: { id: "al-ansari-exchange:uae-public-fx", label: "UAE bank transfer · FX reference" },
     basis: "live_public",
+    fundingLabel: "Bank transfer",
     recipientAmount: Math.round(amount * 100) / 100,
     feeAmount: null,
     feeCurrency: null,

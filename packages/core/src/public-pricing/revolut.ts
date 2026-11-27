@@ -52,6 +52,7 @@ export async function revolutPublicReference(input: PriceCheckInput, fetcher: ty
     providerSlug: "revolut",
     providerName: `Revolut · ${regionLabel} Standard`,
     basis: "live_public",
+    fundingLabel: "Revolut balance",
     recipientAmount: quote.recipient.amount,
     feeAmount: standard.fees.total.amount,
     feeCurrency: source,
