@@ -307,10 +307,10 @@
   .pageHeader nav a { min-height: 33px; }
   .browserTabs { gap: 14px; padding-inline: 14px; scroll-padding-inline: 14px; }
   .browserTabs button { flex: none; font-size: 12.5px; }
-  .tableTools { flex-wrap: wrap; gap: 8px 10px; padding-inline: 12px; }
-  .providerSearch { max-width: none; flex: 1 1 170px; }
-  .sort { font-size: 0; }
-  .sort select { min-width: 0; width: 132px; font-size: 12.5px; }
+  .tableTools { flex-wrap: nowrap; gap: 8px; padding: 10px 12px; }
+  .providerSearch { max-width: none; flex: 1 1 auto; min-width: 0; }
+  .sort { font-size: 0; flex: none; }
+  .sort select { min-width: 0; width: 118px; min-height: 36px; padding: 6px 20px 6px 9px; font-size: 12.5px; }
   .providerSearch input { font-size: 16px; }
   .tableHeader { display: none; }
   .providerRow { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 9px 14px; padding: 15px 13px; }
@@ -402,44 +402,54 @@
 .providerQuoteRequest button:disabled { opacity: .65; cursor: wait; }
 .providerQuoteRequest + a { background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-line); }
 
-/* Bank comparison cards: generous 3-band layout (identity + payout, fee/rate strip, provenance footer).
-   The stablecoin list uses the shared table-row styles above. */
-.compactProviders .providerRows { display: grid; align-content: start; gap: 12px; padding: 14px; background: var(--color-canvas); scrollbar-gutter: stable; }
-.compactProviders .providerRows > li { overflow: hidden; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+/* Bank comparison cards: Skyscanner / MoneyTransfers-grade compact 2-column layout
+   (header identity + 2-column terms & payout grid + tight 1-line provenance footer). */
+.compactProviders .providerRows { display: grid; align-content: start; gap: 10px; padding: 12px; background: var(--color-canvas); scrollbar-gutter: stable; }
+.compactProviders .providerRows > li { overflow: hidden; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); transition: border-color .16s ease, box-shadow .16s ease; }
 .compactProviders .providerRows > li:hover { border-color: var(--color-line-strong); box-shadow: 0 6px 18px -12px rgb(29 28 23 / .22); }
-.compactProviders .providerRows > li:has(.providerRow[aria-pressed="true"]) { border-color: var(--color-orange); box-shadow: 0 0 0 1px var(--color-orange), 0 10px 24px -16px rgb(233 90 44 / .45); }
-.compactProviders .providerRow { display: flex; flex-direction: column; align-items: stretch; gap: 12px; min-height: 0; padding: 16px 18px; text-align: left; }
+.compactProviders .providerRows > li:has(.providerRow[aria-pressed="true"]) { border-color: var(--color-orange); box-shadow: inset 0 0 0 1px var(--color-orange), 0 8px 20px -14px rgb(233 90 44 / .42); }
+.compactProviders .providerRow { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-height: 0; padding: 14px 15px 12px; text-align: left; }
 .compactProviders .providerRow:hover { background: var(--color-surface); }
 .compactProviders .providerRow[aria-pressed="true"] { box-shadow: none; }
-.compactProviders .providerRow > .selection { background: color-mix(in srgb, var(--color-lavender) 52%, var(--color-surface)); opacity: .6; }
+.compactProviders .providerRow > .selection { background: color-mix(in srgb, var(--color-lavender) 44%, var(--color-surface)); opacity: .55; }
 .compactProviders .providerRow[data-promoted]:not([aria-pressed="true"]) { background: #f6f8fd; }
 
-.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; min-width: 0; }
-.cardIdentity { display: flex; align-items: flex-start; gap: 12px; min-width: 0; flex: 1; }
-.cardIdentity > img, .cardIdentity > span:first-child { flex: none; margin-top: 1px; }
-.cardIdentityText { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.cardIdentityText > strong { color: var(--color-ink); font-size: 15px; font-weight: 700; line-height: 1.25; letter-spacing: -.015em; }
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.cardIdentity { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.cardIdentity > img, .cardIdentity > span:first-child { flex: none; }
+.cardIdentityText { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.cardNameRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.cardNameRow > strong { color: var(--color-ink); font-size: 14.5px; font-weight: 700; line-height: 1.2; letter-spacing: -.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cardSubRow { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 7px; min-width: 0; }
 
-.cardPayout { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; text-align: right; max-width: 52%; }
-.cardAmount { display: block; color: var(--color-ink); font: 740 clamp(17px, 3.4cqi, 21px)/1.15 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cardBody { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); align-items: end; gap: 10px; min-width: 0; padding-top: 2px; }
+.cardTerms { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cardTermLine { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12.5px; line-height: 1.3; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.cardTermLine > strong { font-weight: 700; color: var(--color-ink); }
+.cardTermRate { color: var(--color-ink-soft); font-size: 12px; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.cardTermRate > strong { font-weight: 650; color: var(--color-ink); }
+
+.cardPayout { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; text-align: right; }
+.payoutLabel { color: var(--color-muted); font-size: 11px; font-weight: 550; line-height: 1.2; }
+.cardAmount { display: block; color: var(--color-ink); font: 750 clamp(17.5px, 4.4cqi, 21px)/1.12 var(--font-display); letter-spacing: -.028em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cardAmount[data-move="up"] { color: var(--color-ok); }
 .cardAmount[data-move="down"] { color: var(--color-bad); }
-.cardAmount > small { color: var(--color-muted); font: 600 12.5px var(--font-sans); letter-spacing: 0; }
+.cardAmount > small { color: var(--color-muted); font: 650 12px var(--font-sans); letter-spacing: 0; }
+.cardDelivery { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; color: var(--color-muted); font-size: 11.5px; font-weight: 560; line-height: 1.25; }
+.cardDelivery svg { flex: none; }
 
-.quoteRowBadges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.quoteRowBadges:not(:empty) { margin-top: 5px; }
 .fundingBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   width: fit-content;
   max-width: 100%;
-  padding: 3.5px 9px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: #f2eee8;
   color: #3f3830;
-  font-size: 11.5px;
-  font-weight: 620;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
 }
@@ -451,46 +461,35 @@
 .fundingBadge[data-kind="cash"] { background: #f3f0e7; color: #54462c; }
 .fundingBadge[data-kind="unknown"] { background: transparent; color: var(--color-muted); box-shadow: inset 0 0 0 1px var(--color-line-strong); font-weight: 560; }
 
-.promotedBadge, .comparableBadge { display: inline-flex; align-items: center; gap: 4px; padding: 3.5px 8px; border-radius: 999px; font-size: 11px; font-weight: 680; line-height: 1.3; white-space: nowrap; }
+.promotedBadge, .comparableBadge { display: inline-flex; flex: none; align-items: center; gap: 4px; padding: 2.5px 7.5px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
 .promotedBadge { background: #e8edf8; color: #2d4878; }
 .comparableBadge { background: var(--color-ok-bg); color: var(--color-ok); }
 
-.quoteRowDifference { display: flex; align-items: baseline; justify-content: flex-end; flex-wrap: wrap; gap: 4px; color: var(--color-muted); font-size: 12px; line-height: 1.35; }
+.quoteRowDifference { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px; color: var(--color-muted); font-size: 11.5px; line-height: 1.3; }
 .quoteRowDifference b { color: var(--color-ink-soft); font-weight: 700; font-variant-numeric: tabular-nums; }
 .quoteRowDifference[data-favorable] b, .quoteRowDifference[data-favorable] { color: var(--color-ok); }
 
-.cardMetrics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  padding: 9px 12px;
-  border: 1px solid color-mix(in srgb, var(--color-line) 75%, transparent);
-  border-radius: 10px;
-  background: var(--color-paper);
-}
-.compactProviders .providerRow[aria-pressed="true"] .cardMetrics { background: rgb(255 255 255 / .8); border-color: color-mix(in srgb, var(--color-orange) 22%, var(--color-line)); }
-.cardMetric { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 12.5px; line-height: 1.35; }
 .metricLabel { display: inline-flex; align-items: center; gap: 4px; color: var(--color-muted); font-size: 11.5px; font-weight: 560; white-space: nowrap; }
-.metricLabel svg { flex: none; }
-.cardMetric > strong { color: var(--color-ink); font-size: 12.5px; font-weight: 680; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.metricDivider { width: 1px; height: 13px; flex: none; background: var(--color-line); }
 
-.cardFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; padding-top: 2px; }
-.cardMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; color: var(--color-muted); font-size: 11.5px; line-height: 1.4; }
-.metaDot { color: var(--color-faint); }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent); }
+.cardMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 5px; min-width: 0; color: var(--color-muted); font-size: 11px; line-height: 1.35; }
+.metaDot { flex: none; color: var(--color-faint); }
 .rowCollected { white-space: nowrap; color: var(--color-muted); }
-.compactProviders .rowSource { display: inline-flex; grid-column: auto; grid-row: auto; justify-content: flex-start; align-items: center; gap: 5px; margin: 0; padding: 0; white-space: nowrap; font-size: 11.5px; line-height: 1.4; }
+.compactProviders .rowSource { display: inline-flex; flex: none; grid-column: auto; grid-row: auto; justify-content: flex-start; align-items: center; gap: 4px; margin: 0; padding: 0; white-space: nowrap; font-size: 11px; line-height: 1.35; }
 .compactProviders .rowSource svg { flex: none; }
 
 @container providers (max-width: 470px) {
-  .compactProviders .providerRows { padding: 10px; gap: 10px; }
-  .compactProviders .providerRow { padding: 14px; gap: 10px; }
-  .cardTop { flex-direction: column; gap: 10px; }
-  .cardPayout { align-items: flex-start; text-align: left; max-width: 100%; padding-left: 48px; }
-  .quoteRowDifference { justify-content: flex-start; }
-  .metricDivider { display: none; }
-  .cardMetrics { gap: 6px 14px; padding: 8px 10px; }
+  .compactProviders .providerRows { padding: 10px; gap: 9px; scrollbar-gutter: auto; }
+  .compactProviders .providerRow { padding: 12px 13px 10px; gap: 8px; }
+  .cardBody { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 8px; }
+  .cardAmount { font-size: clamp(17px, 5cqi, 19.5px); }
+  .cardTermLine { font-size: 12px; }
+  .cardTermRate { font-size: 11.5px; }
+  .quoteRowDifference { font-size: 11px; }
+  .cardDelivery { font-size: 11px; }
+  .cardMeta { font-size: 10.5px; }
+  .compactProviders .rowSource { font-size: 10.5px; }
+  .statusChip { padding: 2px 7px; font-size: 10px; }
 }
 /* Provider offers: a chip on the row, a fuller box in the selected panel. */
 .offerChip { display: inline-flex; width: fit-content; max-width: 100%; align-items: center; gap: 4px; padding: 3.5px 8px; border-radius: 999px; background: #fff1d6; color: #7a4f0e; font-size: 11px; font-style: normal; font-weight: 650; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
