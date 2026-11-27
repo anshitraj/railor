@@ -116,8 +116,8 @@ a.row:hover .go svg { transform: translateX(2px); }
   .head h1 { font-size: 30px; }
   .summary { font-size: 14px; }
   .head > * { min-width: 0; }
-  .headActions { flex: 1 1 100%; flex-wrap: nowrap; min-width: 0; padding: 2px 0 6px; overflow-x: auto; scrollbar-width: none; }
-  .headActions::-webkit-scrollbar { display: none; }
+  .headActions { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; gap: 8px; padding: 2px 0 4px; overflow: visible; }
+  .pill { height: 38px; padding: 0 14px; font-size: 13px; }
   .pill { height: 40px; padding: 0 16px; font-size: 13.5px; }
   .grid, .stack { gap: 12px; }
   .card { padding: 18px 18px 20px; border-radius: 24px; }

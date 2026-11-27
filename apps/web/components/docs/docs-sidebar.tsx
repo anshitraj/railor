@@ -93,7 +93,19 @@ export function DocsSidebar({ children }: { children?: React.ReactNode }) {
 
 function Sheet({ onClose, pathname, reduce }: { onClose: () => void; pathname: string; reduce: boolean }) {
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const panel = useModalFocus<HTMLDivElement>(true, onClose);
+  useEffect(() => {
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    if (!window.matchMedia("(pointer: coarse)").matches) inputRef.current?.focus();
+    return () => {
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, []);
   return (
     <div className={styles.sheetLayer}>
       <motion.button type="button" aria-label="Close docs menu" className={styles.backdrop} onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }} />
@@ -104,7 +116,7 @@ function Sheet({ onClose, pathname, reduce }: { onClose: () => void; pathname: s
         <div className={styles.sheetHead}>
           <label className={styles.search}>
             <Search size={15} aria-hidden />
-            <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search docs" aria-label="Search the docs" />
+            <input ref={inputRef} enterKeyHint="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search docs" aria-label="Search the docs" />
           </label>
           <button type="button" className={styles.close} onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>

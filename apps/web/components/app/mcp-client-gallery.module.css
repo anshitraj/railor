@@ -16,8 +16,8 @@ button.client:hover { border-color: var(--color-line-strong); background: var(--
 .clientArrow { margin-left: auto; flex: none; color: var(--color-orange-deep); }
 .docs { display: inline-flex; min-height: 34px; align-items: center; gap: 5px; margin-top: 8px; color: var(--color-orange-deep); font-size: 13px; font-weight: 650; }
 .empty { padding: 16px 0; color: var(--color-muted); font-size: 14px; }
-.overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 12px; background: #1a1311a6; }
-.dialog { width: min(100%, 640px); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; outline: none; border: 1px solid var(--color-line); border-radius: 22px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 22px 65px #1a131143; }
+.overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + var(--kb-offset, 0px) + env(safe-area-inset-bottom)); background: #1a1311a6; }
+.dialog { width: min(100%, 640px); max-height: calc(var(--vvh, 100dvh) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; outline: none; border: 1px solid var(--color-line); border-radius: 22px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 22px 65px #1a131143; }
 .dialogHead { display: flex; align-items: center; gap: 12px; padding: 17px 20px; border-bottom: 1px solid var(--color-line); }
 .dialogHead h2 { font-size: 21px; font-weight: 670; letter-spacing: -.025em; line-height: 1.15; }
 .dialogHead p { margin-top: 4px; color: var(--color-muted); font-size: 12.5px; }

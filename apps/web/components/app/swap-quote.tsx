@@ -320,20 +320,20 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
       <section className="price-surface p-3 sm:p-4" aria-label="Price comparison">
         <div className="relative z-10 flex flex-col gap-2">
           {savedPairs ? <SavedPairsStrip saved={saved} active={picked && bookmark ? bookmark : transfer} onSaved={setSaved} /> : null}
-          {!cardComingSoon && <div className="flex items-center justify-between gap-2 px-1">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
+          {!cardComingSoon && <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-[var(--color-canvas)] px-3 py-1 text-[12px] font-semibold text-[var(--color-ink-soft)]">
               <span className="relative flex size-2">
                 <span className="relative inline-flex size-2 rounded-full bg-[#22a35a]" />
               </span>
               Price observations
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 aria-pressed={market}
                 onClick={() => setMarket((m) => !m)}
                 title="Add consumer prices collected by Wise's comparison feed"
-                className={cn("rounded-full border px-2.5 py-1 text-[13px] font-semibold transition", market ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line-strong)] text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
+                className={cn("whitespace-nowrap rounded-full border px-2.5 py-1 text-[12px] font-semibold transition sm:text-[13px]", market ? "border-[var(--color-orange)]/40 bg-[var(--color-lavender)] text-[var(--color-orange-deep)]" : "border-[var(--color-line-strong)] text-[var(--color-muted)] hover:text-[var(--color-ink)]")}
               >
                 {market ? "Market estimates on" : "+ Market estimates"}
               </button>
@@ -376,7 +376,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
 
           {cardComingSoon ? <CardPricingComingSoon personal={context.profile === "personal"} onCompare={() => setContext(c => ({ ...c, paymentMethod: c.profile === "personal" ? "transfer_service" : "local_bank" }))} /> : <>
           <div className="relative flex flex-col gap-1.5">
-            <div className="rounded-2xl border border-transparent bg-[var(--color-canvas)] p-4 transition focus-within:border-[var(--color-ink)]">
+            <div className="rounded-2xl border border-transparent bg-[var(--color-canvas)] px-4 pt-4 pb-6 transition focus-within:border-[var(--color-ink)]">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="swap-amount" className="text-[12.5px] font-medium text-[var(--color-muted)]">
                   {context.direction === "receive" ? (context.profile === "personal" ? "Your sender sends" : "Your client sends") : "You send"}
@@ -416,7 +416,7 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
               <motion.span initial={false} animate={{ rotate: (from > to) === (initial.from > initial.to) ? 0 : 180 }} transition={{ duration: reducedMotion ? 0 : .2 }}><ArrowDownUp size={15} /></motion.span>
             </button>
 
-            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-canvas)] px-4 pt-6 pb-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[12.5px] font-medium text-[var(--color-muted)]">{context.direction === "receive" ? "You receive" : "They receive"}{selected?.partial ? " · reference amount" : ""}</span>
                 {selected || selectedCandidate ? (
@@ -511,9 +511,9 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
         connection={selected && selected.side !== "payer" ? <ConnectionLink slug={selected.providerSlug} name={selected.providerName} mode={mode} connected={connected.includes(connectionProviderSlug(selected.providerSlug))} light /> : null}
         market={estimates.length ? <div className="price-surface p-3">{estimates.length ? (
             <details open={context.profile === "personal" && context.direction === "receive"} className="group rounded-2xl border border-[var(--color-line)] px-1.5 py-1">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1.5 text-[12.5px] font-semibold text-[var(--color-ink-soft)]">
-                Market estimates · {estimates.length}
-                <span className="text-[12.5px] font-normal text-[var(--color-faint)]">consumer prices, collected by Wise · never ranked best</span>
+              <summary className="flex flex-wrap cursor-pointer list-none items-center justify-between gap-1.5 px-2 py-1.5 text-[12.5px] font-semibold text-[var(--color-ink-soft)]">
+                <span className="whitespace-nowrap">Market estimates · {estimates.length}</span>
+                <span className="text-[12px] font-normal text-[var(--color-faint)]">consumer prices, collected by Wise · never ranked best</span>
               </summary>
               <ol className="flex flex-col gap-1 pb-1">
                 {estimates.map((row) => (

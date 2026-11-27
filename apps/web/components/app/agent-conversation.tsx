@@ -346,7 +346,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
               if (commands.length && event.key === "Escape") { event.preventDefault(); setText(""); return; }
               if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(commands.length ? commands[Math.min(commandIndex, commands.length - 1)]!.name : text); }
             }}
-            placeholder={messages.length ? "Ask a follow-up…" : "Ask anything about moving money…"} />
+            placeholder={messages.length ? "Ask a follow-up…" : "Ask about moving money…"} />
           <div className={styles.composerBottom}><button type="button" className={styles.slashButton} onClick={() => { setText("/"); setCommandIndex(0); composer.current?.focus(); }} aria-label="Show commands" title="Commands">/</button><span className={styles.composerScope}><ShieldCheck size={12} />{policies.find((policy) => policy.id === policyId)?.name ?? "Answers with sources"}</span><button className={styles.send} type="submit" disabled={pending || !text.trim() || !historyLoaded} aria-label="Send request"><ArrowUp size={18} /></button></div>
         </form>
         <p className={styles.composerHint}><span>Enter to send · Shift + Enter for a new line · / for commands</span><span>A decision is recorded only when you choose a provider.</span></p>

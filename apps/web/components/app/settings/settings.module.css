@@ -69,9 +69,8 @@
 
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .nav { position: sticky; top: 64px; z-index: 5; display: flex; overflow-x: auto; gap: 4px; margin: 0 -16px; padding: 6px 16px; background: color-mix(in srgb, var(--color-canvas) 92%, transparent); backdrop-filter: blur(8px); scrollbar-width: none; }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav a { flex: none; height: 34px; padding: 0 13px; border-radius: 999px; font-size: 13.5px; }
+  .nav { position: sticky; top: 64px; z-index: 5; display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 -16px; padding: 6px 16px; background: color-mix(in srgb, var(--color-canvas) 92%, transparent); backdrop-filter: blur(8px); }
+  .nav a { flex: none; height: 32px; padding: 0 11px; border-radius: 999px; font-size: 13px; }
   .navPill { border-radius: 999px; }
   .section { scroll-margin-top: 120px; }
 }

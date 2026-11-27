@@ -116,13 +116,18 @@ export function MarketingNav({
     return () => document.removeEventListener("pointerdown", away);
   }, [open]);
 
-  // The mobile sheet owns the screen while it is open.
+  // The mobile sheet and search overlay own the screen while open (lock both html & body to prevent double scrollbars).
   useEffect(() => {
-    if (!mobileOpen) return;
-    const previous = document.body.style.overflow;
+    if (!mobileOpen && !searchOpen) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, [mobileOpen]);
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [mobileOpen, searchOpen]);
 
   const openMenu = (label: string) => { window.clearTimeout(closeTimer.current); setOpen(label); };
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpen(null), 120); };
@@ -229,6 +234,16 @@ export function MarketingNav({
       <div id="mobile-menu" className={styles.sheet} data-open={mobileOpen || undefined} inert={!mobileOpen}>
         <div className={styles.sheetInner}>
           <ul className={styles.sheetLinks}>
+            <li>
+              <button
+                type="button"
+                className={styles.sheetSearch}
+                onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
+              >
+                <span className="inline-flex items-center gap-2"><Search size={17} aria-hidden />Search Railor</span>
+                <ArrowRight size={18} aria-hidden />
+              </button>
+            </li>
             {LINKS.filter((link): link is { label: string; href: string } => "href" in link).map((link) => (
               <li key={link.href}><Link href={link.href} onClick={() => setMobileOpen(false)}>{link.label}<ArrowRight size={18} aria-hidden /></Link></li>
             ))}

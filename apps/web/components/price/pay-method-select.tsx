@@ -38,7 +38,7 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by", car
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ left: number; top: number; width: number; above: boolean } | null>(null);
+  const [position, setPosition] = useState<{ left: number; top: number; width: number; maxHeight: number; above: boolean } | null>(null);
   const [cursor, setCursor] = useState(0);
   const currentIndex = Math.max(0, PAY_METHODS.findIndex((option) => option.value === value));
   const current = PAY_METHODS[currentIndex]!;
@@ -50,11 +50,15 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by", car
     const rect = trigger.current!.getBoundingClientRect();
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const width = Math.min(Math.max(rect.width, 320), window.innerWidth - 24);
-    const height = Math.min(4 * 84 + 40, vh - 24);
-    const above = vh - rect.bottom < height + 16 && rect.top > height + 16;
-    const rawTop = above ? rect.top - height - 6 : rect.bottom + 6;
+    const desiredHeight = Math.min(4 * 96 + 44, vh - 24);
+    const spaceBelow = vh - rect.bottom - 16;
+    const spaceAbove = rect.top - 16;
+    const above = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(180, Math.min(desiredHeight, above ? spaceAbove : spaceBelow));
+    const rawTop = above ? rect.top - maxHeight - 6 : rect.bottom + 6;
+    const top = Math.max(12, Math.min(rawTop, vh - maxHeight - 12));
     setCursor(currentIndex);
-    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top: Math.max(12, Math.min(rawTop, vh - height - 12)), width, above });
+    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top, width, maxHeight, above });
   }
 
   useEffect(() => {
@@ -94,52 +98,55 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by", car
       <ChevronDown size={14} aria-hidden className={styles.payMethodChevron} />
     </button>
     {position && createPortal(
-      <div
-        ref={panel}
-        id={`${id}-list`}
-        role="listbox"
-        tabIndex={-1}
-        aria-label={label}
-        aria-activedescendant={`${id}-opt-${cursor}`}
-        className={styles.methodPanel}
-        data-above={position.above || undefined}
-        style={{ left: position.left, top: position.top, width: position.width }}
-        onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node) && event.relatedTarget !== trigger.current) close(); }}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown") { event.preventDefault(); setCursor((index) => (index + 1) % PAY_METHODS.length); }
-          else if (event.key === "ArrowUp") { event.preventDefault(); setCursor((index) => (index - 1 + PAY_METHODS.length) % PAY_METHODS.length); }
-          else if (event.key === "Home") { event.preventDefault(); setCursor(0); }
-          else if (event.key === "End") { event.preventDefault(); setCursor(PAY_METHODS.length - 1); }
-          else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(PAY_METHODS[cursor]!.value); }
-          else if (event.key === "Escape") { event.preventDefault(); close(true); }
-          else if (event.key === "Tab") close();
-        }}
-      >
-        <p className={styles.methodPanelHead}>{label}</p>
-        {PAY_METHODS.map((option, index) => (
-          <div
-            key={option.value}
-            id={`${id}-opt-${index}`}
-            role="option"
-            aria-selected={option.value === value}
-            data-active={cursor === index || undefined}
-            className={styles.methodOption}
-            onMouseEnter={() => setCursor(index)}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => choose(option.value)}
-          >
-            <MethodMark method={option.value} size="lg" />
-            <span className={styles.methodText}>
-              <strong>{cardComingSoon && option.value === "card" ? "Card · Coming soon" : option.label.replace(/\s*\(.*\)$/, "")}</strong>
-              <small>{cardComingSoon && option.value === "card" ? "Card price comparisons are in development." : option.hint}</small>
-              <span className={styles.methodRails} aria-hidden>
-                {METHOD_LOOK[option.value].rails.map((rail) => <span key={rail}>{rail}</span>)}
+      <>
+        <div className={styles.methodScrim} aria-hidden onClick={() => close()} />
+        <div
+          ref={panel}
+          id={`${id}-list`}
+          role="listbox"
+          tabIndex={-1}
+          aria-label={label}
+          aria-activedescendant={`${id}-opt-${cursor}`}
+          className={styles.methodPanel}
+          data-above={position.above || undefined}
+          style={{ left: position.left, top: position.top, width: position.width, maxHeight: position.maxHeight }}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node) && event.relatedTarget !== trigger.current) close(); }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") { event.preventDefault(); setCursor((index) => (index + 1) % PAY_METHODS.length); }
+            else if (event.key === "ArrowUp") { event.preventDefault(); setCursor((index) => (index - 1 + PAY_METHODS.length) % PAY_METHODS.length); }
+            else if (event.key === "Home") { event.preventDefault(); setCursor(0); }
+            else if (event.key === "End") { event.preventDefault(); setCursor(PAY_METHODS.length - 1); }
+            else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(PAY_METHODS[cursor]!.value); }
+            else if (event.key === "Escape") { event.preventDefault(); close(true); }
+            else if (event.key === "Tab") close();
+          }}
+        >
+          <p className={styles.methodPanelHead}>{label}</p>
+          {PAY_METHODS.map((option, index) => (
+            <div
+              key={option.value}
+              id={`${id}-opt-${index}`}
+              role="option"
+              aria-selected={option.value === value}
+              data-active={cursor === index || undefined}
+              className={styles.methodOption}
+              onMouseEnter={() => setCursor(index)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(option.value)}
+            >
+              <MethodMark method={option.value} size="lg" />
+              <span className={styles.methodText}>
+                <strong>{cardComingSoon && option.value === "card" ? "Card · Coming soon" : option.label.replace(/\s*\(.*\)$/, "")}</strong>
+                <small>{cardComingSoon && option.value === "card" ? "Card price comparisons are in development." : option.hint}</small>
+                <span className={styles.methodRails} aria-hidden>
+                  {METHOD_LOOK[option.value].rails.map((rail) => <span key={rail}>{rail}</span>)}
+                </span>
               </span>
-            </span>
-            <span className={styles.methodCheck} aria-hidden>{option.value === value ? <Check size={14} strokeWidth={2.6} /> : null}</span>
-          </div>
-        ))}
-      </div>,
+              <span className={styles.methodCheck} aria-hidden>{option.value === value ? <Check size={14} strokeWidth={2.6} /> : null}</span>
+            </div>
+          ))}
+        </div>
+      </>,
       document.body,
     )}
   </>;

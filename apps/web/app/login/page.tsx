@@ -47,12 +47,12 @@ export default async function LoginPage({
         <p className="relative text-[12.5px] text-[var(--color-muted)]">Free to start · No card needed</p>
       </section>
 
-      <section className="flex min-h-full flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-10">
+      <section className="flex min-h-full flex-col px-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-10">
         <div className="flex shrink-0 items-center justify-between">
-          <Link href="/" className="lg:invisible" aria-label="Railor home"><RailorBrand size={30} /></Link>
-          <Link href="/prices" className="rounded-full px-3 py-2 text-[14px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]">Compare prices</Link>
+          <Link href="/" className="lg:invisible" aria-label="Railor home"><RailorBrand size={28} /></Link>
+          <Link href="/prices" className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)] sm:py-2 sm:text-[14px]">Compare prices</Link>
         </div>
-        <div className="flex flex-1 items-center justify-center py-4 sm:py-10">
+        <div className="flex flex-1 items-center justify-center py-2 sm:py-10">
           <LoginForm
             returnTo={returnTo}
             intent={intent}

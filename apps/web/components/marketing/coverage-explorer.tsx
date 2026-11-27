@@ -54,8 +54,8 @@ function matches(row: CoverageRow, { region, depth, query }: Filters): boolean {
 }
 
 const TH =
-  "sticky top-16 z-10 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-3 py-3 text-left text-[12.5px] font-semibold uppercase tracking-wide text-[var(--color-muted)] md:px-4";
-const TD = "border-b border-[var(--color-line)] px-3 py-3 align-middle md:px-4";
+  "sticky top-16 z-10 border-b border-[var(--color-line)] bg-[var(--color-paper)] px-2.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)] sm:px-3 sm:py-3 sm:text-[12.5px] md:px-4";
+const TD = "border-b border-[var(--color-line)] px-2.5 py-2.5 align-middle sm:px-3 sm:py-3 md:px-4";
 
 /**
  * The coverage table with its filters. Every filter is a single click; the search box is an
@@ -182,19 +182,19 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
           <table className="w-full table-fixed border-separate border-spacing-0 text-[13px]">
             <thead>
               <tr>
-                <th scope="col" className={cn(TH, "w-[46%] md:w-[28%]")}>
+                <th scope="col" className={cn(TH, "w-[44%] md:w-[28%]")}>
                   Market
                 </th>
                 <th scope="col" className={cn(TH, "hidden md:table-cell md:w-[15%]")}>
                   Region
                 </th>
-                <th scope="col" className={cn(TH, "w-[34%] md:w-[27%]")}>
+                <th scope="col" className={cn(TH, "w-[32%] md:w-[27%]")}>
                   Can pay into
                 </th>
                 <th
                   scope="col"
                   title="Providers that can onboard a company incorporated in this market"
-                  className={cn(TH, "w-[20%] md:w-[14%]")}
+                  className={cn(TH, "w-[24%] text-right md:w-[14%] md:text-left")}
                 >
                   <span className="lg:hidden">Onboard</span>
                   <span className="hidden lg:inline">Can onboard entities from</span>
@@ -249,7 +249,7 @@ export function CoverageExplorer({ rows }: { rows: CoverageRow[] }) {
                         </span>
                       </div>
                     </td>
-                    <td className={cn(TD, "tabular text-[14px]", row.onboardingProviders === 0 ? "text-[var(--color-muted)]" : "font-semibold")}>
+                    <td className={cn(TD, "tabular text-right text-[14px] md:text-left", row.onboardingProviders === 0 ? "text-[var(--color-muted)]" : "font-semibold")}>
                       {row.onboardingProviders}
                     </td>
                     <td className={cn(TD, "hidden md:table-cell")}>

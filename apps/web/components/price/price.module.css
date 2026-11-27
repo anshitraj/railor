@@ -129,8 +129,13 @@
 .methodMark { display: grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: var(--mark-tint); color: var(--mark-ink); box-shadow: inset 0 0 0 1px rgb(21 19 16 / 0.06); }
 .methodMark[data-size="lg"] { width: 38px; height: 38px; border-radius: 12px; transform: rotate(-3deg); box-shadow: inset 0 0 0 1px rgb(21 19 16 / 0.06), 0 1px 2px rgb(21 19 16 / 0.06); transition: transform .2s var(--ease-out); }
 
+.methodScrim { display: none; }
 .methodPanel { position: fixed; z-index: 1000; display: flex; flex-direction: column; gap: 2px; max-height: calc(var(--vvh, 100dvh) - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-lift); outline: none; transform-origin: top left; animation: methodPanelIn .18s var(--ease-out); }
 .methodPanel[data-above] { transform-origin: bottom left; }
+@media (max-width: 639px) {
+  .methodScrim { position: fixed; inset: 0; z-index: 999; display: block; background: rgb(21 19 16 / .3); animation: scrimIn .18s ease both; }
+  .methodPanel { top: auto !important; left: 10px !important; right: 10px !important; bottom: calc(10px + var(--kb-offset, 0px) + env(safe-area-inset-bottom)) !important; width: auto !important; max-height: calc(var(--vvh, 100dvh) - 24px - env(safe-area-inset-top)) !important; border-radius: 22px; transform-origin: bottom center; animation: sheetIn .24s var(--ease-drawer) both; }
+}
 @keyframes methodPanelIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
 @media (prefers-reduced-motion: reduce) { .methodPanel { animation: none; } }
 .methodPanelHead { margin: 4px 10px 6px; color: var(--color-faint); font: 600 10.5px/1.2 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -221,10 +226,20 @@
   .quote[data-variant="hero"] .progress { inset: 0 24px auto; }
   .quote[data-variant="hero"] .segment button { height: 42px; padding: 0 4px; font-size: 13px; }
   .quote[data-variant="hero"] .segmentLabel { gap: 6px; }
-  .heroBest { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 12px; }
+  .quote[data-variant="hero"] .fields > .field:first-child { padding: 12px 12px 22px 14px; }
+  .quote[data-variant="hero"] .fields > .field[data-output] { padding: 20px 12px 14px 14px; }
+  .quote[data-variant="hero"] .fieldRow { gap: 8px; }
+  .quote[data-variant="hero"] .amount { font-size: clamp(21px, 5.8vw, 28px); }
+  .quote[data-variant="hero"] .pickerTrigger { height: 40px; gap: 6px; padding: 0 10px 0 6px; font-size: 14.5px; }
+  .quote[data-variant="hero"] .presets { flex-wrap: wrap; overflow-x: visible; gap: 5px; }
+  .quote[data-variant="hero"] .presets button { height: 30px; padding: 0 9px; font-size: 12px; }
+  .heroBest { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px 10px; padding: 12px; }
+  .heroBestName > span { flex-wrap: wrap; gap: 4px 6px; }
+  .heroBestName strong { font-size: 14.5px; }
+  .heroBestName small { white-space: normal; line-height: 1.3; }
   .heroBestChevron { display: none; }
-  .heroBestAmount strong { font-size: 15.5px; }
-  .heroBestAmount small { font-size: 12px; }
+  .heroBestAmount strong { font-size: 15px; }
+  .heroBestAmount small { font-size: 11.5px; }
 }
 @media (max-width: 380px) {
   .quote[data-variant="hero"] .segmentLabel svg { display: none; }

@@ -305,11 +305,12 @@
   .pageHeader p { font-size: 14px; }
   .pageHeader nav { justify-content: flex-start; }
   .pageHeader nav a { min-height: 33px; }
-  .browserTabs { gap: 16px; padding-inline: 13px; }
-  .browserTabs button { font-size: 12.5px; }
-  .tableTools { gap: 10px; padding-inline: 12px; }
+  .browserTabs { gap: 14px; padding-inline: 14px; scroll-padding-inline: 14px; }
+  .browserTabs button { flex: none; font-size: 12.5px; }
+  .tableTools { flex-wrap: wrap; gap: 8px 10px; padding-inline: 12px; }
+  .providerSearch { max-width: none; flex: 1 1 170px; }
   .sort { font-size: 0; }
-  .sort select { width: 140px; font-size: 12.5px; }
+  .sort select { min-width: 0; width: 132px; font-size: 12.5px; }
   .providerSearch input { font-size: 16px; }
   .tableHeader { display: none; }
   .providerRow { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 9px 14px; padding: 15px 13px; }
@@ -337,8 +338,9 @@
   .overviewGrid > section + section { padding: 12px 0 0; border: 0; border-top: 1px solid var(--color-line); }
   .overviewDisclosure:has(.overviewSource) summary > strong { padding-inline-end: 0; }
   .overviewSource { position: static; margin: 0 10px 5px 45px; }
-  .detailTabs { gap: 4px; }
-  .detailTabs > button { font-size: 12px; }
+  .detailTabs { gap: 12px; overflow-x: auto; scrollbar-width: none; padding-inline: 2px; }
+  .detailTabs::-webkit-scrollbar { display: none; }
+  .detailTabs > button { flex: 0 0 auto; font-size: 12px; }
 }
 @container quote-summary (max-width: 385px) {
   .selectedIdentity { padding: 12px; }

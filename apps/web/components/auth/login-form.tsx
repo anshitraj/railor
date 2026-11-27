@@ -76,10 +76,10 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
   };
 
   return (
-    <div className="railor-rise flex w-full max-w-[400px] flex-col gap-4 sm:gap-6">
-      <div className="flex flex-col gap-1.5 sm:gap-2">
-        <h1 className="text-[clamp(26px,6vw,38px)] font-[650] leading-[1.08] tracking-[-0.03em]">{savedQuery ? "Sign in to see your results" : intent === "start" ? "Create your free account" : "Welcome back"}</h1>
-        <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
+    <div className="railor-rise flex w-full max-w-[400px] flex-col gap-3 sm:gap-6">
+      <div className="flex flex-col gap-1 sm:gap-2">
+        <h1 className="text-[clamp(24px,6vw,38px)] font-[650] leading-[1.08] tracking-[-0.03em]">{savedQuery ? "Sign in to see your results" : intent === "start" ? "Create your free account" : "Welcome back"}</h1>
+        <p className="text-[14px] leading-snug text-[var(--color-muted)] sm:text-[15px] sm:leading-relaxed">
           {savedQuery
             ? <>Your search carries over: <span className="font-semibold text-[var(--color-ink)]">“{savedQuery}”</span></>
             : intent === "start"
@@ -126,7 +126,7 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
           <button type="button" onClick={() => { setState("idle"); setDevLink(null); }} className="w-fit text-[12px] font-semibold underline underline-offset-4">Use a different email</button>
         </div>
       ) : (
-        <form onSubmit={submit} className="flex flex-col gap-3" aria-busy={state === "sending"}>
+        <form onSubmit={submit} className="flex flex-col gap-2.5 sm:gap-3" aria-busy={state === "sending"}>
           <label htmlFor="sign-in-email" className="text-[13.5px] font-semibold">Email address</label>
           <input
             id="sign-in-email"
@@ -139,12 +139,12 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="h-12 rounded-2xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[16px] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-ink)] focus:shadow-[0_0_0_4px_rgb(21_19_16/0.06)]"
+            className="h-11 rounded-2xl border border-[var(--color-line-strong)] bg-[var(--color-surface)] px-4 text-[16px] outline-none transition-[border-color,box-shadow] focus:border-[var(--color-ink)] focus:shadow-[0_0_0_4px_rgb(21_19_16/0.06)] sm:h-12"
             aria-label="Email address"
             aria-describedby="sign-in-email-hint"
           />
-          <p id="sign-in-email-hint" className="text-[12.5px] text-[var(--color-muted)]">Work or personal email both work.</p>
-          <Button type="submit" disabled={state === "sending"} className="min-h-12 justify-center rounded-full bg-[var(--color-ink)] text-[15px] hover:bg-[#2a2722]">
+          <p id="sign-in-email-hint" className="text-[12px] text-[var(--color-muted)] sm:text-[12.5px]">Work or personal email both work.</p>
+          <Button type="submit" disabled={state === "sending"} className="min-h-11 justify-center rounded-full bg-[var(--color-ink)] text-[15px] hover:bg-[#2a2722] sm:min-h-12">
             {state === "sending" ? "Sending your link…" : "Continue with email"}
             <ArrowRight size={16} aria-hidden />
           </Button>
@@ -155,12 +155,12 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
         </form>
       )}
 
-      {demoAvailable && <a href="/api/auth/demo" className="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-4 text-left transition-colors hover:border-[var(--color-line-strong)]">
-        <span><span className="block text-[13.5px] font-semibold">Just want to look around?</span><span className="mt-1 block text-[12px] text-[var(--color-muted)]">Explore the demo. No email needed.</span></span>
+      {demoAvailable && <a href="/api/auth/demo" className="group flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--color-line)] bg-[var(--color-paper)] p-3 text-left transition-colors hover:border-[var(--color-line-strong)] sm:gap-3 sm:p-4">
+        <span><span className="block text-[13.5px] font-semibold">Just want to look around?</span><span className="mt-0.5 block text-[12px] text-[var(--color-muted)] sm:mt-1">Explore the demo. No email needed.</span></span>
         <span className="shrink-0 text-[13px] font-semibold text-[var(--color-orange-deep)] transition-transform group-hover:translate-x-0.5">View demo →</span>
       </a>}
 
-      <p className="text-[13px] leading-relaxed text-[var(--color-muted)]">
+      <p className="text-[12.5px] leading-snug text-[var(--color-muted)] sm:text-[13px] sm:leading-relaxed">
         By continuing, you agree to the{" "}
         <Link href="/legal/terms" className="underline">
           Terms

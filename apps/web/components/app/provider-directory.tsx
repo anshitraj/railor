@@ -24,7 +24,7 @@ const PRODUCTS: Record<string, string> = {
   kyc_kyb: "KYC / KYB", card_issuing: "Card issuing", card_funding: "Card funding",
 };
 type Sort = "name" | "coverage" | "fresh";
-const control = "min-h-11 w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange)]";
+const control = "h-11 w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-[13px] leading-normal outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange)]";
 
 /** Search first. Detailed evidence and technical filters are available on demand. */
 export function ProviderDirectory({ providers, basePath = "/app/providers" }: { providers: DirectoryProvider[]; basePath?: string }) {
