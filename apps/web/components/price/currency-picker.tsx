@@ -67,6 +67,13 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !phone) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [open, phone]);
+
   useEffect(() => { setActive(0); }, [query]);
 
   const choose = (code: string) => {
@@ -119,6 +126,7 @@ export function CurrencyPicker({ label, value, options, onChange, align = "end" 
                 aria-activedescendant={list[active] ? `${listId}-${active}` : undefined}
                 role="combobox"
                 aria-expanded="true"
+                enterKeyHint="search"
                 autoComplete="off"
               />
             </label>

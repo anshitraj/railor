@@ -49,6 +49,7 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (state === "sending") return;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     setMessage(null);
     setState("sending");
     try {
@@ -75,9 +76,9 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
   };
 
   return (
-    <div className="railor-rise flex w-full max-w-[400px] flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[clamp(30px,4vw,38px)] font-[650] leading-[1.08] tracking-[-0.03em]">{savedQuery ? "Sign in to see your results" : intent === "start" ? "Create your free account" : "Welcome back"}</h1>
+    <div className="railor-rise flex w-full max-w-[400px] flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-1.5 sm:gap-2">
+        <h1 className="text-[clamp(26px,6vw,38px)] font-[650] leading-[1.08] tracking-[-0.03em]">{savedQuery ? "Sign in to see your results" : intent === "start" ? "Create your free account" : "Welcome back"}</h1>
         <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">
           {savedQuery
             ? <>Your search carries over: <span className="font-semibold text-[var(--color-ink)]">“{savedQuery}”</span></>
@@ -131,6 +132,8 @@ export function LoginForm({ returnTo, intent, oauth, demoAvailable, savedQuery, 
             id="sign-in-email"
             name="email"
             autoComplete="email"
+            inputMode="email"
+            enterKeyHint="go"
             type="email"
             required
             value={email}

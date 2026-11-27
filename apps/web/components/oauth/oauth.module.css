@@ -1,4 +1,4 @@
-.page { display: grid; min-height: 100vh; place-items: center; padding: 28px 16px; background: var(--color-canvas); color: var(--color-ink); }
+.page { display: grid; min-height: var(--vvh, 100dvh); place-items: center; padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); background: var(--color-canvas); color: var(--color-ink); }
 .card { width: min(100%, 460px); display: grid; gap: 18px; padding: 28px; border: 1px solid var(--color-line); border-radius: 24px; background: var(--color-surface); box-shadow: 0 24px 60px -34px rgb(21 19 16 / .35); }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.02em; }
 .brand img { width: 30px; height: 30px; border-radius: 9px; }

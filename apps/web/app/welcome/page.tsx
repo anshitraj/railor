@@ -65,7 +65,7 @@ export default async function WelcomePage({
   const org = session.organization;
 
   return (
-    <main id="main" className="min-h-screen">
+    <main id="main" className="min-h-dvh">
       <header className="mx-auto flex w-[min(1080px,calc(100%-2rem))] flex-wrap items-center gap-3 py-6">
         <Link href="/" className="flex items-center gap-2">
           <RailorBrand />

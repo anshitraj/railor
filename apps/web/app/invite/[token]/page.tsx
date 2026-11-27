@@ -67,7 +67,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   }
 
   return (
-    <main id="main" className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-paper)] px-4 py-16">
+    <main id="main" className="auth-viewport relative flex items-center justify-center overflow-hidden bg-[var(--color-paper)] px-4 py-8 sm:py-16">
       <div className="rail-map-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden />
       <div className="railor-rise relative flex w-full max-w-[480px] flex-col gap-4 rounded-[24px] border border-[var(--color-line)] bg-[var(--color-surface)] p-7 shadow-[var(--shadow-panel)] sm:p-9">
         <Link href="/" className="mb-2 flex w-fit items-center gap-2">

@@ -391,14 +391,14 @@
   .hero,
   .stage {
     height: 100svh;
-    min-height: 600px;
+    min-height: min(600px, 100svh);
   }
   .film {
     clip-path: none;
   }
   .content {
     width: calc(100% - 32px);
-    padding: 88px 0 32px;
+    padding: calc(84px + env(safe-area-inset-top, 0px)) 0 calc(28px + env(safe-area-inset-bottom, 0px));
   }
   .title {
     font-size: clamp(38px, 11vw, 52px);

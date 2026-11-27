@@ -39,10 +39,13 @@ export function RouteOptionPicker({ label, options, value, onChange, placeholder
   }
   useEffect(() => {
     if (!position) return;
-    input.current?.focus({ preventScroll: true });
+    const openWidth = window.innerWidth;
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    if (!touch) input.current?.focus({ preventScroll: true });
     const outside = (event: PointerEvent) => { if (!panel.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) close(); };
     const scroll = (event: Event) => { if (!panel.current?.contains(event.target as Node)) close(); };
-    const resize = () => close();
+    // Ignore soft-keyboard height resizes on Android/iOS; only close if viewport width changes.
+    const resize = () => { if (Math.abs(window.innerWidth - openWidth) > 40) close(); };
     document.addEventListener("pointerdown", outside); document.addEventListener("wheel", scroll, { passive: true }); document.addEventListener("touchmove", scroll, { passive: true }); window.addEventListener("resize", resize);
     return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("wheel", scroll); document.removeEventListener("touchmove", scroll); window.removeEventListener("resize", resize); };
   }, [Boolean(position)]);

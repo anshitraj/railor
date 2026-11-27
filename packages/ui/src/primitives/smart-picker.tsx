@@ -186,14 +186,15 @@ export function SmartPicker({
             onFocus={() => setOpen(true)}
             onBlur={() => window.setTimeout(() => setOpen(false), 120)}
             placeholder={value.length && !multiple ? "Change…" : placeholder}
-            className="w-40 rounded-full border border-dashed border-[var(--color-line-strong)] bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-[var(--color-faint)] focus:border-[var(--color-purple)]"
+            enterKeyHint="search"
+            className="w-40 max-w-full rounded-full border border-dashed border-[var(--color-line-strong)] bg-transparent px-3 py-1.5 text-base outline-none placeholder:text-[var(--color-faint)] focus:border-[var(--color-purple)] sm:text-sm"
             aria-label={label ? `${label} search` : "Search options"}
           />
           {open && filtered.length ? (
             <ul
               id={listId}
               role="listbox"
-              className="railor-pop absolute left-0 top-full z-30 mt-1 max-h-64 w-64 overflow-auto rounded-2xl border border-[var(--color-line)] bg-white p-1 shadow-[var(--shadow-lift)]"
+              className="railor-pop absolute left-0 top-full z-30 mt-1 max-h-64 w-64 max-w-[calc(100vw-2.5rem)] overflow-auto overscroll-contain rounded-2xl border border-[var(--color-line)] bg-white p-1 shadow-[var(--shadow-lift)]"
             >
               {filtered.map((o, i) => (
                 <li key={o.value} id={`${listId}-${i}`} role="option" aria-selected={i === cursor}>

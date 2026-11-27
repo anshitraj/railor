@@ -100,14 +100,22 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     // The real visible height (100dvh can disagree with it on phones while the
     // browser bar moves), so the chat fills the screen exactly and never scrolls the page.
     const fit = () => {
+      const vv = window.visualViewport;
       element.style.setProperty("--agent-top", `${Math.round(element.getBoundingClientRect().top + window.scrollY)}px`);
-      element.style.setProperty("--agent-vh", `${Math.round(window.innerHeight)}px`);
+      element.style.setProperty("--agent-vh", `${Math.round(vv?.height ?? window.innerHeight)}px`);
     };
     fit();
     const observer = new ResizeObserver(fit);
     if (element.parentElement) observer.observe(element.parentElement);
     window.addEventListener("resize", fit);
-    return () => { observer.disconnect(); window.removeEventListener("resize", fit); };
+    window.visualViewport?.addEventListener("resize", fit);
+    window.visualViewport?.addEventListener("scroll", fit);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", fit);
+      window.visualViewport?.removeEventListener("resize", fit);
+      window.visualViewport?.removeEventListener("scroll", fit);
+    };
   }, []);
   useEffect(() => {
     if (!composer.current) return;

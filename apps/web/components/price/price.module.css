@@ -10,8 +10,8 @@
 .pickerPanel { position: absolute; z-index: 40; top: calc(100% + 8px); width: 320px; overflow: hidden; border: 1px solid var(--color-line); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-panel); animation: pickerIn .18s var(--ease-out) both; }
 .pickerPanel[data-align="end"] { right: 0; transform-origin: top right; }
 .pickerPanel[data-align="start"] { left: 0; transform-origin: top left; }
-.pickerSearch { display: flex; align-items: center; gap: 8px; margin: 8px; padding: 0 12px; border-radius: 12px; background: var(--color-canvas); color: var(--color-faint); }
-.pickerSearch input { min-width: 0; flex: 1; height: 42px; border: 0; outline: 0; background: transparent; color: var(--color-ink); font-size: 15px; }
+.pickerSearch { display: flex; flex: none; align-items: center; gap: 8px; margin: 8px; padding: 0 12px; border-radius: 12px; background: var(--color-canvas); color: var(--color-faint); }
+.pickerSearch input { min-width: 0; flex: 1; height: 42px; border: 0; outline: 0; background: transparent; color: var(--color-ink); font-size: 16px; }
 .pickerList { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding: 0 6px 8px; scrollbar-width: thin; }
 .pickerGroup { padding: 10px 10px 4px; color: var(--color-muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .pickerOption { display: flex; width: 100%; min-height: 46px; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 11px; text-align: left; }
@@ -23,8 +23,8 @@
 @keyframes pickerIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
 @media (max-width: 639px) {
   .pickerScrim { position: fixed; inset: 0; z-index: 79; display: block; background: rgb(21 19 16 / .3); animation: scrimIn .18s ease both; }
-  .pickerPanel, .pickerPanel[data-align="end"], .pickerPanel[data-align="start"] { position: fixed; z-index: 80; top: auto; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); left: 10px; width: auto; border-radius: 22px; transform-origin: bottom center; animation: sheetIn .26s var(--ease-drawer) both; }
-  .pickerList { max-height: min(56dvh, 440px); }
+  .pickerPanel, .pickerPanel[data-align="end"], .pickerPanel[data-align="start"] { position: fixed; z-index: 80; display: flex; flex-direction: column; top: auto; right: 10px; bottom: calc(10px + var(--kb-offset, 0px) + env(safe-area-inset-bottom)); left: 10px; width: auto; max-height: calc(var(--vvh, 100dvh) - 24px - env(safe-area-inset-top)); border-radius: 22px; transform-origin: bottom center; animation: sheetIn .26s var(--ease-drawer) both; }
+  .pickerList { flex: 1; min-height: 0; max-height: min(52dvh, calc(var(--vvh, 100dvh) - 96px)); }
 }
 @keyframes scrimIn { from { opacity: 0; } }
 @keyframes sheetIn { from { opacity: 0; transform: translateY(24px); } }
@@ -129,7 +129,7 @@
 .methodMark { display: grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: var(--mark-tint); color: var(--mark-ink); box-shadow: inset 0 0 0 1px rgb(21 19 16 / 0.06); }
 .methodMark[data-size="lg"] { width: 38px; height: 38px; border-radius: 12px; transform: rotate(-3deg); box-shadow: inset 0 0 0 1px rgb(21 19 16 / 0.06), 0 1px 2px rgb(21 19 16 / 0.06); transition: transform .2s var(--ease-out); }
 
-.methodPanel { position: fixed; z-index: 1000; display: flex; flex-direction: column; gap: 2px; padding: 6px; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-lift); outline: none; transform-origin: top left; animation: methodPanelIn .18s var(--ease-out); }
+.methodPanel { position: fixed; z-index: 1000; display: flex; flex-direction: column; gap: 2px; max-height: calc(var(--vvh, 100dvh) - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border: 1px solid var(--color-line); border-radius: 16px; background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-lift); outline: none; transform-origin: top left; animation: methodPanelIn .18s var(--ease-out); }
 .methodPanel[data-above] { transform-origin: bottom left; }
 @keyframes methodPanelIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
 @media (prefers-reduced-motion: reduce) { .methodPanel { animation: none; } }

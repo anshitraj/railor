@@ -169,7 +169,8 @@
 @media (max-width: 767px) {
   /* Fill the screen down to 8px above the tab bar; the negative margin cancels the
      main area's bottom padding so the page itself has nothing left to scroll. */
-  .workspace { height: calc(min(var(--workspace-viewport-height,100dvh), var(--agent-vh,100dvh)) - var(--agent-top,96px) - var(--workspace-mobile-nav-height,0px) - 8px); min-height:240px; margin-bottom: -24px; }
+  .workspace { height: calc(min(var(--vvh, 100dvh), var(--workspace-viewport-height, 100dvh), var(--agent-vh, 100dvh)) - var(--agent-top, 96px) - var(--workspace-mobile-nav-height, 0px) - 8px); min-height: 220px; margin-bottom: -24px; }
+  .toolsModal { max-height: calc(var(--vvh, 100dvh) - 32px); top: calc(var(--vvh, 100dvh) / 2); }
 }
 @media (prefers-reduced-motion: reduce) { .feed { scroll-behavior: auto; } .welcome, .message, .artSignal, .working i { animation: none; } .starter, .composer, .send, .iconButton { transition: none; } .starter:hover { transform: none; } }
 

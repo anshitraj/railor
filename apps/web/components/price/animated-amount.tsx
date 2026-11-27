@@ -48,8 +48,23 @@ export function AmountInput({ value, className, ...props }: AmountInputProps) {
   const amount = Number(value);
   const showDigits = value !== "" && Number.isFinite(amount);
   return <span className={`${className} ${styles.field}`} data-roll={showDigits || undefined}>
-    <input {...props} value={value} inputMode="decimal" autoComplete="off" placeholder="0"
-      onFocus={() => setEditing(true)} onBlur={() => setEditing(false)} />
+    <input
+      {...props}
+      value={value}
+      inputMode="decimal"
+      enterKeyHint="done"
+      pattern="[0-9]*[.,]?[0-9]*"
+      autoComplete="off"
+      placeholder="0"
+      onFocus={() => setEditing(true)}
+      onBlur={() => setEditing(false)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    />
     {showDigits && <span aria-hidden className={styles.digits}>
       <NumberFlow value={amount} locales="en-US" format={amountFormat} animated={!editing} transformTiming={timing} />
     </span>}

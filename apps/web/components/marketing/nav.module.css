@@ -75,7 +75,7 @@
 .menuButton { display: grid; width: 42px; height: 42px; place-items: center; margin-right: -6px; border-radius: 999px; color: var(--color-ink); }
 .menuButton:hover { background: color-mix(in srgb, var(--color-sand) 75%, transparent); }
 
-.sheet { position: fixed; inset: 75px 0 0; z-index: 59; overflow-y: auto; overscroll-behavior: contain; background: var(--color-canvas); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s var(--ease-out), transform .24s var(--ease-out); }
+.sheet { position: fixed; top: calc(75px + env(safe-area-inset-top, 0px)); right: 0; bottom: 0; left: 0; height: calc(var(--vvh, 100dvh) - 75px - env(safe-area-inset-top, 0px)); z-index: 59; overflow-y: auto; overscroll-behavior: contain; background: var(--color-canvas); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .18s var(--ease-out), transform .24s var(--ease-out); }
 .sheet[data-open] { opacity: 1; transform: none; pointer-events: auto; }
 .sheetInner { display: flex; min-height: 100%; flex-direction: column; gap: 22px; width: min(1240px, calc(100% - 32px)); margin-inline: auto; padding: 12px 0 calc(24px + env(safe-area-inset-bottom)); }
 .sheetLinks a { display: flex; align-items: center; justify-content: space-between; padding: 16px 2px; border-bottom: 1px solid var(--color-line); color: var(--color-ink); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
@@ -88,9 +88,9 @@
 .sheetActions .cta { height: 52px; font-size: 16px; }
 .sheetSecondary { display: grid; height: 52px; place-items: center; border: 1px solid var(--color-line-strong); border-radius: 999px; color: var(--color-ink); font-size: 16px; font-weight: 600; }
 
-.searchLayer { position: fixed; inset: 0; z-index: 120; display: grid; place-items: start center; padding: 12vh 16px 16px; }
+.searchLayer { position: fixed; inset: 0; z-index: 120; display: grid; place-items: start center; padding: min(12vh, 88px) 16px calc(16px + var(--kb-offset, 0px)); }
 .searchBackdrop { position: absolute; inset: 0; background: rgb(21 19 16 / .28); backdrop-filter: blur(4px); animation: fadeIn .16s var(--ease-out) both; }
-.searchPanel { position: relative; width: min(600px, 100%); overflow: hidden; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-panel); animation: panelIn .2s var(--ease-out) both; }
+.searchPanel { position: relative; width: min(600px, 100%); max-height: calc(var(--vvh, 100dvh) - 32px); overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-panel); animation: panelIn .2s var(--ease-out) both; }
 .searchForm { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 18px; border-bottom: 1px solid var(--color-line); color: var(--color-faint); }
 .searchForm input { min-width: 0; flex: 1; height: 44px; border: 0; outline: 0; background: transparent; color: var(--color-ink); font-size: 16px; }
 .searchGo { height: 40px; padding: 0 16px; border-radius: 999px; background: var(--color-ink); color: #fff; font-size: 14px; font-weight: 600; }

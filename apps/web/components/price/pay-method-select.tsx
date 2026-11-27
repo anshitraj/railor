@@ -48,19 +48,22 @@ export function PayMethodSelect({ value, onChange, label = "Client pays by", car
   function choose(next: PayMethod) { if (next !== value) onChange(next); close(true); }
   function open() {
     const rect = trigger.current!.getBoundingClientRect();
-    const width = Math.min(Math.max(rect.width, 340), window.innerWidth - 24);
-    const height = 4 * 84 + 40;
-    const above = window.innerHeight - rect.bottom < height + 16 && rect.top > height + 16;
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const width = Math.min(Math.max(rect.width, 320), window.innerWidth - 24);
+    const height = Math.min(4 * 84 + 40, vh - 24);
+    const above = vh - rect.bottom < height + 16 && rect.top > height + 16;
+    const rawTop = above ? rect.top - height - 6 : rect.bottom + 6;
     setCursor(currentIndex);
-    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top: above ? rect.top - height - 6 : rect.bottom + 6, width, above });
+    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top: Math.max(12, Math.min(rawTop, vh - height - 12)), width, above });
   }
 
   useEffect(() => {
     if (!position) return;
+    const openWidth = window.innerWidth;
     panel.current?.focus({ preventScroll: true });
     const outside = (event: PointerEvent) => { if (!panel.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) close(); };
     const scroll = (event: Event) => { if (!panel.current?.contains(event.target as Node)) close(); };
-    const resize = () => close();
+    const resize = () => { if (Math.abs(window.innerWidth - openWidth) > 40) close(); };
     document.addEventListener("pointerdown", outside);
     window.addEventListener("scroll", scroll, { passive: true, capture: true });
     window.addEventListener("resize", resize);

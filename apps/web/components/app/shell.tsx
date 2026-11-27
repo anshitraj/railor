@@ -247,7 +247,7 @@ export function AppShell({
   const settingsActive = area === "Settings" && !walletActive && !planActive;
 
   return (
-    <div className={cn("workspace-frame flex min-h-screen bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
+    <div className={cn("workspace-frame flex min-h-dvh bg-[var(--color-canvas)]", mobileStyles.frame)} style={{ ...(keyboard.open ? { "--workspace-mobile-nav-height": "0px", "--workspace-viewport-height": `${keyboard.height}px` } : {}) } as CSSProperties}>
       {mobileOpen ? (
         <button
           type="button"

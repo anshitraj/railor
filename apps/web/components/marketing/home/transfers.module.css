@@ -716,7 +716,15 @@
     padding: 64px 0 48px;
   }
   .phoneCard {
-    padding: 18px 12px;
+    padding: 14px 10px;
+    border-radius: 26px;
+  }
+  .phoneFrame {
+    padding: 36px 6px 6px;
+    border-radius: 40px;
+  }
+  .phoneFrame > :not(.phoneIsland) {
+    border-radius: 34px;
   }
   .cornerCoin {
     display: none;

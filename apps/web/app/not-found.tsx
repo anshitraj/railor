@@ -5,7 +5,7 @@ export const metadata = { title: "Not found" };
 
 export default function NotFound() {
   return (
-    <main id="main" className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--color-paper)] px-4 py-16">
+    <main id="main" className="auth-viewport relative flex flex-col items-center justify-center overflow-hidden bg-[var(--color-paper)] px-4 py-10 sm:py-16">
       <div className="rail-map-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
       <svg className="pointer-events-none absolute inset-x-0 top-1/2 h-40 w-full -translate-y-1/2 opacity-70" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden>
         <path d="M0 80 C 240 20, 420 140, 600 80" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeDasharray="6 6" style={{ animation: "railor-route-dash 1.2s linear infinite" }} />

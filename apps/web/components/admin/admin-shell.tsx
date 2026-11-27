@@ -34,7 +34,7 @@ export function AdminShell({ email, alerts, children }: { email: string; alerts:
   }, []);
   const badge: Record<string, number> = { "/admin/payments": alerts.unknownPayments, "/admin/review": alerts.pendingReview };
   return (
-    <div className="admin-frame flex min-h-screen bg-[var(--color-canvas)]">
+    <div className="admin-frame flex min-h-dvh bg-[var(--color-canvas)]">
       {open ? <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" /> : null}
       <aside
         ref={drawerRef}

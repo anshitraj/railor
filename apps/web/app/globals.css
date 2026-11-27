@@ -9,17 +9,38 @@
 
 @layer base {
   html {
+    --vvh: 100dvh;
+    --vv-top: 0px;
+    --kb-offset: 0px;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
 
   body {
+    min-height: 100dvh;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-optical-sizing: auto;
     font-feature-settings: "cv11" 1;
     line-height: 1.6;
+  }
+
+  /* Prevent iOS Safari/Chrome auto-zoom on form controls < 16px and keep focused inputs clear of sticky headers & keyboards. */
+  @media (max-width: 767px), (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"]),
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+      scroll-margin-top: 96px;
+      scroll-margin-bottom: calc(28px + var(--kb-offset, 0px));
+    }
   }
 
   ::selection {
@@ -451,8 +472,8 @@
 .comparison-other-list > div > span:last-child { color: var(--color-muted); }
 .comparison-footnote, .agent-footer { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; line-height: 1.8; color: var(--color-muted); }
 .comparison-footnote svg, .agent-footer svg { flex-shrink: 0; margin-top: 3px; }
-.access-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px; background: rgb(25 25 22 / .48); }
-.access-dialog { position: relative; width: min(100%, 480px); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 32px; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-lift); }
+.access-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px 24px calc(24px + var(--kb-offset, 0px)); background: rgb(25 25 22 / .48); }
+.access-dialog { position: relative; width: min(100%, 480px); max-height: calc(var(--vvh, 100dvh) - 48px); overflow-y: auto; overscroll-behavior: contain; padding: 32px; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-lift); }
 .access-close { position: absolute; right: 16px; top: 16px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
 .access-close:hover { background: var(--color-paper); }
 .access-provider { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; }
@@ -687,7 +708,20 @@
 .railor-toast-close { position: relative; display: grid; width: 24px; height: 24px; flex: none; place-items: center; border-radius: 7px; color: var(--color-faint); transition: background-color .15s, color .15s; }
 .railor-toast-close::after { content: ""; position: absolute; inset: -8px; }
 .railor-toast-close:hover { background: var(--color-canvas); color: var(--color-ink); }
-@media (max-width: 767px) { .railor-toaster { right: 16px; left: 16px; width: auto; bottom: calc(16px + var(--workspace-mobile-nav-height, 0px) + env(safe-area-inset-bottom)); } }
+@media (max-width: 767px) { .railor-toaster { right: 16px; left: 16px; width: auto; bottom: calc(16px + var(--kb-offset, 0px) + var(--workspace-mobile-nav-height, 0px) + env(safe-area-inset-bottom)); } }
+html[data-keyboard-open="true"] .railor-toaster { bottom: calc(12px + var(--kb-offset, 0px) + env(safe-area-inset-bottom)); }
+
+/* Auth / sign-in frame: locked cleanly to the visible mobile viewport with zero unintended dead-space scroll. */
+.auth-viewport { min-height: 100dvh; }
+@media (max-width: 1023px) {
+  .auth-viewport {
+    height: var(--vvh, 100dvh);
+    min-height: var(--vvh, 100dvh);
+    max-height: var(--vvh, 100dvh);
+    overflow-y: auto;
+    overscroll-behavior: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) { .railor-toast { transition: opacity .15s ease; } @starting-style { .railor-toast { transform: none; } } }
 
 /* ── Press feedback: anything marked .press scales a touch on click. ──── */

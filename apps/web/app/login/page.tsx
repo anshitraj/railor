@@ -30,7 +30,7 @@ export default async function LoginPage({
   const prefillEmail = typeof params.email === "string" ? params.email : undefined;
 
   return (
-    <main id="main" className="grid min-h-dvh bg-[var(--color-canvas)] lg:grid-cols-[1.05fr_1fr]">
+    <main id="main" className="auth-viewport grid bg-[var(--color-canvas)] lg:grid-cols-[1.05fr_1fr]">
       <section className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-[linear-gradient(165deg,#f7e8d9,#efd8c4)] p-10 lg:flex xl:p-14">
         <Link href="/" className="relative w-fit" aria-label="Railor home"><RailorBrand size={32} /></Link>
         <div className="relative mx-auto flex w-full max-w-[460px] flex-col gap-10">
@@ -47,12 +47,12 @@ export default async function LoginPage({
         <p className="relative text-[12.5px] text-[var(--color-muted)]">Free to start · No card needed</p>
       </section>
 
-      <section className="flex flex-col px-5 py-6 sm:px-10 sm:py-10">
-        <div className="flex items-center justify-between">
+      <section className="flex min-h-full flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-10">
+        <div className="flex shrink-0 items-center justify-between">
           <Link href="/" className="lg:invisible" aria-label="Railor home"><RailorBrand size={30} /></Link>
           <Link href="/prices" className="rounded-full px-3 py-2 text-[14px] font-semibold text-[var(--color-ink-soft)] hover:bg-[var(--color-sand)]">Compare prices</Link>
         </div>
-        <div className="flex flex-1 items-center justify-center py-10">
+        <div className="flex flex-1 items-center justify-center py-4 sm:py-10">
           <LoginForm
             returnTo={returnTo}
             intent={intent}
