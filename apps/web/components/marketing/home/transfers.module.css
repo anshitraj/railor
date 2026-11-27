@@ -1,0 +1,746 @@
+/* GetOn #transfers-inspired 2-row interactive bento on Railor's warm canvas. */
+.section {
+  position: relative;
+  padding: 96px 0 72px;
+  scroll-margin-top: 84px;
+}
+
+.container {
+  width: min(1160px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.head {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  max-width: 680px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-orange) 11%, var(--color-surface));
+  color: var(--color-orange-deep);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.title {
+  color: var(--color-ink);
+  font-size: clamp(34px, 4.4vw, 54px);
+  font-weight: 680;
+  letter-spacing: -0.04em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.lead {
+  color: var(--color-muted);
+  font-size: clamp(16px, 1.35vw, 18px);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* Row 1: 2-column bento (Left: real live calculator phone, Right: interactive dotted corridor map) */
+.topBento {
+  display: grid;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.phoneCard {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 26px 16px 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 32px;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgb(255 229 213 / 0.45) 0%, transparent 72%),
+    var(--color-surface);
+  box-shadow: 0 1px 0 rgb(21 19 16 / 0.04), 0 28px 60px -42px rgb(21 19 16 / 0.32);
+  scroll-margin-top: 96px;
+}
+
+.phoneFrame {
+  position: relative;
+  width: min(100%, 416px);
+  padding: 42px 8px 9px;
+  border-radius: 48px;
+  background: linear-gradient(145deg, #d9dde3, #8a9099 18%, #3b3f45 40%, #2a2d31 60%, #9aa1aa 92%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.35),
+    0 34px 64px -28px rgb(21 19 16 / 0.5);
+}
+
+.phoneFrame::before {
+  content: "9:41";
+  position: absolute;
+  top: 14px;
+  left: 30px;
+  color: #f4f4f5;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.phoneFrame > :not(.phoneIsland) {
+  border-radius: 38px;
+  overflow: hidden;
+}
+
+.phoneIsland {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  display: block;
+  width: 88px;
+  height: 24px;
+  border-radius: 999px;
+  background: #0c0c0d;
+  translate: -50% 0;
+}
+
+.cornerCoin {
+  --size: 72px;
+  position: absolute;
+  left: -18px;
+  bottom: -18px;
+  z-index: 3;
+  rotate: -12deg;
+  pointer-events: none;
+}
+
+/* Right Bento Card: Interactive Global Corridor Map */
+.mapCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 32px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 0 rgb(21 19 16 / 0.04), 0 28px 60px -42px rgb(21 19 16 / 0.32);
+  overflow: hidden;
+}
+
+.mapTopBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stepPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-canvas);
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.stepPill strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.stepDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22a35a;
+  box-shadow: 0 0 0 3px rgb(34 163 90 / 0.2);
+}
+
+.amountPills {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-canvas);
+}
+
+.amountPills button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.amountPills button[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.mapCanvas {
+  position: relative;
+  flex: 1;
+  min-height: 290px;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  margin-block: 4px;
+  border-radius: 22px;
+  background: radial-gradient(85% 85% at 50% 48%, #fbf8f3 0%, #f4efe6 100%);
+  border: 1px solid rgb(21 19 16 / 0.05);
+  overflow: hidden;
+}
+
+.mapSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.mapDots {
+  color: rgb(21 19 16 / 0.17);
+}
+
+.arcGhost {
+  stroke: rgb(21 19 16 / 0.08);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.arcGhostActive {
+  stroke: rgb(233 86 42 / 0.2);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.arcDash {
+  stroke: var(--color-orange);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 2.5 3.5;
+  animation: mvDash 22s linear infinite;
+}
+
+.arcFlow {
+  stroke: #ff8c5a;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-dasharray: 16 84;
+  filter: drop-shadow(0 0 6px rgb(233 86 42 / 0.6));
+  animation: mvFlow 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.pinRingOrigin {
+  fill: rgb(21 19 16 / 0.12);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mvRing 2.6s ease-out infinite;
+}
+
+.pinCoreOrigin {
+  fill: var(--color-ink);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.pinRingDest {
+  fill: rgb(233 86 42 / 0.22);
+  stroke: rgb(233 86 42 / 0.45);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mvRing 2.4s ease-out infinite;
+}
+
+.pinCoreDest {
+  fill: var(--color-orange);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+@keyframes mvDash {
+  to { stroke-dashoffset: -100; }
+}
+
+@keyframes mvFlow {
+  0% { stroke-dashoffset: 100; opacity: 0; }
+  12% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes mvRing {
+  0% { transform: scale(0.5); opacity: 0.95; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.originChip {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 5px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  translate: -50% calc(-100% - 10px);
+  box-shadow: 0 12px 24px -10px rgb(21 19 16 / 0.55);
+  pointer-events: none;
+}
+
+.destPin {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 5px;
+  border: 1px solid rgb(21 19 16 / 0.1);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  translate: -50% calc(12px);
+  box-shadow: 0 10px 22px -12px rgb(21 19 16 / 0.35);
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s var(--ease-out), border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.destPin:hover {
+  transform: scale(1.06);
+  border-color: var(--color-ink);
+}
+
+.destPin[data-active] {
+  z-index: 6;
+  border-color: var(--color-orange);
+  background: var(--color-orange);
+  color: #fff;
+  box-shadow: 0 12px 24px -10px rgb(233 86 42 / 0.7);
+}
+
+.corridorPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.corridorPill {
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 0 7px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-canvas);
+  color: var(--color-ink-soft);
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.corridorPill:hover {
+  border-color: var(--color-line-strong);
+  color: var(--color-ink);
+}
+
+.corridorPill[aria-selected="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.pairFlags {
+  display: inline-flex;
+}
+
+.pairFlags > :nth-child(2) {
+  margin-left: -5px;
+}
+
+.mapFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-line);
+}
+
+.routeSummary {
+  display: grid;
+  gap: 3px;
+}
+
+.routeTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.routeTitleRow strong {
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.routeBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.routeSummary p {
+  color: var(--color-muted);
+  font-size: 13.5px;
+}
+
+.tryCta {
+  display: inline-flex;
+  height: 46px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tryCta:hover {
+  background: #2a2622;
+}
+
+/* Row 2: 3 equal rounded-[32px] white feature cards (GetOn #transfers bottom trio) */
+.bottomBento {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.bentoCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 360px;
+  padding: 26px 24px 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 32px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 0 rgb(21 19 16 / 0.04), 0 24px 52px -40px rgb(21 19 16 / 0.28);
+  overflow: hidden;
+}
+
+.bentoHead h3 {
+  color: var(--color-ink);
+  font-size: 21px;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.bentoHead p {
+  margin-top: 8px;
+  color: var(--color-muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+/* Card 1 Visual: Concentric rotating provider hub */
+.hubStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 210px;
+  margin-top: 18px;
+}
+
+.hubRingOuter,
+.hubRingInner {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgb(21 19 16 / 0.14);
+}
+
+.hubRingOuter {
+  width: 176px;
+  height: 176px;
+}
+
+.hubRingInner {
+  width: 108px;
+  height: 108px;
+  border-style: solid;
+  border-color: rgb(233 86 42 / 0.16);
+}
+
+.hubCenter {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 28px -12px rgb(21 19 16 / 0.28), 0 0 0 1px var(--color-line);
+}
+
+.hubOrbit {
+  position: absolute;
+  width: 176px;
+  height: 176px;
+}
+
+.hubNode {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--a)) translateX(88px) rotate(calc(var(--a) * -1));
+}
+
+.hubNodeInner {
+  position: absolute;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 10px 22px -10px rgb(21 19 16 / 0.3), 0 0 0 1px rgb(21 19 16 / 0.06);
+}
+
+/* Card 2 Visual: Multi-currency glossy flag orbit */
+.currencyStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 210px;
+  margin-top: 18px;
+}
+
+.currencyRing {
+  position: absolute;
+  width: 172px;
+  height: 172px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 229 213 / 0.5) 0%, transparent 72%);
+}
+
+.currencyCenter {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 22px;
+  background: var(--color-ink);
+  color: #fff;
+  box-shadow: 0 16px 32px -14px rgb(21 19 16 / 0.5);
+  text-align: center;
+  line-height: 1.05;
+}
+
+.currencyCenter span {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.currencyCenter small {
+  color: var(--color-accent-light);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.flagOrb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 12px 24px -10px rgb(21 19 16 / 0.32);
+  transform: translate(-50%, -50%) rotate(var(--a)) translateX(84px) rotate(calc(var(--a) * -1));
+}
+
+/* Card 3 Visual: Bank rails + Stablecoins side-by-side mini UI */
+.railsStage {
+  display: grid;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.railsList {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 22px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-line);
+}
+
+.railRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgb(21 19 16 / 0.05);
+}
+
+.railRow[data-tone="best"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 35%, transparent), 0 8px 20px -14px rgb(233 86 42 / 0.45);
+}
+
+.railAvatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--color-canvas);
+  color: var(--color-orange-deep);
+}
+
+.railCopy {
+  display: grid;
+  min-width: 0;
+}
+
+.railCopy strong {
+  color: var(--color-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.railCopy small {
+  color: var(--color-muted);
+  font-size: 11.5px;
+}
+
+.railChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.railChip[data-tone="best"] {
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+}
+
+.railChip[data-tone="neutral"] {
+  background: var(--color-canvas);
+  color: var(--color-ink-soft);
+}
+
+.railChip[data-tone="crypto"] {
+  background: var(--color-lavender);
+  color: var(--color-orange-deep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hubOrbit {
+    animation: orbitSpin 42s linear infinite;
+  }
+  .hubNodeInner {
+    animation: orbitSpin 42s linear infinite reverse;
+  }
+}
+
+@keyframes orbitSpin {
+  to { rotate: 360deg; }
+}
+
+@media (min-width: 960px) {
+  .topBento {
+    grid-template-columns: 448px minmax(0, 1fr);
+  }
+  .bottomBento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 719px) {
+  .section {
+    padding: 64px 0 48px;
+  }
+  .phoneCard {
+    padding: 18px 12px;
+  }
+  .cornerCoin {
+    display: none;
+  }
+  .mapCard {
+    padding: 18px 16px;
+  }
+  .destPin span,
+  .originChip span {
+    display: none;
+  }
+  .destPin,
+  .originChip {
+    padding: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcDash,
+  .arcFlow,
+  .pinRingOrigin,
+  .pinRingDest,
+  .hubOrbit,
+  .hubNodeInner {
+    animation: none;
+  }
+}

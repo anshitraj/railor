@@ -1,5 +1,11 @@
-/* At the top the bar sits flush; once you scroll it lifts into a floating pill. The header stays 68px tall either way, so nothing below moves. */
+/* At the top the bar sits flush; once you scroll it lifts into a floating pill. Over the full-bleed cinema hero it floats as a frosted white pill right from scrollY=0 (like GetOn's .nav-pill). */
 .header { position: sticky; top: 0; z-index: 60; height: 68px; padding-top: 0; transition: padding .3s var(--ease-out); }
+.header[data-over-hero] { position: fixed; top: 0; left: 0; right: 0; padding-top: 12px; pointer-events: none; }
+.header[data-over-hero] .bar, .header[data-over-hero] .sheet, .header[data-over-hero] .searchLayer { pointer-events: auto; }
+.header[data-over-hero] .bar { width: min(1160px, calc(100% - 24px)); height: 56px; padding: 0 7px 0 16px; border-color: rgb(255 255 255 / .62); border-radius: 999px; background: rgb(255 255 255 / .76); box-shadow: 0 12px 32px -14px rgb(0 0 0 / .28), inset 0 1px 0 rgb(255 255 255 / .75); backdrop-filter: saturate(165%) blur(18px); -webkit-backdrop-filter: saturate(165%) blur(18px); }
+.header[data-over-hero] .cta, .header[data-over-hero] .signIn, .header[data-over-hero] .iconButton { height: 40px; }
+.header[data-over-hero][data-scrolled] { padding-top: 10px; }
+.header[data-over-hero][data-scrolled] .bar { background: rgb(255 254 251 / .96); border-color: color-mix(in srgb, var(--color-line) 85%, transparent); box-shadow: 0 10px 30px -16px rgb(21 19 16 / .28), inset 0 1px 0 rgb(255 255 255 / .9); }
 .header[data-scrolled] { padding-top: 7px; }
 .bar { position: relative; display: flex; align-items: center; gap: 8px; width: min(1240px, calc(100% - 32px)); height: 68px; margin-inline: auto; padding: 0 2px; border: 1px solid transparent; border-radius: 22px; transition: height .3s var(--ease-out), width .3s var(--ease-out), padding .3s var(--ease-out), background-color .25s ease, border-color .25s ease, box-shadow .3s var(--ease-out); }
 .header[data-scrolled] .bar { width: min(1160px, calc(100% - 20px)); height: 54px; padding: 0 7px 0 14px; border-color: color-mix(in srgb, var(--color-line) 80%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 82%, transparent); box-shadow: 0 10px 30px -18px rgb(21 19 16 / .45), 0 1px 0 rgb(255 255 255 / .6) inset; backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px); }

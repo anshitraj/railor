@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-/** How much of the remaining distance the page covers each frame: lower is slower and silkier. */
-const EASE = 0.1;
+/** Exponential decay speed (higher = snappier, lower = silkier). Frame-rate independent. */
+const DAMPING = 9.2;
 
 /** True when the wheel should scroll something inside the page (a menu, a table) rather than the page itself. */
 function innerScroller(start: EventTarget | null, deltaY: number): boolean {
@@ -17,12 +17,10 @@ function innerScroller(start: EventTarget | null, deltaY: number): boolean {
 }
 
 /**
- * Wheel scrolling that glides, the way GetOn and other studio sites feel: the
- * wheel sets where the page is going and the page eases there. Only on a mouse
- * or trackpad; touch keeps the phone's own scrolling, and reduced-motion keeps
- * the browser's. Keyboard, scrollbar and find-in-page still scroll natively;
- * the glide picks up from wherever they leave the page. Same-page links glide
- * to their section too.
+ * Lenis-style damped wheel scrolling for desktop: frame-rate independent
+ * exponential interpolation so 60Hz, 120Hz and 144Hz screens glide identically.
+ * Touch keeps native inertia; reduced motion keeps native browser scrolling;
+ * same-page `#anchor` links glide smoothly into place.
  */
 export function SmoothScroll() {
   useEffect(() => {
@@ -35,17 +33,32 @@ export function SmoothScroll() {
     let target = window.scrollY;
     let current = window.scrollY;
     let frame = 0;
+    let lastTime = 0;
     const limit = () => Math.max(0, root.scrollHeight - window.innerHeight);
     const locked = () => getComputedStyle(document.body).overflow === "hidden" || getComputedStyle(root).overflow === "hidden";
 
-    const tick = () => {
-      current += (target - current) * EASE;
-      if (Math.abs(target - current) < 0.4) current = target;
+    const tick = (now: number) => {
+      const dt = lastTime ? Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000)) : 1 / 60;
+      lastTime = now;
+      const alpha = 1 - Math.exp(-DAMPING * dt);
+      current += (target - current) * alpha;
+      if (Math.abs(target - current) < 0.35) {
+        current = target;
+      }
       window.scrollTo(0, current);
-      frame = current === target ? 0 : requestAnimationFrame(tick);
+      if (current === target) {
+        frame = 0;
+        lastTime = 0;
+      } else {
+        frame = requestAnimationFrame(tick);
+      }
     };
+
     const glideTo = (y: number) => {
-      if (!frame) current = window.scrollY;
+      if (!frame) {
+        current = window.scrollY;
+        lastTime = 0;
+      }
       target = Math.max(0, Math.min(limit(), y));
       if (!frame) frame = requestAnimationFrame(tick);
     };
@@ -57,18 +70,23 @@ export function SmoothScroll() {
       const delta = event.deltaMode === 1 ? event.deltaY * 32 : event.deltaMode === 2 ? event.deltaY * window.innerHeight : event.deltaY;
       glideTo((frame ? target : window.scrollY) + delta);
     };
-    // Anything else that moves the page (keys, scrollbar, focus) becomes the new starting point.
+
     const onScroll = () => {
       if (!frame) target = current = window.scrollY;
     };
+
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
-      const link = (event.target as Element | null)?.closest?.("a[href^='#']");
-      const id = link?.getAttribute("href")?.slice(1);
+      const link = (event.target as Element | null)?.closest?.("a[href^='#'], a[href^='/#']");
+      const rawHref = link?.getAttribute("href") ?? "";
+      const hashIndex = rawHref.indexOf("#");
+      if (hashIndex === -1) return;
+      if (rawHref.startsWith("/#") && window.location.pathname !== "/") return;
+      const id = rawHref.slice(hashIndex + 1);
       const section = id ? document.getElementById(decodeURIComponent(id)) : null;
       if (!section) return;
       event.preventDefault();
-      const margin = parseFloat(getComputedStyle(section).scrollMarginTop) || 80;
+      const margin = parseFloat(getComputedStyle(section).scrollMarginTop) || 88;
       glideTo(section.getBoundingClientRect().top + window.scrollY - margin);
       history.replaceState(null, "", `#${id}`);
     };

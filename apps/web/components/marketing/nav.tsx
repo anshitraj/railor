@@ -81,7 +81,15 @@ function DevelopersFeature({ signedIn, onPick }: { signedIn: boolean; onPick: ()
 }
 
 /** `guideCountries`: where the Guides menu offers to send money, already limited to currencies Railor can price. */
-export function MarketingNav({ signedIn = false, guideCountries = [] }: { signedIn?: boolean; guideCountries?: readonly Destination[] }) {
+export function MarketingNav({
+  signedIn = false,
+  guideCountries = [],
+  overHero = false,
+}: {
+  signedIn?: boolean;
+  guideCountries?: readonly Destination[];
+  overHero?: boolean;
+}) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const [hover, setHover] = useState<string | null>(null);
@@ -123,6 +131,7 @@ export function MarketingNav({ signedIn = false, guideCountries = [] }: { signed
     <header
       ref={header}
       className={styles.header}
+      data-over-hero={overHero || undefined}
       data-scrolled={scrolled || mobileOpen || undefined}
       onKeyDown={(event) => { if (event.key === "Escape") { setOpen(null); setMobileOpen(false); } }}
     >

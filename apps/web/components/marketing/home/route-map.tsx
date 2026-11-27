@@ -24,7 +24,7 @@ const ROUTES = [
 export function RouteMapSection() {
   return (
     <section className={styles.mapSection} aria-labelledby="routes-title">
-      <BandVideo name="rails" opacity={0.38} />
+      <BandVideo name="night-corridors" opacity={0.42} />
       <div className={styles.container}>
         <div className={styles.head}>
           <div>

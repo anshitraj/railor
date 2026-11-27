@@ -165,9 +165,9 @@
 .cardComingSoon button { min-height: 44px; padding-inline: 14px; border-radius: 8px; background: var(--color-surface); border: 1px solid var(--color-line-strong); font-size: 13px; font-weight: 650; }
 .cardComingSoon button:focus-visible { outline: 2px solid var(--color-orange-deep); outline-offset: 2px; }
 
-/* ── Landing hero calculator (the dashboard's "app" variant is untouched) ── */
+/* ── Landing hero calculator (sits edge-to-edge inside the phone frame in #transfers; the dashboard's "app" variant is untouched) ── */
 .quote[data-variant="hero"] { max-width: 480px; }
-.quote[data-variant="hero"] .card { padding: 20px; border-color: rgb(21 19 16 / .07); border-radius: 26px; box-shadow: 0 1px 2px rgb(21 19 16 / .04), 0 24px 48px -24px rgb(60 32 14 / .22), 0 64px 120px -48px rgb(60 32 14 / .3); }
+.quote[data-variant="hero"] .card { padding: 16px 14px 16px; border: 0; border-radius: 38px; box-shadow: none; }
 .quote[data-variant="hero"] .cardHead { margin-bottom: 14px; }
 .quote[data-variant="hero"] .segment { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 0; border-radius: 0; background: transparent; }
 .quote[data-variant="hero"] .segment button { display: flex; height: 44px; align-items: center; justify-content: center; padding: 0 8px; border-radius: 12px; color: var(--color-ink-soft); font-size: 14px; font-weight: 600; }
@@ -181,6 +181,8 @@
 .quote[data-variant="hero"] .fields > .field[data-output] { padding: 20px 16px 16px 18px; }
 .quote[data-variant="hero"] .swap { border: 1px solid var(--color-line-strong); background: var(--color-surface); color: var(--color-ink); box-shadow: 0 0 0 4px var(--color-surface), 0 6px 14px -6px rgb(21 19 16 / .28); }
 .quote[data-variant="hero"] .swap:hover { border-color: var(--color-ink); background: var(--color-surface); }
+.quote[data-variant="hero"] .presets { gap: 5px; }
+.quote[data-variant="hero"] .presets button { padding: 0 9.5px; font-size: 12px; }
 .quote[data-variant="hero"] .presets button[aria-pressed="true"] { border-color: var(--color-orange); background: var(--color-orange); }
 .quote[data-variant="hero"] .compare { height: 54px; margin-top: 14px; border-radius: 14px; background: linear-gradient(180deg, #f0663a 0%, var(--color-orange) 55%, #dc4c22 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), 0 12px 26px -12px rgb(233 86 42 / .75); }
 .quote[data-variant="hero"] .compare:hover { background: linear-gradient(180deg, #e85a2f 0%, #d94c22 100%); }
@@ -214,8 +216,8 @@
 .heroTrustCost { display: inline-flex; align-items: center; gap: 7px; color: var(--color-ink-soft); font-weight: 550; }
 .heroTrustCost svg { flex: none; color: var(--color-ok); }
 @media (max-width: 639px) {
-  /* Inside the phone frame: the card is the screen. */
-  .quote[data-variant="hero"] .card { padding: 52px 12px 14px; border: 0; border-radius: 42px; box-shadow: none; }
+  /* Inside the phone frame: the card is the screen (status bar padding lives on the phone frame). */
+  .quote[data-variant="hero"] .card { padding: 14px 12px 14px; border: 0; border-radius: 36px; box-shadow: none; }
   .quote[data-variant="hero"] .progress { inset: 0 24px auto; }
   .quote[data-variant="hero"] .segment button { height: 42px; padding: 0 4px; font-size: 13px; }
   .quote[data-variant="hero"] .segmentLabel { gap: 6px; }

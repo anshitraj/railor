@@ -154,7 +154,7 @@ export function FinalCta() {
     <section className={styles.section} aria-labelledby="final-title">
       <div className={styles.container}>
         <div className={styles.final}>
-          <BandVideo name="rails" />
+          <BandVideo name="night-corridors" opacity={0.62} />
           <div className={styles.finalBody}>
             <h2 id="final-title">Check before you send.</h2>
             <p>Two currencies and an amount. Every provider, what arrives, and where each price comes from.</p>

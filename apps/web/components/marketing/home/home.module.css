@@ -65,7 +65,7 @@
 @keyframes halo { 0% { transform: scale(.55); opacity: 1; } 70%, 100% { transform: scale(1.5); opacity: 0; } }
 .phone { display: contents; }
 .phoneIsland { display: none; }
-.logos { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--color-line); }
+.logos { margin-top: 20px; padding: 14px 0 6px; border-top: 0; }
 .logosIntro { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; }
 .logosIntro p { grid-column: 2; color: var(--color-muted); font-size: 13.5px; font-weight: 550; text-align: center; }
 .logoControl { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 9px; color: var(--color-muted); }

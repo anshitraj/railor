@@ -4,6 +4,8 @@ import { ensureMigrated } from "@railor/database";
 import { MarketingNav } from "../components/marketing/nav";
 import { MarketingFooter } from "../components/marketing/footer";
 import { HomeHero } from "../components/marketing/home/hero";
+import { TransfersSection } from "../components/marketing/home/transfers-section";
+import { ProviderMarquee } from "../components/marketing/home/provider-marquee";
 import { HowItWorks } from "../components/marketing/home/how-it-works";
 import { ProvidersSection } from "../components/marketing/home/providers";
 import { RouteMapSection } from "../components/marketing/home/route-map";
@@ -48,20 +50,33 @@ async function HeroQuote({ params }: { params: Record<string, string | undefined
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureMigrated();
   const [params, session, destinations, stats] = await Promise.all([searchParams, getSession(), loadGuideDestinations(), siteStats()]);
+  const trackedProviders = remittanceProviderCatalog().length;
 
   return (
     <>
-      <MarketingNav signedIn={Boolean(session)} guideCountries={destinations.popular} />
+      <MarketingNav overHero signedIn={Boolean(session)} guideCountries={destinations.popular} />
       <main id="main" className={homeStyles.motionPage} data-curtain>
         <SmoothScroll />
         <HomeScrollMotion />
-        <HomeHero stats={stats} providerCount={remittanceProviderCatalog().length} calculator={<Suspense fallback={<QuickQuoteSkeleton />}><HeroQuote params={params} /></Suspense>} />
-        <OnePlaceSection />
+        <HomeHero stats={stats} providerCount={trackedProviders} />
+        <div className={homeStyles.container} style={{ paddingTop: 12 }}>
+          <ProviderMarquee />
+        </div>
+        <TransfersSection
+          providerCount={trackedProviders}
+          currencyCount={stats.currencies}
+          calculator={
+            <Suspense fallback={<QuickQuoteSkeleton />}>
+              <HeroQuote params={params} />
+            </Suspense>
+          }
+        />
         <CollageSection />
+        <OnePlaceSection />
         <HowItWorks />
         <WhyRailor signedIn={Boolean(session)} />
         <MathsSection benchmarks={remittanceCostBenchmarks()} />
-        <ProvidersSection trackedCount={remittanceProviderCatalog().length} />
+        <ProvidersSection trackedCount={trackedProviders} />
         <RouteMapSection />
         <CompanyRulesSection />
         <AudiencesSection />
@@ -71,7 +86,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <FaqSection />
         <GuidesSection />
         <FinalCta />
-        <MobileCompareBar providerCount={remittanceProviderCatalog().length} />
+        <MobileCompareBar providerCount={trackedProviders} />
       </main>
       <MarketingFooter />
     </>
