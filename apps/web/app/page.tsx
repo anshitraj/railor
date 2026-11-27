@@ -58,18 +58,21 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <main id="main" className={homeStyles.motionPage} data-curtain>
         <SmoothScroll />
         <HomeScrollMotion />
-        <HomeHero stats={stats} providerCount={trackedProviders} />
+        <HomeHero
+          stats={stats}
+          providerCount={trackedProviders}
+          calculator={
+            <Suspense fallback={<QuickQuoteSkeleton />}>
+              <HeroQuote params={params} />
+            </Suspense>
+          }
+        />
         <div className={homeStyles.container} style={{ paddingTop: 12 }}>
           <ProviderMarquee />
         </div>
         <TransfersSection
           providerCount={trackedProviders}
           currencyCount={stats.currencies}
-          calculator={
-            <Suspense fallback={<QuickQuoteSkeleton />}>
-              <HeroQuote params={params} />
-            </Suspense>
-          }
         />
         <CollageSection />
         <OnePlaceSection />

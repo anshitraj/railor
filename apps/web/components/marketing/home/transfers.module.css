@@ -1,12 +1,12 @@
-/* GetOn #transfers-inspired 2-row interactive bento on Railor's warm canvas. */
+/* Interactive 2-row transfer bento combining GetOn's #transfers corridor map with OpenDue's layered rail-card stage. */
 .section {
   position: relative;
-  padding: 96px 0 72px;
+  padding: 88px 0 72px;
   scroll-margin-top: 84px;
 }
 
 .container {
-  width: min(1160px, calc(100% - 32px));
+  width: min(1180px, calc(100% - 32px));
   margin-inline: auto;
 }
 
@@ -15,7 +15,7 @@
   justify-items: center;
   gap: 12px;
   max-width: 680px;
-  margin: 0 auto 48px;
+  margin: 0 auto 44px;
   text-align: center;
 }
 
@@ -33,7 +33,7 @@
 
 .title {
   color: var(--color-ink);
-  font-size: clamp(34px, 4.4vw, 54px);
+  font-size: clamp(32px, 4.4vw, 54px);
   font-weight: 680;
   letter-spacing: -0.04em;
   line-height: 1.04;
@@ -42,81 +42,19 @@
 
 .lead {
   color: var(--color-muted);
-  font-size: clamp(16px, 1.35vw, 18px);
+  font-size: clamp(15.5px, 1.35vw, 18px);
   line-height: 1.55;
   text-wrap: pretty;
 }
 
-/* Row 1: 2-column bento (Left: real live calculator phone, Right: interactive dotted corridor map) */
+/* Row 1: Wide Interactive Global Corridor Map + OpenDue-style Layered Floating Rail Stack */
 .topBento {
   display: grid;
   gap: 18px;
   align-items: stretch;
 }
 
-.phoneCard {
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: 26px 16px 24px;
-  border: 1px solid var(--color-line);
-  border-radius: 32px;
-  background:
-    radial-gradient(90% 60% at 50% 0%, rgb(255 229 213 / 0.45) 0%, transparent 72%),
-    var(--color-surface);
-  box-shadow: 0 1px 0 rgb(21 19 16 / 0.04), 0 28px 60px -42px rgb(21 19 16 / 0.32);
-  scroll-margin-top: 96px;
-}
-
-.phoneFrame {
-  position: relative;
-  width: min(100%, 416px);
-  padding: 42px 8px 9px;
-  border-radius: 48px;
-  background: linear-gradient(145deg, #d9dde3, #8a9099 18%, #3b3f45 40%, #2a2d31 60%, #9aa1aa 92%);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.35),
-    0 34px 64px -28px rgb(21 19 16 / 0.5);
-}
-
-.phoneFrame::before {
-  content: "9:41";
-  position: absolute;
-  top: 14px;
-  left: 30px;
-  color: #f4f4f5;
-  font-size: 12.5px;
-  font-weight: 700;
-}
-
-.phoneFrame > :not(.phoneIsland) {
-  border-radius: 38px;
-  overflow: hidden;
-}
-
-.phoneIsland {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  display: block;
-  width: 88px;
-  height: 24px;
-  border-radius: 999px;
-  background: #0c0c0d;
-  translate: -50% 0;
-}
-
-.cornerCoin {
-  --size: 72px;
-  position: absolute;
-  left: -18px;
-  bottom: -18px;
-  z-index: 3;
-  rotate: -12deg;
-  pointer-events: none;
-}
-
-/* Right Bento Card: Interactive Global Corridor Map */
+/* Left Card: Wide Interactive Global Corridor Map */
 .mapCard {
   position: relative;
   display: flex;
@@ -161,6 +99,7 @@
 .stepDot {
   width: 8px;
   height: 8px;
+  flex: none;
   border-radius: 50%;
   background: #22a35a;
   box-shadow: 0 0 0 3px rgb(34 163 90 / 0.2);
@@ -192,12 +131,11 @@
 .mapCanvas {
   position: relative;
   flex: 1;
-  min-height: 290px;
+  min-height: 310px;
   aspect-ratio: 16 / 9;
   width: 100%;
-  margin-block: 4px;
   border-radius: 22px;
-  background: radial-gradient(85% 85% at 50% 48%, #fbf8f3 0%, #f4efe6 100%);
+  background: radial-gradient(85% 85% at 50% 48%, #fbf8f3 0%, #f3ede3 100%);
   border: 1px solid rgb(21 19 16 / 0.05);
   overflow: hidden;
 }
@@ -339,6 +277,45 @@
   box-shadow: 0 12px 24px -10px rgb(233 86 42 / 0.7);
 }
 
+.mapFloatToast {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 9px 10px;
+  border: 1px solid rgb(21 19 16 / 0.08);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 16px 32px -16px rgb(21 19 16 / 0.32);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  animation: toastIn 0.32s var(--ease-out) both;
+}
+
+.mapFloatToast strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mapFloatToast small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 550;
+  line-height: 1.2;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
 .corridorPills {
   display: flex;
   flex-wrap: wrap;
@@ -358,6 +335,7 @@
   font-size: 12.5px;
   font-weight: 650;
   cursor: pointer;
+  white-space: nowrap;
   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -374,25 +352,259 @@
 
 .pairFlags {
   display: inline-flex;
+  flex: none;
 }
 
 .pairFlags > :nth-child(2) {
   margin-left: -5px;
 }
 
-.mapFooter {
+/* Right Card: OpenDue-inspired soft-tinted rounded stage with depth-layered floating cards */
+.railStackCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+  padding: 20px 22px 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 32px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 0 rgb(21 19 16 / 0.04), 0 28px 60px -42px rgb(21 19 16 / 0.32);
+  overflow: hidden;
+}
+
+.stackStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 296px;
+  padding: 28px 18px 22px;
+  border-radius: 24px;
+  background:
+    radial-gradient(92% 76% at 50% 18%, #fde3d3 0%, #f5e9ff 52%, #efe8fc 100%);
+  border: 1px solid rgb(21 19 16 / 0.05);
+  overflow: hidden;
+}
+
+.stackDeck {
+  position: relative;
+  width: 100%;
+  max-width: 344px;
+  padding-top: 78px;
+}
+
+.stackSheet {
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 18px 40px -20px rgb(24 19 38 / 0.34),
+    0 0 0 1px rgb(21 19 16 / 0.06);
+}
+
+.stackBack,
+.stackMid {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  translate: -50% 0;
+}
+
+.stackBack {
+  top: 0;
+  z-index: 1;
+  transform: scale(0.86);
+  transform-origin: top center;
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.stackMid {
+  top: 38px;
+  z-index: 2;
+  transform: scale(0.93);
+  transform-origin: top center;
+  background: rgb(255 255 255 / 0.9);
+}
+
+.stackSheetIcon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--color-canvas);
+  color: var(--color-ink-soft);
+}
+
+.stackSheetIcon[data-tone="wire"] {
+  background: #eaf0fb;
+  color: #29508c;
+}
+
+.stackSheetIcon[data-tone="crypto"] {
+  background: var(--color-lavender);
+  color: var(--color-orange-deep);
+}
+
+.stackSheetName {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 680;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stackSheetTag {
+  flex: none;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stackFront {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  box-shadow:
+    0 24px 48px -20px rgb(24 19 38 / 0.34),
+    0 0 0 1px rgb(21 19 16 / 0.06);
+  animation: frontSwap 0.36s var(--ease-out) both;
+}
+
+@keyframes frontSwap {
+  from { opacity: 0.7; transform: translateY(6px) scale(0.985); }
+}
+
+.stackFrontTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stackFlags {
+  display: inline-flex;
+  flex: none;
+}
+
+.stackFlags > :nth-child(2) {
+  margin-left: -8px;
+  box-shadow: 0 0 0 2px #fff;
+  border-radius: 50%;
+}
+
+.stackPair {
+  min-width: 0;
+  flex: 1;
+}
+
+.stackPair strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: 17px;
+  font-weight: 740;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.stackPair small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stackLiveChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stackLiveChip i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22a35a;
+}
+
+.stackFrontStats {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
+  gap: 10px 18px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: var(--color-canvas);
+}
+
+.stackFrontStats span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stackFrontStats strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+}
+
+.stackPayMethods {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-line);
+  gap: 5px;
 }
 
-.routeSummary {
+.stackPayMethods span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f4f1ec;
+  color: var(--color-ink-soft);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.stackSpeedTag {
+  margin-left: auto;
+  background: transparent !important;
+  color: var(--color-muted) !important;
+  padding-inline: 2px !important;
+}
+
+.stackBody {
   display: grid;
-  gap: 3px;
+  gap: 10px;
+  padding: 0 4px;
 }
 
 .routeTitleRow {
@@ -402,46 +614,54 @@
   gap: 8px;
 }
 
-.routeTitleRow strong {
+.routeTitleRow h3 {
   color: var(--color-ink);
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .routeBadge {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 9px;
+  height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
   background: var(--color-ok-bg);
   color: var(--color-ok);
   font-size: 11.5px;
-  font-weight: 650;
+  font-weight: 680;
 }
 
-.routeSummary p {
+.stackBody p {
   color: var(--color-muted);
-  font-size: 13.5px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .tryCta {
   display: inline-flex;
-  height: 46px;
+  width: 100%;
+  height: 48px;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 0 20px;
+  margin-top: 4px;
+  padding: 0 22px;
   border-radius: 999px;
   background: var(--color-ink);
   color: #fff;
   font-size: 14.5px;
   font-weight: 650;
   white-space: nowrap;
+  transition: background-color 0.18s ease, transform 0.18s var(--ease-out);
 }
 
 .tryCta:hover {
   background: #2a2622;
+  transform: translateY(-1px);
 }
 
 /* Row 2: 3 equal rounded-[32px] white feature cards (GetOn #transfers bottom trio) */
@@ -605,7 +825,7 @@
   transform: translate(-50%, -50%) rotate(var(--a)) translateX(84px) rotate(calc(var(--a) * -1));
 }
 
-/* Card 3 Visual: Bank rails + Stablecoins side-by-side mini UI */
+/* Card 3 Visual: Bank rails + Wallet balances + Stablecoins mini UI */
 .railsStage {
   display: grid;
   align-items: end;
@@ -660,6 +880,9 @@
 .railCopy small {
   color: var(--color-muted);
   font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .railChip {
@@ -680,8 +903,8 @@
 }
 
 .railChip[data-tone="neutral"] {
-  background: var(--color-canvas);
-  color: var(--color-ink-soft);
+  background: #e8f6ee;
+  color: #1c5c37;
 }
 
 .railChip[data-tone="crypto"] {
@@ -704,33 +927,58 @@
 
 @media (min-width: 960px) {
   .topBento {
-    grid-template-columns: 448px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
   }
   .bottomBento {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 719px) {
+/* Mobile adaptation matching OpenDue & GetOn: single-column 16px-margin vertical stack, crisp heights, zero horizontal overflow. */
+@media (max-width: 767px) {
   .section {
-    padding: 64px 0 48px;
+    padding: 58px 0 48px;
   }
-  .phoneCard {
-    padding: 14px 10px;
+  .container {
+    width: calc(100% - 28px);
+  }
+  .head {
+    margin-bottom: 28px;
+  }
+  .topBento,
+  .bottomBento {
+    gap: 14px;
+  }
+  .bottomBento {
+    margin-top: 14px;
+  }
+  .mapCard,
+  .railStackCard,
+  .bentoCard {
     border-radius: 26px;
   }
-  .phoneFrame {
-    padding: 36px 6px 6px;
-    border-radius: 40px;
-  }
-  .phoneFrame > :not(.phoneIsland) {
-    border-radius: 34px;
-  }
-  .cornerCoin {
-    display: none;
-  }
   .mapCard {
-    padding: 18px 16px;
+    padding: 16px;
+    gap: 12px;
+  }
+  .stepPill {
+    width: 100%;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  .amountPills {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .amountPills button {
+    flex: 1;
+  }
+  .mapCanvas {
+    min-height: 210px;
+    border-radius: 18px;
+  }
+  .mapFloatToast {
+    display: none;
   }
   .destPin span,
   .originChip span {
@@ -740,6 +988,41 @@
   .originChip {
     padding: 3px;
   }
+  .corridorPills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .corridorPills::-webkit-scrollbar {
+    display: none;
+  }
+  .railStackCard {
+    padding: 14px 14px 20px;
+    gap: 16px;
+  }
+  .stackStage {
+    min-height: 264px;
+    padding: 22px 12px 18px;
+    border-radius: 20px;
+  }
+  .stackDeck {
+    padding-top: 70px;
+  }
+  .stackFront {
+    padding: 15px;
+  }
+  .stackSpeedTag {
+    margin-left: 0;
+  }
+  .routeTitleRow h3 {
+    font-size: 20px;
+  }
+  .bentoCard {
+    min-height: 336px;
+    padding: 22px 18px 20px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -748,7 +1031,9 @@
   .pinRingOrigin,
   .pinRingDest,
   .hubOrbit,
-  .hubNodeInner {
+  .hubNodeInner,
+  .mapFloatToast,
+  .stackFront {
     animation: none;
   }
 }

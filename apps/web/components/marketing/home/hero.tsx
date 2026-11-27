@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { SiteStats } from "../../../lib/site-stats";
@@ -13,12 +14,20 @@ const BADGE_LOGOS = [
 ] as const;
 
 /**
- * Full-bleed cinema hero inspired by GetOn: real lifestyle film fills the
- * viewport with synchronized frosted-glass Railor transfer pills and a bottom-right
- * pause control. As you scroll through the 360px sticky runway, the film clips
- * smoothly into a floating rounded card and hands off cleanly into `#transfers`.
+ * Full-bleed cinema hero with the live translucent glass QuickQuote calculator
+ * floating beside the headline so the background film visibly glows through it.
+ * On desktop the sticky 320px runway clips smoothly into a rounded cinema card;
+ * on mobile it stacks cleanly with the calculator immediately playable above the fold.
  */
-export function HomeHero({ providerCount, stats }: { providerCount: number; stats?: SiteStats }) {
+export function HomeHero({
+  providerCount,
+  stats,
+  calculator,
+}: {
+  providerCount: number;
+  stats?: SiteStats;
+  calculator: ReactNode;
+}) {
   const figures = stats
     ? [
         { value: stats.providers, label: "providers" },
@@ -57,12 +66,12 @@ export function HomeHero({ providerCount, stats }: { providerCount: number; stat
               </p>
 
               <div className={styles.actions}>
-                <a href="#transfers" className={`${styles.primary} press`}>
+                <Link href="/prices" className={`${styles.primary} press`}>
                   Compare prices
                   <ArrowRight size={17} aria-hidden />
-                </a>
-                <a href="#how-it-works" className={`${styles.secondary} press`}>
-                  See how it works
+                </Link>
+                <a href="#transfers" className={`${styles.secondary} press`}>
+                  Explore corridors
                 </a>
               </div>
 
@@ -78,6 +87,10 @@ export function HomeHero({ providerCount, stats }: { providerCount: number; stat
               ) : (
                 <p className={styles.metaLine}>Rechecked every 30 seconds · A source on every price · No sign-up</p>
               )}
+            </div>
+
+            <div id="calculator" className={styles.calcStage}>
+              {calculator}
             </div>
           </div>
         </div>
