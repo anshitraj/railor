@@ -33,6 +33,8 @@ describe("agent small talk", () => {
 
   it("asks for payment facts, with examples to tap", () => {
     expect(needsPaymentFacts("What is the fastest?").title).toBe("Tell me about the payment first");
+    expect(needsPaymentFacts("hey i want").title).toBe("Sure — tell me a bit more about the transfer");
+    expect(needsPaymentFacts("hey i want").chips?.length).toBe(3);
     expect(needsPaymentFacts("blah").chips?.length).toBe(3);
   });
 });

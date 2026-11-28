@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SearchPreviewResult } from "@railor/core";
-import { answerAgentQuestion, followupPreference } from "./agent-presentation";
+import { answerAgentQuestion, followupPreference, sortRelevantCandidates, summarizeComparison } from "./agent-presentation";
 
 const candidate = { provider: "Provider C", providerSlug: "provider-c", routeConfirmation: "confirmed", entityEligibility: "confirmed",
   policyPreview: "fail", policyReasons: ["The production policy denies this provider."], policyReasonCodes: ["provider_denied"], comparisonReason: "Blocked before ranking.",
@@ -41,5 +41,28 @@ describe("evidence-only conversational explanations", () => {
     expect(followupPreference("Compare by price")).toBe("cheapest");
     expect(followupPreference("Prioritize reliability")).toBe("most_reliable");
     expect(followupPreference("Send 100000 USDC to our supplier; cheapest please")).toBeNull();
+  });
+
+  it("summarizes a comparison cleanly and prioritizes priced providers first", () => {
+    const priced = { ...candidate, provider: "Wise", providerSlug: "wise", providerId: "p-wise", policyPreview: "pass", recipientAmount: 8420, knownCost: { amount: 1.5, currency: "USD" }, etaMinutes: 30, advertisedSettlement: null, rank: 1 };
+    const unpriced = { ...candidate, provider: "Airwallex", providerSlug: "airwallex", providerId: "p-air", policyPreview: "pass", recipientAmount: null, knownCost: null, etaMinutes: null, advertisedSettlement: null, rank: null, quoteState: "CONNECT_TO_QUOTE" };
+    const snapshot = {
+      ...preview,
+      policyId: "explore",
+      candidates: [unpriced, priced],
+      permittedCandidates: [priced, unpriced],
+      bestCandidate: priced,
+      intent: { amount: 100, sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", preference: "balanced" },
+      evidenceSummary: { providersChecked: 90, withCurrentQuote: 1 },
+    } as unknown as SearchPreviewResult;
+
+    const sorted = sortRelevantCandidates(snapshot);
+    expect(sorted[0]?.provider).toBe("Wise");
+
+    const summary = summarizeComparison(snapshot);
+    expect(summary.title).toContain("Wise");
+    expect(summary.title).toContain("100 USD → INR");
+    expect(summary.lines[0]).toContain("8,420 INR");
+    expect(summary.links?.[0]?.href).toContain("/app/prices?from=USD&to=INR&amount=100");
   });
 });

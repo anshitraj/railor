@@ -8,9 +8,9 @@ import { useModalFocus } from "@railor/ui";
 import type { SearchPreviewResult, draftPaymentIntent } from "@railor/core";
 import { RANKING_PRESET_LABEL, ProductType, PaymentMethod, type RankingPreset } from "@railor/types";
 import { controlCommand } from "../../app/app/control-actions";
-import { answerAgentQuestion, followupPreference, type AgentAnswer } from "../../lib/agent-presentation";
+import { answerAgentQuestion, followupPreference, summarizeComparison, type AgentAnswer } from "../../lib/agent-presentation";
 import { IntentBuilder, draftFromPartial, intentFromDraft, missingIntentFields, type IntentDraft, type IntentOptions } from "./intent-builder";
-import { InfrastructureResults } from "./infrastructure-results";
+import { AgentComparison } from "./agent-comparison";
 import { RailorMark } from "../brand";
 import { CHAT_HISTORY_LIMIT, CHAT_MESSAGE_LIMIT, chatTitle, parseAgentHistory, upsertAgentChat, type AgentChat, type ChatMessage } from "../../lib/agent-history";
 import { AgentStarters } from "./agent-starters";
@@ -36,6 +36,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   const [policyId, setPolicyId] = useState(policies[0]?.id ?? "");
   const [preview, setPreview] = useState<SearchPreviewResult | null>(null);
   const [previewMessageId, setPreviewMessageId] = useState<number | null>(null);
+  const [pendingConfirmId, setPendingConfirmId] = useState<number | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -131,7 +132,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
 
   function newChat() {
     if (pending) return;
-    setActiveChat(null); setMessages([]); setPreview(null); setDraft(null); setIntent(null);
+    setActiveChat(null); setMessages([]); setPreview(null); setPreviewMessageId(null); setPendingConfirmId(null); setDraft(null); setIntent(null);
     setReviewOpen(false); setError(""); setText(""); setRestored(false); setHistoryOpen(false);
     setPreference("balanced"); setProduct(""); setMethod(""); setPolicyId(policies[0]?.id ?? "");
     sequence.current = 0;
@@ -142,7 +143,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     setActiveChat({ id: chat.id, createdAt: chat.createdAt }); setMessages(chat.messages);
     setIntent(chat.intent); setPreference(chat.preference); setProduct(chat.product); setMethod(chat.method);
     setPolicyId(policies.some((p) => p.id === chat.policyId) ? chat.policyId : policies[0]?.id ?? "");
-    setPreview(null); setDraft(null); setRestored(true); setReviewOpen(false); setText(""); setError(""); setHistoryOpen(false);
+    setPreview(null); setPreviewMessageId(null); setPendingConfirmId(null); setDraft(null); setRestored(true); setReviewOpen(false); setText(""); setError(""); setHistoryOpen(false);
     sequence.current = Math.max(...chat.messages.map((message) => message.id), 0);
     requestAnimationFrame(() => composer.current?.focus());
   }
@@ -171,17 +172,36 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
   const missing = intent ? [...missingIntentFields(intent), ...(!intent.destinationCurrency ? ["destination currency"] : []),
     ...(intent.sourceKind === "asset" && !intent.sourceNetwork ? ["source network"] : [])] : [];
 
-  function receivePreview(next: SearchPreviewResult) {
+  function formatMissingField(field: string) {
+    if (field === "sourceAsset or sourceCurrency") return "currency";
+    if (field === "sourceNetwork") return "network";
+    if (field === "destinationCurrency") return "destination currency";
+    if (field === "destinationCountry") return "destination country";
+    if (field === "sourceEntityCountry") return "sender country";
+    return field.replace(/([A-Z])/g, " $1").toLowerCase();
+  }
+
+  function receivePreview(next: SearchPreviewResult, replaceId?: number | null) {
     setPreview(next); setReviewOpen(false); setRestored(false);
-    const relevant = next.candidates.filter((c) => c.routeConfirmation === "confirmed" || c.routeConfirmation === "partially_confirmed");
-    const ruled = next.policyId !== "explore";
-    setPreviewMessageId(add("agent", `I checked ${next.evidenceSummary.providersChecked} providers. ${relevant.length} ${relevant.length === 1 ? "has" : "have"} route evidence for this request${ruled ? `; ${next.permittedCandidates.length} passed your company rules` : " (no company rules applied)"}. ${next.bestCandidate ? `${next.bestCandidate.provider} ranks first for ${RANKING_PRESET_LABEL[next.intent.preference].toLowerCase()}.` : "Current evidence does not support a best option for this comparison yet."}`));
+    const summary = summarizeComparison(next);
+    const targetId = replaceId ?? pendingConfirmId;
+    setPendingConfirmId(null);
+    if (targetId !== null) {
+      setMessages((current) => current.map((msg) => (msg.id === targetId ? { ...msg, text: "", answer: summary } : msg)));
+      setPreviewMessageId(targetId);
+      return;
+    }
+    setPreviewMessageId(add("agent", "", summary));
   }
 
   function searchDraft(nextPreference = preference, nextPolicyId = policyId, message?: string) {
     if (!intent || missing.length) return;
     setError(""); setPreview(null);
-    if (message) add("user", message);
+    const replaceId = message ? null : pendingConfirmId;
+    if (message) {
+      setPendingConfirmId(null);
+      add("user", message);
+    }
     start(async () => {
       try {
         const value = { ...intentFromDraft(intent), preference: nextPreference,
@@ -191,7 +211,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         // No company rules: the server compares against none, right here in the chat.
         const result = await controlCommand({ action: "search_preview", intent: value, ...(nextPolicyId ? { policyId: nextPolicyId } : {}) });
         if (!result.ok) setError(result.error ?? "Search failed. Please retry.");
-        else receivePreview(result.data as SearchPreviewResult);
+        else receivePreview(result.data as SearchPreviewResult, replaceId);
       } catch { setError("The connection dropped. Please try again."); }
     });
   }
@@ -228,6 +248,10 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
     setText(""); setError(""); setCommandIndex(0);
     const command = findCommand(question);
     if (command !== undefined) { runCommand(command, question); return; }
+    if (!preview && intent && !missing.length && /^(?:yes|yep|yeah|sure|ok|okay|confirm|compare|go ahead|looks good|do it|run it|proceed)[!.?]*$/i.test(question)) {
+      searchDraft(preference, policyId, question);
+      return;
+    }
     const talk = smallTalk(question);
     if (talk) { say(question, talk); return; }
     if (preview && !/\b(?:send|sending|move|transfer|pay)\b.*\d/i.test(question)) {
@@ -240,10 +264,10 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
       const nextPreference = followupPreference(question);
       if (nextPreference) { setPreference(nextPreference); searchDraft(nextPreference, policyId, question); return; }
       if (/^(?:why|explain|what|which|how|is|does|can)\b/i.test(question)) {
-        add("user", question); add("agent", "I can explain the route, policy, pricing and missing evidence for providers in this comparison. Choose a provider’s Why button, or ask what information is missing."); return;
+        add("user", question); add("agent", "I can explain the route, policy, pricing and missing evidence for providers in this comparison. Expand any provider row and click Why, or ask what’s missing."); return;
       }
     }
-    add("user", question); setPreview(null);
+    add("user", question); setPreview(null); setPendingConfirmId(null);
     const priorRequest = draft?.interpretation.input ?? (intent ? messages.filter((message) => message.role === "user").map((message) => message.text).join("\n") : "");
     const requestText = priorRequest && !preview && !/\b(?:send|sending|move|transfer|pay)\b/i.test(question)
       ? `${priorRequest}\n${question}` : question;
@@ -261,17 +285,27 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         setProduct(typeof reply.draft.draft.product === "string" ? reply.draft.draft.product : "");
         setMethod(typeof reply.draft.draft.paymentMethod === "string" ? reply.draft.draft.paymentMethod : "");
         setPreference((reply.draft.draft.preference as RankingPreset) ?? "balanced");
-        if (reply.preview) receivePreview(reply.preview);
+        if (reply.preview) receivePreview(reply.preview, null);
         else {
-          // Open the editor only when something is missing; otherwise the card is enough.
-          setReviewOpen(reply.state === "needs_input");
-          add("agent", reply.state === "needs_input" ? `Almost there. I still need the ${reply.draft.missing.map((field) => field.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}.`
-            : reply.state === "needs_confirmation" ? "Here’s what I understood. Check the destination, then compare."
-            : "Here’s what I understood. Compare when you’re ready.");
-        }
-        if ((facts.sourceAsset === "USDT" || facts.sourceAsset === "USDC") && facts.destinationCurrency === "INR") {
-          const query = new URLSearchParams({ mode: "stablecoin", asset: String(facts.sourceAsset), ...(facts.sourceNetwork ? { network: String(facts.sourceNetwork) } : {}), dest: "INR", ...(facts.amount ? { amount: String(facts.amount) } : {}) });
-          add("agent", "", { title: `Selling ${String(facts.sourceAsset)} for INR?`, lines: ["Indian exchanges price this live, with the trading fee, GST, 1% TDS and income tax worked out."], reasonCodes: [], links: [{ label: "See live exchange prices", href: `/app/prices?${query}` }] });
+          // Keep the form editor collapsed so partial asks stay conversational like ChatGPT.
+          setReviewOpen(false);
+          const fromUnit = String(facts.sourceAsset ?? facts.sourceCurrency ?? "");
+          const toUnit = String(facts.destinationCurrency ?? "");
+          const amountStr = typeof facts.amount === "number" ? facts.amount.toLocaleString("en-US") : "";
+          const routeSummary = [amountStr, fromUnit, toUnit ? `→ ${toUnit}` : ""].filter(Boolean).join(" ");
+          const stablecoinLink = (facts.sourceAsset === "USDT" || facts.sourceAsset === "USDC") && facts.destinationCurrency === "INR"
+            ? [{ label: "See live exchange prices", href: `/app/prices?${new URLSearchParams({ mode: "stablecoin", asset: String(facts.sourceAsset), ...(facts.sourceNetwork ? { network: String(facts.sourceNetwork) } : {}), dest: "INR", ...(facts.amount ? { amount: String(facts.amount) } : {}) })}` }]
+            : undefined;
+          const missingLabels = reply.draft.missing.map(formatMissingField);
+          const promptText = reply.state === "needs_input"
+            ? `Got it${routeSummary ? ` (${routeSummary})` : ""}. Just share the ${missingLabels.join(" and ")} in chat — or tap Edit details below.`
+            : reply.state === "needs_confirmation"
+              ? `I read this as ${routeSummary || "your transfer"}. Confirm below to compare providers, or tap Edit details to adjust.`
+              : `Ready to compare ${routeSummary || "your transfer"} whenever you are.`;
+          const msgId = stablecoinLink
+            ? add("agent", "", { title: promptText, lines: ["Indian exchanges also price USDT/USDC → INR live with GST and 1% TDS."], reasonCodes: [], links: stablecoinLink })
+            : add("agent", promptText);
+          setPendingConfirmId(msgId);
         }
       } catch { setError("The connection dropped. Please try again."); }
     });
@@ -303,8 +337,36 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
       policies={policies} policyId={policyId} onPolicy={(next) => { setPolicyId(next); if (preview) searchDraft(preference, next, "Recheck with the selected company policy."); }}
       preference={preference} onPreference={(next) => { setPreference(next); if (preview) searchDraft(next, policyId, `Compare by ${RANKING_PRESET_LABEL[next].toLowerCase()}.`); }}
       onSearch={() => searchDraft()} hasResults={Boolean(preview)} /> : null;
-  const comparison = preview ? <>{requestPanel}<InfrastructureResults preview={preview} canDecide={canDecide && preview.policyId !== "explore"} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
-      <div className="agent-followups"><span>Keep exploring</span><button type="button" disabled={pending} onClick={() => ask("Why is there no best option?")}>Explain the recommendation</button><button type="button" disabled={pending} onClick={() => ask("What information is missing?")}>What’s missing?</button><button type="button" disabled={pending} onClick={() => ask("Compare by price")}>Compare by price</button></div></> : null;
+  const comparison = preview ? (
+    <div className={styles.comparisonSlot}>
+      {requestPanel}
+      <AgentComparison preview={preview} canDecide={canDecide && preview.policyId !== "explore"} busy={pending} defaultEmail={defaultEmail} onSelect={decide} onExplain={explain} />
+      <div className={styles.chips}>
+        {preview.bestCandidate ? (
+          <button type="button" className={styles.chip} disabled={pending} onClick={() => ask(`Why ${preview.bestCandidate!.provider}?`)}>
+            Why {preview.bestCandidate.provider}?
+          </button>
+        ) : (
+          <button type="button" className={styles.chip} disabled={pending} onClick={() => ask("Why is there no best option?")}>
+            Why is there no winner yet?
+          </button>
+        )}
+        <button type="button" className={styles.chip} disabled={pending} onClick={() => ask("What information is missing?")}>
+          What’s missing?
+        </button>
+        {preview.intent.preference !== "cheapest" ? (
+          <button type="button" className={styles.chip} disabled={pending} onClick={() => ask("Compare by price")}>
+            Compare by cheapest
+          </button>
+        ) : null}
+        {preview.intent.preference !== "fastest" ? (
+          <button type="button" className={styles.chip} disabled={pending} onClick={() => ask("Compare by speed")}>
+            Compare by fastest
+          </button>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
 
   return <div className={styles.workspace} ref={workspace}>
     <section className={styles.conversation} aria-label="Conversation with Railor">
@@ -331,7 +393,7 @@ export function AgentConversation({ policies, options, entityCountry, defaultEma
         </div>}
         {pending ? <AgentWorking /> : null}
         {error ? <p className={styles.error} role="alert">{error}</p> : null}
-        {!preview ? requestPanel : null}
+        {!preview && requestPanel ? <div className={styles.pendingRequest}>{requestPanel}</div> : null}
 
       </div>
       <div className={styles.composerArea}>

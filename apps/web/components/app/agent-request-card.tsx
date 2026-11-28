@@ -74,8 +74,89 @@ export function AgentRequestCard({
   }, [preference, reduce]);
   const from = intent.sourceKind === "asset" ? intent.sourceAsset : intent.sourceCurrency;
   const network = intent.sourceKind === "asset" ? options.networks.find((item) => item.value === intent.sourceNetwork)?.label ?? intent.sourceNetwork : "";
-  const details = [network ? `${network} network` : "", intent.namedRail, intent.endpointType ? intent.endpointType.replaceAll("_", " ") : ""].filter(Boolean);
+  const details = [network ? `${network}` : "", intent.namedRail, intent.endpointType ? intent.endpointType.replaceAll("_", " ") : ""].filter(Boolean);
   const ready = missing.length === 0;
+  const fromCountry = options.countries.find((item) => item.value === intent.sourceEntityCountry);
+  const toCountry = options.countries.find((item) => item.value === intent.destinationCountry);
+
+  // When results are already shown, collapse into a sleek single-row context strip
+  // (like ChatGPT/Perplexity) instead of occupying 320px above the answer.
+  if (hasResults) {
+    return (
+      <section className={styles.strip} aria-label="Your request">
+        <div className={styles.stripBar}>
+          <div className={styles.stripSummary}>
+            <strong className={styles.stripAmount}>
+              {intent.amount !== undefined ? intent.amount.toLocaleString("en-US") : "—"} {from || "?"} → {intent.destinationCurrency || "?"}
+            </strong>
+            <span className={styles.stripRoute}>
+              {intent.sourceEntityCountry ? <Flag code={fromCountry?.flag ?? intent.sourceEntityCountry} size={14} round /> : null}
+              <span>{fromCountry?.label ?? intent.sourceEntityCountry ?? "?"}</span>
+              <span aria-hidden>→</span>
+              {intent.destinationCountry ? <Flag code={toCountry?.flag ?? intent.destinationCountry} size={14} round /> : null}
+              <span>{toCountry?.label ?? intent.destinationCountry ?? "?"}</span>
+            </span>
+            {details.map((detail) => <span key={detail} className={styles.stripTag}>{detail}</span>)}
+          </div>
+
+          <div className={styles.stripControls}>
+            <label className={styles.stripSelect}>
+              <span className="sr-only">Compare by</span>
+              <select
+                disabled={pending}
+                value={preference}
+                aria-label="Compare by"
+                onChange={(event) => onPreference(event.target.value as RankingPreset)}
+              >
+                {PREFERENCES.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            {policies.length ? (
+              <label className={styles.stripSelect}>
+                <span className="sr-only">Company rules</span>
+                <select
+                  disabled={pending}
+                  value={policyId}
+                  aria-label="Company rules"
+                  onChange={(event) => onPolicy(event.target.value)}
+                >
+                  {policies.map((policy) => <option key={policy.id} value={policy.id}>{policy.name}</option>)}
+                </select>
+              </label>
+            ) : null}
+
+            <button type="button" className={styles.stripEdit} aria-expanded={editing} onClick={() => onEditing(!editing)}>
+              <Pencil size={12} aria-hidden />
+              <span>{editing ? "Close" : "Edit"}</span>
+            </button>
+          </div>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {editing ? (
+            <motion.div
+              key="editor"
+              className={styles.editor}
+              initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+              animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+              exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE }}
+            >
+              <div className={styles.editorInner} ref={editorRef}>
+                {editor}
+                <button type="button" className={`${styles.primary} press`} disabled={pending || !ready} onClick={() => { onEditing(false); onSearch(); }}>
+                  Update comparison<ArrowRight size={15} aria-hidden />
+                </button>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </section>
+    );
+  }
 
   return (
     <motion.section

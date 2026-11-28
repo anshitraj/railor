@@ -1,7 +1,131 @@
-import type { SearchPreviewResult } from "@railor/core";
-import type { RankingPreset } from "@railor/types";
+import type { SearchPreviewCandidate, SearchPreviewResult } from "@railor/core";
+import { RANKING_PRESET_LABEL, type RankingPreset } from "@railor/types";
 
 export interface AgentAnswer { title: string; lines: string[]; reasonCodes: string[]; providerSlug?: string; /** Tappable follow-ups: an example request or a slash command. */ chips?: string[]; links?: Array<{ label: string; href: string }> }
+
+const fmtNum = (value: number) => new Intl.NumberFormat("en", { maximumFractionDigits: 4 }).format(value);
+
+/** Prioritize the best pick, then priced candidates, then confirmed routes. */
+export function sortRelevantCandidates(preview: SearchPreviewResult): SearchPreviewCandidate[] {
+  const bestId = preview.bestCandidate?.providerId;
+  return preview.candidates
+    .filter((c) => c.routeConfirmation === "confirmed" || c.routeConfirmation === "partially_confirmed")
+    .sort((a, b) => {
+      if (a.providerId === bestId) return -1;
+      if (b.providerId === bestId) return 1;
+      const aPriced = a.recipientAmount !== null ? 0 : 1;
+      const bPriced = b.recipientAmount !== null ? 0 : 1;
+      if (aPriced !== bPriced) return aPriced - bPriced;
+      const aRank = a.rank ?? Infinity;
+      const bRank = b.rank ?? Infinity;
+      if (aRank !== bRank) return aRank - bRank;
+      const aConf = a.routeConfirmation === "confirmed" ? 0 : 1;
+      const bConf = b.routeConfirmation === "confirmed" ? 0 : 1;
+      if (aConf !== bConf) return aConf - bConf;
+      const aPass = a.policyPreview === "pass" ? 0 : a.policyPreview === "unknown" ? 1 : 2;
+      const bPass = b.policyPreview === "pass" ? 0 : b.policyPreview === "unknown" ? 1 : 2;
+      if (aPass !== bPass) return aPass - bPass;
+      return a.provider.localeCompare(b.provider);
+    });
+}
+
+/** Build a direct in-app link to the live Prices calculator when the route fits it. */
+export function pricesLinkForIntent(intent: SearchPreviewResult["intent"]): { label: string; href: string } | null {
+  const srcAsset = intent.sourceAsset?.toUpperCase();
+  const dst = intent.destinationCurrency?.toUpperCase();
+  if ((srcAsset === "USDT" || srcAsset === "USDC") && dst === "INR") {
+    const query = new URLSearchParams({
+      mode: "stablecoin",
+      asset: srcAsset,
+      ...(intent.sourceNetwork ? { network: intent.sourceNetwork } : {}),
+      dest: "INR",
+      ...(intent.amount ? { amount: String(intent.amount) } : {}),
+    });
+    return { label: "See live Indian exchange prices", href: `/app/prices?${query}` };
+  }
+  const srcFiat = intent.sourceCurrency?.toUpperCase();
+  if (srcFiat && dst && /^[A-Z]{3}$/.test(srcFiat) && /^[A-Z]{3}$/.test(dst) && srcFiat !== dst) {
+    const query = new URLSearchParams({
+      from: srcFiat,
+      to: dst,
+      ...(intent.amount ? { amount: String(intent.amount) } : {}),
+      ...(intent.destinationCountry ? { destinationCountry: intent.destinationCountry } : {}),
+      market: "1",
+    });
+    return { label: `Compare all live ${srcFiat} → ${dst} prices`, href: `/app/prices?${query}` };
+  }
+  return null;
+}
+
+/** Concise, ChatGPT-style conversational summary grounded strictly in the returned snapshot. */
+export function summarizeComparison(preview: SearchPreviewResult): AgentAnswer {
+  const relevant = sortRelevantCandidates(preview);
+  const priced = relevant.filter((c) => c.recipientAmount !== null);
+  const best = preview.bestCandidate;
+  const intent = preview.intent;
+  const fromUnit = intent.sourceAsset ?? intent.sourceCurrency ?? "";
+  const toUnit = intent.destinationCurrency ?? "";
+  const routeText = `${intent.amount ? `${fmtNum(intent.amount)} ` : ""}${fromUnit}${toUnit ? ` → ${toUnit}` : ""}`.trim();
+  const preset = RANKING_PRESET_LABEL[intent.preference].toLowerCase();
+  const ruled = preview.policyId !== "explore";
+  const priceLink = pricesLinkForIntent(intent);
+
+  if (best) {
+    const quoteKind = best.quoteState === "LIVE_CONNECTED" ? "a live account quote" : "an indicative reference rate";
+    const facts: string[] = [];
+    if (best.recipientAmount !== null && toUnit) facts.push(`${fmtNum(best.recipientAmount)} ${toUnit}`);
+    if (best.knownCost) facts.push(`fee ${fmtNum(best.knownCost.amount)} ${best.knownCost.currency ?? ""}`.trim());
+    if (best.etaMinutes !== null) facts.push(`est. ~${fmtNum(best.etaMinutes)} min`);
+    else if (best.advertisedSettlement) facts.push(best.advertisedSettlement);
+
+    const lead = facts.length
+      ? `${best.provider} leads for ${preset} with ${quoteKind} of ${facts.join(" · ")}${ruled ? ", and passed your company rules" : ""}.`
+      : `${best.provider} ranks first for ${preset}${ruled ? " and passed your company rules" : ""}.`;
+    const restCount = relevant.length - 1;
+    const otherPriced = priced.filter((c) => c.providerId !== best.providerId).length;
+    const detail = restCount <= 0
+      ? `Checked ${preview.evidenceSummary.providersChecked} providers.`
+      : otherPriced > 0
+        ? `${otherPriced} other ${otherPriced === 1 ? "provider also returned a price" : "providers also returned prices"}, and ${restCount - otherPriced} more show route coverage.`
+        : `${restCount} other ${restCount === 1 ? "provider has" : "providers have"} route coverage here, awaiting a connected account for live pricing.`;
+
+    return {
+      title: `${best.provider} is the top pick for ${routeText || "this route"}`,
+      lines: [lead, detail],
+      reasonCodes: [],
+      providerSlug: best.providerSlug,
+      ...(priceLink ? { links: [priceLink] } : {}),
+    };
+  }
+
+  if (relevant.length) {
+    const names = relevant.slice(0, 3).map((c) => c.provider);
+    const listText = names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names[0]}, ${names[1]}, and ${names[2]}`;
+    const why = intent.preference === "most_reliable"
+      ? `No single provider can be ranked #1 for reliability yet — observed uptime data isn’t available for these routes.`
+      : intent.preference === "cheapest" || intent.preference === "max_recipient_amount"
+        ? `No single provider can be ranked #1 for ${preset} yet — comparable live quotes require connecting a provider account.`
+        : `No single provider can be ranked #1 yet because comparable live quotes aren’t available for this corridor.`;
+    const coverage = `${relevant.length} of ${preview.evidenceSummary.providersChecked} providers show route evidence${ruled ? ` (${preview.permittedCandidates.length} permitted by policy)` : ""}, including ${listText}.`;
+
+    return {
+      title: `${relevant.length} providers cover ${routeText || "this route"}, but none can rank #1 yet`,
+      lines: [why, coverage],
+      reasonCodes: [],
+      ...(priceLink ? { links: [priceLink] } : {}),
+    };
+  }
+
+  return {
+    title: `No verified route found yet for ${routeText || "this transfer"}`,
+    lines: [
+      `I checked ${preview.evidenceSummary.providersChecked} providers, and current evidence doesn’t confirm an end-to-end path for this corridor yet.`,
+      `Try editing the network, payout rail, or currency — or check our live price calculator if this is a standard bank transfer.`,
+    ],
+    reasonCodes: [],
+    ...(priceLink ? { links: [priceLink] } : {}),
+  };
+}
 
 /** Presentation of a returned engine result. Every financial statement below
  * comes from this snapshot; questions never alter its policy or authorization. */

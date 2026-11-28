@@ -73,13 +73,23 @@ export function smallTalk(text: string): AgentAnswer | null {
 
 /** When the text had no payment facts at all, ask for them instead of showing a blank request. */
 export function needsPaymentFacts(question: string): AgentAnswer {
-  const followup = /^(?:which|what|who|why|how)\b/i.test(question.trim());
+  const trimmed = question.trim();
+  const followup = /^(?:which|what|who|why|how)\b/i.test(trimmed);
+  const casualAsk = /\b(?:want|need|send|transfer|pay|move|platform|app|provider|cheap|best|rate)\b/i.test(trimmed);
   return {
-    title: followup ? "Tell me about the payment first" : "I couldn’t find a payment in that",
+    title: followup
+      ? "Tell me about the payment first"
+      : casualAsk
+        ? "Sure — tell me a bit more about the transfer"
+        : "I couldn’t find a payment in that",
     lines: [followup
       ? "I answer questions about a comparison once there is one. Describe the payment: the amount, the currency and where it goes."
-      : "Include the amount, the currency and where it’s going. For example:"],
+      : casualAsk
+        ? "Share the amount, currency, and destination — for example, \"Send 100 USD to INR\" — and I’ll compare the top options with sources."
+        : "Include the amount, the currency and where it’s going. For example:"],
     reasonCodes: [],
-    chips: EXAMPLE_PROMPTS,
+    chips: casualAsk
+      ? ["Send 100 USD to INR", EXAMPLE_PROMPTS[0]!, EXAMPLE_PROMPTS[2]!]
+      : EXAMPLE_PROMPTS,
   };
 }

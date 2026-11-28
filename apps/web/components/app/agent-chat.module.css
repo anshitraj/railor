@@ -176,26 +176,31 @@
 
 @media (min-width: 1101px) { .toolbar .iconButton:has(> span) { display: none; } }
 
-/* ---- Chat turns: a bubble for you, full-width answers for Railor ---- */
-.messages { gap: 22px; }
+/* ---- Chat turns: calm centered ChatGPT reading column ---- */
+.messages { max-width: 760px; width: 100%; margin-inline: auto; gap: 20px; }
+.savedNotice, .working, .error { max-width: 760px; width: 100%; margin-inline: auto; }
+.pendingRequest { max-width: 760px; width: 100%; margin-inline: auto; padding: 0 4px 12px 34px; }
+.comparisonSlot { padding-left: 30px; margin-top: -10px; min-width: 0; }
+.composer, .composerHint { max-width: 760px; width: 100%; margin-inline: auto; }
+.commandMenu { max-width: 760px; margin-inline: auto; }
 .message { animation: none; }
-.message > .author { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
+.message > .author { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--color-ink); font-size: 13px; font-weight: 650; }
 .message > .body { padding-left: 30px; }
-.message[data-role="user"] { justify-self: end; max-width: min(85%, 560px); }
-.message[data-role="user"] > .body { padding: 11px 16px; border: 0; border-radius: 20px 20px 6px 20px; background: var(--color-ink); box-shadow: 0 6px 18px -12px rgb(21 19 16 / .5); }
-.message[data-role="user"] p { color: #fff; font-size: 14px; line-height: 1.6; }
-.message[data-role="agent"] p { color: var(--color-ink-soft); font-size: 14px; line-height: 1.7; }
-.message h3 { margin-bottom: 6px; font: 650 16px/1.4 var(--font-sans); letter-spacing: -.01em; }
+.message[data-role="user"] { justify-self: end; max-width: min(82%, 520px); }
+.message[data-role="user"] > .body { padding: 10px 16px; border: 0; border-radius: 20px 20px 6px 20px; background: var(--color-ink); box-shadow: 0 6px 18px -12px rgb(21 19 16 / .45); }
+.message[data-role="user"] p { color: #fff; font-size: 14px; line-height: 1.55; }
+.message[data-role="agent"] p { color: var(--color-ink-soft); font-size: 14px; line-height: 1.68; }
+.message h3 { margin-bottom: 5px; color: var(--color-ink); font: 650 15.5px/1.4 var(--font-sans); letter-spacing: -.015em; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.chip { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; padding: 8px 13px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 13px; font-weight: 550; line-height: 1.35; text-align: left; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, transform .15s var(--ease-out); }
-.chip:hover:not(:disabled) { border-color: var(--color-ink); }
+.chip { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; padding: 7px 12px; border: 1px solid var(--color-line-strong); border-radius: 999px; background: var(--color-surface); color: var(--color-ink); font-size: 12.5px; font-weight: 550; line-height: 1.35; text-align: left; cursor: pointer; transition: border-color .15s ease, background-color .15s ease, transform .15s var(--ease-out); }
+.chip:hover:not(:disabled) { border-color: var(--color-ink); background: var(--color-canvas); }
 .chip:active:not(:disabled) { transform: scale(.97); }
 .chip:disabled { opacity: .5; cursor: not-allowed; }
 .chip[data-command] { border-style: dashed; font: 600 12.5px/1.35 var(--font-mono, ui-monospace, monospace); color: var(--color-orange-deep); }
 .chip svg { flex: none; }
-.answerLinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.answerLink { display: inline-flex; height: 40px; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; background: var(--color-orange); color: #fff; font-size: 13.5px; font-weight: 650; box-shadow: 0 10px 22px -14px rgb(233 86 42 / .9); }
-.answerLink:hover { background: var(--color-orange-deep); }
+.answerLinks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.answerLink { display: inline-flex; height: 34px; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--color-orange) 35%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--color-orange) 10%, var(--color-surface)); color: var(--color-orange-deep); font-size: 12.5px; font-weight: 650; transition: background-color .15s ease, border-color .15s ease; }
+.answerLink:hover { background: var(--color-orange); border-color: var(--color-orange); color: #fff; }
 
 /* ---- Working: the mark breathes, the phase changes, the dots bounce ---- */
 .working { display: flex; align-items: center; gap: 10px; margin: 14px 4px; color: var(--color-muted); font-size: 13.5px; }
@@ -230,7 +235,7 @@
   .toolbarActions .iconButton:hover { background: var(--color-sand); }
   .feed { padding: 10px 0 10px; }
   .messages { gap: 18px; }
-  .message > .body { padding-left: 0; }
+  .message > .body, .comparisonSlot, .pendingRequest { padding-left: 0; padding-right: 0; }
   .message[data-role="user"] { max-width: 88%; }
   .welcome { justify-items: start; gap: 10px; text-align: left; }
   .welcome h1 { font-size: 26px; }
