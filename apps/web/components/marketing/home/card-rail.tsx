@@ -37,7 +37,7 @@ export function CardRail({ children, labels }: { children: React.ReactNode; labe
 
   return (
     <div className={styles.rail}>
-      <div ref={track} className={styles.track} data-smooth-ignore>{children}</div>
+      <div ref={track} className={styles.track}>{children}</div>
       <div className={styles.controls}>
         <div className={styles.dots} role="tablist" aria-label="Cards">
           {labels.map((label, i) => <button key={label} type="button" role="tab" aria-selected={i === index} aria-label={label} onClick={() => go(i)} />)}

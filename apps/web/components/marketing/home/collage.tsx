@@ -100,7 +100,7 @@ export function CollageSection() {
             Freelancers, expats, family providers, students abroad, digital nomads and finance teams. Railor fits how you move money.
           </p>
           <div className={styles.actions}>
-            <a href="#transfers" className={`${styles.primary} press`}>
+            <a href="#calculator" className={`${styles.primary} press`}>
               Compare prices
               <ArrowRight size={16} aria-hidden />
             </a>

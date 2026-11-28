@@ -70,9 +70,9 @@ export function HomeHero({
                   Compare prices
                   <ArrowRight size={17} aria-hidden />
                 </Link>
-                <a href="#transfers" className={`${styles.secondary} press`}>
+                <Link href="/coverage" className={`${styles.secondary} press`}>
                   Explore corridors
-                </a>
+                </Link>
               </div>
 
               {figures.length >= 2 ? (

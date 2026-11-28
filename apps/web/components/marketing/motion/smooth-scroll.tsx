@@ -32,12 +32,27 @@ export function SmoothScroll() {
 
     let target = window.scrollY;
     let current = window.scrollY;
+    let lastWritten = window.scrollY;
     let frame = 0;
     let lastTime = 0;
     const limit = () => Math.max(0, root.scrollHeight - window.innerHeight);
     const locked = () => getComputedStyle(document.body).overflow === "hidden" || getComputedStyle(root).overflow === "hidden";
 
+    const cancel = () => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      lastTime = 0;
+      target = current = lastWritten = window.scrollY;
+    };
+
     const tick = (now: number) => {
+      // Yield immediately if native scrolling (scrollbar drag, keyboard, inner scroll) moved the page.
+      if (Math.abs(window.scrollY - lastWritten) > 2) {
+        cancel();
+        return;
+      }
       const dt = lastTime ? Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000)) : 1 / 60;
       lastTime = now;
       const alpha = 1 - Math.exp(-DAMPING * dt);
@@ -46,6 +61,7 @@ export function SmoothScroll() {
         current = target;
       }
       window.scrollTo(0, current);
+      lastWritten = window.scrollY;
       if (current === target) {
         frame = 0;
         lastTime = 0;
@@ -56,7 +72,7 @@ export function SmoothScroll() {
 
     const glideTo = (y: number) => {
       if (!frame) {
-        current = window.scrollY;
+        current = lastWritten = window.scrollY;
         lastTime = 0;
       }
       target = Math.max(0, Math.min(limit(), y));
@@ -64,15 +80,25 @@ export function SmoothScroll() {
     };
 
     const onWheel = (event: WheelEvent) => {
-      if (event.ctrlKey || event.defaultPrevented || Math.abs(event.deltaX) > Math.abs(event.deltaY) || locked()) return;
-      if (innerScroller(event.target, event.deltaY)) return;
+      if (event.ctrlKey || event.defaultPrevented || Math.abs(event.deltaX) > Math.abs(event.deltaY) || locked()) {
+        cancel();
+        return;
+      }
+      if (innerScroller(event.target, event.deltaY)) {
+        cancel();
+        return;
+      }
       event.preventDefault();
       const delta = event.deltaMode === 1 ? event.deltaY * 32 : event.deltaMode === 2 ? event.deltaY * window.innerHeight : event.deltaY;
       glideTo((frame ? target : window.scrollY) + delta);
     };
 
     const onScroll = () => {
-      if (!frame) target = current = window.scrollY;
+      if (!frame) target = current = lastWritten = window.scrollY;
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) cancel();
     };
 
     const onClick = (event: MouseEvent) => {
@@ -93,10 +119,12 @@ export function SmoothScroll() {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("keydown", onKeyDown, { passive: true });
     document.addEventListener("click", onClick);
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("click", onClick);
       if (frame) cancelAnimationFrame(frame);
       delete root.dataset.smoothScroll;

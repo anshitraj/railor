@@ -4,7 +4,6 @@ import { ensureMigrated } from "@railor/database";
 import { MarketingNav } from "../components/marketing/nav";
 import { MarketingFooter } from "../components/marketing/footer";
 import { HomeHero } from "../components/marketing/home/hero";
-import { TransfersSection } from "../components/marketing/home/transfers-section";
 import { ProviderMarquee } from "../components/marketing/home/provider-marquee";
 import { HowItWorks } from "../components/marketing/home/how-it-works";
 import { ProvidersSection } from "../components/marketing/home/providers";
@@ -70,10 +69,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <div className={homeStyles.container} style={{ paddingTop: 12 }}>
           <ProviderMarquee />
         </div>
-        <TransfersSection
-          providerCount={trackedProviders}
-          currencyCount={stats.currencies}
-        />
         <CollageSection />
         <OnePlaceSection />
         <HowItWorks />
