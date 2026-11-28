@@ -14,6 +14,7 @@ import { providerFacts } from "../../lib/provider-facts";
 import { PriceLoadingMark } from "../price/price-loading-mark";
 import { priceSourceTime } from "../../lib/connection-navigation";
 import { recommendedPriceRows } from "../../lib/price-recommendations";
+import { deliveryMinutes, sortPriceEntries, type PriceSortMode } from "../../lib/price-sort";
 import { RollingCost, RollingNumber, RollingPayoutDifference, RollingPercent, RollingPrice, RollingRate } from "../price/animated-amount";
 import { priceCollectedLabel, priceRowKey, priceStatus, pricingSourceLabel, providerIdentity } from "../../lib/price-display";
 import { benchmarkCost, benchmarkPayoutDifference, formatBenchmarkCost, formatPayoutDifference } from "../../lib/price-cost";
@@ -61,7 +62,7 @@ export function PriceProviderBrowser(props: Props) {
   const offerFor = (slug: string) => offers.find((offer) => offer.providerSlug === slug);
   const [tab, setTab] = useState("Providers");
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState("recommended");
+  const [sort, setSort] = useState<PriceSortMode>("cheapest");
   const [showResearch, setShowResearch] = useState(false);
   const [promotions, setPromotions] = useState<{ pair: string; rows: { slug: string; endsAt: string }[] }>();
   const pair = `${from}:${to}`;
@@ -94,21 +95,43 @@ export function PriceProviderBrowser(props: Props) {
     : []), [pair, promotions]);
   const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to, showResearch]);
+  const deliveryLabelFor = (slug: string, quote?: PriceRow) => quote?.delivery ?? providerFacts(slug, { from, to })?.delivery?.label ?? null;
   const filtered = useMemo(() => {
     const priced = new Set(rows.map((row) => row.providerSlug));
     const ordered = sort === "recommended" ? recommendedPriceRows(rows, best) : rows;
     const entries = [...ordered.map((quote) => ({ providerSlug: quote.providerSlug, providerName: quote.providerName, quote, candidate: undefined as MarketCoverageProvider | undefined })), ...(props.candidates ?? []).filter((candidate) => !priced.has(candidate.providerSlug)).map((candidate) => ({ providerSlug: candidate.providerSlug, providerName: candidate.providerName, quote: undefined as PriceRow | undefined, candidate }))];
     const term = query.trim().toLowerCase();
-    const list = entries.filter(entry => (term || showResearch || entry.quote?.recipientAmount != null)
+    const matched = entries.filter(entry => (term || showResearch || entry.quote?.recipientAmount != null)
       && `${entry.providerName} ${entry.providerSlug}`.toLowerCase().includes(term));
-    if (sort === "receive") list.sort((a, b) => (b.quote?.recipientAmount ?? -Infinity) - (a.quote?.recipientAmount ?? -Infinity));
-    if (sort === "cost") list.sort((a, b) => (a.quote?.totalCostPct ?? Infinity) - (b.quote?.totalCostPct ?? Infinity));
-    if (sort === "name") list.sort((a, b) => a.providerName.localeCompare(b.providerName));
-    if (sort === "recommended") list.sort((a, b) =>
-      Number(b.quote?.recipientAmount != null && activePromotions.has(providerIdentity(b.providerSlug))) -
-      Number(a.quote?.recipientAmount != null && activePromotions.has(providerIdentity(a.providerSlug))));
-    return list;
-  }, [rows, best, props.candidates, query, sort, showResearch, activePromotions]);
+    return sortPriceEntries(matched, {
+      sort,
+      amount,
+      referenceRate: props.reference?.rate ?? null,
+      deliveryFor: (entry) => deliveryLabelFor(entry.providerSlug, entry.quote),
+      activePromotions,
+    });
+  }, [rows, best, props.candidates, query, sort, showResearch, activePromotions, amount, props.reference?.rate, from, to]);
+  const topPayoutKey = useMemo(() => {
+    let winner: { key: string; amount: number } | null = null;
+    for (const row of rows) {
+      if (row.recipientAmount != null && (!winner || row.recipientAmount > winner.amount)) {
+        winner = { key: priceRowKey(row), amount: row.recipientAmount };
+      }
+    }
+    return winner?.key ?? null;
+  }, [rows]);
+  const fastestKey = useMemo(() => {
+    let winner: { key: string; mins: number; amount: number } | null = null;
+    for (const row of rows) {
+      if (row.recipientAmount == null) continue;
+      const mins = deliveryMinutes(deliveryLabelFor(row.providerSlug, row));
+      if (!Number.isFinite(mins) || mins >= 1440) continue;
+      if (!winner || mins < winner.mins || (mins === winner.mins && row.recipientAmount > winner.amount)) {
+        winner = { key: priceRowKey(row), mins, amount: row.recipientAmount };
+      }
+    }
+    return winner?.key ?? null;
+  }, [rows, from, to]);
   const priceCount = filtered.filter(({ quote }) => quote?.recipientAmount != null).length;
   function choose(slug: string, rowKey?: string) {
     onSelect(slug, rowKey);
@@ -124,7 +147,21 @@ export function PriceProviderBrowser(props: Props) {
     <section className={`${styles.providers} ${styles.compactProviders}`} aria-label="Provider comparison">
       <div className={styles.browserTabs} role="tablist" aria-label="Pricing view" onKeyDown={tabKeys}>{["Providers", "Ways to send", "Market view", "Historical data"].map((label, index) => <button type="button" role="tab" tabIndex={tab === label ? 0 : -1} id={`price-tab-${index}`} aria-controls={`price-panel-${index}`} aria-selected={tab === label} key={label} onClick={() => setTab(label)}>{index === 0 ? "Prices" : label}{index === 0 && <span>{rows.filter(row => row.recipientAmount != null).length}</span>}</button>)}</div>
       <div id="price-panel-0" role="tabpanel" aria-labelledby="price-tab-0" hidden={tab !== "Providers"}>
-        <div className={styles.tableTools}><label className={styles.providerSearch}><Search size={14} /><input aria-label="Search providers" placeholder="Search provider" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => setQuery("")}><X size={13} /></button>}</label><label className={styles.sort}>Sort by<select aria-label="Sort providers" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">Recommended</option><option value="receive">Highest recipient amount</option><option value="cost">Lowest total cost</option><option value="name">Provider name</option></select></label></div>
+        <div className={styles.tableTools}>
+          <label className={styles.providerSearch}><Search size={14} /><input aria-label="Search providers" placeholder="Search providers" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" aria-label="Clear provider search" onClick={() => setQuery("")}><X size={13} /></button>}</label>
+          <div className={styles.sortPills} role="group" aria-label="Sort providers">
+            {([
+              ["cheapest", "Cheapest"],
+              ["fastest", "Fastest"],
+              ["lowest_fee", "Lowest fee"],
+              ["recommended", "Standard"],
+            ] as const).map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={sort === value} onClick={() => setSort(value)} className={styles.sortPill}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         <ol id="price-provider-list" ref={listRef} className={styles.providerRows} tabIndex={filtered.length > 5 ? 0 : undefined} aria-label="Provider prices" aria-busy={props.loading}>
           {filtered.map(({ providerSlug, providerName, quote, candidate }) => {
             const promoted = quote?.recipientAmount != null && activePromotions.has(providerIdentity(providerSlug));
@@ -138,13 +175,22 @@ export function PriceProviderBrowser(props: Props) {
             const key = quote ? priceRowKey(quote) : providerSlug;
             const offer = offerFor(providerSlug);
             const showMetrics = Boolean(quote || candidate?.feeHighlight);
-            const primaryBadge = quote && quote === best
-              ? { kind: "best" as const, label: "Best comparable" }
-              : promoted
-                ? { kind: "promoted" as const, label: "Promoted" }
-                : offer
-                  ? { kind: "offer" as const, label: offer.headline, title: offer.terms }
-                  : null;
+            const deliveryText = deliveryLabelFor(providerSlug, quote);
+            const isCheapest = Boolean(quote && key === topPayoutKey);
+            const isFastest = Boolean(quote && key === fastestKey);
+            const primaryBadge = sort === "fastest" && isFastest
+              ? { kind: "fastest" as const, label: "Fastest" }
+              : isCheapest
+                ? { kind: "cheapest" as const, label: quote === best ? "Best overall" : "Cheapest" }
+                : quote && quote === best
+                  ? { kind: "best" as const, label: "Best standard" }
+                  : isFastest
+                    ? { kind: "fastest" as const, label: "Fastest" }
+                    : promoted
+                      ? { kind: "promoted" as const, label: "Promoted" }
+                      : offer
+                        ? { kind: "offer" as const, label: offer.headline, title: offer.terms }
+                        : null;
             return <li key={key}>
               <button type="button" className={styles.providerRow} data-promoted={promoted || undefined} aria-pressed={current}
                 aria-label={`Select ${providerName}${promoted ? ", promoted" : ""}`} onClick={() => choose(providerSlug, quote ? key : undefined)}>
@@ -155,7 +201,8 @@ export function PriceProviderBrowser(props: Props) {
                     <span className={styles.cardIdentityText}>
                       <span className={styles.cardNameRow}>
                         <strong>{providerName}</strong>
-                        {primaryBadge?.kind === "best" && <span className={styles.comparableBadge}>{primaryBadge.label}</span>}
+                        {(primaryBadge?.kind === "cheapest" || primaryBadge?.kind === "best") && <span className={styles.comparableBadge}>{primaryBadge.label}</span>}
+                        {primaryBadge?.kind === "fastest" && <span className={styles.fastestBadge}><Zap size={10.5} aria-hidden />{primaryBadge.label}</span>}
                         {primaryBadge?.kind === "promoted" && <span className={styles.promotedBadge} title="Paid placement"><Megaphone size={10.5} aria-hidden />{primaryBadge.label}</span>}
                         {primaryBadge?.kind === "offer" && <span className={styles.offerChip} title={primaryBadge.title}><Gift size={10.5} aria-hidden />{primaryBadge.label}</span>}
                       </span>
@@ -194,10 +241,10 @@ export function PriceProviderBrowser(props: Props) {
                   <span className={styles.cardPayout}>
                     {quote?.recipientAmount != null && <span className={styles.payoutLabel}>Recipient gets</span>}
                     <strong className={styles.cardAmount} data-move={quote ? flashes[key] : undefined}>{quote?.recipientAmount != null ? <><RollingPrice key={to} value={quote.recipientAmount} /><small> {to}</small></> : "No payout quote"}</strong>
-                    {quote?.delivery && (
+                    {deliveryText && (
                       <span className={styles.cardDelivery}>
                         <Clock3 size={11.5} aria-hidden />
-                        <span>{quote.delivery}</span>
+                        <span>{deliveryText}</span>
                       </span>
                     )}
                   </span>

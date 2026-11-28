@@ -278,7 +278,8 @@ export function SwapQuote({ mode, basePath, currencies, initial, initialResult, 
     ?? visibleRows.find(row => row.providerSlug === picked)
     ?? visibleRows.find(row => providerIdentity(row.providerSlug) === providerIdentity(picked)) : null;
   const selectedCandidate = picked && !pickedPrice ? candidates.find(candidate => candidate.providerSlug === providerIdentity(picked)) ?? null : null;
-  const selected = picked ? pickedPrice ?? null : best ?? quotes[0] ?? estimates[0] ?? null;
+  const topPayout = quotes.reduce<PriceRow | null>((winner, row) => (row.recipientAmount != null && (!winner || row.recipientAmount > (winner.recipientAmount ?? -Infinity)) ? row : winner), null);
+  const selected = picked ? pickedPrice ?? null : topPayout ?? best ?? quotes[0] ?? estimates[0] ?? null;
   const midValue = result?.reference ? amount * result.reference.rate : null;
   const rate = selected?.rate ?? result?.reference?.rate ?? null;
   const selectedCost = selected ? benchmarkCost(selected, amount, result?.reference?.rate, to) : null;

@@ -108,10 +108,10 @@ export function QuickQuote({ variant, currencies, initial, initialResult, initia
   const { quotes, estimates, excluded, best } = priceView(result, now);
   // Live and published prices rank first; consumer estimates are listed after them and never called "best".
   const priced = [...quotes, ...estimates].filter((row) => row.recipientAmount !== null);
-  const ranked = priced.filter((row) => row.basis !== "market_estimate");
+  const ranked = priced.filter((row) => row.basis !== "market_estimate").sort((a, b) => (b.recipientAmount ?? -Infinity) - (a.recipientAmount ?? -Infinity));
   const dated = priced.filter((row) => row.basis === "market_estimate").sort((a, b) => b.recipientAmount! - a.recipientAmount!);
   const options: PriceRow[] = [...ranked, ...dated];
-  const top = best ?? ranked[0] ?? dated[0] ?? null;
+  const top = ranked[0] ?? best ?? dated[0] ?? null;
   const topIsEstimate = Boolean(top && top.basis === "market_estimate");
   const shownQuotes = ranked.slice(0, 3);
   const shownEstimates = dated.slice(0, Math.max(0, 3 - shownQuotes.length));
