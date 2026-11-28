@@ -23,8 +23,9 @@ import {
   type ProviderExtraction,
 } from "@railor/types";
 import { COUNTRY_RESEARCH_CONFIG } from "../country-research/config.js";
+import { frontierModels, withFrontierModel } from "../frontier-model.js";
 
-const DEFAULT_MODEL = "gemini-3.1-pro-preview";
+
 
 export class ProviderExtractionError extends Error {}
 
@@ -200,9 +201,10 @@ export async function extractProviderCapabilities(
   }
 
   const ai = getClient();
-  const model = process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim() || DEFAULT_MODEL;
+  const override = process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim();
+  const models = override ? [override, ...frontierModels().filter((m) => m !== override)] : frontierModels();
 
-  const response = await ai.models.generateContent({
+  const { value: response } = await withFrontierModel((model) => ai.models.generateContent({
     model,
     contents: [{ role: "user", parts: [{ text: renderSources(providerName, sources) }] }],
     config: {
@@ -211,7 +213,7 @@ export async function extractProviderCapabilities(
       responseSchema: RESPONSE_SCHEMA,
       temperature: 0,
     },
-  });
+  }), models);
 
   if (response.promptFeedback?.blockReason) {
     throw new ProviderExtractionError(`Gemini blocked the prompt: ${response.promptFeedback.blockReason}`);

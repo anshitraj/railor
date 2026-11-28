@@ -21,9 +21,8 @@
  */
 import { GoogleGenAI, Type, type Schema } from "@google/genai";
 import { CountryProfileExtraction } from "@railor/types";
+import { frontierModels, withFrontierModel } from "../frontier-model.js";
 import { COUNTRY_RESEARCH_CONFIG } from "./config.js";
-
-const DEFAULT_MODEL = "gemini-3.1-pro-preview";
 
 export class GeminiNotConfiguredError extends Error {
   constructor() {
@@ -147,18 +146,23 @@ export async function extractCountryProfile(
   }
 
   const ai = getClient();
-  const model = process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim() || DEFAULT_MODEL;
+  const override = process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim();
+  const models = override ? [override, ...frontierModels().filter((m) => m !== override)] : frontierModels();
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [{ role: "user", parts: [{ text: renderSources(countryName, sources) }] }],
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      responseMimeType: "application/json",
-      responseSchema: EXTRACTION_RESPONSE_SCHEMA,
-      temperature: 0,
-    },
-  });
+  const { value: response } = await withFrontierModel(
+    (model) =>
+      ai.models.generateContent({
+        model,
+        contents: [{ role: "user", parts: [{ text: renderSources(countryName, sources) }] }],
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          responseMimeType: "application/json",
+          responseSchema: EXTRACTION_RESPONSE_SCHEMA,
+          temperature: 0,
+        },
+      }),
+    models,
+  );
 
   if (response.promptFeedback?.blockReason) {
     throw new ExtractionRefusedError(`Gemini blocked the prompt: ${response.promptFeedback.blockReason}`);

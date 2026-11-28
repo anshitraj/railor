@@ -38,8 +38,17 @@ function agent(byHost: Record<string, unknown>) {
 }
 
 describe("reading provider calculators for a price check", () => {
-  // The alternate spelling is cleared too, so a key in the developer's own .env can never reach these tests.
-  beforeEach(async () => { await ensureMigrated(); vi.stubEnv("TINY_FISH_API_KEY", ""); vi.stubEnv("TINYFISH_API_KEY", "test-key"); });
+  // Alternate spellings and fallback scraper keys are cleared so developer .env values never leak into these tests.
+  beforeEach(async () => {
+    await ensureMigrated();
+    vi.stubEnv("TINY_FISH_API_KEY", "");
+    vi.stubEnv("TINYFISH_API_KEY", "test-key");
+    vi.stubEnv("FIRECRAWL_API_KEY", "");
+    vi.stubEnv("PARALLEL_API_KEY", "");
+    vi.stubEnv("TAVILY_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("GOOGLE_API_KEY", "");
+  });
   afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.stubEnv("DATABASE_URL", ""); });
 
   it("explains why a calculator gave no price instead of leaving a blank", async () => {

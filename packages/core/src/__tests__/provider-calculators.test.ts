@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { CALCULATOR_PROVIDERS, calculatorGoal, calculatorProvider, calculatorQuoteRow, calculatorSlugsFor, calculatorSpec, readCalculator } from "../public-pricing/provider-calculators.js";
+import { CALCULATOR_PROVIDERS, calculatorGoal, calculatorProvider, calculatorQuoteRow, calculatorSlugsFor, calculatorSpec, readCalculator, readCalculatorViaWebExtract } from "../public-pricing/provider-calculators.js";
 import type { PriceCheckInput } from "../pricing.js";
 
 const input: PriceCheckInput = { sourceCurrency: "USD", destinationCurrency: "INR", destinationCountry: "IN", amount: 1000, includeMarket: true, context: { profile: "personal", country: "US", direction: "send", purpose: "personal" } };
@@ -186,5 +186,57 @@ describe("long wording on a provider's page", () => {
     expect(result.reject).toBeUndefined();
     expect(result.row).toMatchObject({ recipientAmount: 91_964.88, feeAmount: 4.72 });
     expect(result.row!.product!.label.length).toBeLessThan(160);
+  });
+});
+
+describe("web-extract + Gemini frontier fallback when TinyFish is unavailable", () => {
+  const pageMarkdown = "Xe Send Money Calculator — You send 1,000.00 USD via Direct Debit (ACH). Fee: 0.00 USD. Exchange rate: 1 USD = 92.5614 INR. Recipient gets 92,561.40 INR directly to bank account.";
+
+  it("extracts and validates a live quote via Firecrawl first, falling back through Parallel AI and Tavily", async () => {
+    const calls: string[] = [];
+    const fetcher = vi.fn(async (url: string | URL | Request) => {
+      const target = String(url);
+      calls.push(target);
+      if (target.includes("firecrawl.dev")) return new Response("payment required", { status: 402 });
+      if (target.includes("parallel.ai")) return new Response("rate limited", { status: 429 });
+      if (target.includes("tavily.com")) return Response.json({ results: [{ url: "https://www.xe.com/send-money/", raw_content: pageMarkdown }] });
+      return new Response("unexpected", { status: 500 });
+    }) as unknown as typeof fetch;
+
+    const result = await readCalculatorViaWebExtract("xe", input, MID, {
+      firecrawlApiKey: "fc-key",
+      parallelApiKey: "pa-key",
+      tavilyApiKey: "tv-key",
+      fetcher,
+      now: () => now,
+      extractWithModel: async (prompt) => {
+        expect(prompt).toContain("92,561.40 INR");
+        return READ.xe;
+      },
+    });
+    expect(calls).toEqual([
+      "https://api.firecrawl.dev/v2/scrape",
+      "https://api.parallel.ai/v1/extract",
+      "https://api.tavily.com/extract",
+    ]);
+    expect(result.reject).toBeUndefined();
+    expect(result.row).toMatchObject({ providerSlug: "xe", recipientAmount: 92561.4, basis: "live_public" });
+  });
+
+  it("uses Firecrawl directly when healthy and still rejects hallucinated rates", async () => {
+    const fetcher = vi.fn(async (url: string | URL | Request) => {
+      expect(String(url)).toBe("https://api.firecrawl.dev/v2/scrape");
+      return Response.json({ success: true, data: { markdown: pageMarkdown } });
+    }) as unknown as typeof fetch;
+
+    const bad = await readCalculatorViaWebExtract("xe", input, MID, {
+      firecrawlApiKey: "fc-key",
+      parallelApiKey: "pa-key",
+      fetcher,
+      now: () => now,
+      extractWithModel: async () => ({ ...READ.xe, rate: 50 }),
+    });
+    expect(bad.reject).toMatch(/don't add up/);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });

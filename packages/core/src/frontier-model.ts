@@ -9,7 +9,7 @@
  * newer model can be switched on without a release. A model the project's key
  * cannot reach is skipped and the next one is tried.
  */
-export const DEFAULT_FRONTIER_MODELS = ["gemini-4-argon", "gemini-pro-latest", "gemini-flash-latest"] as const;
+export const DEFAULT_FRONTIER_MODELS = ["gemini-4-argon", "gemini-3.1-pro-preview", "gemini-pro-latest", "gemini-flash-latest"] as const;
 
 export function frontierModels(): string[] {
   const configured = process.env.RAILOR_FRONTIER_MODEL?.split(",").map((value) => value.trim()).filter(Boolean);

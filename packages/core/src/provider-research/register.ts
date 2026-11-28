@@ -13,6 +13,7 @@
  * that's Railor classifying its dataset, not a statement about the company.
  */
 import { GoogleGenAI } from "@google/genai";
+import { frontierModels, withFrontierModel } from "../frontier-model.js";
 import { eq } from "drizzle-orm";
 import { getDb, providers } from "@railor/database";
 import { COUNTRY_RESEARCH_CONFIG } from "../country-research/config.js";
@@ -143,11 +144,17 @@ async function describeFromHomepage(name: string, content: string): Promise<stri
   if (!apiKey) return null;
   const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: COUNTRY_RESEARCH_CONFIG.extractionTimeoutMs } });
 
-  const response = await ai.models.generateContent({
-    model: process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim() || "gemini-3.1-pro-preview",
-    contents: [{ role: "user", parts: [{ text: `Company: ${name}\n\nHomepage text:\n${content.slice(0, 12_000)}` }] }],
-    config: { systemInstruction: DESCRIPTION_PROMPT, temperature: 0 },
-  });
+  const override = process.env.COUNTRY_RESEARCH_LLM_MODEL?.trim();
+  const models = override ? [override, ...frontierModels().filter((m) => m !== override)] : frontierModels();
+  const { value: response } = await withFrontierModel(
+    (model) =>
+      ai.models.generateContent({
+        model,
+        contents: [{ role: "user", parts: [{ text: `Company: ${name}\n\nHomepage text:\n${content.slice(0, 12_000)}` }] }],
+        config: { systemInstruction: DESCRIPTION_PROMPT, temperature: 0 },
+      }),
+    models,
+  );
 
   const text = response.text?.trim();
   if (!text || text === "UNKNOWN") return null;

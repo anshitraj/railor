@@ -57,5 +57,5 @@ export * from "./shortfall.js";
 export * from "./invoice-extraction.js";
 export * from "./payslip-extraction.js";
 
-export { CALCULATOR_PROVIDERS, calculatorGoal, calculatorProvider, calculatorQuoteRow, calculatorSlugsFor, calculatorSpec, readCalculator, type CalculatorProvider, type CalculatorResult, type CalculatorSpec } from "./public-pricing/provider-calculators.js";
+export { CALCULATOR_PROVIDERS, calculatorGoal, calculatorProvider, calculatorQuoteRow, calculatorSlugsFor, calculatorSpec, readCalculator, readCalculatorViaWebExtract, type CalculatorExtractDeps, type CalculatorProvider, type CalculatorResult, type CalculatorSpec } from "./public-pricing/provider-calculators.js";
 export { usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, remitlyBrowserQuoteRow, remitlyCalculatorUrl } from "./public-pricing/us-bank-remittances.js";

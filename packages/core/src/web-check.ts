@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 import { GoogleGenAI, Type } from "@google/genai";
 import { whereAlpha2 } from "iso-3166-1";
+import { firecrawlExtract, isFirecrawlConfigured } from "./country-research/firecrawl.js";
+import { isParallelConfigured, parallelExtract } from "./country-research/parallel.js";
+import { tavilyExtract } from "./country-research/tavily.js";
 import { unconfirmedAssessment, type CustomerContext } from "./customer-profiles.js";
+import { frontierModels, modelUnavailable, searchModels, withFrontierModel } from "./frontier-model.js";
 import { KNOWN_PROVIDER_SITES } from "./logos.js";
 import { guardedGet } from "./net-guard.js";
 import { COUNTRY_TERMS } from "./vocab.js";
@@ -375,18 +379,61 @@ async function resolveCitation(uri: string) {
   return new URL(location, uri).toString();
 }
 
+async function fetchViaWebExtract(url: string): Promise<FetchedSource | null> {
+  // Fallback for JS-rendered or bot-protected pages when Firecrawl, Tavily, or Parallel keys are configured.
+  if (isFirecrawlConfigured()) {
+    try {
+      const scraped = await firecrawlExtract([url]);
+      const hit = scraped.results[0];
+      if (hit && hit.rawContent.trim().length >= 200) {
+        return { url, title: (hit.title ?? "").slice(0, 200), text: hit.rawContent.trim().slice(0, 16_000) };
+      }
+    } catch { /* fall through to next extractor */ }
+  }
+  if (process.env.TAVILY_API_KEY?.trim()) {
+    try {
+      const extracted = await tavilyExtract([url], { extractDepth: "advanced", format: "text" });
+      const hit = extracted.results[0];
+      if (hit && hit.rawContent.trim().length >= 200) {
+        return { url, title: "", text: hit.rawContent.trim().slice(0, 16_000) };
+      }
+    } catch { /* fall through to next extractor */ }
+  }
+  if (isParallelConfigured()) {
+    try {
+      const extracted = await parallelExtract([url]);
+      const hit = extracted.results[0];
+      if (hit && hit.rawContent.trim().length >= 200) {
+        return { url, title: (hit.title ?? "").slice(0, 200), text: hit.rawContent.trim().slice(0, 16_000) };
+      }
+    } catch { /* no more extractors */ }
+  }
+  return null;
+}
+
 export async function fetchSource(uri: string): Promise<FetchedSource> {
   const url = await resolveCitation(uri);
   const domain = registrableDomain(url);
   if (NOT_EVIDENCE.some((d) => domain === d || domain.endsWith(`.${d}`))) throw new SkippedSource("social or user-generated page");
   if (!(await robotsAllow(url))) throw new SkippedSource("disallowed by robots.txt");
-  const page = await guardedGet(url, { maxBytes: 3_000_000, timeoutMs: 12_000, maxRedirects: 4, accept: "text/html,application/xhtml+xml" });
-  if (!page.contentType.includes("html")) throw new SkippedSource(`not an HTML page (${page.contentType || "no type"})`);
-  const html = page.body.toString("utf8");
-  const text = htmlToText(html);
-  if (text.length < 200) throw new SkippedSource("no readable text (rendered by JavaScript)");
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
-  return { url: page.url, title: htmlToText(title).slice(0, 200), text: text.slice(0, 16_000) };
+  let directError: unknown = null;
+  try {
+    const page = await guardedGet(url, { maxBytes: 3_000_000, timeoutMs: 12_000, maxRedirects: 4, accept: "text/html,application/xhtml+xml" });
+    if (!page.contentType.includes("html")) throw new SkippedSource(`not an HTML page (${page.contentType || "no type"})`);
+    const html = page.body.toString("utf8");
+    const text = htmlToText(html);
+    if (text.length >= 200) {
+      const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
+      return { url: page.url, title: htmlToText(title).slice(0, 200), text: text.slice(0, 16_000) };
+    }
+    directError = new SkippedSource("no readable text (rendered by JavaScript)");
+  } catch (error) {
+    if (error instanceof SkippedSource && error.message.startsWith("not an HTML page")) throw error;
+    directError = error;
+  }
+  const fallback = await fetchViaWebExtract(url);
+  if (fallback) return fallback;
+  throw directError;
 }
 
 // ─── Model ───────────────────────────────────────────────────────────────────
@@ -420,44 +467,54 @@ export function webCheckConfigured() {
   return process.env.GOOGLE_GENAI_USE_VERTEXAI?.trim().toLowerCase() === "true" || Boolean((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim());
 }
 
-/** Gemini with Google Search grounding; null when no key or Vertex project is configured. */
+/** Gemini with Google Search grounding + frontier-model judging; null when no key or Vertex project is configured. */
 export function geminiWebCheckModel(): WebCheckModel | null {
   if (!webCheckConfigured()) return null;
   const ai = genaiClient();
   if (!ai) return null;
-  const model = process.env.RAILOR_WEB_CHECK_MODEL?.trim() || process.env.RAILOR_DISCOVERY_MODEL?.trim() || DEFAULT_MODEL;
+  const override = process.env.RAILOR_WEB_CHECK_MODEL?.trim() || process.env.RAILOR_DISCOVERY_MODEL?.trim();
+  const judgeChain = override ? [override, ...frontierModels().filter((m) => m !== override)] : frontierModels();
+  const searchChain = override ? [override, ...searchModels().filter((m) => m !== override)] : searchModels();
+  let used = "";
   return {
-    name: model,
+    get name() { return used || judgeChain[0] || DEFAULT_MODEL; },
     async search(prompt) {
-      const res = await ai.models.generateContent({ model, contents: prompt, config: { temperature: 0, tools: [{ googleSearch: {} }], abortSignal: AbortSignal.timeout(60_000) } });
-      const meta = res.candidates?.[0]?.groundingMetadata;
-      const citations = (meta?.groundingChunks ?? []).flatMap((c) => (c.web?.uri ? [{ uri: c.web.uri, title: c.web.title ?? c.web.domain ?? "" }] : []));
-      return { queries: meta?.webSearchQueries ?? [], citations };
+      const { value } = await withFrontierModel(async (model) => {
+        const ask = (thinking: boolean) => ai.models.generateContent({ model, contents: prompt, config: { temperature: 0, tools: [{ googleSearch: {} }], abortSignal: AbortSignal.timeout(60_000), ...(thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) } });
+        const res = await ask(false).catch((error) => { if (modelUnavailable(error)) return ask(true); throw error; });
+        const meta = res.candidates?.[0]?.groundingMetadata;
+        const citations = (meta?.groundingChunks ?? []).flatMap((c) => (c.web?.uri ? [{ uri: c.web.uri, title: c.web.title ?? c.web.domain ?? "" }] : []));
+        return { queries: meta?.webSearchQueries ?? [], citations };
+      }, searchChain);
+      return value;
     },
     async judge(prompt) {
-      const res = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          temperature: 0,
-          abortSignal: AbortSignal.timeout(60_000),
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              verdict: { type: Type.STRING, enum: ["supported", "contradicted", "unclear"] },
-              sourceId: { type: Type.INTEGER },
-              quote: { type: Type.STRING },
-              reason: { type: Type.STRING },
+      const { value, model } = await withFrontierModel(async (model) => {
+        const res = await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            temperature: 0,
+            abortSignal: AbortSignal.timeout(60_000),
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                verdict: { type: Type.STRING, enum: ["supported", "contradicted", "unclear"] },
+                sourceId: { type: Type.INTEGER },
+                quote: { type: Type.STRING },
+                reason: { type: Type.STRING },
+              },
+              required: ["verdict", "reason"],
             },
-            required: ["verdict", "reason"],
           },
-          thinkingConfig: { thinkingBudget: 1024 },
-        },
-      });
-      const parsed = JSON.parse(res.text ?? "{}") as WebCheckJudgement;
-      if (!["supported", "contradicted", "unclear"].includes(parsed.verdict)) throw new Error("The model returned no verdict.");
-      return parsed;
+        });
+        const parsed = JSON.parse(res.text ?? "{}") as WebCheckJudgement;
+        if (!["supported", "contradicted", "unclear"].includes(parsed.verdict)) throw new Error("The model returned no verdict.");
+        return parsed;
+      }, judgeChain);
+      used = model;
+      return value;
     },
   };
 }

@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { getDb, providers, sourceDocuments, sourceSnapshots } from "@railor/database";
-import { calculatorProvider, calculatorSlugsFor, readCalculator, remitlyBrowserQuoteRow, remitlyCalculatorUrl, usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, type PriceCheckInput, type PriceRow } from "@railor/core";
+import { calculatorProvider, calculatorSlugsFor, readCalculator, readCalculatorViaWebExtract, remitlyBrowserQuoteRow, remitlyCalculatorUrl, usBankRemittanceCorridor, xoomBankQuoteRow, xoomCalculatorUrl, type PriceCheckInput, type PriceRow } from "@railor/core";
 import { z } from "zod";
 import { consumeLimit } from "./rate-limit";
 import { readRiaCalculator } from "./ria-public-quote";
@@ -93,23 +93,57 @@ export function tinyFishApiKey(): string | undefined {
   return process.env.TINYFISH_API_KEY?.trim() || process.env.TINY_FISH_API_KEY?.trim() || undefined;
 }
 
+export function webExtractFallbackConfigured(): boolean {
+  const hasGemini = Boolean((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim());
+  const hasScraper = Boolean(
+    process.env.FIRECRAWL_API_KEY?.trim()
+    || process.env.PARALLEL_API_KEY?.trim()
+    || process.env.TAVILY_API_KEY?.trim(),
+  );
+  return hasGemini && hasScraper;
+}
+
 export type CalculatorAttempt = { row: PriceRow; reason?: undefined } | { row: null; reason: string | null };
 
 /**
- * Asks a provider's own calculator for this exact transfer, through a browser
- * agent. A price comes back only if it passes every check (it adds up, it is
- * for the amount asked, the rate is believable next to mid-market); otherwise
- * the reason comes back so the person can be told why instead of seeing a
- * blank.
+ * Asks a provider's own calculator for this exact transfer.
+ * Order of execution:
+ *   1. Firecrawl interactive JS calculator for Ria US→INR (zero TinyFish spend)
+ *   2. TinyFish browser agent when TINYFISH_API_KEY is configured
+ *   3. Firecrawl → Parallel AI → Tavily + Gemini Frontier (gemini-4-argon) fallback
+ *      whenever TinyFish is unconfigured, out of credits, or fails.
+ * Every returned quote passes the exact same strict math & mid-market validation.
  */
 export async function attemptProviderCalculator(slug: string, input: PriceCheckInput, referenceRate: number | null = null, budgetMs = 50_000): Promise<CalculatorAttempt> {
   if (slug === "xoom" || slug === "remitly") return { row: await readProviderCalculator(slug, input), reason: null } as CalculatorAttempt;
   if (!calculatorProvider(slug)) return { row: null, reason: null };
+
+  if (slug === "ria" && process.env.FIRECRAWL_API_KEY?.trim() && usBankRemittanceCorridor(input) === "INR") {
+    const riaRow = await readRiaCalculator(input).catch(() => null);
+    if (riaRow) return { row: riaRow };
+  }
+
+  let tinyFishReject: string | null = null;
   const apiKey = tinyFishApiKey();
-  if (!apiKey) return { row: null, reason: null };
-  if (!await consumeLimit("provider-quote-browser", slug, 6, 3_600_000)) return { row: null, reason: "This provider has been checked many times this hour. Try again shortly." };
-  const result = await readCalculator(slug, input, referenceRate, { apiKey, budgetMs });
-  return result.row ? { row: result.row } : { row: null, reason: result.reject };
+  if (apiKey) {
+    if (!await consumeLimit("provider-quote-browser", slug, 6, 3_600_000)) {
+      tinyFishReject = "This provider has been checked many times this hour. Try again shortly.";
+    } else {
+      const result = await readCalculator(slug, input, referenceRate, { apiKey, budgetMs });
+      if (result.row) return { row: result.row };
+      tinyFishReject = result.reject;
+    }
+  }
+
+  if (webExtractFallbackConfigured()) {
+    if (await consumeLimit("provider-quote-extract", slug, 12, 3_600_000)) {
+      const fallback = await readCalculatorViaWebExtract(slug, input, referenceRate, { budgetMs: Math.min(budgetMs, 35_000) });
+      if (fallback.row) return { row: fallback.row };
+      return { row: null, reason: tinyFishReject ?? fallback.reject };
+    }
+  }
+
+  return { row: null, reason: tinyFishReject };
 }
 
 /**

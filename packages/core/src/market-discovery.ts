@@ -6,6 +6,7 @@
  * or execution until the normal reviewed ingestion path publishes it.
  */
 import { GoogleGenAI } from "@google/genai";
+import { frontierModels, withFrontierModel } from "./frontier-model.js";
 import { z } from "zod";
 import type { CorridorQuery, MarketDiscoveryCandidate, MarketDiscoveryResult } from "@railor/types";
 import { COUNTRY_TERMS } from "./vocab.js";
@@ -221,12 +222,18 @@ async function hydrateTopSources(sources: DiscoverySourceInput[]): Promise<Disco
 async function defaultGenerate(prompt: string): Promise<unknown> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
-  const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 45_000 } });
-  const response = await ai.models.generateContent({
-    model: process.env.MARKET_DISCOVERY_LLM_MODEL?.trim() || process.env.RAILOR_LLM_MODEL?.trim() || "gemini-flash-latest",
-    contents: prompt,
-    config: { responseMimeType: "application/json", temperature: 0 },
-  });
+  const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 60_000 } });
+  const override = process.env.MARKET_DISCOVERY_LLM_MODEL?.trim();
+  const models = override ? [override, ...frontierModels().filter((m) => m !== override)] : frontierModels();
+  const { value: response } = await withFrontierModel(
+    (model) =>
+      ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: { responseMimeType: "application/json", temperature: 0 },
+      }),
+    models,
+  );
   return response.text ? JSON.parse(response.text) : { candidates: [] };
 }
 
