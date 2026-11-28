@@ -21,10 +21,12 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
     return (
       <div className={styles.page}>
         <FxTicker />
-        <PriceCheckHeader mode="public" guest={!session} />
-        <PriceModeTabs mode="stablecoin" base="/prices" />
+        <div className={styles.pageIntro}>
+          <PriceCheckHeader mode="public" guest={!session} />
+          <PriceModeTabs mode="stablecoin" base="/prices" />
+        </div>
         <StablecoinQuote initial={stablecoinInitial(params)} locked={!session} />
-        <PriceHelpLinks />
+        <PriceHelpLinks mode="public" guest={!session} />
       </div>
     );
   }
@@ -36,8 +38,10 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
   return (
     <div className={styles.page}>
       <FxTicker />
-      <PriceCheckHeader mode="public" guest={!session} />
-      <PriceModeTabs mode="bank" base="/prices" />
+      <div className={styles.pageIntro}>
+        <PriceCheckHeader mode="public" guest={!session} />
+        <PriceModeTabs mode="bank" base="/prices" />
+      </div>
       <SwapQuote
         mode="public"
         guest={!session}
@@ -52,7 +56,7 @@ export default async function PublicPricesPage({ searchParams }: { searchParams:
         accountEmail={session?.user.email ?? null}
         alertPlan={entitlement?.plan}
       />
-      <PriceHelpLinks />
+      <PriceHelpLinks mode="public" guest={!session} />
     </div>
   );
 }

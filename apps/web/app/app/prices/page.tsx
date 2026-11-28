@@ -24,10 +24,12 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
     return (
       <div className={styles.page}>
         <FxTicker />
-        <PriceCheckHeader mode="app" />
-        <PriceModeTabs mode="stablecoin" base="/app/prices" />
+        <div className={styles.pageIntro}>
+          <PriceCheckHeader mode="app" />
+          <PriceModeTabs mode="stablecoin" base="/app/prices" />
+        </div>
         <StablecoinQuote initial={stablecoinInitial(params)} />
-        <PriceHelpLinks />
+        <PriceHelpLinks mode="app" />
       </div>
     );
   }
@@ -37,8 +39,10 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
   return (
     <div className={styles.page}>
       <FxTicker />
-      <PriceCheckHeader mode="app" />
-      <PriceModeTabs mode="bank" base="/app/prices" />
+      <div className={styles.pageIntro}>
+        <PriceCheckHeader mode="app" />
+        <PriceModeTabs mode="bank" base="/app/prices" />
+      </div>
         <SwapQuote
           key={JSON.stringify([page.initial, initialProvider])}
           mode="app"
@@ -55,7 +59,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           connected={connected}
           entityCountry={org.entityCountry ?? null}
         />
-      <PriceHelpLinks />
+      <PriceHelpLinks mode="app" />
     </div>
   );
 }

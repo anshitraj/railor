@@ -37,8 +37,30 @@ export function PriceModeTabs({ mode, base }: { mode: "bank" | "stablecoin"; bas
   );
 }
 
-export function PriceHelpLinks() {
-  return <nav className={styles.helpLinks} aria-label="Pricing documentation"><Link href="/docs/pricing#sources">How prices and sources work <ArrowRight size={12} /></Link><Link href="/docs/pricing#provider-coverage">Provider coverage & features <ArrowRight size={12} /></Link></nav>;
+export function PriceHelpLinks({ mode, guest = false }: { mode?: "app" | "public"; guest?: boolean } = {}) {
+  return (
+    <div className={styles.pageFooterLinks}>
+      {mode ? (
+        <nav className={styles.mobileToolLinks} aria-label="Quick tools">
+          {TOOLS[mode].slice(1).map((tool) => (
+            <Link key={tool.href} href={tool.href}>
+              <tool.icon size={13} aria-hidden />
+              {tool.label}
+            </Link>
+          ))}
+          {guest ? (
+            <Link href="/login" className={styles.mobileToolPrimary}>
+              Sign in to workspace <ArrowRight size={13} aria-hidden />
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
+      <nav className={styles.helpLinks} aria-label="Pricing documentation">
+        <Link href="/docs/pricing#sources">How prices and sources work <ArrowRight size={12} /></Link>
+        <Link href="/docs/pricing#provider-coverage">Provider coverage & features <ArrowRight size={12} /></Link>
+      </nav>
+    </div>
+  );
 }
 
 /** The left rail: where live quotes sit among the other ways to act on a price. */
