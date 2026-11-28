@@ -92,8 +92,9 @@ export async function runPriceCheck(organizationId: string | null, input: PriceC
   });
   const found = new Set(result.rows.filter(row => row.profileAssessment?.status === "not_supported" || (row.basis !== "market_estimate" && row.recipientAmount !== null)).map(row => providerIdentity(row.providerSlug)));
   result.rows.push(...cachedQuotes.filter(row => !found.has(providerIdentity(row.providerSlug))));
-  // Providers that show a price only in their own calculator are read in the background; the next refresh has them.
-  if (input.includeMarket && calculatorSlugsFor(result.input).some(slug => !found.has(slug) && !cachedQuotes.some(row => providerIdentity(row.providerSlug) === slug))) {
+  // Background browser-agent warming is opt-in (RAILOR_AUTO_WARM_TINYFISH=true) so page views, bots,
+  // 20s polling, and daily crons never silently burn TinyFish credits. On-demand "Get quote" still works.
+  if (process.env.RAILOR_AUTO_WARM_TINYFISH === "true" && input.includeMarket && calculatorSlugsFor(result.input).some(slug => !found.has(slug) && !cachedQuotes.some(row => providerIdentity(row.providerSlug) === slug))) {
     const present = new Set([...found, ...cachedQuotes.map(row => providerIdentity(row.providerSlug))]);
     const referenceRate = result.reference?.rate ?? null;
     try { after(() => warmProviderCalculators(result.input, referenceRate, present).catch(() => undefined)); } catch { /* outside a request: nothing to warm for */ }

@@ -63,7 +63,6 @@ export function PriceProviderBrowser(props: Props) {
   const [tab, setTab] = useState("Providers");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<PriceSortMode>("cheapest");
-  const [showResearch, setShowResearch] = useState(false);
   const [promotions, setPromotions] = useState<{ pair: string; rows: { slug: string; endsAt: string }[] }>();
   const pair = `${from}:${to}`;
   useEffect(() => {
@@ -94,15 +93,14 @@ export function PriceProviderBrowser(props: Props) {
     ? promotions.rows.filter(item => Date.parse(item.endsAt) > Date.now()).map(item => item.slug)
     : []), [pair, promotions]);
   const listRef = useRef<HTMLOListElement>(null);
-  useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to, showResearch]);
+  useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [query, sort, from, to]);
   const deliveryLabelFor = (slug: string, quote?: PriceRow) => quote?.delivery ?? providerFacts(slug, { from, to })?.delivery?.label ?? null;
   const filtered = useMemo(() => {
-    const priced = new Set(rows.map((row) => row.providerSlug));
-    const ordered = sort === "recommended" ? recommendedPriceRows(rows, best) : rows;
-    const entries = [...ordered.map((quote) => ({ providerSlug: quote.providerSlug, providerName: quote.providerName, quote, candidate: undefined as MarketCoverageProvider | undefined })), ...(props.candidates ?? []).filter((candidate) => !priced.has(candidate.providerSlug)).map((candidate) => ({ providerSlug: candidate.providerSlug, providerName: candidate.providerName, quote: undefined as PriceRow | undefined, candidate }))];
+    const pricedRows = rows.filter((row) => row.recipientAmount != null);
+    const ordered = sort === "recommended" ? recommendedPriceRows(pricedRows, best) : pricedRows;
+    const entries = ordered.map((quote) => ({ providerSlug: quote.providerSlug, providerName: quote.providerName, quote, candidate: undefined as MarketCoverageProvider | undefined }));
     const term = query.trim().toLowerCase();
-    const matched = entries.filter(entry => (term || showResearch || entry.quote?.recipientAmount != null)
-      && `${entry.providerName} ${entry.providerSlug}`.toLowerCase().includes(term));
+    const matched = term ? entries.filter(entry => `${entry.providerName} ${entry.providerSlug}`.toLowerCase().includes(term)) : entries;
     return sortPriceEntries(matched, {
       sort,
       amount,
@@ -110,7 +108,7 @@ export function PriceProviderBrowser(props: Props) {
       deliveryFor: (entry) => deliveryLabelFor(entry.providerSlug, entry.quote),
       activePromotions,
     });
-  }, [rows, best, props.candidates, query, sort, showResearch, activePromotions, amount, props.reference?.rate, from, to]);
+  }, [rows, best, query, sort, activePromotions, amount, props.reference?.rate, from, to]);
   const topPayoutKey = useMemo(() => {
     let winner: { key: string; amount: number } | null = null;
     for (const row of rows) {
@@ -262,12 +260,7 @@ export function PriceProviderBrowser(props: Props) {
         </ol>
         {!filtered.length && <div className={styles.empty}>{props.loading && !query ? <><PriceLoadingMark /><strong role="status">Checking provider prices…</strong></> : <><FileSearch size={22} /><strong>{query ? "No providers match your search" : "No provider price for this setup yet"}</strong><p>{query ? "Try another name or clear your search." : "Try another currency pair, or review broader coverage in Market view."}</p>{query && <button type="button" onClick={() => setQuery("")}>Clear search</button>}</>}</div>}
         <div className={styles.tableFooter}>
-          <span>{priceCount} {priceCount === 1 ? "price" : "prices"}</span>
-          {!query.trim() && Boolean(props.candidates?.length || rows.some(row => row.recipientAmount === null)) && (
-            <button type="button" className={styles.scrollHint} aria-expanded={showResearch} aria-controls="price-provider-list" onClick={() => setShowResearch(value => !value)}>
-              {showResearch ? "Show prices only" : "Browse more providers"} <ChevronDown size={14} aria-hidden />
-            </button>
-          )}
+          <span>{priceCount} {priceCount === 1 ? "live price" : "live prices"}</span>
         </div>
         <p className={styles.tableNote}>Complete estimates first; public comparisons keep their collection time and conditions. <Link href="/docs/pricing">How comparison works <ArrowUpRight size={10} /></Link></p>
       </div>
@@ -287,10 +280,7 @@ function UnpricedProvider({ provider, from, to, onGetQuote, bookmark }: { provid
   const [detail, setDetail] = useState<Awaited<ReturnType<NonNullable<Props["onGetQuote"]>>>>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
-  // Opening a provider with no price starts the check: one click from the list, no second button to find.
-  // The server caps the rate and caches each provider's web check, so this stays bounded.
-  useEffect(() => { void getQuote(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // On-demand only: wait for the visitor to click "Get quote" so opening a directory entry never burns browser-agent credits silently.
 
   async function getQuote() {
     if (!onGetQuote || pending) return;

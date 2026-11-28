@@ -8,7 +8,7 @@ import { consumeLimit } from "./rate-limit";
 import { readRiaCalculator } from "./ria-public-quote";
 
 const PARSER = "public_calculator_quote";
-const VALID_FOR = 15 * 60_000;
+const VALID_FOR = 60 * 60_000;
 
 function requestKey(input: PriceCheckInput) {
   const { context } = input;
@@ -107,7 +107,7 @@ export async function attemptProviderCalculator(slug: string, input: PriceCheckI
   if (!calculatorProvider(slug)) return { row: null, reason: null };
   const apiKey = tinyFishApiKey();
   if (!apiKey) return { row: null, reason: null };
-  if (!await consumeLimit("provider-quote-browser", slug, 24, 3_600_000)) return { row: null, reason: "This provider has been checked many times this hour. Try again shortly." };
+  if (!await consumeLimit("provider-quote-browser", slug, 6, 3_600_000)) return { row: null, reason: "This provider has been checked many times this hour. Try again shortly." };
   const result = await readCalculator(slug, input, referenceRate, { apiKey, budgetMs });
   return result.row ? { row: result.row } : { row: null, reason: result.reject };
 }
@@ -124,8 +124,8 @@ export async function warmProviderCalculators(input: PriceCheckInput, referenceR
   const wanted = calculatorSlugsFor(input).filter((slug) => !present.has(slug));
   const queue: string[] = [];
   for (const slug of wanted) {
-    if (!await consumeLimit("calculator-warm", `${slug}:${requestKey(input)}`, 1, 15 * 60_000).catch(() => false)) continue;
-    if (!await consumeLimit("calculator-warm-hour", "all", Number(process.env.QUOTE_WARM_PER_HOUR) || 60, 3_600_000).catch(() => false)) break;
+    if (!await consumeLimit("calculator-warm", `${slug}:${requestKey(input)}`, 1, 60 * 60_000).catch(() => false)) continue;
+    if (!await consumeLimit("calculator-warm-hour", "all", Number(process.env.QUOTE_WARM_PER_HOUR) || 10, 3_600_000).catch(() => false)) break;
     queue.push(slug);
   }
   const worker = async () => {
